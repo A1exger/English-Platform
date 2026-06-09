@@ -10,6 +10,7 @@ import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { AttendanceDto } from './dto/attendance.dto';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { BillingService } from '../billing/billing.service';
+import { LiveKitService } from '../video/livekit.service';
 
 const LESSON_INCLUDE = {
   participants: { include: { studentProfile: true } },
@@ -22,7 +23,27 @@ export class LessonsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly billing: BillingService,
+    private readonly livekit: LiveKitService,
   ) {}
+
+  /**
+   * Issue everything the client needs to enter the lesson room: a LiveKit
+   * video token (room = lesson) plus the server URL. Access is restricted to
+   * the owning tutor, booked students, or an admin (via getOne).
+   */
+  async join(user: AuthenticatedUser, id: string) {
+    const lesson = await this.getOne(user, id);
+    const room = this.livekit.roomNameForLesson(lesson.id);
+    // Parents (if added later) would join subscribe-only; tutors/students publish.
+    const canPublish = user.role !== 'parent';
+    const token = this.livekit.createToken({
+      room,
+      identity: user.id,
+      name: user.email,
+      canPublish,
+    });
+    return { roomName: room, url: this.livekit.url, token };
+  }
 
   private async tutorProfileForUser(userId: string) {
     const profile = await this.prisma.tutorProfile.findUnique({

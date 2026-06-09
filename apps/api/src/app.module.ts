@@ -12,6 +12,9 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { LessonsModule } from './lessons/lessons.module';
 import { BillingModule } from './billing/billing.module';
+import { HomeworkModule } from './homework/homework.module';
+import { CrmModule } from './crm/crm.module';
+import { VideoModule } from './video/video.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -35,6 +38,9 @@ import { HealthModule } from './health/health.module';
     UsersModule,
     LessonsModule,
     BillingModule,
+    HomeworkModule,
+    CrmModule,
+    VideoModule,
     HealthModule,
   ],
 })

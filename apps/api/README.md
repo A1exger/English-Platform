@@ -72,7 +72,18 @@ All seeded users share the password `Password123!`:
 | GET    | /lessons/:id               | JWT           | only participants/owner/admin           |
 | PATCH  | /lessons/:id               | JWT, tutor    | reschedule / cancel                     |
 | POST   | /lessons/:id/book          | JWT, student  | creates a `LessonParticipant`           |
+| POST   | /lessons/:id/join          | JWT           | LiveKit room token (participants/owner) |
 | POST   | /lessons/:id/attendance    | JWT           | mark present/absent/late                |
+| POST   | /homework                  | JWT, tutor    | assign homework to a student            |
+| GET    | /homework                  | JWT           | tutor: assigned; student: theirs        |
+| GET    | /homework/:id              | JWT           | owner tutor / assigned student          |
+| POST   | /homework/:id/submit       | JWT, student  | submit work (content + fileUrls)        |
+| POST   | /homework/:id/grade        | JWT, tutor    | grade + feedback on a submission        |
+| POST   | /crm/students              | JWT, tutor    | enroll a student by email               |
+| GET    | /crm/students              | JWT, tutor    | students + lesson/attendance summary    |
+| GET    | /crm/students/:id          | JWT, tutor    | card: profile, lessons, homework, notes |
+| POST   | /crm/students/:id/notes    | JWT, tutor    | add a private note                      |
+| GET    | /crm/students/:id/notes    | JWT, tutor    | list private notes                      |
 | GET    | /billing/packages          | JWT           | tutor: own; student: active packages    |
 | POST   | /billing/packages          | JWT, tutor    | create a tariff/package                 |
 | GET    | /billing/balance           | JWT, student  | balance + remaining package lessons     |
@@ -98,6 +109,14 @@ All seeded users share the password `Password123!`:
   consumes a package lesson if available, otherwise debits the cash balance —
   idempotent per (lesson, student).
 - **Invoices** are issued on successful payment in the payer's locale.
+
+### Video (LiveKit)
+
+`POST /lessons/:id/join` returns `{ roomName, url, token }` where `token` is a
+LiveKit access JWT (HS256, signed with `LIVEKIT_API_SECRET`, carrying a `video`
+grant for the lesson room). We target **LiveKit Cloud** (managed SFU) for HD
+video, screen share, recording and group rooms; the token is generated without
+the `livekit-server-sdk` dependency (`src/video/livekit.service.ts`).
 
 ### i18n
 

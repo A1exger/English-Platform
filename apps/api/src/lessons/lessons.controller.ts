@@ -63,6 +63,11 @@ export class LessonsController {
     return this.lessons.book(user, id);
   }
 
+  @Post(':id/join')
+  join(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.lessons.join(user, id);
+  }
+
   @Post(':id/attendance')
   attendance(
     @CurrentUser() user: AuthenticatedUser,
