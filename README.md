@@ -36,6 +36,24 @@ English-Platform/
 | Интерактивная доска | **tldraw / Konva + Yjs (CRDT)** поверх WebSocket | CRDT даёт надёжную совместную правку и оффлайн-слияние без серверных конфликтов. |
 | Мультиязычность | **next-intl** (web) + **nestjs-i18n** (api) | Язык — свойство пользователя; интерфейс каждого участника независим. RTL для арабского. |
 
+## Статус реализации (бэкенд)
+
+| Фича из ТЗ | Статус | Где |
+|---|---|---|
+| 1–2. Кабинеты (репетитор/ученик) | ✅ | auth, users, lessons, crm |
+| 3. Интерактивная доска | ⏳ план | `docs/01`, `docs/04` |
+| 4. Видеозвонки | 🟡 токены LiveKit | `apps/api/src/video` |
+| 5. Управление уроками + бронирование | ✅ | `apps/api/src/lessons` |
+| 6. Домашние задания | ✅ | `apps/api/src/homework` |
+| 7. Оплата (Stripe/PayPal, ledger, инвойсы) | ✅ | `apps/api/src/billing` |
+| 8. CRM | ✅ | `apps/api/src/crm` |
+| 9. Учебные материалы | ✅ | `apps/api/src/materials` |
+| 10. Аналитика | ✅ | `apps/api/src/analytics` |
+| 11. Мультиязычность + RTL | ✅ | `apps/web`, `apps/api` i18n |
+| Уведомления (email/Telegram/in-app, по локали) | ✅ in-app + воркер | `apps/api/src/notifications` |
+
+Покрытие тестами бэкенда: **7 unit + 51 e2e**, всё зелёное.
+
 ## Быстрый старт (MVP-модуль)
 
 ```bash

@@ -8,6 +8,7 @@ import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { CreateHomeworkDto } from './dto/create-homework.dto';
 import { SubmitHomeworkDto } from './dto/submit-homework.dto';
 import { GradeHomeworkDto } from './dto/grade-homework.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const HOMEWORK_INCLUDE = {
   submissions: { orderBy: { submittedAt: 'desc' } },
@@ -15,7 +16,10 @@ const HOMEWORK_INCLUDE = {
 
 @Injectable()
 export class HomeworkService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   private async tutorProfileForUser(userId: string) {
     const profile = await this.prisma.tutorProfile.findUnique({
@@ -39,7 +43,7 @@ export class HomeworkService {
 
   async create(user: AuthenticatedUser, dto: CreateHomeworkDto) {
     const tutor = await this.tutorProfileForUser(user.id);
-    return this.prisma.homework.create({
+    const homework = await this.prisma.homework.create({
       data: {
         tutorProfileId: tutor.id,
         studentProfileId: dto.studentProfileId,
@@ -51,6 +55,20 @@ export class HomeworkService {
       },
       include: HOMEWORK_INCLUDE,
     });
+
+    // Notify the student (in their own language).
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { id: dto.studentProfileId },
+    });
+    if (student) {
+      await this.notifications.enqueue({
+        userId: student.userId,
+        templateKey: 'homework_assigned',
+        payload: { title: homework.title },
+      });
+    }
+
+    return homework;
   }
 
   async list(user: AuthenticatedUser) {

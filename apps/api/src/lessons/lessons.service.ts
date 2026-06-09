@@ -11,6 +11,7 @@ import { AttendanceDto } from './dto/attendance.dto';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { BillingService } from '../billing/billing.service';
 import { LiveKitService } from '../video/livekit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const LESSON_INCLUDE = {
   participants: { include: { studentProfile: true } },
@@ -24,6 +25,7 @@ export class LessonsService {
     private readonly prisma: PrismaService,
     private readonly billing: BillingService,
     private readonly livekit: LiveKitService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /**
@@ -208,6 +210,12 @@ export class LessonsService {
 
     await this.prisma.lessonParticipant.create({
       data: { lessonId, studentProfileId: studentProfile.id },
+    });
+
+    await this.notifications.enqueue({
+      userId: user.id,
+      templateKey: 'lesson_booked',
+      payload: { title: lesson.title ?? '' },
     });
 
     return this.prisma.lesson.findUnique({

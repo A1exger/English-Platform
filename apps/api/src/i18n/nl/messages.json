@@ -3,6 +3,11 @@
   "lesson": {
     "reminder": "Herinnering: je Engelse les \"{title}\" begint om {time}."
   },
+  "notification": {
+    "homework_assigned": "Nieuw huiswerk: \"{title}\".",
+    "lesson_booked": "Les geboekt: \"{title}\".",
+    "lesson_reminder": "Herinnering: \"{title}\" begint om {time}."
+  },
   "auth": {
     "invalid_credentials": "Ongeldig e-mailadres of wachtwoord."
   }

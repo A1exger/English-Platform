@@ -3,6 +3,11 @@
   "lesson": {
     "reminder": "Reminder: your English lesson \"{title}\" starts at {time}."
   },
+  "notification": {
+    "homework_assigned": "New homework: \"{title}\".",
+    "lesson_booked": "Lesson booked: \"{title}\".",
+    "lesson_reminder": "Reminder: \"{title}\" starts at {time}."
+  },
   "auth": {
     "invalid_credentials": "Invalid email or password."
   }

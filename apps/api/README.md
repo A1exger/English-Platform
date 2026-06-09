@@ -91,6 +91,14 @@ All seeded users share the password `Password123!`:
 | GET    | /billing/invoices          | JWT           | own invoices (in payer's locale)        |
 | POST   | /billing/checkout          | JWT, student  | start Stripe/PayPal checkout            |
 | POST   | /billing/webhook/:provider | signature     | provider webhook (no JWT)               |
+| POST   | /materials                 | JWT, tutor    | add a material to the library           |
+| GET    | /materials                 | JWT           | tutor: own; student: enrolled tutors'   |
+| GET    | /materials/:id             | JWT           | owner / enrolled student / admin        |
+| DELETE | /materials/:id             | JWT, tutor    | delete own material                     |
+| GET    | /notifications             | JWT           | own in-app notifications                |
+| PATCH  | /notifications/:id/read    | JWT           | mark as read                            |
+| POST   | /notifications/dispatch    | JWT, admin    | flush the queue (worker simulation)     |
+| GET    | /analytics/overview        | JWT, tutor    | revenue, lessons, attendance, conversion|
 
 ### Billing & payments
 
@@ -109,6 +117,26 @@ All seeded users share the password `Password123!`:
   consumes a package lesson if available, otherwise debits the cash balance —
   idempotent per (lesson, student).
 - **Invoices** are issued on successful payment in the payer's locale.
+
+### Notifications
+
+`NotificationsService.enqueue` captures the recipient's `locale` at enqueue time
+so messages render in their language even if they later switch. Triggers are
+wired for homework assignment and lesson booking. `POST /notifications/dispatch`
+simulates the BullMQ worker: it renders each queued item via `nestjs-i18n` and
+marks it `sent` (in production this would also send email/Telegram).
+
+### Materials
+
+A material keeps the **language of its original content** and is never
+auto-translated (only the UI is localized). Tutors own their library; enrolled
+students get read-only access to their tutors' materials.
+
+### Analytics
+
+`GET /analytics/overview` aggregates the tutor dashboard KPIs: revenue from
+completed lessons, completed/upcoming counts, active students, attendance rate,
+and trial→paid conversion.
 
 ### Video (LiveKit)
 

@@ -3,6 +3,11 @@
   "lesson": {
     "reminder": "Напоминание: ваш урок английского \"{title}\" начинается в {time}."
   },
+  "notification": {
+    "homework_assigned": "Новое домашнее задание: \"{title}\".",
+    "lesson_booked": "Урок забронирован: \"{title}\".",
+    "lesson_reminder": "Напоминание: \"{title}\" начинается в {time}."
+  },
   "auth": {
     "invalid_credentials": "Неверный email или пароль."
   }

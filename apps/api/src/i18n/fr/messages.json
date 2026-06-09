@@ -3,6 +3,11 @@
   "lesson": {
     "reminder": "Rappel : votre cours d'anglais \"{title}\" commence à {time}."
   },
+  "notification": {
+    "homework_assigned": "Nouveau devoir : \"{title}\".",
+    "lesson_booked": "Cours réservé : \"{title}\".",
+    "lesson_reminder": "Rappel : \"{title}\" commence à {time}."
+  },
   "auth": {
     "invalid_credentials": "E-mail ou mot de passe invalide."
   }
