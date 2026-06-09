@@ -41,5 +41,28 @@ export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 export const PAYMENT_PROVIDERS = ['stripe', 'paypal', 'manual'] as const;
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
+// Providers a customer can actually check out with (excludes internal "manual").
+export const CHECKOUT_PROVIDERS = ['stripe', 'paypal'] as const;
+export type CheckoutProvider = (typeof CHECKOUT_PROVIDERS)[number];
+
+export const TRANSACTION_STATUSES = [
+  'pending',
+  'succeeded',
+  'failed',
+  'refunded',
+] as const;
+export type TransactionStatus = (typeof TRANSACTION_STATUSES)[number];
+
+export const LEDGER_REASONS = [
+  'topup',
+  'charge',
+  'refund',
+  'adjustment',
+] as const;
+export type LedgerReason = (typeof LEDGER_REASONS)[number];
+
+export const INVOICE_STATUSES = ['draft', 'issued', 'paid', 'void'] as const;
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
 export const NOTIFICATION_CHANNELS = ['email', 'telegram', 'in_app'] as const;
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];

@@ -85,8 +85,10 @@ model StudentProfile {
   parentUserId   String?
   balanceCents   Int     @default(0)
 
-  tutors       TutorStudent[]
-  participants LessonParticipant[]
+  tutors          TutorStudent[]
+  participants    LessonParticipant[]
+  ledgerEntries   LedgerEntry[]
+  studentPackages StudentPackage[]
 }
 
 model TutorStudent {
@@ -211,6 +213,8 @@ model Package {
   validityDays   Int?
   isActive       Boolean @default(true)
 
+  studentPackages StudentPackage[]
+
   @@index([tutorProfileId])
 }
 
@@ -225,8 +229,65 @@ model Transaction {
   currency   String   @default("EUR")
   // status: "pending" | "succeeded" | "failed" | "refunded"
   status     String   @default("pending")
-  externalId String?
+  // externalId: payment session/intent id at the provider (Stripe/PayPal).
+  externalId String?  @unique
+  // metadata: JSON-serialized string, e.g. '{"packageId":"..."}'
+  metadata   String?
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Source of truth for a student's balance: each money movement is one entry.
+// balanceCents on StudentProfile is a denormalized cache updated in the same
+// transaction. amountCents is signed (+topup/refund, -charge).
+model LedgerEntry {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  amountCents      Int
+  currency         String   @default("EUR")
+  // reason: "topup" | "charge" | "refund" | "adjustment"
+  reason           String
+  // referenceType/Id: what this entry relates to, e.g. "lesson"/"transaction".
+  referenceType    String?
+  referenceId      String?
+  balanceAfterCents Int
+  createdAt        DateTime @default(now())
+
+  @@index([studentProfileId])
+  @@index([referenceType, referenceId])
+}
+
+// A purchased package: lessonsRemaining is decremented as lessons complete.
+model StudentPackage {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  packageId        String
+  package          Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  lessonsTotal     Int
+  lessonsRemaining Int
+  expiresAt        DateTime?
+  transactionId    String?
+  createdAt        DateTime @default(now())
+
+  @@index([studentProfileId])
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  userId        String
+  number        String   @unique
+  amountCents   Int
+  currency      String   @default("EUR")
+  // status: "draft" | "issued" | "paid" | "void"
+  status        String   @default("paid")
+  locale        String   @default("en")
+  transactionId String?
+  pdfUrl        String?
+  createdAt     DateTime @default(now())
 
   @@index([userId])
 }

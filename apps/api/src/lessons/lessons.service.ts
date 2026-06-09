@@ -9,6 +9,7 @@ import { CreateLessonDto } from './dto/create-lesson.dto';
 import { UpdateLessonDto } from './dto/update-lesson.dto';
 import { AttendanceDto } from './dto/attendance.dto';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
+import { BillingService } from '../billing/billing.service';
 
 const LESSON_INCLUDE = {
   participants: { include: { studentProfile: true } },
@@ -18,7 +19,10 @@ const LESSON_INCLUDE = {
 
 @Injectable()
 export class LessonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly billing: BillingService,
+  ) {}
 
   private async tutorProfileForUser(userId: string) {
     const profile = await this.prisma.tutorProfile.findUnique({
@@ -140,7 +144,7 @@ export class LessonsService {
       throw new BadRequestException('endsAt must be after startsAt');
     }
 
-    return this.prisma.lesson.update({
+    const updated = await this.prisma.lesson.update({
       where: { id },
       data: {
         ...(dto.title !== undefined ? { title: dto.title } : {}),
@@ -151,6 +155,14 @@ export class LessonsService {
       },
       include: LESSON_INCLUDE,
     });
+
+    // On transition to "completed", auto-charge each participant (package or
+    // balance). Idempotent, so re-saving a completed lesson won't double-charge.
+    if (lesson.status !== 'completed' && updated.status === 'completed') {
+      await this.billing.chargeForCompletedLesson(updated);
+    }
+
+    return updated;
   }
 
   async book(user: AuthenticatedUser, lessonId: string) {

@@ -3,9 +3,11 @@
 MVP backend for an online English-tutoring platform. Built with **NestJS 10**,
 **Prisma**, JWT auth, class-validator, `@nestjs/config`, and `nestjs-i18n`.
 
-A vertical slice: registration/login with access + refresh tokens, a protected
+Vertical slices: registration/login with access + refresh tokens, a protected
 `/me`, profile updates, lesson creation/listing/rescheduling, a student booking
-flow, and attendance.
+flow, attendance, and a full **billing** module (Stripe/PayPal checkout,
+signature-verified webhooks, ledger-based balance, lesson packages, invoices,
+and automatic charging when a lesson is completed).
 
 ## Tech & data store
 
@@ -71,6 +73,31 @@ All seeded users share the password `Password123!`:
 | PATCH  | /lessons/:id               | JWT, tutor    | reschedule / cancel                     |
 | POST   | /lessons/:id/book          | JWT, student  | creates a `LessonParticipant`           |
 | POST   | /lessons/:id/attendance    | JWT           | mark present/absent/late                |
+| GET    | /billing/packages          | JWT           | tutor: own; student: active packages    |
+| POST   | /billing/packages          | JWT, tutor    | create a tariff/package                 |
+| GET    | /billing/balance           | JWT, student  | balance + remaining package lessons     |
+| GET    | /billing/transactions      | JWT           | own transaction history                 |
+| GET    | /billing/invoices          | JWT           | own invoices (in payer's locale)        |
+| POST   | /billing/checkout          | JWT, student  | start Stripe/PayPal checkout            |
+| POST   | /billing/webhook/:provider | signature     | provider webhook (no JWT)               |
+
+### Billing & payments
+
+- **Provider abstraction** (`src/billing/providers`): `stripe` and `paypal`
+  adapters behind a `PaymentProvider` interface, resolved by a registry. Local
+  providers (Tunisia/CIS) can be added without touching `BillingService`.
+- **Checkout** creates a `pending` `Transaction`, asks the provider for a
+  checkout session, and stores its id as `externalId`.
+- **Webhooks** are unauthenticated but **signature-verified** (HMAC-SHA256 over
+  the raw body with `*_WEBHOOK_SECRET`; requires the app's `rawBody: true`).
+  Processing is **idempotent** by `externalId` — replays are ignored.
+- **Balance** is ledger-based: each money movement is a signed `LedgerEntry`;
+  `StudentProfile.balanceCents` is a denormalized cache updated in the same DB
+  transaction. Package purchases grant `StudentPackage` lessons instead of cash.
+- **Auto-charge**: completing a lesson (`PATCH /lessons/:id {status:"completed"}`)
+  consumes a package lesson if available, otherwise debits the cash balance —
+  idempotent per (lesson, student).
+- **Invoices** are issued on successful payment in the payer's locale.
 
 ### i18n
 

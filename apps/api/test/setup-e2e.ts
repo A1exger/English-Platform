@@ -5,3 +5,5 @@ process.env.JWT_ACCESS_SECRET = 'test-access-secret';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
 process.env.JWT_ACCESS_TTL = '15m';
 process.env.JWT_REFRESH_TTL = '7d';
+process.env.STRIPE_WEBHOOK_SECRET = 'test-stripe-webhook-secret';
+process.env.PAYPAL_WEBHOOK_SECRET = 'test-paypal-webhook-secret';

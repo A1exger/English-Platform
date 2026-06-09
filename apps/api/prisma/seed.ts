@@ -141,6 +141,33 @@ async function main(): Promise<void> {
     },
   });
 
+  // Lesson packages (tariffs) for the tutor — created once.
+  const existingPackages = await prisma.package.count({
+    where: { tutorProfileId },
+  });
+  if (existingPackages === 0) {
+    await prisma.package.createMany({
+      data: [
+        {
+          tutorProfileId,
+          name: '5 lessons',
+          lessonsCount: 5,
+          priceCents: 11000,
+          currency: 'EUR',
+          validityDays: 90,
+        },
+        {
+          tutorProfileId,
+          name: '10 lessons',
+          lessonsCount: 10,
+          priceCents: 20000,
+          currency: 'EUR',
+          validityDays: 180,
+        },
+      ],
+    });
+  }
+
   // eslint-disable-next-line no-console
   console.log('Seed complete:', {
     tutor: tutor.email,
