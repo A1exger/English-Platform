@@ -1,0 +1,9 @@
+{
+  "greeting": "Привет, {name}!",
+  "lesson": {
+    "reminder": "Напоминание: ваш урок английского \"{title}\" начинается в {time}."
+  },
+  "auth": {
+    "invalid_credentials": "Неверный email или пароль."
+  }
+}

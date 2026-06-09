@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+
+# env
+.env
+.env.*.local
+
+# databases (SQLite dev/test)
+*.db
+*.db-journal
+dev.db
+test.db
+prisma/*.db

@@ -1,0 +1,9 @@
+{
+  "greeting": "Hallo, {name}!",
+  "lesson": {
+    "reminder": "Erinnerung: Deine Englischstunde \"{title}\" beginnt um {time}."
+  },
+  "auth": {
+    "invalid_credentials": "Ungültige E-Mail oder Passwort."
+  }
+}

@@ -1,0 +1,261 @@
+// English-Platform Prisma schema
+//
+// DATABASE PORTABILITY NOTES
+// --------------------------
+// Dev/test use SQLite (file:./dev.db). PRODUCTION uses PostgreSQL.
+// The datasource always reads env("DATABASE_URL"); only the connection string
+// differs between environments (sqlite "file:..." vs postgres "postgresql://...").
+//
+// SQLite limitations we work around so the SAME schema runs on Postgres:
+//   * No native Prisma `enum` support on SQLite -> all "enum-like" fields are
+//     modeled as `String`. Allowed values are documented inline and enforced in
+//     code via TypeScript string-literal union types / constants
+//     (see src/common/constants/enums.ts).
+//   * JSON blobs are stored as `String` (serialized JSON) for maximum
+//     portability, documented with the field. Parse/stringify in services.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Dev/test: sqlite. Production: postgresql. Driven entirely by DATABASE_URL.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  // role: "tutor" | "student" | "parent" | "admin"
+  role         String
+  firstName    String
+  lastName     String
+  locale       String   @default("en")
+  timezone     String   @default("UTC")
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tutorProfile   TutorProfile?
+  studentProfile StudentProfile?
+  refreshTokens  RefreshToken[]
+  notifications  Notification[]
+
+  @@index([role])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TutorProfile {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline   String?
+  bio        String?
+  hourlyRate Float   @default(0)
+  currency   String  @default("EUR")
+
+  lessons  Lesson[]
+  packages Package[]
+  students TutorStudent[]
+  notes    TutorNote[]
+}
+
+model StudentProfile {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // cefrLevel: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"
+  cefrLevel      String?
+  goals          String?
+  nativeLanguage String?
+  parentUserId   String?
+  balanceCents   Int     @default(0)
+
+  tutors       TutorStudent[]
+  participants LessonParticipant[]
+}
+
+model TutorStudent {
+  id               String   @id @default(cuid())
+  tutorProfileId   String
+  tutorProfile     TutorProfile   @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  // status: "active" | "paused" | "ended"
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+
+  @@unique([tutorProfileId, studentProfileId])
+  @@index([studentProfileId])
+}
+
+model Lesson {
+  id               String   @id @default(cuid())
+  tutorProfileId   String
+  tutorProfile     TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  // type: "individual" | "group" | "trial"
+  type             String   @default("individual")
+  title            String?
+  startsAt         DateTime
+  endsAt           DateTime
+  // status: "scheduled" | "completed" | "cancelled" | "no_show"
+  status           String   @default("scheduled")
+  priceCents       Int      @default(0)
+  currency         String   @default("EUR")
+  meetingUrl       String?
+  boardId          String?
+  recurrenceRuleId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  participants LessonParticipant[]
+  attendance   Attendance[]
+  homeworks    Homework[]
+
+  @@index([tutorProfileId])
+  @@index([startsAt])
+}
+
+model LessonParticipant {
+  id               String   @id @default(cuid())
+  lessonId         String
+  lesson           Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  bookedAt         DateTime @default(now())
+
+  @@unique([lessonId, studentProfileId])
+  @@index([studentProfileId])
+}
+
+model Attendance {
+  id       String    @id @default(cuid())
+  lessonId String
+  lesson   Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userId   String
+  // status: "present" | "absent" | "late"
+  status   String    @default("present")
+  joinedAt DateTime?
+  leftAt   DateTime?
+
+  @@index([lessonId])
+}
+
+model Homework {
+  id               String    @id @default(cuid())
+  lessonId         String?
+  lesson           Lesson?   @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  tutorProfileId   String
+  studentProfileId String
+  title            String
+  description      String?
+  dueAt            DateTime?
+  // status: "assigned" | "submitted" | "graded"
+  status           String    @default("assigned")
+  createdAt        DateTime  @default(now())
+
+  submissions HomeworkSubmission[]
+
+  @@index([studentProfileId])
+}
+
+model HomeworkSubmission {
+  id          String   @id @default(cuid())
+  homeworkId  String
+  homework    Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  content     String?
+  // fileUrls: JSON-serialized string array, e.g. '["https://..."]'
+  fileUrls    String?
+  grade       String?
+  feedback    String?
+  submittedAt DateTime @default(now())
+
+  @@index([homeworkId])
+}
+
+model Material {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  // type: "pdf" | "video" | "audio" | "image" | "exercise" | "link"
+  type        String
+  title       String
+  url         String?
+  language    String?
+  createdAt   DateTime @default(now())
+
+  @@index([ownerUserId])
+}
+
+model Package {
+  id             String  @id @default(cuid())
+  tutorProfileId String
+  tutorProfile   TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  name           String
+  lessonsCount   Int
+  priceCents     Int
+  currency       String  @default("EUR")
+  validityDays   Int?
+  isActive       Boolean @default(true)
+
+  @@index([tutorProfileId])
+}
+
+model Transaction {
+  id         String   @id @default(cuid())
+  userId     String
+  // type: "topup" | "charge" | "refund" | "payout"
+  type       String
+  // provider: "stripe" | "paypal" | "manual"
+  provider   String
+  amountCents Int
+  currency   String   @default("EUR")
+  // status: "pending" | "succeeded" | "failed" | "refunded"
+  status     String   @default("pending")
+  externalId String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // channel: "email" | "telegram" | "in_app"
+  channel     String
+  templateKey String
+  locale      String
+  // payload: JSON-serialized string, e.g. '{"lessonId":"..."}'
+  payload     String?
+  // status: "queued" | "sent" | "failed"
+  status      String    @default("queued")
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model TutorNote {
+  id               String   @id @default(cuid())
+  tutorProfileId   String
+  tutorProfile     TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  body             String
+  createdAt        DateTime @default(now())
+
+  @@index([tutorProfileId])
+}
