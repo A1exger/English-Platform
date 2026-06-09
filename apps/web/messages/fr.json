@@ -1,4 +1,13 @@
 {
+  "app": {
+    "signingIn": "Connexion…",
+    "authError": "Échec de la connexion. Vérifiez vos identifiants.",
+    "logout": "Se déconnecter",
+    "loginPrompt": "Connectez-vous pour voir votre tableau de bord.",
+    "upcomingLessons": "Prochains cours",
+    "noLessons": "Aucun cours pour l'instant.",
+    "loadError": "Impossible de charger les données. L'API est-elle lancée ?"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "Le bureau en ligne du tuteur — cours, élèves, planning et paiements au même endroit.",

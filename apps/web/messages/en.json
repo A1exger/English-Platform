@@ -1,4 +1,13 @@
 {
+  "app": {
+    "signingIn": "Signing in…",
+    "authError": "Login failed. Check your credentials.",
+    "logout": "Log out",
+    "loginPrompt": "Please sign in to see your dashboard.",
+    "upcomingLessons": "Upcoming lessons",
+    "noLessons": "No lessons yet.",
+    "loadError": "Could not load data. Is the API running?"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "The tutor's online office — lessons, students, schedule and payments in one place.",

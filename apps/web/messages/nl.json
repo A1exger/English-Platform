@@ -1,4 +1,13 @@
 {
+  "app": {
+    "signingIn": "Bezig met inloggen…",
+    "authError": "Inloggen mislukt. Controleer je gegevens.",
+    "logout": "Uitloggen",
+    "loginPrompt": "Log in om je dashboard te zien.",
+    "upcomingLessons": "Komende lessen",
+    "noLessons": "Nog geen lessen.",
+    "loadError": "Kan gegevens niet laden. Draait de API?"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "Het online kantoor van de docent — lessen, leerlingen, rooster en betalingen op één plek.",

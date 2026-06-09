@@ -170,6 +170,40 @@ button {
   clip: rect(0 0 0 0);
 }
 
+.error {
+  color: #f87171;
+  font-size: 14px;
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lesson-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lesson-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 @media (max-width: 720px) {
   .dashboard {
     grid-template-columns: 1fr;

@@ -1,4 +1,13 @@
 {
+  "app": {
+    "signingIn": "Anmeldung…",
+    "authError": "Anmeldung fehlgeschlagen. Zugangsdaten prüfen.",
+    "logout": "Abmelden",
+    "loginPrompt": "Bitte melde dich an, um dein Dashboard zu sehen.",
+    "upcomingLessons": "Kommende Stunden",
+    "noLessons": "Noch keine Stunden.",
+    "loadError": "Daten konnten nicht geladen werden. Läuft die API?"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "Das Online-Büro des Tutors — Unterricht, Schüler, Zeitplan und Zahlungen an einem Ort.",

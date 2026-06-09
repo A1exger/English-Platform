@@ -40,7 +40,7 @@ English-Platform/
 
 | Фича из ТЗ | Статус | Где |
 |---|---|---|
-| 1–2. Кабинеты (репетитор/ученик) | ✅ | auth, users, lessons, crm |
+| 1–2. Кабинеты (репетитор/ученик) | ✅ бэкенд + фронтенд (логин + живой дашборд) | auth, users, lessons, crm, `apps/web` |
 | 3. Интерактивная доска | 🟡 бэкенд (persist + real-time relay) | `apps/api/src/board` |
 | 4. Видеозвонки | 🟡 токены LiveKit | `apps/api/src/video` |
 | 5. Управление уроками + бронирование | ✅ | `apps/api/src/lessons` |
@@ -60,22 +60,24 @@ English-Platform/
 # 1. Инфраструктура (опционально для прод-режима на Postgres)
 docker compose up -d            # Postgres + Redis
 
-# 2. Бэкенд
+# 2. Бэкенд (порт 3001, чтобы не конфликтовать с фронтендом на 3000)
 cd apps/api
 cp .env.example .env
 npm install
 npm run prisma:generate
+npm run prisma:push             # создать схему в SQLite dev.db
 npm run seed                    # демо-данные (репетитор + ученики разных локалей)
-npm run start:dev               # http://localhost:3001/api/v1/health
+PORT=3001 npm run start:dev     # http://localhost:3001/api/v1/health
 
 # 3. Тесты
-npm test                        # unit
-npm run test:e2e                # e2e (auth, lessons, booking)
+npm test                        # unit (7)
+DATABASE_URL="file:./test.db" npm run test:e2e   # e2e (56)
 
 # 4. Фронтенд
 cd ../web
+cp .env.example .env.local      # NEXT_PUBLIC_API_URL -> http://localhost:3001/api/v1
 npm install
-npm run dev                     # http://localhost:3000
+npm run dev                     # http://localhost:3000  (вход: tutor@example.com / Password123!)
 ```
 
 Подробности — в `apps/api/README.md` и `docs/`.
