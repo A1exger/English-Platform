@@ -26,6 +26,8 @@ export class PrismaService
       this.lessonParticipant.deleteMany(),
       this.lesson.deleteMany(),
       this.tutorNote.deleteMany(),
+      this.boardSnapshot.deleteMany(),
+      this.board.deleteMany(),
       this.invoice.deleteMany(),
       this.studentPackage.deleteMany(),
       this.ledgerEntry.deleteMany(),

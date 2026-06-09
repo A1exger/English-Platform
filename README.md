@@ -41,7 +41,7 @@ English-Platform/
 | Фича из ТЗ | Статус | Где |
 |---|---|---|
 | 1–2. Кабинеты (репетитор/ученик) | ✅ | auth, users, lessons, crm |
-| 3. Интерактивная доска | ⏳ план | `docs/01`, `docs/04` |
+| 3. Интерактивная доска | 🟡 бэкенд (persist + real-time relay) | `apps/api/src/board` |
 | 4. Видеозвонки | 🟡 токены LiveKit | `apps/api/src/video` |
 | 5. Управление уроками + бронирование | ✅ | `apps/api/src/lessons` |
 | 6. Домашние задания | ✅ | `apps/api/src/homework` |
@@ -52,7 +52,7 @@ English-Platform/
 | 11. Мультиязычность + RTL | ✅ | `apps/web`, `apps/api` i18n |
 | Уведомления (email/Telegram/in-app, по локали) | ✅ in-app + воркер | `apps/api/src/notifications` |
 
-Покрытие тестами бэкенда: **7 unit + 51 e2e**, всё зелёное.
+Покрытие тестами бэкенда: **7 unit + 56 e2e**, всё зелёное.
 
 ## Быстрый старт (MVP-модуль)
 

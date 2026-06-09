@@ -99,6 +99,16 @@ All seeded users share the password `Password123!`:
 | PATCH  | /notifications/:id/read    | JWT           | mark as read                            |
 | POST   | /notifications/dispatch    | JWT, admin    | flush the queue (worker simulation)     |
 | GET    | /analytics/overview        | JWT, tutor    | revenue, lessons, attendance, conversion|
+| GET    | /lessons/:id/board         | JWT           | get/create the lesson whiteboard        |
+| POST   | /lessons/:id/board/snapshot| JWT           | persist a board snapshot (+history)     |
+| GET    | /lessons/:id/board/history | JWT           | snapshot history (for restore)          |
+
+WebSocket (Socket.IO namespace `/board`): authenticated via a JWT in the
+handshake `auth.token`. Events: `board:join` (enforces lesson access),
+`board:update` (relays opaque Yjs/tldraw updates to peers), `board:cursor`
+(presence), plus `board:peer-joined`/`board:peer-left`. The server is
+CRDT-agnostic — it authenticates, gates room access, and relays; snapshots are
+persisted via the REST endpoints above.
 
 ### Billing & payments
 

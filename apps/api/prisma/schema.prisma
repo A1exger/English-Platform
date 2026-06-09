@@ -320,3 +320,28 @@ model TutorNote {
 
   @@index([tutorProfileId])
 }
+
+// Interactive whiteboard state for a lesson. latestSnapshot holds the current
+// document (serialized Yjs/tldraw state); the gateway relays live updates and
+// snapshots are persisted periodically and on lesson end.
+model Board {
+  id             String          @id @default(cuid())
+  lessonId       String          @unique
+  latestSnapshot String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  snapshots      BoardSnapshot[]
+}
+
+// Version history of a board, enabling undo/restore after the lesson.
+model BoardSnapshot {
+  id           String   @id @default(cuid())
+  boardId      String
+  board        Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  snapshot     String
+  authorUserId String?
+  label        String?
+  createdAt    DateTime @default(now())
+
+  @@index([boardId])
+}
