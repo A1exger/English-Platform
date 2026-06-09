@@ -1,0 +1,31 @@
+{
+  "common": {
+    "appName": "LinguaDesk",
+    "tagline": "المكتب الإلكتروني للمعلّم — الدروس والطلاب والجدول والمدفوعات في مكان واحد.",
+    "language": "اللغة",
+    "signIn": "تسجيل الدخول",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "dashboard": "لوحة التحكم"
+  },
+  "nav": {
+    "overview": "نظرة عامة",
+    "students": "الطلاب",
+    "schedule": "الجدول",
+    "materials": "المواد",
+    "homework": "الواجبات المنزلية",
+    "billing": "الفواتير",
+    "analytics": "التحليلات",
+    "settings": "الإعدادات"
+  },
+  "dashboard": {
+    "greeting": "مرحبًا بعودتك، {name}!",
+    "lessonsToday": "دروس اليوم",
+    "monthlyRevenue": "الإيراد الشهري",
+    "activeStudents": "الطلاب النشطون",
+    "attendance": "الحضور",
+    "nextLesson": "الدرس التالي",
+    "joinLesson": "الانضمام إلى الدرس",
+    "everyoneOwnLanguage": "يرى كل مشارك الواجهة بلغته الخاصة — الدرس مشترك بغضّ النظر عن اللغة."
+  }
+}

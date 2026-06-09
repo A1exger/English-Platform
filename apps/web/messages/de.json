@@ -1,0 +1,31 @@
+{
+  "common": {
+    "appName": "LinguaDesk",
+    "tagline": "Das Online-Büro des Tutors — Unterricht, Schüler, Zeitplan und Zahlungen an einem Ort.",
+    "language": "Sprache",
+    "signIn": "Anmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "dashboard": "Dashboard"
+  },
+  "nav": {
+    "overview": "Übersicht",
+    "students": "Schüler",
+    "schedule": "Zeitplan",
+    "materials": "Materialien",
+    "homework": "Hausaufgaben",
+    "billing": "Abrechnung",
+    "analytics": "Analytik",
+    "settings": "Einstellungen"
+  },
+  "dashboard": {
+    "greeting": "Willkommen zurück, {name}!",
+    "lessonsToday": "Stunden heute",
+    "monthlyRevenue": "Monatsumsatz",
+    "activeStudents": "Aktive Schüler",
+    "attendance": "Anwesenheit",
+    "nextLesson": "Nächste Stunde",
+    "joinLesson": "Stunde beitreten",
+    "everyoneOwnLanguage": "Jeder Teilnehmer sieht die Oberfläche in seiner eigenen Sprache — die Stunde ist gemeinsam, unabhängig von der Sprache."
+  }
+}

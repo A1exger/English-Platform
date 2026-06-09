@@ -1,0 +1,31 @@
+{
+  "common": {
+    "appName": "LinguaDesk",
+    "tagline": "Het online kantoor van de docent — lessen, leerlingen, rooster en betalingen op één plek.",
+    "language": "Taal",
+    "signIn": "Inloggen",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "dashboard": "Dashboard"
+  },
+  "nav": {
+    "overview": "Overzicht",
+    "students": "Leerlingen",
+    "schedule": "Rooster",
+    "materials": "Materialen",
+    "homework": "Huiswerk",
+    "billing": "Facturatie",
+    "analytics": "Analyse",
+    "settings": "Instellingen"
+  },
+  "dashboard": {
+    "greeting": "Welkom terug, {name}!",
+    "lessonsToday": "Lessen vandaag",
+    "monthlyRevenue": "Maandelijkse omzet",
+    "activeStudents": "Actieve leerlingen",
+    "attendance": "Aanwezigheid",
+    "nextLesson": "Volgende les",
+    "joinLesson": "Deelnemen aan les",
+    "everyoneOwnLanguage": "Elke deelnemer ziet de interface in zijn eigen taal — de les is gedeeld, ongeacht de taal."
+  }
+}

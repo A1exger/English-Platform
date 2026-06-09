@@ -1,0 +1,31 @@
+{
+  "common": {
+    "appName": "LinguaDesk",
+    "tagline": "Онлайн-кабинет репетитора — уроки, ученики, расписание и оплата в одном месте.",
+    "language": "Язык",
+    "signIn": "Войти",
+    "email": "Эл. почта",
+    "password": "Пароль",
+    "dashboard": "Кабинет"
+  },
+  "nav": {
+    "overview": "Обзор",
+    "students": "Ученики",
+    "schedule": "Расписание",
+    "materials": "Материалы",
+    "homework": "Домашние задания",
+    "billing": "Финансы",
+    "analytics": "Аналитика",
+    "settings": "Настройки"
+  },
+  "dashboard": {
+    "greeting": "С возвращением, {name}!",
+    "lessonsToday": "Уроков сегодня",
+    "monthlyRevenue": "Доход за месяц",
+    "activeStudents": "Активных учеников",
+    "attendance": "Посещаемость",
+    "nextLesson": "Следующий урок",
+    "joinLesson": "Войти в урок",
+    "everyoneOwnLanguage": "Каждый участник видит интерфейс на своём языке — урок общий независимо от языка."
+  }
+}

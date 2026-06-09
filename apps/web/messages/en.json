@@ -1,0 +1,31 @@
+{
+  "common": {
+    "appName": "LinguaDesk",
+    "tagline": "The tutor's online office — lessons, students, schedule and payments in one place.",
+    "language": "Language",
+    "signIn": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "dashboard": "Dashboard"
+  },
+  "nav": {
+    "overview": "Overview",
+    "students": "Students",
+    "schedule": "Schedule",
+    "materials": "Materials",
+    "homework": "Homework",
+    "billing": "Billing",
+    "analytics": "Analytics",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "greeting": "Welcome back, {name}!",
+    "lessonsToday": "Lessons today",
+    "monthlyRevenue": "Monthly revenue",
+    "activeStudents": "Active students",
+    "attendance": "Attendance",
+    "nextLesson": "Next lesson",
+    "joinLesson": "Join lesson",
+    "everyoneOwnLanguage": "Every participant sees the interface in their own language — this lesson is shared regardless of language."
+  }
+}
