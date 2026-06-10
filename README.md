@@ -65,6 +65,43 @@ English-Platform/
   через `POST /notifications/telegram/link`.
 - **Email**: подключить SMTP-провайдера (Postmark/Resend) в воркере dispatch.
 
+## Деплой (production)
+
+Готовый к развёртыванию вид: **Dockerfile** для каждого приложения,
+**`docker-compose.prod.yml`** (Postgres + Redis + API + Web) и **CI/CD** на
+GitHub Actions.
+
+```bash
+# 1. Заполнить переменные окружения (секреты, домены, ключи интеграций)
+cp .env.prod.example .env.prod
+#   - сгенерировать JWT-секреты: openssl rand -hex 32
+#   - NEXT_PUBLIC_API_URL и CORS_ORIGIN — публичные URL фронтенда/бэкенда
+
+# 2. Собрать и поднять весь стек
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+
+# Web  -> http://localhost:3000
+# API  -> http://localhost:3001/api/v1/health
+```
+
+Особенности production-сборки:
+- **API-образ** переключает Prisma-датасорс на **PostgreSQL** (репозиторий по
+  умолчанию использует SQLite для dev/тестов), при старте синхронизирует схему
+  (`prisma db push`; для истории миграций замените на `prisma migrate deploy`).
+- **Web-образ** — Next.js **standalone** (минимальный самодостаточный сервер).
+  `NEXT_PUBLIC_API_URL` инлайнится на этапе сборки (это публичный URL API).
+- **CORS** на API настраивается через `CORS_ORIGIN` (список доменов).
+
+CI/CD (`.github/workflows/`):
+- `ci.yml` — на каждый push/PR: сборка + тесты API (7 unit + 58 e2e на SQLite),
+  typecheck + build Web.
+- `docker.yml` — на `main`: сборка и публикация образов API/Web в GHCR.
+
+> ⚠️ Образы не собирались в этой песочнице (нет docker-демона), но Dockerfile'ы
+> следуют стандартным паттернам; локальные `npm run build` для обоих приложений
+> и `docker compose config` проходят. Перед первым деплоем прогоните
+> `docker compose -f docker-compose.prod.yml --env-file .env.prod build`.
+
 ## Быстрый старт (MVP-модуль)
 
 ```bash
