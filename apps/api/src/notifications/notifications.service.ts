@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationChannel } from '../common/constants/enums';
+import { TelegramService } from './telegram.service';
 
 interface EnqueueParams {
   userId: string;
@@ -15,6 +16,7 @@ export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService,
+    private readonly telegram: TelegramService,
   ) {}
 
   /**
@@ -78,22 +80,44 @@ export class NotificationsService {
    * Simulate the background dispatch worker: render each queued notification in
    * its locale and mark it sent. Returns the rendered messages for inspection.
    */
-  async dispatchQueued(): Promise<{ id: string; locale: string; text: string }[]> {
+  async dispatchQueued(): Promise<
+    { id: string; channel: string; locale: string; text: string; delivered: string }[]
+  > {
     const queued = await this.prisma.notification.findMany({
       where: { status: 'queued' },
     });
-    const out: { id: string; locale: string; text: string }[] = [];
+    const out: {
+      id: string;
+      channel: string;
+      locale: string;
+      text: string;
+      delivered: string;
+    }[] = [];
     for (const n of queued) {
       const args = n.payload ? JSON.parse(n.payload) : {};
-      const text = await this.i18n.translate(
-        `messages.notification.${n.templateKey}`,
-        { lang: n.locale, args },
+      const text = String(
+        await this.i18n.translate(`messages.notification.${n.templateKey}`, {
+          lang: n.locale,
+          args,
+        }),
       );
+
+      // Route by channel. email/in_app are rendered (email would be sent by the
+      // SMTP provider); telegram is delivered via the Bot API when linked.
+      let delivered = 'sent';
+      if (n.channel === 'telegram') {
+        const chatId = await this.telegram.chatIdFor(n.userId);
+        const result = chatId
+          ? await this.telegram.sendMessage(chatId, text)
+          : { delivered: 'skipped' as const, reason: 'no_link' };
+        delivered = result.delivered;
+      }
+
       await this.prisma.notification.update({
         where: { id: n.id },
         data: { status: 'sent', sentAt: new Date() },
       });
-      out.push({ id: n.id, locale: n.locale, text: String(text) });
+      out.push({ id: n.id, channel: n.channel, locale: n.locale, text, delivered });
     }
     return out;
   }

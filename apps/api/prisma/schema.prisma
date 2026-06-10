@@ -321,6 +321,14 @@ model TutorNote {
   @@index([tutorProfileId])
 }
 
+// Links a user to their Telegram chat so notifications can be delivered there.
+model TelegramLink {
+  id       String   @id @default(cuid())
+  userId   String   @unique
+  chatId   String
+  linkedAt DateTime @default(now())
+}
+
 // Interactive whiteboard state for a lesson. latestSnapshot holds the current
 // document (serialized Yjs/tldraw state); the gateway relays live updates and
 // snapshots are persisted periodically and on lesson end.

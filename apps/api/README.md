@@ -98,6 +98,7 @@ All seeded users share the password `Password123!`:
 | GET    | /notifications             | JWT           | own in-app notifications                |
 | PATCH  | /notifications/:id/read    | JWT           | mark as read                            |
 | POST   | /notifications/dispatch    | JWT, admin    | flush the queue (worker simulation)     |
+| POST   | /notifications/telegram/link | JWT         | link the user's Telegram chat           |
 | GET    | /analytics/overview        | JWT, tutor    | revenue, lessons, attendance, conversion|
 | GET    | /lessons/:id/board         | JWT           | get/create the lesson whiteboard        |
 | POST   | /lessons/:id/board/snapshot| JWT           | persist a board snapshot (+history)     |
@@ -134,7 +135,11 @@ persisted via the REST endpoints above.
 so messages render in their language even if they later switch. Triggers are
 wired for homework assignment and lesson booking. `POST /notifications/dispatch`
 simulates the BullMQ worker: it renders each queued item via `nestjs-i18n` and
-marks it `sent` (in production this would also send email/Telegram).
+marks it `sent`. Dispatch routes by channel: `telegram` notifications are
+delivered via the Bot API (`TelegramService`) when the user has linked their
+chat (`POST /notifications/telegram/link`) and `TELEGRAM_BOT_TOKEN` is set —
+otherwise delivery is cleanly skipped; `email`/`in_app` are rendered (email
+would be sent by the SMTP provider in production).
 
 ### Materials
 

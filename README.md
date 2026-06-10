@@ -50,9 +50,20 @@ English-Platform/
 | 9. Учебные материалы | ✅ | `apps/api/src/materials` |
 | 10. Аналитика | ✅ | `apps/api/src/analytics` |
 | 11. Мультиязычность + RTL | ✅ | `apps/web`, `apps/api` i18n |
-| Уведомления (email/Telegram/in-app, по локали) | ✅ in-app + воркер | `apps/api/src/notifications` |
+| Уведомления (email/Telegram/in-app, по локали) | ✅ in-app + Telegram-доставка + воркер | `apps/api/src/notifications` |
+| Кабинеты (фронтенд-страницы) | ✅ дашборд, расписание, ученики, ДЗ, материалы, оплата, аналитика, доска+видео | `apps/web` |
 
-Покрытие тестами бэкенда: **7 unit + 56 e2e**, всё зелёное.
+Покрытие тестами бэкенда: **7 unit + 58 e2e**, всё зелёное. Оба приложения
+(`apps/api`, `apps/web`) собираются.
+
+### Что требует только конфигурации (без кода)
+- **Реальное видео LiveKit**: задать `LIVEKIT_URL` / `LIVEKIT_API_KEY` /
+  `LIVEKIT_API_SECRET` от проекта LiveKit Cloud — клиент и выдача токенов готовы.
+- **Запись уроков и шумоподавление**: включаются на стороне LiveKit (egress +
+  Krisp), фронтенд-кнопки уже в составе LiveKit-компонента.
+- **Telegram-бот**: задать `TELEGRAM_BOT_TOKEN`; пользователи привязывают чат
+  через `POST /notifications/telegram/link`.
+- **Email**: подключить SMTP-провайдера (Postmark/Resend) в воркере dispatch.
 
 ## Быстрый старт (MVP-модуль)
 
