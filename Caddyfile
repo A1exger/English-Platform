@@ -1,0 +1,15 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# Frontend
+{$APP_DOMAIN} {
+	encode gzip
+	reverse_proxy web:3000
+}
+
+# API (REST + WebSocket: Caddy proxies WebSocket upgrades automatically)
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:3001
+}

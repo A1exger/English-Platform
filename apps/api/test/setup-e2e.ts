@@ -7,3 +7,5 @@ process.env.JWT_ACCESS_TTL = '15m';
 process.env.JWT_REFRESH_TTL = '7d';
 process.env.STRIPE_WEBHOOK_SECRET = 'test-stripe-webhook-secret';
 process.env.PAYPAL_WEBHOOK_SECRET = 'test-paypal-webhook-secret';
+// Tests provision admin accounts via the register endpoint.
+process.env.ALLOW_ADMIN_REGISTRATION = 'true';

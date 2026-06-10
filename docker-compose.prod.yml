@@ -40,6 +40,7 @@ services:
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      ALLOW_ADMIN_REGISTRATION: ${ALLOW_ADMIN_REGISTRATION:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       PAYPAL_WEBHOOK_SECRET: ${PAYPAL_WEBHOOK_SECRET:-}
@@ -50,6 +51,16 @@ services:
       PORT: "3001"
     ports:
       - "3001:3001"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   web:
     build:

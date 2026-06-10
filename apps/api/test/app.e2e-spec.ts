@@ -76,6 +76,22 @@ describe('English-Platform API (e2e)', () => {
     studentTokens = res.body;
   });
 
+  it('POST /auth/register forbids admin self-registration when disabled', async () => {
+    const prev = process.env.ALLOW_ADMIN_REGISTRATION;
+    delete process.env.ALLOW_ADMIN_REGISTRATION;
+    await api()
+      .post('/api/v1/auth/register')
+      .send({
+        email: 'evil-admin@test.com',
+        password: 'Password123!',
+        role: 'admin',
+        firstName: 'E',
+        lastName: 'A',
+      })
+      .expect(403);
+    process.env.ALLOW_ADMIN_REGISTRATION = prev;
+  });
+
   it('POST /auth/register rejects invalid payload (whitelist/validation)', async () => {
     await api()
       .post('/api/v1/auth/register')

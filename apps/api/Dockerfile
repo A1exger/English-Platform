@@ -35,6 +35,6 @@ COPY --from=build /app/package.json ./
 
 EXPOSE 3001
 
-# Sync the schema to the database, then start. For migration-history-based
-# deploys swap `db push` for `prisma migrate deploy`.
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/main.js"]
+# Apply committed migrations, then start. (The image's schema provider is
+# postgresql, matching prisma/migrations.)
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

@@ -30,6 +30,21 @@ async function main(): Promise<void> {
     include: { tutorProfile: true },
   });
 
+  // Platform admin (cannot be created via public sign-up)
+  await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
+    update: {},
+    create: {
+      email: 'admin@example.com',
+      passwordHash: password,
+      role: 'admin',
+      firstName: 'Ada',
+      lastName: 'Admin',
+      locale: 'en',
+      timezone: 'UTC',
+    },
+  });
+
   // Student 1 (Russian locale)
   const student1 = await prisma.user.upsert({
     where: { email: 'student.ru@example.com' },
@@ -170,6 +185,7 @@ async function main(): Promise<void> {
 
   // eslint-disable-next-line no-console
   console.log('Seed complete:', {
+    admin: 'admin@example.com',
     tutor: tutor.email,
     students: [student1.email, student2.email],
   });

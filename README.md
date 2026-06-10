@@ -67,40 +67,76 @@ English-Platform/
 
 ## Деплой (production)
 
-Готовый к развёртыванию вид: **Dockerfile** для каждого приложения,
-**`docker-compose.prod.yml`** (Postgres + Redis + API + Web) и **CI/CD** на
-GitHub Actions.
+Готовый к развёртыванию вид: **Dockerfile** на каждое приложение,
+**`docker-compose.prod.yml`** (Postgres + Redis + API + Web), **Caddy** с
+авто‑HTTPS (`docker-compose.caddy.yml`), **миграции Prisma** и **CI/CD** на
+GitHub Actions. Особенности:
+- **API‑образ** использует **PostgreSQL** и применяет миграции
+  (`prisma migrate deploy`) при старте; healthcheck по `/api/v1/health`.
+- **Web‑образ** — Next.js **standalone**; `NEXT_PUBLIC_API_URL` инлайнится при
+  сборке (публичный URL API).
+- **CORS** — через `CORS_ORIGIN`. Саморегистрация админов запрещена (см. ниже).
+
+### Развёртывание на VPS (Docker Compose)
 
 ```bash
-# 1. Заполнить переменные окружения (секреты, домены, ключи интеграций)
-cp .env.prod.example .env.prod
-#   - сгенерировать JWT-секреты: openssl rand -hex 32
-#   - NEXT_PUBLIC_API_URL и CORS_ORIGIN — публичные URL фронтенда/бэкенда
+# 0. Установить Docker
+curl -fsSL https://get.docker.com | sh
 
-# 2. Собрать и поднять весь стек
+# 1. Получить код и заполнить секреты
+git clone <repo> && cd English-Platform && git checkout main
+cp .env.prod.example .env.prod && nano .env.prod
+#   JWT_ACCESS_SECRET / JWT_REFRESH_SECRET = openssl rand -hex 32
+#   NEXT_PUBLIC_API_URL, CORS_ORIGIN — публичные URL (или http://IP:3001/api/v1
+#   и http://IP:3000 для теста по IP)
+
+# 2. Поднять стек (миграции применятся автоматически при старте API)
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#   Web -> http://<IP>:3000 ,  API -> http://<IP>:3001/api/v1/health
 
-# Web  -> http://localhost:3000
-# API  -> http://localhost:3001/api/v1/health
+# 3. Создать админа и (опц.) демо-данные — разово
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec api npx prisma db seed
+#   admin@example.com / tutor@example.com / Password123!  (СМЕНИТЕ пароли!)
 ```
 
-Особенности production-сборки:
-- **API-образ** переключает Prisma-датасорс на **PostgreSQL** (репозиторий по
-  умолчанию использует SQLite для dev/тестов), при старте синхронизирует схему
-  (`prisma db push`; для истории миграций замените на `prisma migrate deploy`).
-- **Web-образ** — Next.js **standalone** (минимальный самодостаточный сервер).
-  `NEXT_PUBLIC_API_URL` инлайнится на этапе сборки (это публичный URL API).
-- **CORS** на API настраивается через `CORS_ORIGIN` (список доменов).
+### HTTPS и домены (когда будут)
 
-CI/CD (`.github/workflows/`):
-- `ci.yml` — на каждый push/PR: сборка + тесты API (7 unit + 58 e2e на SQLite),
+Направьте `app.example.com` и `api.example.com` на IP сервера, заполните
+`APP_DOMAIN`/`API_DOMAIN`/`ACME_EMAIL` в `.env.prod` и добавьте Caddy:
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.caddy.yml \
+  --env-file .env.prod up -d --build
+# Caddy сам выпустит сертификаты Let's Encrypt. Закройте порты 3000/3001 в фаерволе.
+```
+Затем укажите Stripe‑webhook: `https://api.example.com/api/v1/billing/webhook/stripe`.
+
+### ⚠️ Сервер 1 CPU / 1 ГБ RAM
+
+Сборка Next.js на 1 ГБ почти наверняка упадёт по памяти. Варианты:
+
+1. **Добавить swap** (быстро, для теста):
+   ```bash
+   sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+   sudo mkswap /swapfile && sudo swapon /swapfile
+   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+   ```
+2. **Не собирать на сервере, а тянуть готовые образы из GHCR** (рекомендуется):
+   CI (`docker.yml`) собирает образы при пуше в `main`. На сервере используйте
+   `image: ghcr.io/<owner>/<repo>-api:latest` и `...-web:latest` вместо `build:`
+   (правка двух сервисов в compose) и `docker compose ... pull && up -d`.
+
+Для роста: вынести Postgres/Redis в managed‑сервисы и увеличить RAM (2–4 ГБ).
+
+### CI/CD (`.github/workflows/`)
+- `ci.yml` — на каждый push/PR: сборка + тесты API (**7 unit + 59 e2e**),
   typecheck + build Web.
-- `docker.yml` — на `main`: сборка и публикация образов API/Web в GHCR.
+- `docker.yml` — на `main`: сборка и публикация образов API/Web в **GHCR**.
 
-> ⚠️ Образы не собирались в этой песочнице (нет docker-демона), но Dockerfile'ы
-> следуют стандартным паттернам; локальные `npm run build` для обоих приложений
-> и `docker compose config` проходят. Перед первым деплоем прогоните
-> `docker compose -f docker-compose.prod.yml --env-file .env.prod build`.
+> ⚠️ Образы не собирались в этой песочнице (нет docker‑демона), но Dockerfile'ы
+> следуют стандартным паттернам; `npm run build` обоих приложений, генерация
+> Postgres‑миграций и `docker compose config` проверены. CI соберёт образы при
+> пуше в `main`.
 
 ## Быстрый старт (MVP-модуль)
 

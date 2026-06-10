@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -28,6 +29,12 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<TokenPair> {
+    // Public sign-up may never create admins. Admins are provisioned via the
+    // seed or, in controlled environments, when ALLOW_ADMIN_REGISTRATION=true.
+    if (dto.role === 'admin' && process.env.ALLOW_ADMIN_REGISTRATION !== 'true') {
+      throw new ForbiddenException('Admin registration is not allowed');
+    }
+
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
