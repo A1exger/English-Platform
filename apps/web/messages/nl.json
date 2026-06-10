@@ -8,6 +8,47 @@
     "noLessons": "Nog geen lessen.",
     "loadError": "Kan gegevens niet laden. Draait de API?"
   },
+  "schedule": {
+    "title": "Rooster",
+    "newLesson": "Nieuwe les",
+    "titleField": "Titel",
+    "start": "Start",
+    "end": "Einde",
+    "price": "Prijs (centen)",
+    "create": "Aanmaken",
+    "creating": "Bezig…",
+    "empty": "Geen lessen.",
+    "openBoard": "Bord openen"
+  },
+  "billing": {
+    "title": "Facturatie",
+    "balance": "Saldo",
+    "lessonsRemaining": "Resterende lessen",
+    "packages": "Pakketten",
+    "buy": "Kopen",
+    "transactions": "Transacties",
+    "invoices": "Facturen",
+    "empty": "Nog niets.",
+    "newPackage": "Nieuw pakket",
+    "name": "Naam",
+    "lessons": "Lessen",
+    "price": "Prijs (centen)",
+    "create": "Aanmaken",
+    "processing": "Bezig…",
+    "checkoutReady": "Checkout aangemaakt — betaal hier:"
+  },
+  "board": {
+    "title": "Whiteboard",
+    "pen": "Pen",
+    "eraser": "Gum",
+    "clear": "Wissen",
+    "color": "Kleur",
+    "save": "Opslaan",
+    "saved": "Opgeslagen",
+    "connecting": "Verbinden…",
+    "connected": "Verbonden",
+    "back": "Terug"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "Het online kantoor van de docent — lessen, leerlingen, rooster en betalingen op één plek.",

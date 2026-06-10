@@ -8,6 +8,47 @@
     "noLessons": "لا توجد دروس بعد.",
     "loadError": "تعذّر تحميل البيانات. هل واجهة البرمجة قيد التشغيل؟"
   },
+  "schedule": {
+    "title": "الجدول",
+    "newLesson": "درس جديد",
+    "titleField": "العنوان",
+    "start": "البداية",
+    "end": "النهاية",
+    "price": "السعر (سنت)",
+    "create": "إنشاء",
+    "creating": "جارٍ الإنشاء…",
+    "empty": "لا توجد دروس.",
+    "openBoard": "فتح اللوحة"
+  },
+  "billing": {
+    "title": "الفواتير",
+    "balance": "الرصيد",
+    "lessonsRemaining": "الدروس المتبقية",
+    "packages": "الباقات",
+    "buy": "شراء",
+    "transactions": "المعاملات",
+    "invoices": "الفواتير",
+    "empty": "لا شيء بعد.",
+    "newPackage": "باقة جديدة",
+    "name": "الاسم",
+    "lessons": "دروس",
+    "price": "السعر (سنت)",
+    "create": "إنشاء",
+    "processing": "جارٍ المعالجة…",
+    "checkoutReady": "تم إنشاء الدفع — ادفع هنا:"
+  },
+  "board": {
+    "title": "اللوحة",
+    "pen": "قلم",
+    "eraser": "ممحاة",
+    "clear": "مسح",
+    "color": "اللون",
+    "save": "حفظ",
+    "saved": "تم الحفظ",
+    "connecting": "جارٍ الاتصال…",
+    "connected": "متصل",
+    "back": "رجوع"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "المكتب الإلكتروني للمعلّم — الدروس والطلاب والجدول والمدفوعات في مكان واحد.",

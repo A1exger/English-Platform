@@ -41,11 +41,11 @@ English-Platform/
 | Фича из ТЗ | Статус | Где |
 |---|---|---|
 | 1–2. Кабинеты (репетитор/ученик) | ✅ бэкенд + фронтенд (логин + живой дашборд) | auth, users, lessons, crm, `apps/web` |
-| 3. Интерактивная доска | 🟡 бэкенд (persist + real-time relay) | `apps/api/src/board` |
-| 4. Видеозвонки | 🟡 токены LiveKit | `apps/api/src/video` |
-| 5. Управление уроками + бронирование | ✅ | `apps/api/src/lessons` |
+| 3. Интерактивная доска | ✅ бэкенд + canvas-клиент (real-time, snapshot) | `apps/api/src/board`, `apps/web` BoardCanvas |
+| 4. Видеозвонки | 🟡 токены LiveKit (нужен видео-клиент) | `apps/api/src/video` |
+| 5. Управление уроками + бронирование | ✅ бэкенд + страница расписания | `apps/api/src/lessons`, `apps/web` ScheduleView |
 | 6. Домашние задания | ✅ | `apps/api/src/homework` |
-| 7. Оплата (Stripe/PayPal, ledger, инвойсы) | ✅ | `apps/api/src/billing` |
+| 7. Оплата (Stripe/PayPal, ledger, инвойсы) | ✅ бэкенд + страница оплаты | `apps/api/src/billing`, `apps/web` BillingView |
 | 8. CRM | ✅ | `apps/api/src/crm` |
 | 9. Учебные материалы | ✅ | `apps/api/src/materials` |
 | 10. Аналитика | ✅ | `apps/api/src/analytics` |

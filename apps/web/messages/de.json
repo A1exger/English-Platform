@@ -8,6 +8,47 @@
     "noLessons": "Noch keine Stunden.",
     "loadError": "Daten konnten nicht geladen werden. Läuft die API?"
   },
+  "schedule": {
+    "title": "Zeitplan",
+    "newLesson": "Neue Stunde",
+    "titleField": "Titel",
+    "start": "Beginn",
+    "end": "Ende",
+    "price": "Preis (Cent)",
+    "create": "Erstellen",
+    "creating": "Wird erstellt…",
+    "empty": "Keine Stunden.",
+    "openBoard": "Board öffnen"
+  },
+  "billing": {
+    "title": "Abrechnung",
+    "balance": "Guthaben",
+    "lessonsRemaining": "Verbleibende Stunden",
+    "packages": "Pakete",
+    "buy": "Kaufen",
+    "transactions": "Transaktionen",
+    "invoices": "Rechnungen",
+    "empty": "Noch nichts.",
+    "newPackage": "Neues Paket",
+    "name": "Name",
+    "lessons": "Stunden",
+    "price": "Preis (Cent)",
+    "create": "Erstellen",
+    "processing": "Wird verarbeitet…",
+    "checkoutReady": "Checkout erstellt – hier bezahlen:"
+  },
+  "board": {
+    "title": "Whiteboard",
+    "pen": "Stift",
+    "eraser": "Radierer",
+    "clear": "Löschen",
+    "color": "Farbe",
+    "save": "Speichern",
+    "saved": "Gespeichert",
+    "connecting": "Verbinden…",
+    "connected": "Verbunden",
+    "back": "Zurück"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "Das Online-Büro des Tutors — Unterricht, Schüler, Zeitplan und Zahlungen an einem Ort.",

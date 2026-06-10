@@ -8,6 +8,47 @@
     "noLessons": "No lessons yet.",
     "loadError": "Could not load data. Is the API running?"
   },
+  "schedule": {
+    "title": "Schedule",
+    "newLesson": "New lesson",
+    "titleField": "Title",
+    "start": "Start",
+    "end": "End",
+    "price": "Price (cents)",
+    "create": "Create",
+    "creating": "Creating…",
+    "empty": "No lessons.",
+    "openBoard": "Open board"
+  },
+  "billing": {
+    "title": "Billing",
+    "balance": "Balance",
+    "lessonsRemaining": "Lessons remaining",
+    "packages": "Packages",
+    "buy": "Buy",
+    "transactions": "Transactions",
+    "invoices": "Invoices",
+    "empty": "Nothing yet.",
+    "newPackage": "New package",
+    "name": "Name",
+    "lessons": "Lessons",
+    "price": "Price (cents)",
+    "create": "Create",
+    "processing": "Processing…",
+    "checkoutReady": "Checkout created — pay here:"
+  },
+  "board": {
+    "title": "Whiteboard",
+    "pen": "Pen",
+    "eraser": "Eraser",
+    "clear": "Clear",
+    "color": "Color",
+    "save": "Save",
+    "saved": "Saved",
+    "connecting": "Connecting…",
+    "connected": "Connected",
+    "back": "Back"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "The tutor's online office — lessons, students, schedule and payments in one place.",

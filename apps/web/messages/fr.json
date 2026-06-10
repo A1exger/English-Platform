@@ -8,6 +8,47 @@
     "noLessons": "Aucun cours pour l'instant.",
     "loadError": "Impossible de charger les données. L'API est-elle lancée ?"
   },
+  "schedule": {
+    "title": "Planning",
+    "newLesson": "Nouveau cours",
+    "titleField": "Titre",
+    "start": "Début",
+    "end": "Fin",
+    "price": "Prix (centimes)",
+    "create": "Créer",
+    "creating": "Création…",
+    "empty": "Aucun cours.",
+    "openBoard": "Ouvrir le tableau"
+  },
+  "billing": {
+    "title": "Facturation",
+    "balance": "Solde",
+    "lessonsRemaining": "Cours restants",
+    "packages": "Forfaits",
+    "buy": "Acheter",
+    "transactions": "Transactions",
+    "invoices": "Factures",
+    "empty": "Rien pour l'instant.",
+    "newPackage": "Nouveau forfait",
+    "name": "Nom",
+    "lessons": "Cours",
+    "price": "Prix (centimes)",
+    "create": "Créer",
+    "processing": "Traitement…",
+    "checkoutReady": "Paiement créé — payez ici :"
+  },
+  "board": {
+    "title": "Tableau",
+    "pen": "Stylo",
+    "eraser": "Gomme",
+    "clear": "Effacer",
+    "color": "Couleur",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "connecting": "Connexion…",
+    "connected": "Connecté",
+    "back": "Retour"
+  },
   "common": {
     "appName": "LinguaDesk",
     "tagline": "Le bureau en ligne du tuteur — cours, élèves, planning et paiements au même endroit.",

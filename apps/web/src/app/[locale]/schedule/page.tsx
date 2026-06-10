@@ -1,10 +1,8 @@
 import { setRequestLocale } from 'next-intl/server';
 import { Sidebar } from '@/components/Sidebar';
-import { DashboardData } from '@/components/DashboardData';
+import { ScheduleView } from '@/components/ScheduleView';
 
-// Server-rendered shell (localized sidebar) + a client component that loads the
-// signed-in user's real profile and lessons from the API.
-export default function DashboardPage({
+export default function SchedulePage({
   params: { locale }
 }: {
   params: { locale: string };
@@ -13,7 +11,7 @@ export default function DashboardPage({
   return (
     <div className="dashboard">
       <Sidebar />
-      <DashboardData />
+      <ScheduleView />
     </div>
   );
 }
