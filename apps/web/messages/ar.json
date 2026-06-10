@@ -37,6 +37,13 @@
     "processing": "جارٍ المعالجة…",
     "checkoutReady": "تم إنشاء الدفع — ادفع هنا:"
   },
+  "room": {
+    "title": "غرفة الدرس",
+    "connecting": "جارٍ الاتصال بالفيديو…",
+    "connectError": "تعذّر الاتصال بالفيديو. هل تم ضبط LIVEKIT_URL؟",
+    "board": "اللوحة",
+    "video": "فيديو"
+  },
   "board": {
     "title": "اللوحة",
     "pen": "قلم",

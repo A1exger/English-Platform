@@ -283,6 +283,50 @@ button {
   cursor: crosshair;
 }
 
+.row-actions {
+  display: inline-flex;
+  gap: 12px;
+}
+
+.room {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  height: calc(100vh - 120px);
+}
+
+.room .board-wrap {
+  height: 100%;
+}
+
+.room-video,
+.video-panel {
+  height: 100%;
+}
+
+.video-panel {
+  background: var(--panel);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .room {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .room .board-wrap {
+    height: 60vh;
+  }
+  .video-panel {
+    height: 50vh;
+  }
+}
+
 @media (max-width: 720px) {
   .dashboard {
     grid-template-columns: 1fr;

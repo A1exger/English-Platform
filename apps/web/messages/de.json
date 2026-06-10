@@ -37,6 +37,13 @@
     "processing": "Wird verarbeitet…",
     "checkoutReady": "Checkout erstellt – hier bezahlen:"
   },
+  "room": {
+    "title": "Unterrichtsraum",
+    "connecting": "Verbindung zum Video…",
+    "connectError": "Keine Videoverbindung. Ist LIVEKIT_URL konfiguriert?",
+    "board": "Board",
+    "video": "Video"
+  },
   "board": {
     "title": "Whiteboard",
     "pen": "Stift",

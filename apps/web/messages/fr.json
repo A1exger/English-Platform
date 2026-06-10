@@ -37,6 +37,13 @@
     "processing": "Traitement…",
     "checkoutReady": "Paiement créé — payez ici :"
   },
+  "room": {
+    "title": "Salle de cours",
+    "connecting": "Connexion à la vidéo…",
+    "connectError": "Connexion vidéo impossible. LIVEKIT_URL est-il configuré ?",
+    "board": "Tableau",
+    "video": "Vidéo"
+  },
   "board": {
     "title": "Tableau",
     "pen": "Stylo",

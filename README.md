@@ -42,7 +42,7 @@ English-Platform/
 |---|---|---|
 | 1–2. Кабинеты (репетитор/ученик) | ✅ бэкенд + фронтенд (логин + живой дашборд) | auth, users, lessons, crm, `apps/web` |
 | 3. Интерактивная доска | ✅ бэкенд + canvas-клиент (real-time, snapshot) | `apps/api/src/board`, `apps/web` BoardCanvas |
-| 4. Видеозвонки | 🟡 токены LiveKit (нужен видео-клиент) | `apps/api/src/video` |
+| 4. Видеозвонки | ✅ токены LiveKit + видео-клиент (камера/экран/чат) | `apps/api/src/video`, `apps/web` VideoRoom/LessonRoom |
 | 5. Управление уроками + бронирование | ✅ бэкенд + страница расписания | `apps/api/src/lessons`, `apps/web` ScheduleView |
 | 6. Домашние задания | ✅ | `apps/api/src/homework` |
 | 7. Оплата (Stripe/PayPal, ledger, инвойсы) | ✅ бэкенд + страница оплаты | `apps/api/src/billing`, `apps/web` BillingView |

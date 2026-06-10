@@ -37,6 +37,13 @@
     "processing": "Processing…",
     "checkoutReady": "Checkout created — pay here:"
   },
+  "room": {
+    "title": "Lesson room",
+    "connecting": "Connecting to video…",
+    "connectError": "Could not connect to video. Is LIVEKIT_URL configured?",
+    "board": "Board",
+    "video": "Video"
+  },
   "board": {
     "title": "Whiteboard",
     "pen": "Pen",

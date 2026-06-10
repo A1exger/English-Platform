@@ -37,6 +37,13 @@
     "processing": "Bezig…",
     "checkoutReady": "Checkout aangemaakt — betaal hier:"
   },
+  "room": {
+    "title": "Lesruimte",
+    "connecting": "Verbinden met video…",
+    "connectError": "Kan geen verbinding maken met video. Is LIVEKIT_URL ingesteld?",
+    "board": "Bord",
+    "video": "Video"
+  },
   "board": {
     "title": "Whiteboard",
     "pen": "Pen",

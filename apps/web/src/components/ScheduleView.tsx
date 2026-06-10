@@ -17,6 +17,7 @@ interface Lesson {
 export function ScheduleView() {
   const t = useTranslations('schedule');
   const tApp = useTranslations('app');
+  const tDash = useTranslations('dashboard');
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
@@ -146,9 +147,14 @@ export function ScheduleView() {
                   })}{' '}
                   · {l.status}
                 </span>
-                <Link className="link" href={`/lessons/${l.id}/board`}>
-                  {t('openBoard')} →
-                </Link>
+                <span className="row-actions">
+                  <Link className="link" href={`/lessons/${l.id}/room`}>
+                    {tDash('joinLesson')} →
+                  </Link>
+                  <Link className="link" href={`/lessons/${l.id}/board`}>
+                    {t('openBoard')}
+                  </Link>
+                </span>
               </li>
             ))}
           </ul>
