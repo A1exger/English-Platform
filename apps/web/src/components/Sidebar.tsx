@@ -5,12 +5,12 @@ import { Link, usePathname } from '@/i18n/routing';
 
 const items = [
   { key: 'overview', href: '/dashboard' },
-  { key: 'students', href: '/dashboard' },
+  { key: 'students', href: '/students' },
   { key: 'schedule', href: '/schedule' },
-  { key: 'materials', href: '/dashboard' },
-  { key: 'homework', href: '/dashboard' },
+  { key: 'materials', href: '/materials' },
+  { key: 'homework', href: '/homework' },
   { key: 'billing', href: '/billing' },
-  { key: 'analytics', href: '/dashboard' },
+  { key: 'analytics', href: '/analytics' },
   { key: 'settings', href: '/dashboard' }
 ] as const;
 
