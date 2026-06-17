@@ -91,6 +91,10 @@ All seeded users share the password `Password123!`:
 | GET    | /billing/invoices          | JWT           | own invoices (in payer's locale)        |
 | POST   | /billing/checkout          | JWT, student  | start Stripe/PayPal checkout            |
 | POST   | /billing/webhook/:provider | signature     | provider webhook (no JWT)               |
+| POST   | /billing/transfer          | JWT, student  | start a Western Union / MoneyGram transfer |
+| POST   | /billing/transfer/:id/reference | JWT, student | submit the transfer tracking number (MTCN) |
+| GET    | /billing/transfers/pending | JWT, admin    | transfers awaiting confirmation         |
+| POST   | /billing/transfer/:id/confirm | JWT, admin | confirm receipt → credit the student     |
 | POST   | /materials                 | JWT, tutor    | add a material to the library           |
 | GET    | /materials                 | JWT           | tutor: own; student: enrolled tutors'   |
 | GET    | /materials/:id             | JWT           | owner / enrolled student / admin        |
@@ -128,6 +132,11 @@ persisted via the REST endpoints above.
   consumes a package lesson if available, otherwise debits the cash balance —
   idempotent per (lesson, student).
 - **Invoices** are issued on successful payment in the payer's locale.
+- **Western Union / MoneyGram** are manual money transfers (no auto-settlement
+  API): the student starts a transfer (gets a reference + instructions), sends
+  the funds, submits the tracking number (MTCN), and an **admin confirms**
+  receipt — which credits the balance / grants the package via the same
+  `creditTransaction` path as card webhooks.
 
 ### Notifications
 

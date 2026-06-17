@@ -88,7 +88,15 @@
     "price": "السعر (سنت)",
     "create": "إنشاء",
     "processing": "جارٍ المعالجة…",
-    "checkoutReady": "تم إنشاء الدفع — ادفع هنا:"
+    "checkoutReady": "تم إنشاء الدفع — ادفع هنا:",
+    "westernUnion": "Western Union",
+    "moneyGram": "MoneyGram",
+    "reference": "المرجع",
+    "mtcn": "رقم التتبع (MTCN)",
+    "submitReference": "إرسال",
+    "transferSent": "تم الإرسال — بانتظار تأكيد المشرف.",
+    "pendingTransfers": "تحويلات بانتظار التأكيد",
+    "confirm": "تأكيد"
   },
   "room": {
     "title": "غرفة الدرس",

@@ -38,12 +38,23 @@ export type MaterialType = (typeof MATERIAL_TYPES)[number];
 export const TRANSACTION_TYPES = ['topup', 'charge', 'refund', 'payout'] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 
-export const PAYMENT_PROVIDERS = ['stripe', 'paypal', 'manual'] as const;
+export const PAYMENT_PROVIDERS = [
+  'stripe',
+  'paypal',
+  'manual',
+  'westernunion',
+  'moneygram',
+] as const;
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
-// Providers a customer can actually check out with (excludes internal "manual").
+// Card/online providers settled automatically via webhook.
 export const CHECKOUT_PROVIDERS = ['stripe', 'paypal'] as const;
 export type CheckoutProvider = (typeof CHECKOUT_PROVIDERS)[number];
+
+// Money-transfer methods settled manually: the student sends funds and submits
+// a reference (MTCN), then an admin confirms receipt.
+export const OFFLINE_PROVIDERS = ['westernunion', 'moneygram'] as const;
+export type OfflineProvider = (typeof OFFLINE_PROVIDERS)[number];
 
 export const TRANSACTION_STATUSES = [
   'pending',

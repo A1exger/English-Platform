@@ -88,7 +88,15 @@
     "price": "Preis (Cent)",
     "create": "Erstellen",
     "processing": "Wird verarbeitet…",
-    "checkoutReady": "Checkout erstellt – hier bezahlen:"
+    "checkoutReady": "Checkout erstellt – hier bezahlen:",
+    "westernUnion": "Western Union",
+    "moneyGram": "MoneyGram",
+    "reference": "Referenz",
+    "mtcn": "Tracking-Nummer (MTCN)",
+    "submitReference": "Senden",
+    "transferSent": "Übermittelt – wartet auf Bestätigung durch den Admin.",
+    "pendingTransfers": "Überweisungen zur Bestätigung",
+    "confirm": "Bestätigen"
   },
   "room": {
     "title": "Unterrichtsraum",

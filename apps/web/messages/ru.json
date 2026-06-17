@@ -88,7 +88,15 @@
     "price": "Цена (в центах)",
     "create": "Создать",
     "processing": "Обработка…",
-    "checkoutReady": "Оплата создана — перейдите по ссылке:"
+    "checkoutReady": "Оплата создана — перейдите по ссылке:",
+    "westernUnion": "Western Union",
+    "moneyGram": "MoneyGram",
+    "reference": "Код перевода",
+    "mtcn": "Номер перевода (MTCN)",
+    "submitReference": "Отправить",
+    "transferSent": "Отправлено — ожидает подтверждения администратором.",
+    "pendingTransfers": "Переводы, ожидающие подтверждения",
+    "confirm": "Подтвердить"
   },
   "room": {
     "title": "Комната урока",

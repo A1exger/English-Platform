@@ -35,6 +35,22 @@ interface Checkout {
   transactionId: string;
   checkoutUrl: string;
 }
+interface Transfer {
+  transactionId: string;
+  method: 'westernunion' | 'moneygram';
+  reference: string;
+  instructions: string;
+  amountCents: number;
+  currency: string;
+}
+interface PendingTransfer {
+  id: string;
+  provider: string;
+  amountCents: number;
+  currency: string;
+  externalId?: string | null;
+  metadata?: string | null;
+}
 
 function money(format: ReturnType<typeof useFormatter>, cents: number, currency: string) {
   return format.number(cents / 100, { style: 'currency', currency });
@@ -53,6 +69,10 @@ export function BillingView() {
   const [txns, setTxns] = useState<Txn[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [checkout, setCheckout] = useState<Checkout | null>(null);
+  const [transfer, setTransfer] = useState<Transfer | null>(null);
+  const [mtcn, setMtcn] = useState('');
+  const [mtcnSent, setMtcnSent] = useState(false);
+  const [pending, setPending] = useState<PendingTransfer[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: '', lessons: '10', price: '20000' });
@@ -77,6 +97,11 @@ export function BillingView() {
         setBalance(bal);
         setTxns(tx);
         setInvoices(inv);
+      }
+      if (profile.role === 'admin') {
+        setPending(
+          await apiFetch<PendingTransfer[]>('/billing/transfers/pending', { token, locale })
+        );
       }
       setState('ready');
     } catch (e) {
@@ -104,6 +129,54 @@ export function BillingView() {
         body: { provider: 'stripe', packageId }
       });
       setCheckout(res);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function startTransfer(method: 'westernunion' | 'moneygram', packageId: string) {
+    const token = tokenStore.get();
+    if (!token) return;
+    setBusy(true);
+    setMtcn('');
+    setMtcnSent(false);
+    try {
+      const res = await apiFetch<Transfer>('/billing/transfer', {
+        method: 'POST',
+        token,
+        locale,
+        body: { method, packageId }
+      });
+      setTransfer(res);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitMtcn() {
+    const token = tokenStore.get();
+    if (!token || !transfer || !mtcn.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/billing/transfer/${transfer.transactionId}/reference`, {
+        method: 'POST',
+        token,
+        locale,
+        body: { reference: mtcn }
+      });
+      setMtcnSent(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmTransfer(id: string) {
+    const token = tokenStore.get();
+    if (!token) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/billing/transfer/${id}/confirm`, { method: 'POST', token, locale });
+      await load();
     } finally {
       setBusy(false);
     }
@@ -137,6 +210,8 @@ export function BillingView() {
     return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const isTutor = me?.role === 'tutor';
+  const isStudent = me?.role === 'student';
+  const isAdmin = me?.role === 'admin';
 
   return (
     <div className="content">
@@ -204,10 +279,26 @@ export function BillingView() {
                   {p.name} · {p.lessonsCount}
                 </span>
                 <span className="muted">{money(format, p.priceCents, p.currency)}</span>
-                {!isTutor && (
-                  <button type="button" disabled={busy} onClick={() => buy(p.id)}>
-                    {t('buy')}
-                  </button>
+                {isStudent && (
+                  <span className="row-actions">
+                    <button type="button" disabled={busy} onClick={() => buy(p.id)}>
+                      {t('buy')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => startTransfer('westernunion', p.id)}
+                    >
+                      {t('westernUnion')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => startTransfer('moneygram', p.id)}
+                    >
+                      {t('moneyGram')}
+                    </button>
+                  </span>
                 )}
               </li>
             ))}
@@ -223,7 +314,58 @@ export function BillingView() {
         )}
       </div>
 
-      {!isTutor && (
+      {transfer && (
+        <div className="card">
+          <strong>
+            {transfer.method === 'westernunion' ? t('westernUnion') : t('moneyGram')} ·{' '}
+            {money(format, transfer.amountCents, transfer.currency)}
+          </strong>
+          <p className="note">{transfer.instructions}</p>
+          <p className="muted">
+            {t('reference')}: <b>{transfer.reference}</b>
+          </p>
+          {mtcnSent ? (
+            <p className="note">{t('transferSent')}</p>
+          ) : (
+            <div className="inline-form">
+              <input
+                placeholder={t('mtcn')}
+                value={mtcn}
+                onChange={(e) => setMtcn(e.target.value)}
+              />
+              <button type="button" disabled={busy} onClick={submitMtcn}>
+                {t('submitReference')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isAdmin && (
+        <div className="card">
+          <strong>{t('pendingTransfers')}</strong>
+          {pending.length === 0 ? (
+            <p className="note">{t('empty')}</p>
+          ) : (
+            <ul className="lesson-list">
+              {pending.map((p) => (
+                <li key={p.id}>
+                  <span>
+                    {p.provider === 'westernunion' ? t('westernUnion') : t('moneyGram')} ·{' '}
+                    {p.externalId}
+                  </span>
+                  <span className="muted">{money(format, p.amountCents, p.currency)}</span>
+                  <button type="button" disabled={busy} onClick={() => confirmTransfer(p.id)}>
+                    {t('confirm')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {isStudent && (
         <div className="two-col">
           <div className="card">
             <strong>{t('transactions')}</strong>

@@ -88,7 +88,15 @@
     "price": "Prijs (centen)",
     "create": "Aanmaken",
     "processing": "Bezig…",
-    "checkoutReady": "Checkout aangemaakt — betaal hier:"
+    "checkoutReady": "Checkout aangemaakt — betaal hier:",
+    "westernUnion": "Western Union",
+    "moneyGram": "MoneyGram",
+    "reference": "Referentie",
+    "mtcn": "Trackingnummer (MTCN)",
+    "submitReference": "Versturen",
+    "transferSent": "Verzonden — wacht op bevestiging door de beheerder.",
+    "pendingTransfers": "Overboekingen die op bevestiging wachten",
+    "confirm": "Bevestigen"
   },
   "room": {
     "title": "Lesruimte",

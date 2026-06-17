@@ -88,7 +88,15 @@
     "price": "Prix (centimes)",
     "create": "Créer",
     "processing": "Traitement…",
-    "checkoutReady": "Paiement créé — payez ici :"
+    "checkoutReady": "Paiement créé — payez ici :",
+    "westernUnion": "Western Union",
+    "moneyGram": "MoneyGram",
+    "reference": "Référence",
+    "mtcn": "Numéro de suivi (MTCN)",
+    "submitReference": "Envoyer",
+    "transferSent": "Envoyé — en attente de confirmation par l'administrateur.",
+    "pendingTransfers": "Transferts en attente de confirmation",
+    "confirm": "Confirmer"
   },
   "room": {
     "title": "Salle de cours",

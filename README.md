@@ -45,7 +45,7 @@ English-Platform/
 | 4. Видеозвонки | ✅ токены LiveKit + видео-клиент (камера/экран/чат) | `apps/api/src/video`, `apps/web` VideoRoom/LessonRoom |
 | 5. Управление уроками + бронирование | ✅ бэкенд + страница расписания | `apps/api/src/lessons`, `apps/web` ScheduleView |
 | 6. Домашние задания | ✅ | `apps/api/src/homework` |
-| 7. Оплата (Stripe/PayPal, ledger, инвойсы) | ✅ бэкенд + страница оплаты | `apps/api/src/billing`, `apps/web` BillingView |
+| 7. Оплата (Stripe/PayPal + Western Union/MoneyGram, ledger, инвойсы) | ✅ бэкенд + страница оплаты | `apps/api/src/billing`, `apps/web` BillingView |
 | 8. CRM | ✅ | `apps/api/src/crm` |
 | 9. Учебные материалы | ✅ | `apps/api/src/materials` |
 | 10. Аналитика | ✅ | `apps/api/src/analytics` |
