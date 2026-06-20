@@ -1,0 +1,15 @@
+# Запуск из готовых образов GHCR (без сборки на сервере).
+# Образы публикует .github/workflows/docker.yml при пуше в main.
+#
+# Использование:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.ghcr.yml \
+#     --env-file .env.prod pull
+#   docker compose -f docker-compose.prod.yml -f docker-compose.ghcr.yml \
+#     --env-file .env.prod up -d --no-build
+#
+# IMAGE_OWNER по умолчанию = a1exger/english-platform (lowercase репозитория).
+services:
+  api:
+    image: ghcr.io/${IMAGE_OWNER:-a1exger/english-platform}-api:${IMAGE_TAG:-latest}
+  web:
+    image: ghcr.io/${IMAGE_OWNER:-a1exger/english-platform}-web:${IMAGE_TAG:-latest}
