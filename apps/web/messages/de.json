@@ -72,6 +72,32 @@
     "save": "Speichern",
     "saved": "Gespeichert"
   },
+  "register": {
+    "title": "Konto erstellen",
+    "role": "Ich bin",
+    "roleStudent": "Schüler",
+    "roleTutor": "Tutor",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "submit": "Registrieren",
+    "creating": "Wird erstellt…",
+    "haveAccount": "Schon ein Konto?",
+    "error": "Registrierung fehlgeschlagen. Andere E-Mail versuchen."
+  },
+  "adminUsers": {
+    "title": "Benutzer",
+    "newUser": "Neuer Benutzer",
+    "role": "Rolle",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "create": "Erstellen",
+    "creating": "Wird erstellt…",
+    "empty": "Keine Benutzer.",
+    "delete": "Löschen",
+    "forbidden": "Nur für Admins."
+  },
   "schedule": {
     "title": "Zeitplan",
     "newLesson": "Neue Stunde",
@@ -135,7 +161,8 @@
     "signIn": "Anmelden",
     "email": "E-Mail",
     "password": "Passwort",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "createAccount": "Konto erstellen"
   },
   "nav": {
     "overview": "Übersicht",
@@ -145,7 +172,8 @@
     "homework": "Hausaufgaben",
     "billing": "Abrechnung",
     "analytics": "Analytik",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "users": "Benutzer"
   },
   "dashboard": {
     "greeting": "Willkommen zurück, {name}!",

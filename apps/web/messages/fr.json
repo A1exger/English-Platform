@@ -72,6 +72,32 @@
     "save": "Enregistrer",
     "saved": "Enregistré"
   },
+  "register": {
+    "title": "Créer un compte",
+    "role": "Je suis",
+    "roleStudent": "Élève",
+    "roleTutor": "Tuteur",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "submit": "S'inscrire",
+    "creating": "Création…",
+    "haveAccount": "Déjà un compte ?",
+    "error": "Échec de l'inscription. Essayez un autre e-mail."
+  },
+  "adminUsers": {
+    "title": "Utilisateurs",
+    "newUser": "Nouvel utilisateur",
+    "role": "Rôle",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "create": "Créer",
+    "creating": "Création…",
+    "empty": "Aucun utilisateur.",
+    "delete": "Supprimer",
+    "forbidden": "Réservé aux administrateurs."
+  },
   "schedule": {
     "title": "Planning",
     "newLesson": "Nouveau cours",
@@ -135,7 +161,8 @@
     "signIn": "Se connecter",
     "email": "E-mail",
     "password": "Mot de passe",
-    "dashboard": "Tableau de bord"
+    "dashboard": "Tableau de bord",
+    "createAccount": "Créer un compte"
   },
   "nav": {
     "overview": "Aperçu",
@@ -145,7 +172,8 @@
     "homework": "Devoirs",
     "billing": "Facturation",
     "analytics": "Analytique",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "users": "Utilisateurs"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",

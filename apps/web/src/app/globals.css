@@ -157,6 +157,17 @@ button {
   padding-inline-start: 12px;
 }
 
+.header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logout-btn {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
 .lang-switcher {
   display: inline-flex;
   align-items: center;

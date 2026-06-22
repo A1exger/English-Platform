@@ -72,6 +72,32 @@
     "save": "حفظ",
     "saved": "تم الحفظ"
   },
+  "register": {
+    "title": "إنشاء حساب",
+    "role": "أنا",
+    "roleStudent": "طالب",
+    "roleTutor": "معلّم",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "submit": "تسجيل",
+    "creating": "جارٍ الإنشاء…",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "error": "فشل التسجيل. جرّب بريدًا آخر."
+  },
+  "adminUsers": {
+    "title": "المستخدمون",
+    "newUser": "مستخدم جديد",
+    "role": "الدور",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "create": "إنشاء",
+    "creating": "جارٍ الإنشاء…",
+    "empty": "لا يوجد مستخدمون.",
+    "delete": "حذف",
+    "forbidden": "للمشرفين فقط."
+  },
   "schedule": {
     "title": "الجدول",
     "newLesson": "درس جديد",
@@ -135,7 +161,8 @@
     "signIn": "تسجيل الدخول",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
-    "dashboard": "لوحة التحكم"
+    "dashboard": "لوحة التحكم",
+    "createAccount": "إنشاء حساب"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -145,7 +172,8 @@
     "homework": "الواجبات المنزلية",
     "billing": "الفواتير",
     "analytics": "التحليلات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "users": "المستخدمون"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",

@@ -19,8 +19,8 @@ export default function HomePage({
 
       <LoginForm />
 
-      <Link className="link" href="/dashboard">
-        {t('dashboard')} →
+      <Link className="link" href="/register">
+        {t('createAccount')}
       </Link>
     </section>
   );

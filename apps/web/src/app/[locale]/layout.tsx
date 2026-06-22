@@ -2,7 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing, isRtl, type Locale } from '@/i18n/routing';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { HeaderActions } from '@/components/HeaderActions';
 import '../globals.css';
 
 export function generateStaticParams() {
@@ -30,7 +30,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <header className="topbar">
             <span className="brand">LinguaDesk</span>
-            <LanguageSwitcher />
+            <HeaderActions />
           </header>
           <main className="container">{children}</main>
         </NextIntlClientProvider>

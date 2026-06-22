@@ -72,6 +72,32 @@
     "save": "Save",
     "saved": "Saved"
   },
+  "register": {
+    "title": "Create your account",
+    "role": "I am",
+    "roleStudent": "Student",
+    "roleTutor": "Tutor",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "submit": "Sign up",
+    "creating": "Creating…",
+    "haveAccount": "Already have an account?",
+    "error": "Registration failed. Try a different email."
+  },
+  "adminUsers": {
+    "title": "Users",
+    "newUser": "New user",
+    "role": "Role",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "password": "Password",
+    "create": "Create",
+    "creating": "Creating…",
+    "empty": "No users.",
+    "delete": "Delete",
+    "forbidden": "Admins only."
+  },
   "schedule": {
     "title": "Schedule",
     "newLesson": "New lesson",
@@ -135,7 +161,8 @@
     "signIn": "Sign in",
     "email": "Email",
     "password": "Password",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "createAccount": "Create an account"
   },
   "nav": {
     "overview": "Overview",
@@ -145,7 +172,8 @@
     "homework": "Homework",
     "billing": "Billing",
     "analytics": "Analytics",
-    "settings": "Settings"
+    "settings": "Settings",
+    "users": "Users"
   },
   "dashboard": {
     "greeting": "Welcome back, {name}!",

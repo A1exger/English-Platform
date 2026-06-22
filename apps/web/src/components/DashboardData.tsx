@@ -64,18 +64,7 @@ export function DashboardData() {
 
   return (
     <div className="content">
-      <div className="row-between">
-        <h2>{tDash('greeting', { name: me?.firstName ?? '' })}</h2>
-        <button
-          type="button"
-          onClick={() => {
-            tokenStore.clear();
-            router.push('/');
-          }}
-        >
-          {tApp('logout')}
-        </button>
-      </div>
+      <h2>{tDash('greeting', { name: me?.firstName ?? '' })}</h2>
 
       <div className="card">
         <strong>{tApp('upcomingLessons')}</strong>

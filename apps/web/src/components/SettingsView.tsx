@@ -7,6 +7,35 @@ import { locales, type Locale } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 
+// Curated IANA time zones (label = UTC offset shown for orientation).
+const TIMEZONES = [
+  'UTC',
+  'Europe/London',
+  'Europe/Lisbon',
+  'Europe/Berlin',
+  'Europe/Paris',
+  'Europe/Amsterdam',
+  'Europe/Madrid',
+  'Europe/Rome',
+  'Europe/Warsaw',
+  'Europe/Kyiv',
+  'Europe/Moscow',
+  'Europe/Istanbul',
+  'Africa/Tunis',
+  'Africa/Cairo',
+  'Asia/Dubai',
+  'Asia/Karachi',
+  'Asia/Kolkata',
+  'Asia/Shanghai',
+  'Asia/Tokyo',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Sao_Paulo',
+  'Australia/Sydney'
+];
+
 const localeLabels: Record<Locale, string> = {
   en: 'English',
   ru: 'Русский',
@@ -122,11 +151,19 @@ export function SettingsView() {
         </label>
         <label>
           {t('timezone')}
-          <input
+          <select
             value={form.timezone}
             onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-            placeholder="Europe/Berlin"
-          />
+          >
+            {!TIMEZONES.includes(form.timezone) && form.timezone && (
+              <option value={form.timezone}>{form.timezone}</option>
+            )}
+            {TIMEZONES.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           {t('language')}

@@ -72,6 +72,32 @@
     "save": "Сохранить",
     "saved": "Сохранено"
   },
+  "register": {
+    "title": "Создание аккаунта",
+    "role": "Я",
+    "roleStudent": "Ученик",
+    "roleTutor": "Репетитор",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "submit": "Зарегистрироваться",
+    "creating": "Создание…",
+    "haveAccount": "Уже есть аккаунт?",
+    "error": "Не удалось зарегистрироваться. Попробуйте другой email."
+  },
+  "adminUsers": {
+    "title": "Пользователи",
+    "newUser": "Новый пользователь",
+    "role": "Роль",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "email": "Эл. почта",
+    "password": "Пароль",
+    "create": "Создать",
+    "creating": "Создание…",
+    "empty": "Пользователей нет.",
+    "delete": "Удалить",
+    "forbidden": "Только для администраторов."
+  },
   "schedule": {
     "title": "Расписание",
     "newLesson": "Новый урок",
@@ -135,7 +161,8 @@
     "signIn": "Войти",
     "email": "Эл. почта",
     "password": "Пароль",
-    "dashboard": "Кабинет"
+    "dashboard": "Кабинет",
+    "createAccount": "Создать аккаунт"
   },
   "nav": {
     "overview": "Обзор",
@@ -145,7 +172,8 @@
     "homework": "Домашние задания",
     "billing": "Финансы",
     "analytics": "Аналитика",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "users": "Пользователи"
   },
   "dashboard": {
     "greeting": "С возвращением, {name}!",

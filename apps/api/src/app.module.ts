@@ -19,6 +19,7 @@ import { BoardModule } from './board/board.module';
 import { MaterialsModule } from './materials/materials.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { AdminModule } from './admin/admin.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -49,6 +50,7 @@ import { HealthModule } from './health/health.module';
     MaterialsModule,
     NotificationsModule,
     AnalyticsModule,
+    AdminModule,
     HealthModule,
   ],
 })

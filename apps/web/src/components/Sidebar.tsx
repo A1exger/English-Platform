@@ -1,7 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
+import { fetchMe, tokenStore } from '@/lib/auth';
 
 const items = [
   { key: 'overview', href: '/dashboard' },
@@ -17,9 +19,26 @@ const items = [
 export function Sidebar() {
   const nav = useTranslations('nav');
   const pathname = usePathname();
+  const locale = useLocale();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const token = tokenStore.get();
+    if (!token) return;
+    fetchMe(token, locale)
+      .then((m) => setIsAdmin(m.role === 'admin'))
+      .catch(() => undefined);
+  }, [locale]);
+
+  const links = [
+    ...items.slice(0, 2),
+    ...(isAdmin ? [{ key: 'users', href: '/admin/users' } as const] : []),
+    ...items.slice(2)
+  ];
+
   return (
     <nav className="sidebar">
-      {items.map((it) => (
+      {links.map((it) => (
         <Link
           key={it.key}
           href={it.href}
