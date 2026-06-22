@@ -61,6 +61,17 @@
     "attendance": "Aanwezigheidspercentage",
     "conversion": "Proefconversie"
   },
+  "settings": {
+    "title": "Instellingen",
+    "firstName": "Voornaam",
+    "lastName": "Achternaam",
+    "timezone": "Tijdzone",
+    "language": "Taal",
+    "email": "E-mail",
+    "role": "Rol",
+    "save": "Opslaan",
+    "saved": "Opgeslagen"
+  },
   "schedule": {
     "title": "Rooster",
     "newLesson": "Nieuwe les",

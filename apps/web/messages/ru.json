@@ -61,6 +61,17 @@
     "attendance": "Посещаемость",
     "conversion": "Конверсия пробных"
   },
+  "settings": {
+    "title": "Настройки",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "timezone": "Часовой пояс",
+    "language": "Язык",
+    "email": "Эл. почта",
+    "role": "Роль",
+    "save": "Сохранить",
+    "saved": "Сохранено"
+  },
   "schedule": {
     "title": "Расписание",
     "newLesson": "Новый урок",

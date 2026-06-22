@@ -61,6 +61,17 @@
     "attendance": "نسبة الحضور",
     "conversion": "تحويل الدروس التجريبية"
   },
+  "settings": {
+    "title": "الإعدادات",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "timezone": "المنطقة الزمنية",
+    "language": "اللغة",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "save": "حفظ",
+    "saved": "تم الحفظ"
+  },
   "schedule": {
     "title": "الجدول",
     "newLesson": "درس جديد",

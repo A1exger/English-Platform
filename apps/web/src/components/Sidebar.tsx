@@ -11,7 +11,7 @@ const items = [
   { key: 'homework', href: '/homework' },
   { key: 'billing', href: '/billing' },
   { key: 'analytics', href: '/analytics' },
-  { key: 'settings', href: '/dashboard' }
+  { key: 'settings', href: '/settings' }
 ] as const;
 
 export function Sidebar() {

@@ -61,6 +61,17 @@
     "attendance": "Taux de présence",
     "conversion": "Conversion d'essai"
   },
+  "settings": {
+    "title": "Paramètres",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "timezone": "Fuseau horaire",
+    "language": "Langue",
+    "email": "E-mail",
+    "role": "Rôle",
+    "save": "Enregistrer",
+    "saved": "Enregistré"
+  },
   "schedule": {
     "title": "Planning",
     "newLesson": "Nouveau cours",

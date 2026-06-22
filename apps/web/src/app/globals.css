@@ -112,6 +112,7 @@ button {
   padding: 10px 12px;
   border-radius: 8px;
   color: var(--muted);
+  text-decoration: none;
 }
 
 .nav-item:hover {

@@ -61,6 +61,17 @@
     "attendance": "Anwesenheitsquote",
     "conversion": "Probe-Konversion"
   },
+  "settings": {
+    "title": "Einstellungen",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "timezone": "Zeitzone",
+    "language": "Sprache",
+    "email": "E-Mail",
+    "role": "Rolle",
+    "save": "Speichern",
+    "saved": "Gespeichert"
+  },
   "schedule": {
     "title": "Zeitplan",
     "newLesson": "Neue Stunde",

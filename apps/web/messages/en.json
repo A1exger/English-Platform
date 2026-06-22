@@ -61,6 +61,17 @@
     "attendance": "Attendance rate",
     "conversion": "Trial conversion"
   },
+  "settings": {
+    "title": "Settings",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "timezone": "Time zone",
+    "language": "Language",
+    "email": "Email",
+    "role": "Role",
+    "save": "Save",
+    "saved": "Saved"
+  },
   "schedule": {
     "title": "Schedule",
     "newLesson": "New lesson",
