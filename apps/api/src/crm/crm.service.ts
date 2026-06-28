@@ -1,12 +1,15 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { AddStudentDto } from './dto/add-student.dto';
+import { CreateStudentDto } from './dto/create-student.dto';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
@@ -67,6 +70,49 @@ export class CrmService {
       },
       include: { studentProfile: { include: { user: true } } },
     });
+  }
+
+  /** Admin: create a brand-new student account. */
+  async createStudent(dto: CreateStudentDto) {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existing) {
+      throw new ConflictException('Email already registered');
+    }
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash,
+        role: 'student',
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        locale: dto.locale ?? 'en',
+        studentProfile: { create: {} },
+      },
+      include: { studentProfile: true },
+    });
+    return { studentProfileId: user.studentProfile!.id, email: user.email };
+  }
+
+  /** Tutor: unenroll a student. Admin: delete the student account entirely. */
+  async removeStudent(user: AuthenticatedUser, studentProfileId: string) {
+    const profile = await this.prisma.studentProfile.findUnique({
+      where: { id: studentProfileId },
+    });
+    if (!profile) {
+      throw new NotFoundException('Student not found');
+    }
+    if (user.role === 'admin') {
+      await this.prisma.user.delete({ where: { id: profile.userId } });
+      return { deleted: true };
+    }
+    const tutor = await this.tutorProfileForUser(user.id);
+    await this.prisma.tutorStudent.deleteMany({
+      where: { tutorProfileId: tutor.id, studentProfileId },
+    });
+    return { unenrolled: true };
   }
 
   async listStudents(user: AuthenticatedUser) {

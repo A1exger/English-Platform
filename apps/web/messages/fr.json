@@ -51,7 +51,13 @@
     "notes": "Notes",
     "noteBody": "Note",
     "save": "Enregistrer",
-    "openCard": "Ouvrir"
+    "openCard": "Ouvrir",
+    "create": "Créer un élève",
+    "password": "Mot de passe",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "delete": "Supprimer",
+    "remove": "Retirer"
   },
   "analytics": {
     "title": "Analytique",
@@ -105,7 +111,7 @@
     "titleField": "Titre",
     "start": "Début",
     "end": "Fin",
-    "price": "Prix (centimes)",
+    "price": "Prix",
     "create": "Créer",
     "creating": "Création…",
     "empty": "Aucun cours.",
@@ -130,7 +136,7 @@
     "newPackage": "Nouveau forfait",
     "name": "Nom",
     "lessons": "Cours",
-    "price": "Prix (centimes)",
+    "price": "Prix",
     "create": "Créer",
     "processing": "Traitement…",
     "checkoutReady": "Paiement créé — payez ici :",
@@ -142,7 +148,8 @@
     "transferSent": "Envoyé — en attente de confirmation par l'administrateur.",
     "pendingTransfers": "Transferts en attente de confirmation",
     "confirm": "Confirmer",
-    "currency": "Devise"
+    "currency": "Devise",
+    "delete": "Supprimer"
   },
   "room": {
     "title": "Salle de cours",
@@ -166,7 +173,7 @@
     "notesPlaceholder": "Notes partagées (visibles par le professeur et l’élève)…"
   },
   "common": {
-    "appName": "LinguaDesk",
+    "appName": "English Spark Studio",
     "tagline": "Le bureau en ligne du tuteur — cours, élèves, planning et paiements au même endroit.",
     "language": "Langue",
     "signIn": "Se connecter",

@@ -51,7 +51,13 @@
     "notes": "Notes",
     "noteBody": "Note",
     "save": "Save",
-    "openCard": "Open"
+    "openCard": "Open",
+    "create": "Create student",
+    "password": "Password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "delete": "Delete",
+    "remove": "Remove"
   },
   "analytics": {
     "title": "Analytics",
@@ -105,7 +111,7 @@
     "titleField": "Title",
     "start": "Start",
     "end": "End",
-    "price": "Price (cents)",
+    "price": "Price",
     "create": "Create",
     "creating": "Creating…",
     "empty": "No lessons.",
@@ -130,7 +136,7 @@
     "newPackage": "New package",
     "name": "Name",
     "lessons": "Lessons",
-    "price": "Price (cents)",
+    "price": "Price",
     "create": "Create",
     "processing": "Processing…",
     "checkoutReady": "Checkout created — pay here:",
@@ -142,7 +148,8 @@
     "transferSent": "Submitted — awaiting admin confirmation.",
     "pendingTransfers": "Transfers awaiting confirmation",
     "confirm": "Confirm",
-    "currency": "Currency"
+    "currency": "Currency",
+    "delete": "Delete"
   },
   "room": {
     "title": "Lesson room",
@@ -166,7 +173,7 @@
     "notesPlaceholder": "Shared notes (visible to teacher and student)…"
   },
   "common": {
-    "appName": "LinguaDesk",
+    "appName": "English Spark Studio",
     "tagline": "The tutor's online office — lessons, students, schedule and payments in one place.",
     "language": "Language",
     "signIn": "Sign in",

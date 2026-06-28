@@ -29,8 +29,8 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider messages={messages}>
           <header className="topbar">
-            <Link href="/" className="brand" aria-label="LinguaDesk — home">
-              LinguaDesk
+            <Link href="/" className="brand" aria-label="English Spark Studio — home">
+              English Spark Studio
             </Link>
             <HeaderActions />
           </header>

@@ -59,16 +59,26 @@ export class MaterialsService {
    * Tutors see their own library. Students see materials owned by the tutors
    * they are enrolled with (read-only), so a tutor can share a library.
    */
+  private async adminUserIds(): Promise<string[]> {
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'admin' },
+      select: { id: true },
+    });
+    return admins.map((a) => a.id);
+  }
+
   async list(user: AuthenticatedUser) {
-    if (user.role === 'student') {
-      const tutorUserIds = await this.enrolledTutorUserIds(user.id);
-      return this.prisma.material.findMany({
-        where: { ownerUserId: { in: tutorUserIds } },
-        orderBy: { createdAt: 'desc' },
-      });
+    if (user.role === 'admin') {
+      return this.prisma.material.findMany({ orderBy: { createdAt: 'desc' } });
     }
+    // Admin-uploaded materials are shared platform-wide (visible to everyone).
+    const adminIds = await this.adminUserIds();
+    const ownerIds =
+      user.role === 'student'
+        ? await this.enrolledTutorUserIds(user.id)
+        : [user.id];
     return this.prisma.material.findMany({
-      where: { ownerUserId: user.id },
+      where: { ownerUserId: { in: [...new Set([...ownerIds, ...adminIds])] } },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -80,6 +90,10 @@ export class MaterialsService {
     }
     if (material.ownerUserId === user.id || user.role === 'admin') {
       return material;
+    }
+    const adminIds = await this.adminUserIds();
+    if (adminIds.includes(material.ownerUserId)) {
+      return material; // platform material
     }
     if (user.role === 'student') {
       const tutorUserIds = await this.enrolledTutorUserIds(user.id);

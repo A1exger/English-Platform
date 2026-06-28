@@ -51,7 +51,13 @@
     "notes": "الملاحظات",
     "noteBody": "ملاحظة",
     "save": "حفظ",
-    "openCard": "فتح"
+    "openCard": "فتح",
+    "create": "إنشاء طالب",
+    "password": "كلمة المرور",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "delete": "حذف",
+    "remove": "إزالة"
   },
   "analytics": {
     "title": "التحليلات",
@@ -105,7 +111,7 @@
     "titleField": "العنوان",
     "start": "البداية",
     "end": "النهاية",
-    "price": "السعر (سنت)",
+    "price": "السعر",
     "create": "إنشاء",
     "creating": "جارٍ الإنشاء…",
     "empty": "لا توجد دروس.",
@@ -130,7 +136,7 @@
     "newPackage": "باقة جديدة",
     "name": "الاسم",
     "lessons": "دروس",
-    "price": "السعر (سنت)",
+    "price": "السعر",
     "create": "إنشاء",
     "processing": "جارٍ المعالجة…",
     "checkoutReady": "تم إنشاء الدفع — ادفع هنا:",
@@ -142,7 +148,8 @@
     "transferSent": "تم الإرسال — بانتظار تأكيد المشرف.",
     "pendingTransfers": "تحويلات بانتظار التأكيد",
     "confirm": "تأكيد",
-    "currency": "العملة"
+    "currency": "العملة",
+    "delete": "حذف"
   },
   "room": {
     "title": "غرفة الدرس",
@@ -166,7 +173,7 @@
     "notesPlaceholder": "ملاحظات مشتركة (يراها المعلّم والطالب)…"
   },
   "common": {
-    "appName": "LinguaDesk",
+    "appName": "English Spark Studio",
     "tagline": "المكتب الإلكتروني للمعلّم — الدروس والطلاب والجدول والمدفوعات في مكان واحد.",
     "language": "اللغة",
     "signIn": "تسجيل الدخول",

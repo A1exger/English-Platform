@@ -53,20 +53,50 @@ export class BillingService {
 
   // --- packages (tariffs) ---------------------------------------------------
 
+  private async adminUserIds(): Promise<string[]> {
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'admin' },
+      select: { id: true },
+    });
+    return admins.map((a) => a.id);
+  }
+
   async listPackages(user: AuthenticatedUser) {
     if (user.role === 'tutor') {
+      // A tutor sees their own packages plus platform (admin-created) packages.
       const tutor = await this.prisma.tutorProfile.findUnique({
         where: { userId: user.id },
       });
-      return tutor
-        ? this.prisma.package.findMany({ where: { tutorProfileId: tutor.id } })
-        : [];
+      const adminIds = await this.adminUserIds();
+      return this.prisma.package.findMany({
+        where: {
+          OR: [
+            { tutorProfileId: tutor?.id ?? '__none__' },
+            { tutorProfile: { userId: { in: adminIds } } },
+          ],
+        },
+      });
     }
     if (user.role === 'admin') {
       return this.prisma.package.findMany();
     }
     // students/parents only see purchasable (active) packages
     return this.prisma.package.findMany({ where: { isActive: true } });
+  }
+
+  async deletePackage(user: AuthenticatedUser, id: string) {
+    const pkg = await this.prisma.package.findUnique({
+      where: { id },
+      include: { tutorProfile: true },
+    });
+    if (!pkg) {
+      throw new NotFoundException('Package not found');
+    }
+    if (user.role !== 'admin' && pkg.tutorProfile.userId !== user.id) {
+      throw new ForbiddenException('Not your package');
+    }
+    await this.prisma.package.delete({ where: { id } });
+    return { deleted: true };
   }
 
   /** Resolve the caller's tutor profile, creating one for an admin on demand. */

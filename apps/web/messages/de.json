@@ -51,7 +51,13 @@
     "notes": "Notizen",
     "noteBody": "Notiz",
     "save": "Speichern",
-    "openCard": "Öffnen"
+    "openCard": "Öffnen",
+    "create": "Schüler anlegen",
+    "password": "Passwort",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "delete": "Löschen",
+    "remove": "Entfernen"
   },
   "analytics": {
     "title": "Analytik",
@@ -105,7 +111,7 @@
     "titleField": "Titel",
     "start": "Beginn",
     "end": "Ende",
-    "price": "Preis (Cent)",
+    "price": "Preis",
     "create": "Erstellen",
     "creating": "Wird erstellt…",
     "empty": "Keine Stunden.",
@@ -130,7 +136,7 @@
     "newPackage": "Neues Paket",
     "name": "Name",
     "lessons": "Stunden",
-    "price": "Preis (Cent)",
+    "price": "Preis",
     "create": "Erstellen",
     "processing": "Wird verarbeitet…",
     "checkoutReady": "Checkout erstellt – hier bezahlen:",
@@ -142,7 +148,8 @@
     "transferSent": "Übermittelt – wartet auf Bestätigung durch den Admin.",
     "pendingTransfers": "Überweisungen zur Bestätigung",
     "confirm": "Bestätigen",
-    "currency": "Währung"
+    "currency": "Währung",
+    "delete": "Löschen"
   },
   "room": {
     "title": "Unterrichtsraum",
@@ -166,7 +173,7 @@
     "notesPlaceholder": "Gemeinsame Notizen (für Lehrer und Schüler sichtbar)…"
   },
   "common": {
-    "appName": "LinguaDesk",
+    "appName": "English Spark Studio",
     "tagline": "Das Online-Büro des Tutors — Unterricht, Schüler, Zeitplan und Zahlungen an einem Ort.",
     "language": "Sprache",
     "signIn": "Anmelden",

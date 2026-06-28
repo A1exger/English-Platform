@@ -51,7 +51,13 @@
     "notes": "Notities",
     "noteBody": "Notitie",
     "save": "Opslaan",
-    "openCard": "Openen"
+    "openCard": "Openen",
+    "create": "Leerling aanmaken",
+    "password": "Wachtwoord",
+    "firstName": "Voornaam",
+    "lastName": "Achternaam",
+    "delete": "Verwijderen",
+    "remove": "Verwijderen"
   },
   "analytics": {
     "title": "Analyse",
@@ -105,7 +111,7 @@
     "titleField": "Titel",
     "start": "Start",
     "end": "Einde",
-    "price": "Prijs (centen)",
+    "price": "Prijs",
     "create": "Aanmaken",
     "creating": "Bezig…",
     "empty": "Geen lessen.",
@@ -130,7 +136,7 @@
     "newPackage": "Nieuw pakket",
     "name": "Naam",
     "lessons": "Lessen",
-    "price": "Prijs (centen)",
+    "price": "Prijs",
     "create": "Aanmaken",
     "processing": "Bezig…",
     "checkoutReady": "Checkout aangemaakt — betaal hier:",
@@ -142,7 +148,8 @@
     "transferSent": "Verzonden — wacht op bevestiging door de beheerder.",
     "pendingTransfers": "Overboekingen die op bevestiging wachten",
     "confirm": "Bevestigen",
-    "currency": "Valuta"
+    "currency": "Valuta",
+    "delete": "Verwijderen"
   },
   "room": {
     "title": "Lesruimte",
@@ -166,7 +173,7 @@
     "notesPlaceholder": "Gedeelde notities (zichtbaar voor docent en leerling)…"
   },
   "common": {
-    "appName": "LinguaDesk",
+    "appName": "English Spark Studio",
     "tagline": "Het online kantoor van de docent — lessen, leerlingen, rooster en betalingen op één plek.",
     "language": "Taal",
     "signIn": "Inloggen",

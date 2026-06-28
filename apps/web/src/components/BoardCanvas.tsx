@@ -6,6 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import { Link, useRouter } from '@/i18n/routing';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
+import { DraggablePanel } from './DraggablePanel';
 
 // Normalized (0..1) segment so the drawing looks the same regardless of each
 // client's canvas pixel size.
@@ -271,23 +272,21 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
         />
-        {notesOpen && (
-          <aside className="board-notes">
-            <div className="board-notes-head">
-              <strong>{t('notes')}</strong>
-              <button type="button" onClick={() => setNotesOpen(false)}>
-                ✕
-              </button>
-            </div>
-            <textarea
-              className="board-notes-area"
-              value={notes}
-              placeholder={t('notesPlaceholder')}
-              onChange={(e) => onNotesChange(e.target.value)}
-            />
-          </aside>
-        )}
       </div>
+      {notesOpen && (
+        <DraggablePanel
+          title={t('notes')}
+          onClose={() => setNotesOpen(false)}
+          initial={{ x: 160, y: 140, width: 320, height: 260 }}
+        >
+          <textarea
+            className="board-notes-area"
+            value={notes}
+            placeholder={t('notesPlaceholder')}
+            onChange={(e) => onNotesChange(e.target.value)}
+          />
+        </DraggablePanel>
+      )}
     </div>
   );
 }

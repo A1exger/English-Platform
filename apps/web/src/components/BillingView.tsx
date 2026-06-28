@@ -75,7 +75,7 @@ export function BillingView() {
   const [pending, setPending] = useState<PendingTransfer[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: '', lessons: '10', price: '20000', currency: 'EUR' });
+  const [form, setForm] = useState({ name: '', lessons: '10', price: '200', currency: 'EUR' });
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -182,6 +182,18 @@ export function BillingView() {
     }
   }
 
+  async function deletePackage(id: string) {
+    const token = tokenStore.get();
+    if (!token) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/billing/packages/${id}`, { method: 'DELETE', token, locale });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function createPackage(e: FormEvent) {
     e.preventDefault();
     const token = tokenStore.get();
@@ -195,11 +207,12 @@ export function BillingView() {
         body: {
           name: form.name,
           lessonsCount: Number(form.lessons) || 1,
-          priceCents: Number(form.price) || 0,
+          // Price is entered in major units (e.g. 200 EUR) -> store as cents.
+          priceCents: Math.round((Number(form.price) || 0) * 100),
           currency: form.currency
         }
       });
-      setForm({ name: '', lessons: '10', price: '20000', currency: 'EUR' });
+      setForm({ name: '', lessons: '10', price: '200', currency: 'EUR' });
       await load();
     } finally {
       setBusy(false);
@@ -311,6 +324,11 @@ export function BillingView() {
                       {t('moneyGram')}
                     </button>
                   </span>
+                )}
+                {(isTutor || isAdmin) && (
+                  <button type="button" disabled={busy} onClick={() => deletePackage(p.id)}>
+                    {t('delete')}
+                  </button>
                 )}
               </li>
             ))}

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -29,6 +30,16 @@ export class BillingController {
   @Get('packages')
   listPackages(@CurrentUser() user: AuthenticatedUser) {
     return this.billing.listPackages(user);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('tutor', 'admin')
+  @Delete('packages/:id')
+  deletePackage(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    return this.billing.deletePackage(user, id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

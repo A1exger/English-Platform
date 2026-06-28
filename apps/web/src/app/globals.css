@@ -287,6 +287,49 @@ button {
   outline: 2px solid var(--text);
 }
 
+.dpanel {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: #0e1530;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  resize: both;
+  overflow: hidden;
+  min-width: 220px;
+  min-height: 160px;
+}
+
+.dpanel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--panel);
+  cursor: move;
+  user-select: none;
+}
+
+.dpanel-head button {
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dpanel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: auto;
+}
+
+.dpanel-body > * {
+  flex: 1;
+}
+
 .board-stage {
   position: relative;
   flex: 1;
@@ -326,7 +369,20 @@ button {
 
 .board-notes-area {
   flex: 1;
+  width: 100%;
+  height: 100%;
   resize: none;
+}
+
+.lesson-room {
+  position: relative;
+}
+
+.reopen-video {
+  position: fixed;
+  bottom: 16px;
+  inset-inline-end: 16px;
+  z-index: 50;
 }
 
 .badges {

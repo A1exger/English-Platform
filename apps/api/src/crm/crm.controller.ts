@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -9,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { CrmService } from './crm.service';
 import { AddStudentDto } from './dto/add-student.dto';
+import { CreateStudentDto } from './dto/create-student.dto';
 import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -34,9 +36,25 @@ export class CrmController {
     return this.crm.addStudent(user, dto);
   }
 
+  // Admin creates a brand-new student account.
+  @Roles('admin')
+  @Post('students/new')
+  createStudent(@Body() dto: CreateStudentDto) {
+    return this.crm.createStudent(dto);
+  }
+
   @Get('students')
   listStudents(@CurrentUser() user: AuthenticatedUser) {
     return this.crm.listStudents(user);
+  }
+
+  // Tutor: unenroll. Admin: delete the account.
+  @Delete('students/:studentProfileId')
+  removeStudent(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('studentProfileId') studentProfileId: string,
+  ) {
+    return this.crm.removeStudent(user, studentProfileId);
   }
 
   @Get('students/:studentProfileId')

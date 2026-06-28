@@ -25,10 +25,11 @@ export function StudentsView() {
   const router = useRouter();
 
   const [rows, setRows] = useState<Row[]>([]);
-  const [isTutor, setIsTutor] = useState(false);
+  const [role, setRole] = useState<string>('');
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState('');
+  const [newStudent, setNewStudent] = useState({ firstName: '', lastName: '', email: '', password: '' });
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -38,7 +39,7 @@ export function StudentsView() {
     }
     try {
       const me = await fetchMe(token, locale);
-      setIsTutor(me.role === 'tutor');
+      setRole(me.role);
       setRows(await apiFetch<Row[]>('/crm/students', { token, locale }));
       setState('ready');
     } catch (e) {
@@ -68,8 +69,37 @@ export function StudentsView() {
     }
   }
 
+  async function createStudent(e: FormEvent) {
+    e.preventDefault();
+    const token = tokenStore.get();
+    if (!token) return;
+    setBusy(true);
+    try {
+      await apiFetch('/crm/students/new', { method: 'POST', token, locale, body: newStudent });
+      setNewStudent({ firstName: '', lastName: '', email: '', password: '' });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeStudent(id: string) {
+    const token = tokenStore.get();
+    if (!token) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/crm/students/${id}`, { method: 'DELETE', token, locale });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
+
+  const isAdmin = role === 'admin';
+  const isTutor = role === 'tutor';
 
   return (
     <div className="content">
@@ -85,6 +115,17 @@ export function StudentsView() {
           <button type="submit" disabled={busy}>
             {busy ? t('adding') : t('add')}
           </button>
+        </form>
+      )}
+
+      {isAdmin && (
+        <form className="card form-grid" onSubmit={createStudent}>
+          <strong>{t('create')}</strong>
+          <label>{t('firstName')}<input required value={newStudent.firstName} onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })} /></label>
+          <label>{t('lastName')}<input required value={newStudent.lastName} onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })} /></label>
+          <label>{t('email')}<input type="email" required value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} /></label>
+          <label>{t('password')}<input type="password" required minLength={8} value={newStudent.password} onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })} /></label>
+          <button type="submit" disabled={busy}>{busy ? t('adding') : t('create')}</button>
         </form>
       )}
 
@@ -104,6 +145,9 @@ export function StudentsView() {
                   {r.attendanceRate === null ? '—' : `${r.attendanceRate}%`} ·{' '}
                   {format.number(r.balanceCents / 100, { style: 'currency', currency: 'EUR' })}
                 </span>
+                <button type="button" disabled={busy} onClick={() => removeStudent(r.studentProfileId)}>
+                  {isAdmin ? t('delete') : t('remove')}
+                </button>
               </li>
             ))}
           </ul>
