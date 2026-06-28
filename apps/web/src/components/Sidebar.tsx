@@ -5,20 +5,23 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import { fetchMe, tokenStore } from '@/lib/auth';
 
-type Item = { key: string; href: string };
-
-const COMMON: Item[] = [
-  { key: 'overview', href: '/dashboard' },
-  { key: 'schedule', href: '/schedule' },
-  { key: 'materials', href: '/materials' },
-  { key: 'homework', href: '/homework' },
-  { key: 'billing', href: '/billing' },
-  { key: 'settings', href: '/settings' }
-];
+type Item = { key: string; href: string; labelKey?: string };
 
 function itemsForRole(role: string | null): Item[] {
-  const items = [...COMMON];
-  // Insert role-specific entries after Overview.
+  // Students see "Payment" instead of "Billing".
+  const billing: Item =
+    role === 'student'
+      ? { key: 'billing', href: '/billing', labelKey: 'payment' }
+      : { key: 'billing', href: '/billing' };
+  const common: Item[] = [
+    { key: 'overview', href: '/dashboard' },
+    { key: 'schedule', href: '/schedule' },
+    { key: 'materials', href: '/materials' },
+    { key: 'homework', href: '/homework' },
+    billing,
+    { key: 'settings', href: '/settings' }
+  ];
+
   const extra: Item[] = [];
   if (role === 'admin') {
     extra.push({ key: 'users', href: '/admin/users' });
@@ -30,7 +33,7 @@ function itemsForRole(role: string | null): Item[] {
   if (role === 'student') {
     extra.push({ key: 'progress', href: '/progress' });
   }
-  return [items[0], ...extra, ...items.slice(1)];
+  return [common[0], ...extra, ...common.slice(1)];
 }
 
 export function Sidebar() {
@@ -55,7 +58,7 @@ export function Sidebar() {
           href={it.href}
           className={`nav-item${pathname === it.href ? ' active' : ''}`}
         >
-          {nav(it.key)}
+          {nav(it.labelKey ?? it.key)}
         </Link>
       ))}
     </nav>

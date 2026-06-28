@@ -192,7 +192,8 @@
     "analytics": "Аналитика",
     "settings": "Настройки",
     "users": "Пользователи",
-    "progress": "Прогресс"
+    "progress": "Прогресс",
+    "payment": "Оплата"
   },
   "dashboard": {
     "greeting": "С возвращением, {name}!",

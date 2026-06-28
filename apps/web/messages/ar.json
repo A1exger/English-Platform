@@ -192,7 +192,8 @@
     "analytics": "التحليلات",
     "settings": "الإعدادات",
     "users": "المستخدمون",
-    "progress": "التقدم"
+    "progress": "التقدم",
+    "payment": "الدفع"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",

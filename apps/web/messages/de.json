@@ -192,7 +192,8 @@
     "analytics": "Analytik",
     "settings": "Einstellungen",
     "users": "Benutzer",
-    "progress": "Fortschritt"
+    "progress": "Fortschritt",
+    "payment": "Zahlung"
   },
   "dashboard": {
     "greeting": "Willkommen zurück, {name}!",

@@ -1,8 +1,9 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { routing, isRtl, type Locale, Link } from '@/i18n/routing';
+import { routing, isRtl, type Locale } from '@/i18n/routing';
 import { HeaderActions } from '@/components/HeaderActions';
+import { BrandLink } from '@/components/BrandLink';
 import '../globals.css';
 
 export function generateStaticParams() {
@@ -29,9 +30,7 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider messages={messages}>
           <header className="topbar">
-            <Link href="/" className="brand" aria-label="English Spark Studio — home">
-              English Spark Studio
-            </Link>
+            <BrandLink />
             <HeaderActions />
           </header>
           <main className="container">{children}</main>

@@ -56,6 +56,7 @@ export function SettingsView() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
+    email: '',
     firstName: '',
     lastName: '',
     timezone: '',
@@ -76,6 +77,7 @@ export function SettingsView() {
         });
         setMe(profile);
         setForm({
+          email: profile.email ?? '',
           firstName: profile.firstName ?? '',
           lastName: profile.lastName ?? '',
           timezone: (profile as { timezone?: string }).timezone ?? 'UTC',
@@ -104,6 +106,7 @@ export function SettingsView() {
         token,
         locale,
         body: {
+          email: form.email,
           firstName: form.firstName,
           lastName: form.lastName,
           timezone: form.timezone,
@@ -129,12 +132,18 @@ export function SettingsView() {
       <form className="card form-grid" onSubmit={save}>
         <label>
           {t('email')}
-          <input value={me?.email ?? ''} disabled />
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
         </label>
-        <label>
-          {t('role')}
-          <input value={me?.role ?? ''} disabled />
-        </label>
+        {me?.role !== 'student' && (
+          <label>
+            {t('role')}
+            <input value={me?.role ?? ''} disabled />
+          </label>
+        )}
         <label>
           {t('firstName')}
           <input

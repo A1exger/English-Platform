@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
@@ -27,7 +27,18 @@ export class UsersService {
   }
 
   async updateMe(user: AuthenticatedUser, dto: UpdateMeDto) {
+    // Allow changing the login email, enforcing uniqueness.
+    if (dto.email !== undefined) {
+      const taken = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (taken && taken.id !== user.id) {
+        throw new ConflictException('Email already in use');
+      }
+    }
+
     const userData = {
+      ...(dto.email !== undefined ? { email: dto.email } : {}),
       ...(dto.firstName !== undefined ? { firstName: dto.firstName } : {}),
       ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
       ...(dto.locale !== undefined ? { locale: dto.locale } : {}),

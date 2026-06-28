@@ -1,4 +1,5 @@
 import {
+  IsEmail,
   IsIn,
   IsOptional,
   IsString,
@@ -7,6 +8,10 @@ import {
 import { CEFR_LEVELS, CefrLevel } from '../../common/constants/enums';
 
 export class UpdateMeDto {
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
   @IsOptional()
   @IsString()
   firstName?: string;

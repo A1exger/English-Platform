@@ -192,7 +192,8 @@
     "analytics": "Analytique",
     "settings": "Paramètres",
     "users": "Utilisateurs",
-    "progress": "Progression"
+    "progress": "Progression",
+    "payment": "Paiement"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
