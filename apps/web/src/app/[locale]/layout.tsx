@@ -1,7 +1,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { routing, isRtl, type Locale } from '@/i18n/routing';
+import { routing, isRtl, type Locale, Link } from '@/i18n/routing';
 import { HeaderActions } from '@/components/HeaderActions';
 import '../globals.css';
 
@@ -29,7 +29,9 @@ export default async function LocaleLayout({
       <body>
         <NextIntlClientProvider messages={messages}>
           <header className="topbar">
-            <span className="brand">LinguaDesk</span>
+            <Link href="/" className="brand" aria-label="LinguaDesk — home">
+              LinguaDesk
+            </Link>
             <HeaderActions />
           </header>
           <main className="container">{children}</main>

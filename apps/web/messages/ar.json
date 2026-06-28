@@ -36,7 +36,8 @@
     "create": "إضافة",
     "creating": "جارٍ الإضافة…",
     "empty": "لا توجد مواد.",
-    "delete": "حذف"
+    "delete": "حذف",
+    "uploadFile": "رفع ملف"
   },
   "students": {
     "title": "الطلاب",
@@ -108,7 +109,14 @@
     "create": "إنشاء",
     "creating": "جارٍ الإنشاء…",
     "empty": "لا توجد دروس.",
-    "openBoard": "فتح اللوحة"
+    "openBoard": "فتح اللوحة",
+    "today": "اليوم",
+    "join": "انضمام",
+    "prevWeek": "السابق",
+    "nextWeek": "التالي",
+    "duration": "المدة (دقيقة)",
+    "viewList": "قائمة",
+    "viewWeek": "أسبوع"
   },
   "billing": {
     "title": "الفواتير",
@@ -133,7 +141,8 @@
     "submitReference": "إرسال",
     "transferSent": "تم الإرسال — بانتظار تأكيد المشرف.",
     "pendingTransfers": "تحويلات بانتظار التأكيد",
-    "confirm": "تأكيد"
+    "confirm": "تأكيد",
+    "currency": "العملة"
   },
   "room": {
     "title": "غرفة الدرس",
@@ -152,7 +161,9 @@
     "saved": "تم الحفظ",
     "connecting": "جارٍ الاتصال…",
     "connected": "متصل",
-    "back": "رجوع"
+    "back": "رجوع",
+    "notes": "ملاحظات",
+    "notesPlaceholder": "ملاحظات مشتركة (يراها المعلّم والطالب)…"
   },
   "common": {
     "appName": "LinguaDesk",
@@ -173,7 +184,8 @@
     "billing": "الفواتير",
     "analytics": "التحليلات",
     "settings": "الإعدادات",
-    "users": "المستخدمون"
+    "users": "المستخدمون",
+    "progress": "التقدم"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",
@@ -184,5 +196,36 @@
     "nextLesson": "الدرس التالي",
     "joinLesson": "الانضمام إلى الدرس",
     "everyoneOwnLanguage": "يرى كل مشارك الواجهة بلغته الخاصة — الدرس مشترك بغضّ النظر عن اللغة."
+  },
+  "studentProfile": {
+    "title": "ملف الطالب",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "country": "البلد",
+    "address": "العنوان",
+    "birthDate": "تاريخ الميلاد",
+    "level": "المستوى",
+    "goals": "الأهداف",
+    "save": "حفظ",
+    "saved": "تم الحفظ",
+    "back": "رجوع",
+    "age": "العمر",
+    "notes": "الملاحظات",
+    "noteBody": "ملاحظة",
+    "lessons": "الدروس"
+  },
+  "progress": {
+    "title": "تقدمي",
+    "level": "المستوى",
+    "lessonsCompleted": "الدروس المكتملة",
+    "lessonsUpcoming": "الدروس القادمة",
+    "attendance": "الحضور",
+    "homework": "الواجبات المقيّمة",
+    "achievements": "الإنجازات",
+    "badge_first_lesson": "الدرس الأول",
+    "badge_five_lessons": "5 دروس",
+    "badge_ten_lessons": "10 دروس",
+    "badge_homework_hero": "بطل الواجبات",
+    "badge_perfect_attendance": "حضور مثالي"
   }
 }

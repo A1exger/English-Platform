@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
-import { ApiError, apiFetch } from '@/lib/api';
+import { ApiError, apiFetch, apiUpload, fileUrl } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 
 interface Material {
@@ -79,6 +79,23 @@ export function MaterialsView() {
     }
   }
 
+  async function upload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    const token = tokenStore.get();
+    if (!file || !token) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('title', file.name);
+      await apiUpload('/materials/upload', fd, { token, locale });
+      await load();
+    } finally {
+      setBusy(false);
+      e.target.value = '';
+    }
+  }
+
   async function remove(id: string) {
     const token = tokenStore.get();
     if (!token) return;
@@ -94,13 +111,20 @@ export function MaterialsView() {
   if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
-  const isTutor = me?.role === 'tutor';
+  const canManage = me?.role === 'tutor' || me?.role === 'admin';
 
   return (
     <div className="content">
       <h2>{t('title')}</h2>
 
-      {isTutor && (
+      {canManage && (
+        <div className="card upload-row">
+          <strong>{t('uploadFile')}</strong>
+          <input type="file" disabled={busy} onChange={upload} />
+        </div>
+      )}
+
+      {canManage && (
         <form className="card form-grid" onSubmit={create}>
           <strong>{t('add')}</strong>
           <label>
@@ -140,7 +164,7 @@ export function MaterialsView() {
               <li key={m.id}>
                 <span>
                   {m.url ? (
-                    <a className="link" href={m.url} target="_blank" rel="noreferrer">
+                    <a className="link" href={fileUrl(m.url)} target="_blank" rel="noreferrer">
                       {m.title}
                     </a>
                   ) : (
@@ -151,7 +175,7 @@ export function MaterialsView() {
                   {m.type}
                   {m.language ? ` · ${m.language}` : ''}
                 </span>
-                {isTutor && (
+                {canManage && (
                   <button type="button" disabled={busy} onClick={() => remove(m.id)}>
                     {t('delete')}
                   </button>

@@ -36,7 +36,8 @@
     "create": "Ajouter",
     "creating": "Ajout…",
     "empty": "Aucun support.",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "uploadFile": "Téléverser un fichier"
   },
   "students": {
     "title": "Élèves",
@@ -108,7 +109,14 @@
     "create": "Créer",
     "creating": "Création…",
     "empty": "Aucun cours.",
-    "openBoard": "Ouvrir le tableau"
+    "openBoard": "Ouvrir le tableau",
+    "today": "Aujourd’hui",
+    "join": "Rejoindre",
+    "prevWeek": "Précédent",
+    "nextWeek": "Suivant",
+    "duration": "Durée (min)",
+    "viewList": "Liste",
+    "viewWeek": "Semaine"
   },
   "billing": {
     "title": "Facturation",
@@ -133,7 +141,8 @@
     "submitReference": "Envoyer",
     "transferSent": "Envoyé — en attente de confirmation par l'administrateur.",
     "pendingTransfers": "Transferts en attente de confirmation",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "currency": "Devise"
   },
   "room": {
     "title": "Salle de cours",
@@ -152,7 +161,9 @@
     "saved": "Enregistré",
     "connecting": "Connexion…",
     "connected": "Connecté",
-    "back": "Retour"
+    "back": "Retour",
+    "notes": "Notes",
+    "notesPlaceholder": "Notes partagées (visibles par le professeur et l’élève)…"
   },
   "common": {
     "appName": "LinguaDesk",
@@ -173,7 +184,8 @@
     "billing": "Facturation",
     "analytics": "Analytique",
     "settings": "Paramètres",
-    "users": "Utilisateurs"
+    "users": "Utilisateurs",
+    "progress": "Progression"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
@@ -184,5 +196,36 @@
     "nextLesson": "Prochain cours",
     "joinLesson": "Rejoindre le cours",
     "everyoneOwnLanguage": "Chaque participant voit l'interface dans sa propre langue — le cours est partagé quelle que soit la langue."
+  },
+  "studentProfile": {
+    "title": "Profil de l'élève",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "country": "Pays",
+    "address": "Adresse",
+    "birthDate": "Date de naissance",
+    "level": "Niveau",
+    "goals": "Objectifs",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "back": "Retour",
+    "age": "Âge",
+    "notes": "Notes",
+    "noteBody": "Note",
+    "lessons": "Cours"
+  },
+  "progress": {
+    "title": "Ma progression",
+    "level": "Niveau",
+    "lessonsCompleted": "Cours terminés",
+    "lessonsUpcoming": "Prochains cours",
+    "attendance": "Présence",
+    "homework": "Devoirs notés",
+    "achievements": "Réussites",
+    "badge_first_lesson": "Premier cours",
+    "badge_five_lessons": "5 cours",
+    "badge_ten_lessons": "10 cours",
+    "badge_homework_hero": "Héros des devoirs",
+    "badge_perfect_attendance": "Présence parfaite"
   }
 }

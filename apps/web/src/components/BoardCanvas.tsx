@@ -41,6 +41,9 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
   const [erasing, setErasing] = useState(false);
   const [status, setStatus] = useState<'connecting' | 'connected'>('connecting');
   const [saved, setSaved] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notes, setNotes] = useState('');
+  const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const drawSeg = useCallback((seg: Seg) => {
     const canvas = canvasRef.current;
@@ -100,10 +103,12 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
       return;
     }
 
-    apiFetch<{ latestSnapshot: string | null }>(`/lessons/${lessonId}/board`, {
-      token,
-    })
+    apiFetch<{ latestSnapshot: string | null; notes: string | null }>(
+      `/lessons/${lessonId}/board`,
+      { token },
+    )
       .then((board) => {
+        if (board.notes) setNotes(board.notes);
         if (board.latestSnapshot) {
           try {
             opsRef.current = JSON.parse(board.latestSnapshot) as Seg[];
@@ -125,6 +130,7 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
     socket.on('connect', () => socket.emit('board:join', { lessonId }));
     socket.on('board:joined', () => setStatus('connected'));
     socket.on('board:update', (msg: { update: BoardOp }) => applyOp(msg.update));
+    socket.on('board:note', (msg: { notes: string }) => setNotes(msg.notes));
 
     return () => {
       socket.close();
@@ -188,6 +194,22 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
     setSaved(true);
   }
 
+  // Shared notepad: broadcast live and debounce-persist to the server.
+  function onNotesChange(value: string) {
+    setNotes(value);
+    socketRef.current?.emit('board:note', { lessonId, notes: value });
+    if (notesTimer.current) clearTimeout(notesTimer.current);
+    notesTimer.current = setTimeout(() => {
+      const token = tokenStore.get();
+      if (!token) return;
+      void apiFetch(`/lessons/${lessonId}/board/notes`, {
+        method: 'POST',
+        token,
+        body: { notes: value },
+      }).catch(() => undefined);
+    }, 700);
+  }
+
   return (
     <div className="board-wrap">
       <div className="board-toolbar">
@@ -229,18 +251,43 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
         <button type="button" onClick={save}>
           {saved ? t('saved') : t('save')}
         </button>
+        <button
+          type="button"
+          className={notesOpen ? 'active' : ''}
+          onClick={() => setNotesOpen((v) => !v)}
+        >
+          📝 {t('notes')}
+        </button>
         <span className="muted">
           {status === 'connected' ? `● ${t('connected')}` : `○ ${t('connecting')}`}
         </span>
       </div>
-      <canvas
-        ref={canvasRef}
-        className="board-canvas"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-      />
+      <div className="board-stage">
+        <canvas
+          ref={canvasRef}
+          className="board-canvas"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+        />
+        {notesOpen && (
+          <aside className="board-notes">
+            <div className="board-notes-head">
+              <strong>{t('notes')}</strong>
+              <button type="button" onClick={() => setNotesOpen(false)}>
+                ✕
+              </button>
+            </div>
+            <textarea
+              className="board-notes-area"
+              value={notes}
+              placeholder={t('notesPlaceholder')}
+              onChange={(e) => onNotesChange(e.target.value)}
+            />
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

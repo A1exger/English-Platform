@@ -69,8 +69,22 @@ export class BillingService {
     return this.prisma.package.findMany({ where: { isActive: true } });
   }
 
+  /** Resolve the caller's tutor profile, creating one for an admin on demand. */
+  private async tutorProfileForOwner(user: AuthenticatedUser) {
+    const existing = await this.prisma.tutorProfile.findUnique({
+      where: { userId: user.id },
+    });
+    if (existing) {
+      return existing;
+    }
+    if (user.role === 'admin') {
+      return this.prisma.tutorProfile.create({ data: { userId: user.id } });
+    }
+    throw new ForbiddenException('No tutor profile for this user');
+  }
+
   async createPackage(user: AuthenticatedUser, dto: CreatePackageDto) {
-    const tutor = await this.tutorProfileForUser(user.id);
+    const tutor = await this.tutorProfileForOwner(user);
     return this.prisma.package.create({
       data: {
         tutorProfileId: tutor.id,

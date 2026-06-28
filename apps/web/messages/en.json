@@ -36,7 +36,8 @@
     "create": "Add",
     "creating": "Adding…",
     "empty": "No materials.",
-    "delete": "Delete"
+    "delete": "Delete",
+    "uploadFile": "Upload a file"
   },
   "students": {
     "title": "Students",
@@ -108,7 +109,14 @@
     "create": "Create",
     "creating": "Creating…",
     "empty": "No lessons.",
-    "openBoard": "Open board"
+    "openBoard": "Open board",
+    "today": "Today",
+    "join": "Join",
+    "prevWeek": "Previous",
+    "nextWeek": "Next",
+    "duration": "Duration (min)",
+    "viewList": "List",
+    "viewWeek": "Week"
   },
   "billing": {
     "title": "Billing",
@@ -133,7 +141,8 @@
     "submitReference": "Submit",
     "transferSent": "Submitted — awaiting admin confirmation.",
     "pendingTransfers": "Transfers awaiting confirmation",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "currency": "Currency"
   },
   "room": {
     "title": "Lesson room",
@@ -152,7 +161,9 @@
     "saved": "Saved",
     "connecting": "Connecting…",
     "connected": "Connected",
-    "back": "Back"
+    "back": "Back",
+    "notes": "Notes",
+    "notesPlaceholder": "Shared notes (visible to teacher and student)…"
   },
   "common": {
     "appName": "LinguaDesk",
@@ -173,7 +184,8 @@
     "billing": "Billing",
     "analytics": "Analytics",
     "settings": "Settings",
-    "users": "Users"
+    "users": "Users",
+    "progress": "Progress"
   },
   "dashboard": {
     "greeting": "Welcome back, {name}!",
@@ -184,5 +196,36 @@
     "nextLesson": "Next lesson",
     "joinLesson": "Join lesson",
     "everyoneOwnLanguage": "Every participant sees the interface in their own language — this lesson is shared regardless of language."
+  },
+  "studentProfile": {
+    "title": "Student profile",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "country": "Country",
+    "address": "Address",
+    "birthDate": "Date of birth",
+    "level": "Level",
+    "goals": "Goals",
+    "save": "Save",
+    "saved": "Saved",
+    "back": "Back",
+    "age": "Age",
+    "notes": "Notes",
+    "noteBody": "Note",
+    "lessons": "Lessons"
+  },
+  "progress": {
+    "title": "My progress",
+    "level": "Level",
+    "lessonsCompleted": "Lessons completed",
+    "lessonsUpcoming": "Upcoming lessons",
+    "attendance": "Attendance",
+    "homework": "Homework graded",
+    "achievements": "Achievements",
+    "badge_first_lesson": "First lesson",
+    "badge_five_lessons": "5 lessons",
+    "badge_ten_lessons": "10 lessons",
+    "badge_homework_hero": "Homework hero",
+    "badge_perfect_attendance": "Perfect attendance"
   }
 }

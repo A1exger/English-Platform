@@ -5,40 +5,51 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import { fetchMe, tokenStore } from '@/lib/auth';
 
-const items = [
+type Item = { key: string; href: string };
+
+const COMMON: Item[] = [
   { key: 'overview', href: '/dashboard' },
-  { key: 'students', href: '/students' },
   { key: 'schedule', href: '/schedule' },
   { key: 'materials', href: '/materials' },
   { key: 'homework', href: '/homework' },
   { key: 'billing', href: '/billing' },
-  { key: 'analytics', href: '/analytics' },
   { key: 'settings', href: '/settings' }
-] as const;
+];
+
+function itemsForRole(role: string | null): Item[] {
+  const items = [...COMMON];
+  // Insert role-specific entries after Overview.
+  const extra: Item[] = [];
+  if (role === 'admin') {
+    extra.push({ key: 'users', href: '/admin/users' });
+  }
+  if (role === 'tutor' || role === 'admin') {
+    extra.push({ key: 'students', href: '/students' });
+    extra.push({ key: 'analytics', href: '/analytics' });
+  }
+  if (role === 'student') {
+    extra.push({ key: 'progress', href: '/progress' });
+  }
+  return [items[0], ...extra, ...items.slice(1)];
+}
 
 export function Sidebar() {
   const nav = useTranslations('nav');
   const pathname = usePathname();
   const locale = useLocale();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
     const token = tokenStore.get();
     if (!token) return;
     fetchMe(token, locale)
-      .then((m) => setIsAdmin(m.role === 'admin'))
+      .then((m) => setRole(m.role))
       .catch(() => undefined);
   }, [locale]);
 
-  const links = [
-    ...items.slice(0, 2),
-    ...(isAdmin ? [{ key: 'users', href: '/admin/users' } as const] : []),
-    ...items.slice(2)
-  ];
-
   return (
     <nav className="sidebar">
-      {links.map((it) => (
+      {itemsForRole(role).map((it) => (
         <Link
           key={it.key}
           href={it.href}

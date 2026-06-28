@@ -36,7 +36,8 @@
     "create": "Добавить",
     "creating": "Добавление…",
     "empty": "Материалов нет.",
-    "delete": "Удалить"
+    "delete": "Удалить",
+    "uploadFile": "Загрузить файл"
   },
   "students": {
     "title": "Ученики",
@@ -108,7 +109,14 @@
     "create": "Создать",
     "creating": "Создание…",
     "empty": "Уроков нет.",
-    "openBoard": "Открыть доску"
+    "openBoard": "Открыть доску",
+    "today": "Сегодня",
+    "join": "Войти",
+    "prevWeek": "Назад",
+    "nextWeek": "Вперёд",
+    "duration": "Длительность (мин)",
+    "viewList": "Список",
+    "viewWeek": "Неделя"
   },
   "billing": {
     "title": "Оплата",
@@ -133,7 +141,8 @@
     "submitReference": "Отправить",
     "transferSent": "Отправлено — ожидает подтверждения администратором.",
     "pendingTransfers": "Переводы, ожидающие подтверждения",
-    "confirm": "Подтвердить"
+    "confirm": "Подтвердить",
+    "currency": "Валюта"
   },
   "room": {
     "title": "Комната урока",
@@ -152,7 +161,9 @@
     "saved": "Сохранено",
     "connecting": "Подключение…",
     "connected": "Подключено",
-    "back": "Назад"
+    "back": "Назад",
+    "notes": "Заметки",
+    "notesPlaceholder": "Общие заметки (видят преподаватель и ученик)…"
   },
   "common": {
     "appName": "LinguaDesk",
@@ -173,7 +184,8 @@
     "billing": "Финансы",
     "analytics": "Аналитика",
     "settings": "Настройки",
-    "users": "Пользователи"
+    "users": "Пользователи",
+    "progress": "Прогресс"
   },
   "dashboard": {
     "greeting": "С возвращением, {name}!",
@@ -184,5 +196,36 @@
     "nextLesson": "Следующий урок",
     "joinLesson": "Войти в урок",
     "everyoneOwnLanguage": "Каждый участник видит интерфейс на своём языке — урок общий независимо от языка."
+  },
+  "studentProfile": {
+    "title": "Профиль ученика",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "country": "Страна",
+    "address": "Адрес",
+    "birthDate": "Дата рождения",
+    "level": "Уровень",
+    "goals": "Цели",
+    "save": "Сохранить",
+    "saved": "Сохранено",
+    "back": "Назад",
+    "age": "Возраст",
+    "notes": "Заметки",
+    "noteBody": "Заметка",
+    "lessons": "Уроки"
+  },
+  "progress": {
+    "title": "Мой прогресс",
+    "level": "Уровень",
+    "lessonsCompleted": "Уроков пройдено",
+    "lessonsUpcoming": "Предстоящие уроки",
+    "attendance": "Посещаемость",
+    "homework": "Проверенных ДЗ",
+    "achievements": "Достижения",
+    "badge_first_lesson": "Первый урок",
+    "badge_five_lessons": "5 уроков",
+    "badge_ten_lessons": "10 уроков",
+    "badge_homework_hero": "Герой домашек",
+    "badge_perfect_attendance": "Идеальная посещаемость"
   }
 }

@@ -12,8 +12,9 @@ export function RegisterForm() {
   const locale = useLocale();
   const router = useRouter();
 
+  // Public sign-up is for students only; tutors/admins are provisioned by an
+  // admin.
   const [form, setForm] = useState({
-    role: 'student',
     firstName: '',
     lastName: '',
     email: '',
@@ -30,7 +31,7 @@ export function RegisterForm() {
       const tokens = await apiFetch<Tokens>('/auth/register', {
         method: 'POST',
         locale,
-        body: { ...form, locale }
+        body: { ...form, role: 'student', locale }
       });
       tokenStore.set(tokens);
       router.push('/dashboard');
@@ -43,16 +44,6 @@ export function RegisterForm() {
 
   return (
     <form className="card login" onSubmit={onSubmit}>
-      <label>
-        {t('role')}
-        <select
-          value={form.role}
-          onChange={(e) => setForm({ ...form, role: e.target.value })}
-        >
-          <option value="student">{t('roleStudent')}</option>
-          <option value="tutor">{t('roleTutor')}</option>
-        </select>
-      </label>
       <label>
         {t('firstName')}
         <input

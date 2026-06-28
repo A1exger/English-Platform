@@ -36,7 +36,8 @@
     "create": "Hinzufügen",
     "creating": "Wird hinzugefügt…",
     "empty": "Keine Materialien.",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "uploadFile": "Datei hochladen"
   },
   "students": {
     "title": "Schüler",
@@ -108,7 +109,14 @@
     "create": "Erstellen",
     "creating": "Wird erstellt…",
     "empty": "Keine Stunden.",
-    "openBoard": "Board öffnen"
+    "openBoard": "Board öffnen",
+    "today": "Heute",
+    "join": "Beitreten",
+    "prevWeek": "Zurück",
+    "nextWeek": "Weiter",
+    "duration": "Dauer (Min)",
+    "viewList": "Liste",
+    "viewWeek": "Woche"
   },
   "billing": {
     "title": "Abrechnung",
@@ -133,7 +141,8 @@
     "submitReference": "Senden",
     "transferSent": "Übermittelt – wartet auf Bestätigung durch den Admin.",
     "pendingTransfers": "Überweisungen zur Bestätigung",
-    "confirm": "Bestätigen"
+    "confirm": "Bestätigen",
+    "currency": "Währung"
   },
   "room": {
     "title": "Unterrichtsraum",
@@ -152,7 +161,9 @@
     "saved": "Gespeichert",
     "connecting": "Verbinden…",
     "connected": "Verbunden",
-    "back": "Zurück"
+    "back": "Zurück",
+    "notes": "Notizen",
+    "notesPlaceholder": "Gemeinsame Notizen (für Lehrer und Schüler sichtbar)…"
   },
   "common": {
     "appName": "LinguaDesk",
@@ -173,7 +184,8 @@
     "billing": "Abrechnung",
     "analytics": "Analytik",
     "settings": "Einstellungen",
-    "users": "Benutzer"
+    "users": "Benutzer",
+    "progress": "Fortschritt"
   },
   "dashboard": {
     "greeting": "Willkommen zurück, {name}!",
@@ -184,5 +196,36 @@
     "nextLesson": "Nächste Stunde",
     "joinLesson": "Stunde beitreten",
     "everyoneOwnLanguage": "Jeder Teilnehmer sieht die Oberfläche in seiner eigenen Sprache — die Stunde ist gemeinsam, unabhängig von der Sprache."
+  },
+  "studentProfile": {
+    "title": "Schülerprofil",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "country": "Land",
+    "address": "Adresse",
+    "birthDate": "Geburtsdatum",
+    "level": "Niveau",
+    "goals": "Ziele",
+    "save": "Speichern",
+    "saved": "Gespeichert",
+    "back": "Zurück",
+    "age": "Alter",
+    "notes": "Notizen",
+    "noteBody": "Notiz",
+    "lessons": "Stunden"
+  },
+  "progress": {
+    "title": "Mein Fortschritt",
+    "level": "Niveau",
+    "lessonsCompleted": "Absolvierte Stunden",
+    "lessonsUpcoming": "Kommende Stunden",
+    "attendance": "Anwesenheit",
+    "homework": "Bewertete Hausaufgaben",
+    "achievements": "Erfolge",
+    "badge_first_lesson": "Erste Stunde",
+    "badge_five_lessons": "5 Stunden",
+    "badge_ten_lessons": "10 Stunden",
+    "badge_homework_hero": "Hausaufgaben-Held",
+    "badge_perfect_attendance": "Perfekte Anwesenheit"
   }
 }

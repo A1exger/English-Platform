@@ -32,7 +32,7 @@ export class BillingController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('tutor')
+  @Roles('tutor', 'admin')
   @Post('packages')
   createPackage(
     @CurrentUser() user: AuthenticatedUser,

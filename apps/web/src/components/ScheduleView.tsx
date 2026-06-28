@@ -1,10 +1,10 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
-import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { fetchMe, tokenStore } from '@/lib/auth';
 
 interface Lesson {
   id: string;
@@ -12,6 +12,16 @@ interface Lesson {
   startsAt: string;
   endsAt: string;
   status: string;
+}
+
+const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 08:00–21:00
+
+function startOfWeek(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const day = (x.getDay() + 6) % 7; // Monday = 0
+  x.setDate(x.getDate() - day);
+  return x;
 }
 
 export function ScheduleView() {
@@ -22,11 +32,23 @@ export function ScheduleView() {
   const format = useFormatter();
   const router = useRouter();
 
-  const [me, setMe] = useState<Me | null>(null);
+  const [canManage, setCanManage] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ title: '', start: '', end: '', price: '2500' });
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
+  const [busy, setBusy] = useState(false);
+  const [slot, setSlot] = useState<{ date: Date } | null>(null);
+  const [form, setForm] = useState({ title: '', duration: '60', price: '2500' });
+
+  const days = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart);
+        d.setDate(d.getDate() + i);
+        return d;
+      }),
+    [weekStart],
+  );
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -35,12 +57,9 @@ export function ScheduleView() {
       return;
     }
     try {
-      const [profile, list] = await Promise.all([
-        fetchMe(token, locale),
-        apiFetch<Lesson[]>('/lessons', { token, locale })
-      ]);
-      setMe(profile);
-      setLessons(list);
+      const me = await fetchMe(token, locale);
+      setCanManage(me.role === 'tutor' || me.role === 'admin');
+      setLessons(await apiFetch<Lesson[]>('/lessons', { token, locale }));
       setState('ready');
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
@@ -55,111 +74,174 @@ export function ScheduleView() {
     void load();
   }, [load]);
 
+  // Index lessons by "dayIndex-hour" within the visible week.
+  const byCell = useMemo(() => {
+    const map = new Map<string, Lesson[]>();
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    for (const l of lessons) {
+      const s = new Date(l.startsAt);
+      if (s < weekStart || s >= weekEnd) continue;
+      const dayIndex = Math.floor((s.getTime() - weekStart.getTime()) / 86400000);
+      const key = `${dayIndex}-${s.getHours()}`;
+      const arr = map.get(key) ?? [];
+      arr.push(l);
+      map.set(key, arr);
+    }
+    return map;
+  }, [lessons, weekStart]);
+
+  function shiftWeek(deltaDays: number) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + deltaDays);
+    setWeekStart(startOfWeek(d));
+  }
+
+  function openSlot(dayIndex: number, hour: number) {
+    if (!canManage) return;
+    const date = new Date(weekStart);
+    date.setDate(date.getDate() + dayIndex);
+    date.setHours(hour, 0, 0, 0);
+    setSlot({ date });
+    setForm({ title: '', duration: '60', price: '2500' });
+  }
+
   async function createLesson(e: FormEvent) {
     e.preventDefault();
     const token = tokenStore.get();
-    if (!token) return;
-    setSaving(true);
+    if (!token || !slot) return;
+    setBusy(true);
     try {
+      const start = slot.date;
+      const end = new Date(start.getTime() + (Number(form.duration) || 60) * 60000);
       await apiFetch('/lessons', {
         method: 'POST',
         token,
         locale,
         body: {
           title: form.title || undefined,
-          startsAt: new Date(form.start).toISOString(),
-          endsAt: new Date(form.end).toISOString(),
-          priceCents: Number(form.price) || 0
-        }
+          startsAt: start.toISOString(),
+          endsAt: end.toISOString(),
+          priceCents: Number(form.price) || 0,
+        },
       });
-      setForm({ title: '', start: '', end: '', price: '2500' });
+      setSlot(null);
       await load();
-    } catch {
-      /* surfaced via reload */
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   }
 
   if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
-  if (state === 'error')
-    return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
+  if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
+
+  const weekLabel = `${format.dateTime(days[0], { day: 'numeric', month: 'short' })} – ${format.dateTime(days[6], { day: 'numeric', month: 'short' })}`;
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <div className="row-between">
+        <h2>{t('title')}</h2>
+        <div className="cal-nav">
+          <button type="button" onClick={() => shiftWeek(-7)}>‹ {t('prevWeek')}</button>
+          <button type="button" onClick={() => setWeekStart(startOfWeek(new Date()))}>{t('today')}</button>
+          <button type="button" onClick={() => shiftWeek(7)}>{t('nextWeek')} ›</button>
+          <span className="muted">{weekLabel}</span>
+        </div>
+      </div>
 
-      {me?.role === 'tutor' && (
+      <div className="cal">
+        <div className="cal-head cal-corner" />
+        {days.map((d, i) => (
+          <div key={i} className="cal-head">
+            {format.dateTime(d, { weekday: 'short' })}{' '}
+            <span className="muted">{format.dateTime(d, { day: 'numeric' })}</span>
+          </div>
+        ))}
+
+        {HOURS.map((hour) => (
+          <FragmentRow
+            key={hour}
+            hour={hour}
+            days={days}
+            byCell={byCell}
+            canManage={canManage}
+            onSlot={openSlot}
+            joinLabel={tDash('joinLesson')}
+            boardLabel={t('openBoard')}
+          />
+        ))}
+      </div>
+
+      {slot && (
         <form className="card form-grid" onSubmit={createLesson}>
-          <strong>{t('newLesson')}</strong>
+          <strong>
+            {t('newLesson')} ·{' '}
+            {format.dateTime(slot.date, { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+          </strong>
           <label>
             {t('titleField')}
-            <input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
+            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           </label>
           <label>
-            {t('start')}
-            <input
-              type="datetime-local"
-              required
-              value={form.start}
-              onChange={(e) => setForm({ ...form, start: e.target.value })}
-            />
-          </label>
-          <label>
-            {t('end')}
-            <input
-              type="datetime-local"
-              required
-              value={form.end}
-              onChange={(e) => setForm({ ...form, end: e.target.value })}
-            />
+            {t('duration')}
+            <input type="number" min={15} step={15} value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
           </label>
           <label>
             {t('price')}
-            <input
-              type="number"
-              min={0}
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-            />
+            <input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
           </label>
-          <button type="submit" disabled={saving}>
-            {saving ? t('creating') : t('create')}
-          </button>
+          <button type="submit" disabled={busy}>{busy ? t('creating') : t('create')}</button>
+          <button type="button" className="ghost" onClick={() => setSlot(null)}>✕</button>
         </form>
       )}
-
-      <div className="card">
-        {lessons.length === 0 ? (
-          <p className="note">{t('empty')}</p>
-        ) : (
-          <ul className="lesson-list">
-            {lessons.map((l) => (
-              <li key={l.id}>
-                <span>{l.title ?? l.id}</span>
-                <span className="muted">
-                  {format.dateTime(new Date(l.startsAt), {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                  })}{' '}
-                  · {l.status}
-                </span>
-                <span className="row-actions">
-                  <Link className="link" href={`/lessons/${l.id}/room`}>
-                    {tDash('joinLesson')} →
-                  </Link>
-                  <Link className="link" href={`/lessons/${l.id}/board`}>
-                    {t('openBoard')}
-                  </Link>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
     </div>
+  );
+}
+
+function FragmentRow({
+  hour,
+  days,
+  byCell,
+  canManage,
+  onSlot,
+  joinLabel,
+  boardLabel,
+}: {
+  hour: number;
+  days: Date[];
+  byCell: Map<string, Lesson[]>;
+  canManage: boolean;
+  onSlot: (dayIndex: number, hour: number) => void;
+  joinLabel: string;
+  boardLabel: string;
+}) {
+  return (
+    <>
+      <div className="cal-hour">{String(hour).padStart(2, '0')}:00</div>
+      {days.map((_, dayIndex) => {
+        const items = byCell.get(`${dayIndex}-${hour}`) ?? [];
+        return (
+          <div
+            key={dayIndex}
+            className={`cal-cell${canManage ? ' clickable' : ''}`}
+            onClick={() => items.length === 0 && onSlot(dayIndex, hour)}
+          >
+            {items.map((l) => (
+              <div key={l.id} className={`cal-event status-${l.status}`}>
+                <div className="cal-event-title">{l.title ?? '—'}</div>
+                <div className="cal-event-actions">
+                  <Link className="link" href={`/lessons/${l.id}/room`} onClick={(e) => e.stopPropagation()}>
+                    {joinLabel}
+                  </Link>
+                  <Link className="link" href={`/lessons/${l.id}/board`} onClick={(e) => e.stopPropagation()}>
+                    {boardLabel}
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </>
   );
 }

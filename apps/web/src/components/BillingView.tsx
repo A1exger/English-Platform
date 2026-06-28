@@ -75,7 +75,7 @@ export function BillingView() {
   const [pending, setPending] = useState<PendingTransfer[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: '', lessons: '10', price: '20000' });
+  const [form, setForm] = useState({ name: '', lessons: '10', price: '20000', currency: 'EUR' });
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -195,10 +195,11 @@ export function BillingView() {
         body: {
           name: form.name,
           lessonsCount: Number(form.lessons) || 1,
-          priceCents: Number(form.price) || 0
+          priceCents: Number(form.price) || 0,
+          currency: form.currency
         }
       });
-      setForm({ name: '', lessons: '10', price: '20000' });
+      setForm({ name: '', lessons: '10', price: '20000', currency: 'EUR' });
       await load();
     } finally {
       setBusy(false);
@@ -232,7 +233,7 @@ export function BillingView() {
         </div>
       )}
 
-      {isTutor && (
+      {(isTutor || isAdmin) && (
         <form className="card form-grid" onSubmit={createPackage}>
           <strong>{t('newPackage')}</strong>
           <label>
@@ -260,6 +261,17 @@ export function BillingView() {
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
             />
+          </label>
+          <label>
+            {t('currency')}
+            <select
+              value={form.currency}
+              onChange={(e) => setForm({ ...form, currency: e.target.value })}
+            >
+              <option value="EUR">EUR €</option>
+              <option value="USD">USD $</option>
+              <option value="TND">TND (DT)</option>
+            </select>
           </label>
           <button type="submit" disabled={busy}>
             {busy ? t('processing') : t('create')}

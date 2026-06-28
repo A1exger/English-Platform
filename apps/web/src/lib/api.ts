@@ -18,6 +18,43 @@ export class ApiError extends Error {
   }
 }
 
+/** Absolute URL for a server-relative path (e.g. an uploaded /uploads/... file). */
+export function fileUrl(url: string): string {
+  if (url.startsWith('/uploads')) {
+    return BASE.replace(/\/api\/v1\/?$/, '') + url;
+  }
+  return url;
+}
+
+/** Multipart upload (FormData); the browser sets the multipart boundary. */
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  opts: { token?: string | null; locale?: string } = {},
+): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      ...(opts.locale ? { 'x-lang': opts.locale } : {}),
+      ...(opts.token ? { Authorization: `Bearer ${opts.token}` } : {}),
+    },
+    body: formData,
+  });
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`;
+    try {
+      const data = (await res.json()) as { message?: string | string[] };
+      if (data?.message) {
+        message = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+      }
+    } catch {
+      /* non-JSON */
+    }
+    throw new ApiError(message, res.status);
+  }
+  return res.json() as Promise<T>;
+}
+
 export async function apiFetch<T>(
   path: string,
   opts: ApiOptions = {},
