@@ -103,6 +103,15 @@ export class BoardGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  @SubscribeMessage('board:note')
+  note(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { lessonId: string; notes: string },
+  ): void {
+    const room = `board:${body.lessonId}`;
+    client.to(room).emit('board:note', { notes: body.notes });
+  }
+
   @SubscribeMessage('board:cursor')
   cursor(
     @ConnectedSocket() client: Socket,

@@ -53,6 +53,8 @@ services:
       PORT: "3001"
     ports:
       - "3001:3001"
+    volumes:
+      - apiuploads:/app/uploads
     healthcheck:
       test:
         - CMD
@@ -80,3 +82,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  apiuploads:

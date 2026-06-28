@@ -42,6 +42,17 @@ export class BoardService {
     return updated;
   }
 
+  /** Persist the shared lesson notepad. */
+  async saveNotes(user: AuthenticatedUser, lessonId: string, notes: string) {
+    await this.lessons.getOne(user, lessonId);
+    const board = await this.ensureBoard(lessonId);
+    return this.prisma.board.update({
+      where: { id: board.id },
+      data: { notes },
+      select: { id: true, notes: true },
+    });
+  }
+
   async history(user: AuthenticatedUser, lessonId: string) {
     await this.lessons.getOne(user, lessonId);
     const board = await this.ensureBoard(lessonId);

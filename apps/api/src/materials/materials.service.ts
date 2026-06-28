@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -10,6 +11,35 @@ import { CreateMaterialDto } from './dto/create-material.dto';
 @Injectable()
 export class MaterialsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Create a Material from an uploaded file (served from /uploads). */
+  createUploaded(
+    user: AuthenticatedUser,
+    file: Express.Multer.File,
+    title?: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    const mime = file.mimetype || '';
+    const type = mime.startsWith('image/')
+      ? 'image'
+      : mime.startsWith('audio/')
+        ? 'audio'
+        : mime.startsWith('video/')
+          ? 'video'
+          : mime === 'application/pdf'
+            ? 'pdf'
+            : 'link';
+    return this.prisma.material.create({
+      data: {
+        ownerUserId: user.id,
+        type,
+        title: title || file.originalname,
+        url: `/uploads/${file.filename}`,
+      },
+    });
+  }
 
   create(user: AuthenticatedUser, dto: CreateMaterialDto) {
     // Materials keep the language of the original content; the platform UI is

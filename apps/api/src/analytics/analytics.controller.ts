@@ -7,7 +7,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('tutor')
+@Roles('tutor', 'admin')
 @Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly analytics: AnalyticsService) {}
@@ -15,5 +15,11 @@ export class AnalyticsController {
   @Get('overview')
   overview(@CurrentUser() user: AuthenticatedUser) {
     return this.analytics.overview(user);
+  }
+
+  @Roles('student')
+  @Get('progress')
+  progress(@CurrentUser() user: AuthenticatedUser) {
+    return this.analytics.progress(user);
   }
 }

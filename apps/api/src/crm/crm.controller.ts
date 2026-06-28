@@ -3,25 +3,29 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { CrmService } from './crm.service';
 import { AddStudentDto } from './dto/add-student.dto';
 import { CreateNoteDto } from './dto/create-note.dto';
+import { UpdateStudentDto } from './dto/update-student.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 
-// The CRM is the tutor's view of their students; all routes are tutor-only.
+// CRM: tutors manage their own students; admins see/edit all of them.
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('tutor')
+@Roles('tutor', 'admin')
 @Controller('crm')
 export class CrmController {
   constructor(private readonly crm: CrmService) {}
 
+  // Enrolling a student under yourself only makes sense for a tutor.
+  @Roles('tutor')
   @Post('students')
   addStudent(
     @CurrentUser() user: AuthenticatedUser,
@@ -43,6 +47,16 @@ export class CrmController {
     return this.crm.getStudentCard(user, studentProfileId);
   }
 
+  @Patch('students/:studentProfileId')
+  updateStudent(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('studentProfileId') studentProfileId: string,
+    @Body() dto: UpdateStudentDto,
+  ) {
+    return this.crm.updateStudent(user, studentProfileId, dto);
+  }
+
+  @Roles('tutor')
   @Post('students/:studentProfileId/notes')
   addNote(
     @CurrentUser() user: AuthenticatedUser,

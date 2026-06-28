@@ -13,6 +13,9 @@ dist/
 *.db
 *.db-journal
 
+# Uploaded materials (served from /uploads; mounted as a volume in prod)
+apps/api/uploads/
+
 # Misc
 .DS_Store
 *.log

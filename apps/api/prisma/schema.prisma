@@ -82,6 +82,9 @@ model StudentProfile {
   cefrLevel      String?
   goals          String?
   nativeLanguage String?
+  country        String?
+  address        String?
+  birthDate      DateTime?
   parentUserId   String?
   balanceCents   Int     @default(0)
 
@@ -336,6 +339,8 @@ model Board {
   id             String          @id @default(cuid())
   lessonId       String          @unique
   latestSnapshot String?
+  // Shared lesson notepad (plain text), synced live and persisted.
+  notes          String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   snapshots      BoardSnapshot[]
