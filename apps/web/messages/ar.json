@@ -193,7 +193,8 @@
     "settings": "الإعدادات",
     "users": "المستخدمون",
     "progress": "التقدم",
-    "payment": "الدفع"
+    "payment": "الدفع",
+    "exercises": "التمارين"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",
@@ -235,5 +236,43 @@
     "badge_ten_lessons": "10 دروس",
     "badge_homework_hero": "بطل الواجبات",
     "badge_perfect_attendance": "حضور مثالي"
+  },
+  "exercises": {
+    "title": "التمارين",
+    "library": "المكتبة",
+    "create": "إنشاء تمرين",
+    "type": "النوع",
+    "order": "ترتيب الكلمات",
+    "match": "المطابقة",
+    "fill": "ملء الفراغات",
+    "categorize": "التصنيف",
+    "words": "الكلمات (بالترتيب الصحيح)",
+    "wordsHint": "افصل الكلمات بمسافات.",
+    "prompt": "تعليمات (اختياري)",
+    "pairs": "الأزواج",
+    "pairsHint": "واحد في كل سطر: كلمة = ترجمة",
+    "fillText": "النص",
+    "fillHint": "ضع الإجابات بين قوسين: I [go] to [school].",
+    "categories": "الفئات",
+    "categoriesHint": "مفصولة بفواصل.",
+    "items": "العناصر",
+    "itemsHint": "واحد في كل سطر: عنصر = فئة",
+    "preview": "معاينة",
+    "save": "حفظ",
+    "creating": "جارٍ الحفظ…",
+    "empty": "لا توجد تمارين بعد.",
+    "delete": "حذف",
+    "duplicate": "نسخ",
+    "assign": "إسناد كواجب",
+    "due": "تاريخ التسليم",
+    "assignBtn": "إسناد",
+    "assigned": "تم الإسناد ✓",
+    "check": "تحقق",
+    "score": "النتيجة",
+    "place": "ضع",
+    "push": "إضافة إلى الدرس",
+    "live": "تمارين مباشرة",
+    "chooseStudents": "الطلاب",
+    "none": "لا توجد تمارين بعد."
   }
 }

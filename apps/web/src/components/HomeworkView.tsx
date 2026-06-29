@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { ExercisePlayer } from './ExercisePlayer';
 
 interface Submission {
   id: string;
@@ -12,11 +13,17 @@ interface Submission {
   grade?: string | null;
   feedback?: string | null;
 }
+interface ExerciseRef {
+  id: string;
+  status: string;
+  score: number | null;
+}
 interface Homework {
   id: string;
   title: string;
   status: string;
   submissions: Submission[];
+  exercises?: ExerciseRef[];
 }
 interface StudentRow {
   studentProfileId: string;
@@ -186,7 +193,20 @@ export function HomeworkView() {
                       {sub.feedback ? ` — ${sub.feedback}` : ''}
                     </p>
                   )}
-                  {!isTutor && h.status === 'assigned' && (
+                  {h.exercises && h.exercises.length > 0 &&
+                    (isTutor ? (
+                      <p className="muted">
+                        {h.exercises.length} ·{' '}
+                        {h.exercises.map((e) => (e.score == null ? '–' : `${e.score}%`)).join(', ')}
+                      </p>
+                    ) : (
+                      <div className="ex-list">
+                        {h.exercises.map((e) => (
+                          <ExercisePlayer key={e.id} instanceId={e.id} />
+                        ))}
+                      </div>
+                    ))}
+                  {!isTutor && h.status === 'assigned' && (!h.exercises || h.exercises.length === 0) && (
                     <div className="inline-form">
                       <textarea
                         placeholder={t('content')}

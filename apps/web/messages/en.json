@@ -193,7 +193,8 @@
     "settings": "Settings",
     "users": "Users",
     "progress": "Progress",
-    "payment": "Payment"
+    "payment": "Payment",
+    "exercises": "Exercises"
   },
   "dashboard": {
     "greeting": "Welcome back, {name}!",
@@ -235,5 +236,43 @@
     "badge_ten_lessons": "10 lessons",
     "badge_homework_hero": "Homework hero",
     "badge_perfect_attendance": "Perfect attendance"
+  },
+  "exercises": {
+    "title": "Exercises",
+    "library": "Library",
+    "create": "Create exercise",
+    "type": "Type",
+    "order": "Sentence order",
+    "match": "Matching",
+    "fill": "Fill the blanks",
+    "categorize": "Categorize",
+    "words": "Words (correct order)",
+    "wordsHint": "Separate words by spaces.",
+    "prompt": "Prompt (optional)",
+    "pairs": "Pairs",
+    "pairsHint": "One per line: word = translation",
+    "fillText": "Text",
+    "fillHint": "Wrap answers in brackets: I [go] to [school].",
+    "categories": "Categories",
+    "categoriesHint": "Comma-separated.",
+    "items": "Items",
+    "itemsHint": "One per line: item = category",
+    "preview": "Preview",
+    "save": "Save",
+    "creating": "Saving…",
+    "empty": "No exercises yet.",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "assign": "Assign to homework",
+    "due": "Due date",
+    "assignBtn": "Assign",
+    "assigned": "Assigned ✓",
+    "check": "Check",
+    "score": "Score",
+    "place": "place",
+    "push": "Add to lesson",
+    "live": "Live exercises",
+    "chooseStudents": "Students",
+    "none": "No exercises pushed yet."
   }
 }

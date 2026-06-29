@@ -193,7 +193,8 @@
     "settings": "Einstellungen",
     "users": "Benutzer",
     "progress": "Fortschritt",
-    "payment": "Zahlung"
+    "payment": "Zahlung",
+    "exercises": "Übungen"
   },
   "dashboard": {
     "greeting": "Willkommen zurück, {name}!",
@@ -235,5 +236,43 @@
     "badge_ten_lessons": "10 Stunden",
     "badge_homework_hero": "Hausaufgaben-Held",
     "badge_perfect_attendance": "Perfekte Anwesenheit"
+  },
+  "exercises": {
+    "title": "Übungen",
+    "library": "Bibliothek",
+    "create": "Übung erstellen",
+    "type": "Typ",
+    "order": "Satzstellung",
+    "match": "Zuordnung",
+    "fill": "Lücken füllen",
+    "categorize": "Kategorisieren",
+    "words": "Wörter (richtige Reihenfolge)",
+    "wordsHint": "Wörter mit Leerzeichen trennen.",
+    "prompt": "Hinweis (optional)",
+    "pairs": "Paare",
+    "pairsHint": "Eins pro Zeile: Wort = Übersetzung",
+    "fillText": "Text",
+    "fillHint": "Antworten in Klammern: I [go] to [school].",
+    "categories": "Kategorien",
+    "categoriesHint": "Mit Komma getrennt.",
+    "items": "Elemente",
+    "itemsHint": "Eins pro Zeile: Element = Kategorie",
+    "preview": "Vorschau",
+    "save": "Speichern",
+    "creating": "Speichern…",
+    "empty": "Noch keine Übungen.",
+    "delete": "Löschen",
+    "duplicate": "Duplizieren",
+    "assign": "Als Hausaufgabe geben",
+    "due": "Fällig am",
+    "assignBtn": "Zuweisen",
+    "assigned": "Zugewiesen ✓",
+    "check": "Prüfen",
+    "score": "Punkte",
+    "place": "einordnen",
+    "push": "Zur Stunde",
+    "live": "Live-Übungen",
+    "chooseStudents": "Schüler",
+    "none": "Noch keine Übungen."
   }
 }

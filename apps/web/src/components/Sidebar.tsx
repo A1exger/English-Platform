@@ -28,6 +28,7 @@ function itemsForRole(role: string | null): Item[] {
   }
   if (role === 'tutor' || role === 'admin') {
     extra.push({ key: 'students', href: '/students' });
+    extra.push({ key: 'exercises', href: '/exercises' });
     extra.push({ key: 'analytics', href: '/analytics' });
   }
   if (role === 'student') {

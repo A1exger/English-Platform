@@ -193,7 +193,8 @@
     "settings": "Paramètres",
     "users": "Utilisateurs",
     "progress": "Progression",
-    "payment": "Paiement"
+    "payment": "Paiement",
+    "exercises": "Exercices"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
@@ -235,5 +236,43 @@
     "badge_ten_lessons": "10 cours",
     "badge_homework_hero": "Héros des devoirs",
     "badge_perfect_attendance": "Présence parfaite"
+  },
+  "exercises": {
+    "title": "Exercices",
+    "library": "Bibliothèque",
+    "create": "Créer un exercice",
+    "type": "Type",
+    "order": "Ordre des mots",
+    "match": "Association",
+    "fill": "Compléter",
+    "categorize": "Catégoriser",
+    "words": "Mots (ordre correct)",
+    "wordsHint": "Séparez les mots par des espaces.",
+    "prompt": "Consigne (optionnel)",
+    "pairs": "Paires",
+    "pairsHint": "Une par ligne : mot = traduction",
+    "fillText": "Texte",
+    "fillHint": "Mettez les réponses entre crochets : I [go] to [school].",
+    "categories": "Catégories",
+    "categoriesHint": "Séparées par des virgules.",
+    "items": "Éléments",
+    "itemsHint": "Un par ligne : élément = catégorie",
+    "preview": "Aperçu",
+    "save": "Enregistrer",
+    "creating": "Enregistrement…",
+    "empty": "Aucun exercice.",
+    "delete": "Supprimer",
+    "duplicate": "Dupliquer",
+    "assign": "Donner en devoir",
+    "due": "Échéance",
+    "assignBtn": "Attribuer",
+    "assigned": "Attribué ✓",
+    "check": "Vérifier",
+    "score": "Score",
+    "place": "placer",
+    "push": "Ajouter au cours",
+    "live": "Exercices en direct",
+    "chooseStudents": "Élèves",
+    "none": "Aucun exercice."
   }
 }

@@ -193,7 +193,8 @@
     "settings": "Instellingen",
     "users": "Gebruikers",
     "progress": "Voortgang",
-    "payment": "Betaling"
+    "payment": "Betaling",
+    "exercises": "Oefeningen"
   },
   "dashboard": {
     "greeting": "Welkom terug, {name}!",
@@ -235,5 +236,43 @@
     "badge_ten_lessons": "10 lessen",
     "badge_homework_hero": "Huiswerkheld",
     "badge_perfect_attendance": "Perfecte aanwezigheid"
+  },
+  "exercises": {
+    "title": "Oefeningen",
+    "library": "Bibliotheek",
+    "create": "Oefening maken",
+    "type": "Type",
+    "order": "Woordvolgorde",
+    "match": "Koppelen",
+    "fill": "Vul in",
+    "categorize": "Categoriseren",
+    "words": "Woorden (juiste volgorde)",
+    "wordsHint": "Scheid woorden met spaties.",
+    "prompt": "Opdracht (optioneel)",
+    "pairs": "Paren",
+    "pairsHint": "Eén per regel: woord = vertaling",
+    "fillText": "Tekst",
+    "fillHint": "Zet antwoorden tussen haken: I [go] to [school].",
+    "categories": "Categorieën",
+    "categoriesHint": "Door komma's gescheiden.",
+    "items": "Items",
+    "itemsHint": "Eén per regel: item = categorie",
+    "preview": "Voorbeeld",
+    "save": "Opslaan",
+    "creating": "Opslaan…",
+    "empty": "Nog geen oefeningen.",
+    "delete": "Verwijderen",
+    "duplicate": "Dupliceren",
+    "assign": "Als huiswerk geven",
+    "due": "Inleverdatum",
+    "assignBtn": "Toewijzen",
+    "assigned": "Toegewezen ✓",
+    "check": "Controleren",
+    "score": "Score",
+    "place": "plaatsen",
+    "push": "Aan les toevoegen",
+    "live": "Live-oefeningen",
+    "chooseStudents": "Leerlingen",
+    "none": "Nog geen oefeningen."
   }
 }

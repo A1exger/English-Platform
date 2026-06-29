@@ -20,8 +20,9 @@ interface Seg {
 }
 type BoardOp = { type: 'seg'; seg: Seg } | { type: 'clear' };
 
-const BG = '#151c33';
-const COLORS = ['#e2e8f0', '#2563eb', '#f87171', '#34d399', '#fbbf24'];
+// Light-grey board surface with dark-friendly pen colours.
+const BG = '#eef1f6';
+const COLORS = ['#1f2937', '#2563eb', '#dc2626', '#16a34a', '#d97706'];
 
 function apiOrigin(): string {
   const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
