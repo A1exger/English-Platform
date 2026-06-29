@@ -324,6 +324,45 @@ model TutorNote {
   @@index([tutorProfileId])
 }
 
+// Reusable interactive exercise template built by a tutor/admin.
+// type: "order" | "match" | "fill" | "categorize"
+// payload: JSON string with the content AND the solution (never sent to students).
+model Exercise {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  type        String
+  title       String
+  payload     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  instances ExerciseInstance[]
+
+  @@index([ownerUserId])
+}
+
+// A handed-out copy of an exercise: live on a lesson board, or in homework
+// (one per student). context: "lesson" | "homework". state = student's current
+// arrangement (JSON). status: "open" | "submitted".
+model ExerciseInstance {
+  id               String   @id @default(cuid())
+  exerciseId       String
+  exercise         Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  context          String
+  lessonId         String?
+  homeworkId       String?
+  studentProfileId String?
+  state            String?
+  status           String   @default("open")
+  score            Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([lessonId])
+  @@index([homeworkId])
+  @@index([studentProfileId])
+}
+
 // Links a user to their Telegram chat so notifications can be delivered there.
 model TelegramLink {
   id       String   @id @default(cuid())

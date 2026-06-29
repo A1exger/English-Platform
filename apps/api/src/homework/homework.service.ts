@@ -41,6 +41,80 @@ export class HomeworkService {
     return profile;
   }
 
+  /** Tutor profile for the owner, auto-created for an admin. */
+  private async tutorProfileForOwner(user: AuthenticatedUser) {
+    const existing = await this.prisma.tutorProfile.findUnique({
+      where: { userId: user.id },
+    });
+    if (existing) return existing;
+    if (user.role === 'admin') {
+      return this.prisma.tutorProfile.create({ data: { userId: user.id } });
+    }
+    throw new ForbiddenException('No tutor profile for this user');
+  }
+
+  /** Attach exercise-instance summaries to homework rows. */
+  private async withExercises<T extends { id: string }>(hws: T[]) {
+    return Promise.all(
+      hws.map(async (hw) => {
+        const exercises = await this.prisma.exerciseInstance.findMany({
+          where: { homeworkId: hw.id },
+          select: { id: true, status: true, score: true, exerciseId: true },
+        });
+        return { ...hw, exercises };
+      }),
+    );
+  }
+
+  /**
+   * Assign one or more exercises to one or more students. Each student gets
+   * their own homework + per-exercise instance, and a notification.
+   */
+  async assignExercises(
+    user: AuthenticatedUser,
+    dto: {
+      studentProfileIds: string[];
+      exerciseIds: string[];
+      title?: string;
+      dueAt?: string;
+    },
+  ) {
+    const tutor = await this.tutorProfileForOwner(user);
+    const created: string[] = [];
+    for (const studentProfileId of dto.studentProfileIds) {
+      const student = await this.prisma.studentProfile.findUnique({
+        where: { id: studentProfileId },
+      });
+      if (!student) continue;
+      const homework = await this.prisma.homework.create({
+        data: {
+          tutorProfileId: tutor.id,
+          studentProfileId,
+          title: dto.title || 'Exercises',
+          dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
+          status: 'assigned',
+        },
+      });
+      for (const exerciseId of dto.exerciseIds) {
+        await this.prisma.exerciseInstance.create({
+          data: {
+            exerciseId,
+            context: 'homework',
+            homeworkId: homework.id,
+            studentProfileId,
+          },
+        });
+      }
+      await this.notifications.enqueue({
+        userId: student.userId,
+        templateKey: 'homework_assigned',
+        payload: { title: homework.title },
+      });
+      created.push(homework.id);
+    }
+    return { created: created.length };
+  }
+
   async create(user: AuthenticatedUser, dto: CreateHomeworkDto) {
     const tutor = await this.tutorProfileForUser(user.id);
     const homework = await this.prisma.homework.create({
@@ -72,29 +146,36 @@ export class HomeworkService {
   }
 
   async list(user: AuthenticatedUser) {
-    if (user.role === 'tutor') {
+    if (user.role === 'tutor' || user.role === 'admin') {
       const tutor = await this.prisma.tutorProfile.findUnique({
         where: { userId: user.id },
       });
-      return tutor
-        ? this.prisma.homework.findMany({
-            where: { tutorProfileId: tutor.id },
-            orderBy: { createdAt: 'desc' },
-            include: HOMEWORK_INCLUDE,
-          })
-        : [];
+      const hws =
+        user.role === 'admin'
+          ? await this.prisma.homework.findMany({
+              orderBy: { createdAt: 'desc' },
+              include: HOMEWORK_INCLUDE,
+            })
+          : tutor
+            ? await this.prisma.homework.findMany({
+                where: { tutorProfileId: tutor.id },
+                orderBy: { createdAt: 'desc' },
+                include: HOMEWORK_INCLUDE,
+              })
+            : [];
+      return this.withExercises(hws);
     }
     if (user.role === 'student') {
       const student = await this.prisma.studentProfile.findUnique({
         where: { userId: user.id },
       });
-      return student
-        ? this.prisma.homework.findMany({
-            where: { studentProfileId: student.id },
-            orderBy: { createdAt: 'desc' },
-            include: HOMEWORK_INCLUDE,
-          })
-        : [];
+      if (!student) return [];
+      const hws = await this.prisma.homework.findMany({
+        where: { studentProfileId: student.id },
+        orderBy: { createdAt: 'desc' },
+        include: HOMEWORK_INCLUDE,
+      });
+      return this.withExercises(hws);
     }
     return [];
   }
@@ -108,7 +189,8 @@ export class HomeworkService {
       throw new NotFoundException('Homework not found');
     }
     await this.assertCanView(user, hw);
-    return hw;
+    const [withEx] = await this.withExercises([hw]);
+    return withEx;
   }
 
   async submit(user: AuthenticatedUser, id: string, dto: SubmitHomeworkDto) {

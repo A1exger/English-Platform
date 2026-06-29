@@ -20,6 +20,7 @@ import { MaterialsModule } from './materials/materials.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AdminModule } from './admin/admin.module';
+import { ExercisesModule } from './exercises/exercises.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -51,6 +52,7 @@ import { HealthModule } from './health/health.module';
     NotificationsModule,
     AnalyticsModule,
     AdminModule,
+    ExercisesModule,
     HealthModule,
   ],
 })

@@ -10,6 +10,7 @@ import { HomeworkService } from './homework.service';
 import { CreateHomeworkDto } from './dto/create-homework.dto';
 import { SubmitHomeworkDto } from './dto/submit-homework.dto';
 import { GradeHomeworkDto } from './dto/grade-homework.dto';
+import { AssignExercisesDto } from './dto/assign-exercises.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -28,6 +29,16 @@ export class HomeworkController {
     @Body() dto: CreateHomeworkDto,
   ) {
     return this.homework.create(user, dto);
+  }
+
+  // Assign exercises to multiple students at once.
+  @Roles('tutor', 'admin')
+  @Post('assign')
+  assign(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: AssignExercisesDto,
+  ) {
+    return this.homework.assignExercises(user, dto);
   }
 
   @Get()
