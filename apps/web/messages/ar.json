@@ -122,7 +122,8 @@
     "nextWeek": "التالي",
     "duration": "المدة (دقيقة)",
     "viewList": "قائمة",
-    "viewWeek": "أسبوع"
+    "viewWeek": "أسبوع",
+    "student": "الطالب"
   },
   "billing": {
     "title": "الفواتير",
@@ -204,7 +205,9 @@
     "attendance": "الحضور",
     "nextLesson": "الدرس التالي",
     "joinLesson": "الانضمام إلى الدرس",
-    "everyoneOwnLanguage": "يرى كل مشارك الواجهة بلغته الخاصة — الدرس مشترك بغضّ النظر عن اللغة."
+    "everyoneOwnLanguage": "يرى كل مشارك الواجهة بلغته الخاصة — الدرس مشترك بغضّ النظر عن اللغة.",
+    "homeworkPending": "لديك {count} واجبات.",
+    "notifications": "الإشعارات"
   },
   "studentProfile": {
     "title": "ملف الطالب",
@@ -273,6 +276,7 @@
     "push": "إضافة إلى الدرس",
     "live": "تمارين مباشرة",
     "chooseStudents": "الطلاب",
-    "none": "لا توجد تمارين بعد."
+    "none": "لا توجد تمارين بعد.",
+    "view": "عرض"
   }
 }

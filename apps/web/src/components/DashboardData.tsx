@@ -27,6 +27,7 @@ export function DashboardData() {
 
   const [me, setMe] = useState<Me | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [hwPending, setHwPending] = useState(0);
   const [state, setState] = useState<State>('loading');
 
   useEffect(() => {
@@ -41,6 +42,10 @@ export function DashboardData() {
         setMe(profile);
         const list = await apiFetch<Lesson[]>('/lessons', { token, locale });
         setLessons(list);
+        if (profile.role === 'student') {
+          const hw = await apiFetch<{ status: string }[]>('/homework', { token, locale }).catch(() => []);
+          setHwPending(hw.filter((h) => h.status !== 'graded').length);
+        }
         setState('ready');
       } catch (e) {
         setState(e instanceof ApiError && e.status === 401 ? 'unauth' : 'error');
@@ -65,6 +70,12 @@ export function DashboardData() {
   return (
     <div className="content">
       <h2>{tDash('greeting', { name: me?.firstName ?? '' })}</h2>
+
+      {hwPending > 0 && (
+        <Link href="/homework" className="banner">
+          🔔 {tDash('homeworkPending', { count: hwPending })}
+        </Link>
+      )}
 
       <div className="card">
         <strong>{tApp('upcomingLessons')}</strong>

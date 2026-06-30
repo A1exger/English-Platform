@@ -38,7 +38,8 @@ export function ScheduleView() {
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [busy, setBusy] = useState(false);
   const [slot, setSlot] = useState<{ date: Date } | null>(null);
-  const [form, setForm] = useState({ title: '', duration: '60', price: '2500' });
+  const [form, setForm] = useState({ title: '', duration: '60', price: '25', studentProfileId: '' });
+  const [students, setStudents] = useState<{ studentProfileId: string; name: string }[]>([]);
 
   const days = useMemo(
     () =>
@@ -58,8 +59,17 @@ export function ScheduleView() {
     }
     try {
       const me = await fetchMe(token, locale);
-      setCanManage(me.role === 'tutor' || me.role === 'admin');
+      const manage = me.role === 'tutor' || me.role === 'admin';
+      setCanManage(manage);
       setLessons(await apiFetch<Lesson[]>('/lessons', { token, locale }));
+      if (manage) {
+        setStudents(
+          await apiFetch<{ studentProfileId: string; name: string }[]>('/crm/students', {
+            token,
+            locale
+          }).catch(() => [])
+        );
+      }
       setState('ready');
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
@@ -103,7 +113,7 @@ export function ScheduleView() {
     date.setDate(date.getDate() + dayIndex);
     date.setHours(hour, 0, 0, 0);
     setSlot({ date });
-    setForm({ title: '', duration: '60', price: '2500' });
+    setForm({ title: '', duration: '60', price: '25', studentProfileId: '' });
   }
 
   async function createLesson(e: FormEvent) {
@@ -122,7 +132,8 @@ export function ScheduleView() {
           title: form.title || undefined,
           startsAt: start.toISOString(),
           endsAt: end.toISOString(),
-          priceCents: Number(form.price) || 0,
+          priceCents: Math.round((Number(form.price) || 0) * 100),
+          studentProfileIds: form.studentProfileId ? [form.studentProfileId] : undefined,
         },
       });
       setSlot(null);
@@ -181,6 +192,17 @@ export function ScheduleView() {
           <label>
             {t('titleField')}
             <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </label>
+          <label>
+            {t('student')}
+            <select value={form.studentProfileId} onChange={(e) => setForm({ ...form, studentProfileId: e.target.value })}>
+              <option value="">—</option>
+              {students.map((s) => (
+                <option key={s.studentProfileId} value={s.studentProfileId}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             {t('duration')}

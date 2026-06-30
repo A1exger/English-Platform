@@ -122,7 +122,8 @@
     "nextWeek": "Next",
     "duration": "Duration (min)",
     "viewList": "List",
-    "viewWeek": "Week"
+    "viewWeek": "Week",
+    "student": "Student"
   },
   "billing": {
     "title": "Billing",
@@ -204,7 +205,9 @@
     "attendance": "Attendance",
     "nextLesson": "Next lesson",
     "joinLesson": "Join lesson",
-    "everyoneOwnLanguage": "Every participant sees the interface in their own language — this lesson is shared regardless of language."
+    "everyoneOwnLanguage": "Every participant sees the interface in their own language — this lesson is shared regardless of language.",
+    "homeworkPending": "You have {count} homework to do.",
+    "notifications": "Notifications"
   },
   "studentProfile": {
     "title": "Student profile",
@@ -273,6 +276,7 @@
     "push": "Add to lesson",
     "live": "Live exercises",
     "chooseStudents": "Students",
-    "none": "No exercises pushed yet."
+    "none": "No exercises pushed yet.",
+    "view": "View"
   }
 }

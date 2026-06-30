@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { BoardCanvas } from './BoardCanvas';
 import { VideoRoom } from './VideoRoom';
@@ -12,6 +12,12 @@ import { LessonExercisePanel } from './LessonExercisePanel';
 export function LessonRoom({ lessonId }: { lessonId: string }) {
   const t = useTranslations('room');
   const [showVideo, setShowVideo] = useState(true);
+  // Default the call window to the bottom-left corner.
+  const [videoPos, setVideoPos] = useState({ x: 16, y: 360, width: 280, height: 230 });
+
+  useEffect(() => {
+    setVideoPos((p) => ({ ...p, y: Math.max(80, window.innerHeight - p.height - 24) }));
+  }, []);
 
   return (
     <div className="lesson-room split">
@@ -25,7 +31,7 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
         <DraggablePanel
           title={t('video')}
           onClose={() => setShowVideo(false)}
-          initial={{ x: 880, y: 90, width: 300, height: 280 }}
+          initial={videoPos}
         >
           <VideoRoom lessonId={lessonId} />
         </DraggablePanel>

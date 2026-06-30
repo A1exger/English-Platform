@@ -13,6 +13,7 @@ import {
 import {
   checkAnswer,
   ExerciseType,
+  solutionFor,
   toQuestion,
   validatePayload,
 } from './exercise.logic';
@@ -201,13 +202,20 @@ export class ExercisesService {
   /** Server-side check. Idempotent for homework: returns the stored score. */
   async check(user: AuthenticatedUser, id: string) {
     const instance = await this.accessibleInstance(user, id);
+    const payload = JSON.parse(instance.exercise.payload);
+    const solution = solutionFor(instance.exercise.type as ExerciseType, payload);
     if (instance.status === 'submitted' && instance.score !== null) {
-      return { score: instance.score, correct: instance.score === 100, submitted: true };
+      return {
+        score: instance.score,
+        correct: instance.score === 100,
+        submitted: true,
+        solution,
+      };
     }
     const state = instance.state ? JSON.parse(instance.state) : {};
     const result = checkAnswer(
       instance.exercise.type as ExerciseType,
-      JSON.parse(instance.exercise.payload),
+      payload,
       state,
     );
 
@@ -229,6 +237,6 @@ export class ExercisesService {
         }
       }
     }
-    return { score: result.score, correct: result.correct, submitted: true };
+    return { score: result.score, correct: result.correct, submitted: true, solution };
   }
 }

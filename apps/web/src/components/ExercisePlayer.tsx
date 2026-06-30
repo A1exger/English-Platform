@@ -28,6 +28,7 @@ export function ExercisePlayer({
   const [view, setView] = useState<InstanceView | null>(null);
   const [state, setLocalState] = useState<ExerciseState>({});
   const [result, setResult] = useState<{ score: number; correct: boolean } | null>(null);
+  const [solution, setSolution] = useState<ExerciseState | null>(null);
   const [busy, setBusy] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -40,6 +41,14 @@ export function ExercisePlayer({
         setLocalState(v.state ?? {});
         if (v.status === 'submitted' && v.score !== null) {
           setResult({ score: v.score, correct: v.score === 100 });
+          // Fetch the solution (idempotent) so mistakes are highlighted on reload.
+          apiFetch<{ solution?: ExerciseState }>(`/exercise-instances/${instanceId}/check`, {
+            method: 'POST',
+            token,
+            locale
+          })
+            .then((r) => r.solution && setSolution(r.solution))
+            .catch(() => undefined);
         }
       })
       .catch(() => undefined);
@@ -69,11 +78,12 @@ export function ExercisePlayer({
     if (!token) return;
     setBusy(true);
     try {
-      const r = await apiFetch<{ score: number; correct: boolean }>(
+      const r = await apiFetch<{ score: number; correct: boolean; solution?: ExerciseState }>(
         `/exercise-instances/${instanceId}/check`,
         { method: 'POST', token, locale }
       );
-      setResult(r);
+      setResult({ score: r.score, correct: r.correct });
+      if (r.solution) setSolution(r.solution);
     } finally {
       setBusy(false);
     }
@@ -90,6 +100,7 @@ export function ExercisePlayer({
         state={state}
         onChange={onChange}
         readOnly={done}
+        review={solution}
       />
       {result ? (
         <p className={result.correct ? 'ex-ok' : 'ex-partial'}>

@@ -122,7 +122,8 @@
     "nextWeek": "Weiter",
     "duration": "Dauer (Min)",
     "viewList": "Liste",
-    "viewWeek": "Woche"
+    "viewWeek": "Woche",
+    "student": "Schüler"
   },
   "billing": {
     "title": "Abrechnung",
@@ -204,7 +205,9 @@
     "attendance": "Anwesenheit",
     "nextLesson": "Nächste Stunde",
     "joinLesson": "Stunde beitreten",
-    "everyoneOwnLanguage": "Jeder Teilnehmer sieht die Oberfläche in seiner eigenen Sprache — die Stunde ist gemeinsam, unabhängig von der Sprache."
+    "everyoneOwnLanguage": "Jeder Teilnehmer sieht die Oberfläche in seiner eigenen Sprache — die Stunde ist gemeinsam, unabhängig von der Sprache.",
+    "homeworkPending": "Du hast {count} Hausaufgaben.",
+    "notifications": "Benachrichtigungen"
   },
   "studentProfile": {
     "title": "Schülerprofil",
@@ -273,6 +276,7 @@
     "push": "Zur Stunde",
     "live": "Live-Übungen",
     "chooseStudents": "Schüler",
-    "none": "Noch keine Übungen."
+    "none": "Noch keine Übungen.",
+    "view": "Ansehen"
   }
 }

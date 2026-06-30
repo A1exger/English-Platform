@@ -378,11 +378,14 @@ button {
   position: relative;
 }
 
+/* Full-bleed lesson: board + tasks fill the viewport under the header. */
 .lesson-room.split {
+  position: fixed;
+  inset: 64px 0 0 0;
   display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 12px;
-  height: calc(100vh - 120px);
+  grid-template-columns: 1fr minmax(300px, 30vw);
+  gap: 8px;
+  padding: 8px;
 }
 
 .lesson-left {
@@ -396,7 +399,7 @@ button {
 
 .lesson-right {
   overflow: auto;
-  height: calc(100vh - 120px);
+  height: 100%;
 }
 
 .lesson-right-inner {
@@ -520,8 +523,75 @@ button {
 }
 .check {
   display: flex;
-  gap: 6px;
+  gap: 10px;
   align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: var(--panel);
+  cursor: pointer;
+}
+.check:hover {
+  border-color: var(--accent);
+}
+.check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+/* Exercise review highlighting */
+.chip.ok,
+.gap.ok {
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.18);
+}
+.chip.err,
+.gap.err {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.18);
+}
+select.ok {
+  border-color: #16a34a;
+}
+select.err {
+  border-color: #dc2626;
+}
+.ex-correct {
+  color: #34d399;
+  font-size: 13px;
+}
+
+/* Sidebar homework badge */
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-badge {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Dashboard notification banner */
+.banner {
+  display: block;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  text-decoration: none;
+}
+.banner:hover {
+  background: rgba(37, 99, 235, 0.25);
 }
 
 .reopen-video {

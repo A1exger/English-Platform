@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
-import { ExerciseRenderer, Question } from './ExerciseRenderer';
+import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
 
 interface ExerciseRow {
   id: string;
@@ -43,6 +43,23 @@ function parsePairs(text: string) {
     .map((p) => ({ left: p[0].trim(), right: p[1].trim() }));
 }
 
+// Build a renderable question from a stored payload (for viewing/preview).
+function buildQuestion(type: string, title: string, payload: Record<string, unknown>): Question {
+  if (type === 'match') {
+    const pairs = (payload.pairs as { left: string; right: string }[]) ?? [];
+    return { type: 'match', title, lefts: pairs.map((p) => p.left), rights: pairs.map((p) => p.right) };
+  }
+  if (type === 'fill') {
+    const { segments, answers } = parseFill(String(payload.text ?? ''));
+    return { type: 'fill', title, segments, blanks: answers.length, bank: answers };
+  }
+  if (type === 'categorize') {
+    const items = (payload.items as { text: string }[]) ?? [];
+    return { type: 'categorize', title, categories: (payload.categories as string[]) ?? [], items: items.map((i) => i.text) };
+  }
+  return { type: 'order', title, prompt: payload.prompt as string, tokens: (payload.words as string[]) ?? [] };
+}
+
 function parseItems(text: string) {
   return text
     .split('\n')
@@ -76,6 +93,7 @@ export function ExercisesView() {
   const [assignFor, setAssignFor] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [due, setDue] = useState('');
+  const [viewing, setViewing] = useState<{ q: Question; state: ExerciseState } | null>(null);
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -151,6 +169,30 @@ export function ExercisesView() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function openAssign(id: string) {
+    if (assignFor === id) {
+      setAssignFor(null);
+      return;
+    }
+    const token = tokenStore.get();
+    if (token) {
+      // Refresh the student list so newly added students appear.
+      setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }).catch(() => []));
+    }
+    setPicked({});
+    setAssignFor(id);
+  }
+
+  async function view(id: string) {
+    const token = tokenStore.get();
+    if (!token) return;
+    const ex = await apiFetch<{ type: string; title: string; payload: Record<string, unknown> }>(
+      `/exercises/${id}`,
+      { token, locale }
+    );
+    setViewing({ q: buildQuestion(ex.type, ex.title, ex.payload), state: {} });
   }
 
   async function assign(exerciseId: string) {
@@ -233,6 +275,20 @@ export function ExercisesView() {
         </div>
       </div>
 
+      {viewing && (
+        <div className="card">
+          <div className="row-between">
+            <strong>{viewing.q.title}</strong>
+            <button type="button" className="ghost" onClick={() => setViewing(null)}>✕</button>
+          </div>
+          <ExerciseRenderer
+            question={viewing.q}
+            state={viewing.state}
+            onChange={(s) => setViewing({ q: viewing.q, state: s })}
+          />
+        </div>
+      )}
+
       <div className="card">
         <strong>{t('library')}</strong>
         {list.length === 0 ? (
@@ -244,8 +300,9 @@ export function ExercisesView() {
                 <div className="row-between">
                   <span>{ex.title} <span className="muted">· {t(ex.type)}</span></span>
                   <span className="row-actions">
+                    <button type="button" onClick={() => view(ex.id)}>{t('view')}</button>
                     <button type="button" onClick={() => act(`/exercises/${ex.id}/duplicate`, 'POST')}>{t('duplicate')}</button>
-                    <button type="button" onClick={() => setAssignFor(assignFor === ex.id ? null : ex.id)}>{t('assign')}</button>
+                    <button type="button" onClick={() => openAssign(ex.id)}>{t('assign')}</button>
                     <button type="button" onClick={() => act(`/exercises/${ex.id}`, 'DELETE')}>{t('delete')}</button>
                   </span>
                 </div>

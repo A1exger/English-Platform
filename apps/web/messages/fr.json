@@ -122,7 +122,8 @@
     "nextWeek": "Suivant",
     "duration": "Durée (min)",
     "viewList": "Liste",
-    "viewWeek": "Semaine"
+    "viewWeek": "Semaine",
+    "student": "Élève"
   },
   "billing": {
     "title": "Facturation",
@@ -204,7 +205,9 @@
     "attendance": "Présence",
     "nextLesson": "Prochain cours",
     "joinLesson": "Rejoindre le cours",
-    "everyoneOwnLanguage": "Chaque participant voit l'interface dans sa propre langue — le cours est partagé quelle que soit la langue."
+    "everyoneOwnLanguage": "Chaque participant voit l'interface dans sa propre langue — le cours est partagé quelle que soit la langue.",
+    "homeworkPending": "Vous avez {count} devoirs.",
+    "notifications": "Notifications"
   },
   "studentProfile": {
     "title": "Profil de l'élève",
@@ -273,6 +276,7 @@
     "push": "Ajouter au cours",
     "live": "Exercices en direct",
     "chooseStudents": "Élèves",
-    "none": "Aucun exercice."
+    "none": "Aucun exercice.",
+    "view": "Voir"
   }
 }

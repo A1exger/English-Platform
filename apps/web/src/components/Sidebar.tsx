@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
+import { apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 
 type Item = { key: string; href: string; labelKey?: string };
@@ -42,14 +43,23 @@ export function Sidebar() {
   const pathname = usePathname();
   const locale = useLocale();
   const [role, setRole] = useState<string | null>(null);
+  const [hwCount, setHwCount] = useState(0);
 
   useEffect(() => {
     const token = tokenStore.get();
     if (!token) return;
     fetchMe(token, locale)
-      .then((m) => setRole(m.role))
+      .then((m) => {
+        setRole(m.role);
+        if (m.role === 'student') {
+          // Pending homework count (anything not yet graded) for the badge.
+          apiFetch<{ status: string }[]>('/homework', { token, locale })
+            .then((hw) => setHwCount(hw.filter((h) => h.status !== 'graded').length))
+            .catch(() => undefined);
+        }
+      })
       .catch(() => undefined);
-  }, [locale]);
+  }, [locale, pathname]);
 
   return (
     <nav className="sidebar">
@@ -60,6 +70,7 @@ export function Sidebar() {
           className={`nav-item${pathname === it.href ? ' active' : ''}`}
         >
           {nav(it.labelKey ?? it.key)}
+          {it.key === 'homework' && hwCount > 0 && <span className="nav-badge">{hwCount}</span>}
         </Link>
       ))}
     </nav>

@@ -119,6 +119,29 @@ export function toQuestion(
   };
 }
 
+/** The correct answer in the same shape as a student's `state` (for review). */
+export function solutionFor(
+  type: ExerciseType,
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
+  if (type === 'order') {
+    return { order: payload.words as string[] };
+  }
+  if (type === 'match') {
+    const pairs = payload.pairs as { left: string; right: string }[];
+    const map: Record<string, string> = {};
+    for (const p of pairs) map[p.left] = p.right;
+    return { map };
+  }
+  if (type === 'fill') {
+    return { answers: parseFill(String(payload.text)).answers };
+  }
+  const items = payload.items as { text: string; category: string }[];
+  const placement: Record<string, string> = {};
+  for (const it of items) placement[it.text] = it.category;
+  return { placement };
+}
+
 /** Score a student's state against the stored solution. */
 export function checkAnswer(
   type: ExerciseType,

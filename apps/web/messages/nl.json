@@ -122,7 +122,8 @@
     "nextWeek": "Volgende",
     "duration": "Duur (min)",
     "viewList": "Lijst",
-    "viewWeek": "Week"
+    "viewWeek": "Week",
+    "student": "Leerling"
   },
   "billing": {
     "title": "Facturatie",
@@ -204,7 +205,9 @@
     "attendance": "Aanwezigheid",
     "nextLesson": "Volgende les",
     "joinLesson": "Deelnemen aan les",
-    "everyoneOwnLanguage": "Elke deelnemer ziet de interface in zijn eigen taal — de les is gedeeld, ongeacht de taal."
+    "everyoneOwnLanguage": "Elke deelnemer ziet de interface in zijn eigen taal — de les is gedeeld, ongeacht de taal.",
+    "homeworkPending": "Je hebt {count} huiswerk.",
+    "notifications": "Meldingen"
   },
   "studentProfile": {
     "title": "Leerlingprofiel",
@@ -273,6 +276,7 @@
     "push": "Aan les toevoegen",
     "live": "Live-oefeningen",
     "chooseStudents": "Leerlingen",
-    "none": "Nog geen oefeningen."
+    "none": "Nog geen oefeningen.",
+    "view": "Bekijken"
   }
 }
