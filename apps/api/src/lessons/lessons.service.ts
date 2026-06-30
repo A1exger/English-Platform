@@ -188,6 +188,25 @@ export class LessonsService {
     return updated;
   }
 
+  async remove(user: AuthenticatedUser, id: string) {
+    const lesson = await this.prisma.lesson.findUnique({ where: { id } });
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+    if (user.role !== 'admin') {
+      const tutorProfile = await this.tutorProfileForUser(user.id);
+      if (lesson.tutorProfileId !== tutorProfile.id) {
+        throw new ForbiddenException('Not your lesson');
+      }
+    }
+    // Clean up live exercises + board; participants/attendance cascade,
+    // homework.lessonId is set null by the schema.
+    await this.prisma.exerciseInstance.deleteMany({ where: { lessonId: id } });
+    await this.prisma.board.deleteMany({ where: { lessonId: id } });
+    await this.prisma.lesson.delete({ where: { id } });
+    return { deleted: true };
+  }
+
   async book(user: AuthenticatedUser, lessonId: string) {
     const lesson = await this.prisma.lesson.findUnique({
       where: { id: lessonId },

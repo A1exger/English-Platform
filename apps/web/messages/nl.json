@@ -24,7 +24,8 @@
     "empty": "Geen huiswerk.",
     "statusAssigned": "Toegewezen",
     "statusSubmitted": "Ingeleverd",
-    "statusGraded": "Beoordeeld"
+    "statusGraded": "Beoordeeld",
+    "viewAnswers": "Antwoorden bekijken"
   },
   "materials": {
     "title": "Materialen",
@@ -123,7 +124,8 @@
     "duration": "Duur (min)",
     "viewList": "Lijst",
     "viewWeek": "Week",
-    "student": "Leerling"
+    "student": "Leerling",
+    "delete": "Verwijderen"
   },
   "billing": {
     "title": "Facturatie",
@@ -277,6 +279,7 @@
     "live": "Live-oefeningen",
     "chooseStudents": "Leerlingen",
     "none": "Nog geen oefeningen.",
-    "view": "Bekijken"
+    "view": "Bekijken",
+    "edit": "Bewerken"
   }
 }

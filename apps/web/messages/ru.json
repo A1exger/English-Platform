@@ -24,7 +24,8 @@
     "empty": "Заданий нет.",
     "statusAssigned": "Назначено",
     "statusSubmitted": "Сдано",
-    "statusGraded": "Проверено"
+    "statusGraded": "Проверено",
+    "viewAnswers": "Посмотреть ответы"
   },
   "materials": {
     "title": "Материалы",
@@ -123,7 +124,8 @@
     "duration": "Длительность (мин)",
     "viewList": "Список",
     "viewWeek": "Неделя",
-    "student": "Ученик"
+    "student": "Ученик",
+    "delete": "Удалить"
   },
   "billing": {
     "title": "Оплата",
@@ -277,6 +279,7 @@
     "live": "Задания на уроке",
     "chooseStudents": "Ученики",
     "none": "Заданий пока нет.",
-    "view": "Просмотр"
+    "view": "Просмотр",
+    "edit": "Редактировать"
   }
 }

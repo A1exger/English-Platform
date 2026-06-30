@@ -151,6 +151,19 @@ export class ExercisesService {
     return instances.map((i) => this.instanceView(i, i.exercise));
   }
 
+  /** Remove a live exercise from a lesson board (tutor/admin). */
+  async removeLessonInstance(
+    user: AuthenticatedUser,
+    lessonId: string,
+    instanceId: string,
+  ) {
+    await this.lessons.getOne(user, lessonId);
+    await this.prisma.exerciseInstance.deleteMany({
+      where: { id: instanceId, lessonId },
+    });
+    return { deleted: true };
+  }
+
   // --- instance state + checking (lesson or homework) -----------------------
 
   private async accessibleInstance(user: AuthenticatedUser, id: string) {

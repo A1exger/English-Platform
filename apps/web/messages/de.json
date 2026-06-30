@@ -24,7 +24,8 @@
     "empty": "Keine Hausaufgaben.",
     "statusAssigned": "Zugewiesen",
     "statusSubmitted": "Abgegeben",
-    "statusGraded": "Bewertet"
+    "statusGraded": "Bewertet",
+    "viewAnswers": "Antworten ansehen"
   },
   "materials": {
     "title": "Materialien",
@@ -123,7 +124,8 @@
     "duration": "Dauer (Min)",
     "viewList": "Liste",
     "viewWeek": "Woche",
-    "student": "Schüler"
+    "student": "Schüler",
+    "delete": "Löschen"
   },
   "billing": {
     "title": "Abrechnung",
@@ -277,6 +279,7 @@
     "live": "Live-Übungen",
     "chooseStudents": "Schüler",
     "none": "Noch keine Übungen.",
-    "view": "Ansehen"
+    "view": "Ansehen",
+    "edit": "Bearbeiten"
   }
 }

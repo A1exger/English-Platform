@@ -18,10 +18,13 @@ interface InstanceView {
 // it on the server. `onState` lets a lesson broadcast live progress.
 export function ExercisePlayer({
   instanceId,
-  onState
+  onState,
+  reviewOnly
 }: {
   instanceId: string;
   onState?: (state: ExerciseState) => void;
+  // reviewOnly: read-only view of the learner's arrangement (for the teacher).
+  reviewOnly?: boolean;
 }) {
   const t = useTranslations('exercises');
   const locale = useLocale();
@@ -39,6 +42,19 @@ export function ExercisePlayer({
       .then((v) => {
         setView(v);
         setLocalState(v.state ?? {});
+        if (reviewOnly) {
+          // Teacher review: always fetch score + solution to show the answer.
+          apiFetch<{ score: number; correct: boolean; solution?: ExerciseState }>(
+            `/exercise-instances/${instanceId}/check`,
+            { method: 'POST', token, locale }
+          )
+            .then((r) => {
+              setResult({ score: r.score, correct: r.correct });
+              if (r.solution) setSolution(r.solution);
+            })
+            .catch(() => undefined);
+          return;
+        }
         if (v.status === 'submitted' && v.score !== null) {
           setResult({ score: v.score, correct: v.score === 100 });
           // Fetch the solution (idempotent) so mistakes are highlighted on reload.
@@ -90,7 +106,7 @@ export function ExercisePlayer({
   }
 
   if (!view) return <p className="note">…</p>;
-  const done = result !== null || view.status === 'submitted';
+  const done = result !== null || view.status === 'submitted' || !!reviewOnly;
 
   return (
     <div className="card ex-card">

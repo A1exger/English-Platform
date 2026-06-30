@@ -94,6 +94,7 @@ export function ExercisesView() {
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [due, setDue] = useState('');
   const [viewing, setViewing] = useState<{ q: Question; state: ExerciseState } | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -103,7 +104,7 @@ export function ExercisesView() {
     }
     try {
       setList(await apiFetch<ExerciseRow[]>('/exercises', { token, locale }));
-      setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }).catch(() => []));
+      setStudents(await apiFetch<StudentRow[]>('/crm/students/all', { token, locale }).catch(() => []));
       setStateName('ready');
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
@@ -146,17 +147,53 @@ export function ExercisesView() {
     if (!token) return;
     setBusy(true);
     try {
-      await apiFetch('/exercises', {
-        method: 'POST',
-        token,
-        locale,
-        body: { type, title: title || t(type), payload }
-      });
+      if (editingId) {
+        await apiFetch(`/exercises/${editingId}`, {
+          method: 'PATCH',
+          token,
+          locale,
+          body: { title: title || t(type), payload }
+        });
+        setEditingId(null);
+      } else {
+        await apiFetch('/exercises', {
+          method: 'POST',
+          token,
+          locale,
+          body: { type, title: title || t(type), payload }
+        });
+      }
       setTitle('');
       await load();
     } finally {
       setBusy(false);
     }
+  }
+
+  // Load a saved exercise into the form for editing.
+  async function edit(id: string) {
+    const token = tokenStore.get();
+    if (!token) return;
+    const ex = await apiFetch<{ type: string; title: string; payload: Record<string, unknown> }>(
+      `/exercises/${id}`,
+      { token, locale }
+    );
+    setType(ex.type as (typeof TYPES)[number]);
+    setTitle(ex.title);
+    const p = ex.payload;
+    if (ex.type === 'order') {
+      setWords(((p.words as string[]) ?? []).join(' '));
+      setPrompt((p.prompt as string) ?? '');
+    } else if (ex.type === 'match') {
+      setPairs(((p.pairs as { left: string; right: string }[]) ?? []).map((x) => `${x.left} = ${x.right}`).join('\n'));
+    } else if (ex.type === 'fill') {
+      setFillText((p.text as string) ?? '');
+    } else if (ex.type === 'categorize') {
+      setCategories(((p.categories as string[]) ?? []).join(', '));
+      setItems(((p.items as { text: string; category: string }[]) ?? []).map((x) => `${x.text} = ${x.category}`).join('\n'));
+    }
+    setEditingId(id);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function act(path: string, method: 'POST' | 'DELETE') {
@@ -179,7 +216,7 @@ export function ExercisesView() {
     const token = tokenStore.get();
     if (token) {
       // Refresh the student list so newly added students appear.
-      setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }).catch(() => []));
+      setStudents(await apiFetch<StudentRow[]>('/crm/students/all', { token, locale }).catch(() => []));
     }
     setPicked({});
     setAssignFor(id);
@@ -266,7 +303,12 @@ export function ExercisesView() {
               <small className="muted">{t('itemsHint')}</small>
             </>
           )}
-          <button type="submit" disabled={busy}>{busy ? t('creating') : t('save')}</button>
+          <div className="row-actions">
+            <button type="submit" disabled={busy}>{busy ? t('creating') : t('save')}</button>
+            {editingId && (
+              <button type="button" className="ghost" onClick={() => { setEditingId(null); setTitle(''); }}>✕</button>
+            )}
+          </div>
         </form>
 
         <div className="card">
@@ -276,16 +318,18 @@ export function ExercisesView() {
       </div>
 
       {viewing && (
-        <div className="card">
-          <div className="row-between">
-            <strong>{viewing.q.title}</strong>
-            <button type="button" className="ghost" onClick={() => setViewing(null)}>✕</button>
+        <div className="modal-overlay" onClick={() => setViewing(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="row-between">
+              <strong>{viewing.q.title}</strong>
+              <button type="button" className="ghost" onClick={() => setViewing(null)}>✕</button>
+            </div>
+            <ExerciseRenderer
+              question={viewing.q}
+              state={viewing.state}
+              onChange={(s) => setViewing({ q: viewing.q, state: s })}
+            />
           </div>
-          <ExerciseRenderer
-            question={viewing.q}
-            state={viewing.state}
-            onChange={(s) => setViewing({ q: viewing.q, state: s })}
-          />
         </div>
       )}
 
@@ -301,6 +345,7 @@ export function ExercisesView() {
                   <span>{ex.title} <span className="muted">· {t(ex.type)}</span></span>
                   <span className="row-actions">
                     <button type="button" onClick={() => view(ex.id)}>{t('view')}</button>
+                    <button type="button" onClick={() => edit(ex.id)}>{t('edit')}</button>
                     <button type="button" onClick={() => act(`/exercises/${ex.id}/duplicate`, 'POST')}>{t('duplicate')}</button>
                     <button type="button" onClick={() => openAssign(ex.id)}>{t('assign')}</button>
                     <button type="button" onClick={() => act(`/exercises/${ex.id}`, 'DELETE')}>{t('delete')}</button>

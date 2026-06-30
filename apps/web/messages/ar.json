@@ -24,7 +24,8 @@
     "empty": "لا توجد واجبات.",
     "statusAssigned": "مُسند",
     "statusSubmitted": "تم الإرسال",
-    "statusGraded": "تم التقييم"
+    "statusGraded": "تم التقييم",
+    "viewAnswers": "عرض الإجابات"
   },
   "materials": {
     "title": "المواد",
@@ -123,7 +124,8 @@
     "duration": "المدة (دقيقة)",
     "viewList": "قائمة",
     "viewWeek": "أسبوع",
-    "student": "الطالب"
+    "student": "الطالب",
+    "delete": "حذف"
   },
   "billing": {
     "title": "الفواتير",
@@ -277,6 +279,7 @@
     "live": "تمارين مباشرة",
     "chooseStudents": "الطلاب",
     "none": "لا توجد تمارين بعد.",
-    "view": "عرض"
+    "view": "عرض",
+    "edit": "تعديل"
   }
 }

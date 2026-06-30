@@ -72,8 +72,21 @@ export class CrmService {
     });
   }
 
-  /** Admin: create a brand-new student account. */
-  async createStudent(dto: CreateStudentDto) {
+  /** All students (for assigning homework/lessons to anyone). */
+  listAllStudents() {
+    return this.prisma.studentProfile
+      .findMany({ include: { user: true }, orderBy: { id: 'desc' } })
+      .then((profiles) =>
+        profiles.map((sp) => ({
+          studentProfileId: sp.id,
+          name: `${sp.user.firstName} ${sp.user.lastName}`,
+          email: sp.user.email,
+        })),
+      );
+  }
+
+  /** Create a new student account. A tutor also auto-enrolls the new student. */
+  async createStudent(user: AuthenticatedUser, dto: CreateStudentDto) {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -81,7 +94,7 @@ export class CrmService {
       throw new ConflictException('Email already registered');
     }
     const passwordHash = await bcrypt.hash(dto.password, 10);
-    const user = await this.prisma.user.create({
+    const created = await this.prisma.user.create({
       data: {
         email: dto.email,
         passwordHash,
@@ -93,7 +106,17 @@ export class CrmService {
       },
       include: { studentProfile: true },
     });
-    return { studentProfileId: user.studentProfile!.id, email: user.email };
+    if (user.role === 'tutor') {
+      const tutor = await this.prisma.tutorProfile.findUnique({
+        where: { userId: user.id },
+      });
+      if (tutor) {
+        await this.prisma.tutorStudent.create({
+          data: { tutorProfileId: tutor.id, studentProfileId: created.studentProfile!.id },
+        });
+      }
+    }
+    return { studentProfileId: created.studentProfile!.id, email: created.email };
   }
 
   /** Tutor: unenroll a student. Admin: delete the student account entirely. */

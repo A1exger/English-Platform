@@ -24,7 +24,8 @@
     "empty": "No homework.",
     "statusAssigned": "Assigned",
     "statusSubmitted": "Submitted",
-    "statusGraded": "Graded"
+    "statusGraded": "Graded",
+    "viewAnswers": "View answers"
   },
   "materials": {
     "title": "Materials",
@@ -123,7 +124,8 @@
     "duration": "Duration (min)",
     "viewList": "List",
     "viewWeek": "Week",
-    "student": "Student"
+    "student": "Student",
+    "delete": "Delete"
   },
   "billing": {
     "title": "Billing",
@@ -277,6 +279,7 @@
     "live": "Live exercises",
     "chooseStudents": "Students",
     "none": "No exercises pushed yet.",
-    "view": "View"
+    "view": "View",
+    "edit": "Edit"
   }
 }

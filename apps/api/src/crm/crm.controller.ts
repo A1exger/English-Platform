@@ -36,11 +36,19 @@ export class CrmController {
     return this.crm.addStudent(user, dto);
   }
 
-  // Admin creates a brand-new student account.
-  @Roles('admin')
+  // Tutor or admin creates a brand-new student account (tutor auto-enrolls).
   @Post('students/new')
-  createStudent(@Body() dto: CreateStudentDto) {
-    return this.crm.createStudent(dto);
+  createStudent(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateStudentDto,
+  ) {
+    return this.crm.createStudent(user, dto);
+  }
+
+  // All students (for assigning homework/lessons to anyone).
+  @Get('students/all')
+  listAllStudents() {
+    return this.crm.listAllStudents();
   }
 
   @Get('students')

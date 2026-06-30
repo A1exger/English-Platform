@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -61,6 +62,12 @@ export class LessonsController {
     @Param('id') id: string,
   ) {
     return this.lessons.book(user, id);
+  }
+
+  @Roles('tutor', 'admin')
+  @Delete(':id')
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.lessons.remove(user, id);
   }
 
   @Post(':id/join')

@@ -24,7 +24,8 @@
     "empty": "Aucun devoir.",
     "statusAssigned": "Attribué",
     "statusSubmitted": "Envoyé",
-    "statusGraded": "Noté"
+    "statusGraded": "Noté",
+    "viewAnswers": "Voir les réponses"
   },
   "materials": {
     "title": "Supports",
@@ -123,7 +124,8 @@
     "duration": "Durée (min)",
     "viewList": "Liste",
     "viewWeek": "Semaine",
-    "student": "Élève"
+    "student": "Élève",
+    "delete": "Supprimer"
   },
   "billing": {
     "title": "Facturation",
@@ -277,6 +279,7 @@
     "live": "Exercices en direct",
     "chooseStudents": "Élèves",
     "none": "Aucun exercice.",
-    "view": "Voir"
+    "view": "Voir",
+    "edit": "Modifier"
   }
 }

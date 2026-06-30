@@ -44,6 +44,7 @@ export function HomeworkView() {
   const [form, setForm] = useState({ studentProfileId: '', title: '', due: '' });
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [grades, setGrades] = useState<Record<string, { grade: string; feedback: string }>>({});
+  const [openAnswers, setOpenAnswers] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -195,10 +196,24 @@ export function HomeworkView() {
                   )}
                   {h.exercises && h.exercises.length > 0 &&
                     (isTutor ? (
-                      <p className="muted">
-                        {h.exercises.length} ·{' '}
-                        {h.exercises.map((e) => (e.score == null ? '–' : `${e.score}%`)).join(', ')}
-                      </p>
+                      <>
+                        <div className="row-between">
+                          <span className="muted">
+                            {h.exercises.length} ·{' '}
+                            {h.exercises.map((e) => (e.score == null ? '–' : `${e.score}%`)).join(', ')}
+                          </span>
+                          <button type="button" onClick={() => setOpenAnswers({ ...openAnswers, [h.id]: !openAnswers[h.id] })}>
+                            {t('viewAnswers')}
+                          </button>
+                        </div>
+                        {openAnswers[h.id] && (
+                          <div className="ex-list">
+                            {h.exercises.map((e) => (
+                              <ExercisePlayer key={e.id} instanceId={e.id} reviewOnly />
+                            ))}
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="ex-list">
                         {h.exercises.map((e) => (

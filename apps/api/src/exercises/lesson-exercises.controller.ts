@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -37,5 +38,15 @@ export class LessonExercisesController {
     @Body() dto: CreateLessonExerciseDto,
   ) {
     return this.exercises.createLessonInstance(user, lessonId, dto.exerciseId);
+  }
+
+  @Roles('tutor', 'admin')
+  @Delete(':instanceId')
+  remove(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('lessonId') lessonId: string,
+    @Param('instanceId') instanceId: string,
+  ) {
+    return this.exercises.removeLessonInstance(user, lessonId, instanceId);
   }
 }

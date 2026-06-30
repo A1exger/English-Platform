@@ -62,6 +62,9 @@ export function LessonExercisePanel({ lessonId }: { lessonId: string }) {
       if (u?.type === 'exercise' && u.instanceId) {
         const id = u.instanceId;
         setInstances((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      } else if (u?.type === 'exercise-remove' && u.instanceId) {
+        const id = u.instanceId;
+        setInstances((prev) => prev.filter((x) => x !== id));
       }
     });
     return () => {
@@ -83,6 +86,21 @@ export function LessonExercisePanel({ lessonId }: { lessonId: string }) {
       update: { type: 'exercise', instanceId: inst.id }
     });
     setPick('');
+  }
+
+  async function removeInstance(id: string) {
+    const token = tokenStore.get();
+    if (!token) return;
+    await apiFetch(`/lessons/${lessonId}/board/exercises/${id}`, {
+      method: 'DELETE',
+      token,
+      locale
+    }).catch(() => undefined);
+    setInstances((prev) => prev.filter((x) => x !== id));
+    socketRef.current?.emit('board:update', {
+      lessonId,
+      update: { type: 'exercise-remove', instanceId: id }
+    });
   }
 
   return (
@@ -107,16 +125,22 @@ export function LessonExercisePanel({ lessonId }: { lessonId: string }) {
         <p className="note">{t('none')}</p>
       ) : (
         instances.map((id) => (
-          <ExercisePlayer
-            key={id}
-            instanceId={id}
-            onState={(s) =>
-              socketRef.current?.emit('board:update', {
-                lessonId,
-                update: { type: 'exercise-state', instanceId: id, state: s }
-              })
-            }
-          />
+          <div key={id} className="lesson-ex-item">
+            {canPush && (
+              <button type="button" className="ghost ex-remove" onClick={() => removeInstance(id)}>
+                ✕
+              </button>
+            )}
+            <ExercisePlayer
+              instanceId={id}
+              onState={(s) =>
+                socketRef.current?.emit('board:update', {
+                  lessonId,
+                  update: { type: 'exercise-state', instanceId: id, state: s }
+                })
+              }
+            />
+          </div>
         ))
       )}
     </div>

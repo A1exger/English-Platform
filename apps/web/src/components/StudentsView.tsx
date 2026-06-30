@@ -118,7 +118,7 @@ export function StudentsView() {
         </form>
       )}
 
-      {isAdmin && (
+      {(isAdmin || isTutor) && (
         <form className="card form-grid" onSubmit={createStudent}>
           <strong>{t('create')}</strong>
           <label>{t('firstName')}<input required value={newStudent.firstName} onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })} /></label>

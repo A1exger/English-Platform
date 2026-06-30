@@ -64,7 +64,7 @@ export function ScheduleView() {
       setLessons(await apiFetch<Lesson[]>('/lessons', { token, locale }));
       if (manage) {
         setStudents(
-          await apiFetch<{ studentProfileId: string; name: string }[]>('/crm/students', {
+          await apiFetch<{ studentProfileId: string; name: string }[]>('/crm/students/all', {
             token,
             locale
           }).catch(() => [])
@@ -143,6 +143,13 @@ export function ScheduleView() {
     }
   }
 
+  async function deleteLesson(id: string) {
+    const token = tokenStore.get();
+    if (!token) return;
+    await apiFetch(`/lessons/${id}`, { method: 'DELETE', token, locale }).catch(() => undefined);
+    await load();
+  }
+
   if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
@@ -177,8 +184,10 @@ export function ScheduleView() {
             byCell={byCell}
             canManage={canManage}
             onSlot={openSlot}
+            onDelete={deleteLesson}
             joinLabel={tDash('joinLesson')}
             boardLabel={t('openBoard')}
+            delLabel={t('delete')}
           />
         ))}
       </div>
@@ -226,16 +235,20 @@ function FragmentRow({
   byCell,
   canManage,
   onSlot,
+  onDelete,
   joinLabel,
   boardLabel,
+  delLabel,
 }: {
   hour: number;
   days: Date[];
   byCell: Map<string, Lesson[]>;
   canManage: boolean;
   onSlot: (dayIndex: number, hour: number) => void;
+  onDelete: (id: string) => void;
   joinLabel: string;
   boardLabel: string;
+  delLabel: string;
 }) {
   return (
     <>
@@ -258,6 +271,18 @@ function FragmentRow({
                   <Link className="link" href={`/lessons/${l.id}/board`} onClick={(e) => e.stopPropagation()}>
                     {boardLabel}
                   </Link>
+                  {canManage && (
+                    <button
+                      type="button"
+                      className="cal-del"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(l.id);
+                      }}
+                    >
+                      {delLabel}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
