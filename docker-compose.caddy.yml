@@ -14,8 +14,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      APP_DOMAIN: ${APP_DOMAIN}
-      API_DOMAIN: ${API_DOMAIN}
+      DOMAIN: ${DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro

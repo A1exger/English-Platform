@@ -87,27 +87,46 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec api npx pris
 
 ---
 
-## 7. Домены + HTTPS (для боевого запуска)
+## 7. Домен + HTTPS (один домен: englishsparkstudio.com)
 
-1. Направьте `app.ВАШ_ДОМЕН` и `api.ВАШ_ДОМЕН` (A‑записи) на IP сервера.
+Фронтенд и API живут на **одном домене**: сайт — `https://englishsparkstudio.com`,
+API — `https://englishsparkstudio.com/api/...`. Caddy маршрутизирует
+`/api/*`, `/uploads/*`, `/socket.io/*` в API‑контейнер, остальное — во фронтенд.
+
+1. DNS у регистратора — A‑записи на IP сервера:
+   ```
+   englishsparkstudio.com       A  <IP сервера>
+   www.englishsparkstudio.com   A  <IP сервера>   (опционально; редиректится на apex)
+   ```
+   Проверка: `dig +short englishsparkstudio.com`.
 2. В `.env.prod`:
    ```ini
-   APP_DOMAIN=app.ВАШ_ДОМЕН
-   API_DOMAIN=api.ВАШ_ДОМЕН
-   ACME_EMAIL=you@example.com
-   NEXT_PUBLIC_API_URL=https://api.ВАШ_ДОМЕН/api/v1
-   CORS_ORIGIN=https://app.ВАШ_ДОМЕН
+   DOMAIN=englishsparkstudio.com
+   ACME_EMAIL=ваш-email@пример.com
+   NEXT_PUBLIC_API_URL=https://englishsparkstudio.com/api/v1
+   CORS_ORIGIN=https://englishsparkstudio.com
    ```
-3. Поднять с Caddy (выпустит сертификаты Let's Encrypt сам) и пересобрать web:
+3. Открыть порты 80/443 (нужны для сертификата и HTTPS):
+   ```bash
+   sudo ufw allow 80,443/tcp && sudo ufw allow 22/tcp && sudo ufw enable
+   ```
+4. Поднять с Caddy (сам выпустит и будет продлевать сертификат Let's Encrypt).
+   `--build` обязателен: `NEXT_PUBLIC_API_URL` запекается в веб‑образ:
    ```bash
    docker compose -f docker-compose.prod.yml -f docker-compose.caddy.yml \
      --env-file .env.prod up -d --build
    ```
-4. Закройте порты 3000/3001 в фаерволе (наружу только 80/443):
+5. Закрыть прямые порты приложений (трафик только через Caddy):
    ```bash
-   sudo ufw allow 80,443/tcp && sudo ufw allow 22/tcp && sudo ufw enable
+   sudo ufw deny 3000/tcp && sudo ufw deny 3001/tcp
    ```
-5. Stripe → Webhooks: `https://api.ВАШ_ДОМЕН/api/v1/billing/webhook/stripe`.
+6. Проверка:
+   - `https://englishsparkstudio.com` — сайт с замком 🔒
+   - `https://englishsparkstudio.com/api/v1/health` → `{"status":"ok"}`
+7. Stripe → Webhooks: `https://englishsparkstudio.com/api/v1/billing/webhook/stripe`.
+
+Если сертификат не выпускается — почти всегда DNS ещё не указывает на сервер
+или порт 80 закрыт/занят. Логи: `docker compose ... logs caddy`.
 
 ---
 

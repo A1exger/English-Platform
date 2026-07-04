@@ -99,17 +99,21 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec api npx pris
 #   admin@example.com / tutor@example.com / Password123!  (СМЕНИТЕ пароли!)
 ```
 
-### HTTPS и домены (когда будут)
+### HTTPS и домен (один домен: сайт + API под /api)
 
-Направьте `app.example.com` и `api.example.com` на IP сервера, заполните
-`APP_DOMAIN`/`API_DOMAIN`/`ACME_EMAIL` в `.env.prod` и добавьте Caddy:
+Направьте `englishsparkstudio.com` (и `www`) на IP сервера, заполните
+`DOMAIN`/`ACME_EMAIL`/`NEXT_PUBLIC_API_URL`/`CORS_ORIGIN` в `.env.prod`
+(см. `.env.prod.example`) и добавьте Caddy:
 
 ```bash
 docker compose -f docker-compose.prod.yml -f docker-compose.caddy.yml \
   --env-file .env.prod up -d --build
-# Caddy сам выпустит сертификаты Let's Encrypt. Закройте порты 3000/3001 в фаерволе.
+# Caddy сам выпустит сертификаты Let's Encrypt и маршрутизирует
+# /api/*, /uploads/*, /socket.io/* -> API, остальное -> фронтенд.
+# Закройте порты 3000/3001 в фаерволе.
 ```
-Затем укажите Stripe‑webhook: `https://api.example.com/api/v1/billing/webhook/stripe`.
+Stripe‑webhook: `https://englishsparkstudio.com/api/v1/billing/webhook/stripe`.
+Подробный пошаговый рунбук — в `DEPLOY.md` (§7).
 
 ### ⚠️ Сервер 1 CPU / 1 ГБ RAM
 
