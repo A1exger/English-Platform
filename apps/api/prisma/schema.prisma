@@ -397,3 +397,224 @@ model BoardSnapshot {
 
   @@index([boardId])
 }
+
+// ============================================================================
+// COURSE CONTENT (Skyeng-like lesson system)
+// Hierarchy: Category -> Course -> (level) -> Section -> Unit -> CourseLesson
+//            -> LessonPage -> LessonTask
+// NOTE: the scheduling entity is `Lesson` (a calendar meeting); the CONTENT
+// entity is `CourseLesson`. Enum-like fields are String (SQLite): see
+// src/common/constants/enums.ts for allowed values.
+// ============================================================================
+
+model Category {
+  id      String   @id @default(cuid())
+  title   String
+  order   Int      @default(0)
+  courses Course[]
+}
+
+model Course {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  title      String
+  selfStudy  Boolean  @default(false)
+  isNew      Boolean  @default(false)
+  // status: "draft" | "published"
+  status     String   @default("draft")
+  ownerUserId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sections Section[]
+  lessons  CourseLesson[]
+
+  @@index([categoryId])
+}
+
+// level: "Beginner" | "Elementary" | "PreIntermediate" | "Intermediate" |
+//        "UpperIntermediate" | "Advanced"  (content binds to (courseId, level))
+model Section {
+  id       String @id @default(cuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  level    String
+  title    String
+  order    Int    @default(0)
+  units    Unit[]
+
+  @@index([courseId, level])
+}
+
+model Unit {
+  id        String  @id @default(cuid())
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title     String
+  order     Int     @default(0)
+  lessons   CourseLesson[]
+
+  @@index([sectionId])
+}
+
+model CourseLesson {
+  id       String  @id @default(cuid())
+  courseId String
+  course   Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  level    String
+  unitId   String
+  unit     Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title    String
+  // INV-2: optional lessons sit in the ordered list like any other; the flag
+  // never disables grading (only excludes them from courseCompletion).
+  optional Boolean @default(false)
+  // INV-1: order is level-wide, unique per (courseId, level) across all units.
+  order    Int
+  // objectives: JSON string array (Preparation phase content)
+  objectives String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pages            LessonPage[]
+  wordlist         Wordlist?
+  grammarReference GrammarReference?
+
+  @@unique([courseId, level, order])
+  @@index([unitId])
+}
+
+// type: "grammar" | "practice" | "listening" | "reading" | "discussion" | "essay"
+model LessonPage {
+  id                 String       @id @default(cuid())
+  courseLessonId     String
+  courseLesson       CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  type               String
+  order              Int          @default(0)
+  includedInHomework Boolean      @default(false)
+  mediaUrl           String?
+  text               String?
+  tasks              LessonTask[]
+
+  @@index([courseLessonId])
+}
+
+// type: "sentence_ordering" | "word_matching" | "gap_fill" | "categorization" |
+//       "multiple_choice" | "audio" | "essay" | "discussion"
+// gradingMode: "AUTO" | "MANUAL" | "COMPLETION"   (INV-5)
+// aspect: explicit tag, never derived from titles (INV-6):
+//         "Grammar" | "Reading" | "Listening" | "Vocabulary" | "Speaking" | "Writing"
+model LessonTask {
+  id               String     @id @default(cuid())
+  pageId           String
+  page             LessonPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type             String
+  gradingMode      String
+  aspect           String
+  estimatedMinutes Int        @default(5)
+  order            Int        @default(0)
+  // payload / answerKey: JSON strings; answerKey never leaves the server.
+  payload          String
+  answerKey        String?
+
+  @@index([pageId])
+}
+
+model Wordlist {
+  id             String          @id @default(cuid())
+  courseLessonId String          @unique
+  courseLesson   CourseLesson    @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  entries        WordlistEntry[]
+}
+
+model WordlistEntry {
+  id          String   @id @default(cuid())
+  wordlistId  String
+  wordlist    Wordlist @relation(fields: [wordlistId], references: [id], onDelete: Cascade)
+  word        String
+  translation String?
+  example     String?
+  order       Int      @default(0)
+
+  @@index([wordlistId])
+}
+
+// Structured explanation (Meaning / Form table).
+model GrammarReference {
+  id             String       @id @default(cuid())
+  courseLessonId String       @unique
+  courseLesson   CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  title          String
+  meaning        String
+  form           String
+}
+
+// Personal dictionary + spaced-repetition trainer state.
+model DictionaryEntry {
+  id               String    @id @default(cuid())
+  studentProfileId String
+  word             String
+  translation      String?
+  sourceLessonId   String?
+  repetitions      Int       @default(0)
+  lastReviewedAt   DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@unique([studentProfileId, word])
+  @@index([studentProfileId])
+}
+
+// Assignment of content to a student (live lesson or async homework).
+// INV-7: tasks are SNAPSHOTTED into HomeworkCard at assignment time, so later
+// edits to master content never affect already-assigned work.
+// kind: "lesson" | "homework"; status: "assigned" | "in_progress" | "done"
+model ContentAssignment {
+  id               String   @id @default(cuid())
+  courseLessonId   String?
+  studentProfileId String
+  assignedByUserId String
+  kind             String
+  topicTag         String?
+  dueAt            DateTime?
+  status           String   @default("assigned")
+  createdAt        DateTime @default(now())
+
+  cards  HomeworkCard[]
+  result LessonResult?
+
+  @@index([studentProfileId])
+}
+
+// One snapshotted task inside an assignment. Submission/Grade/Feedback are
+// consolidated here for the MVP: state = student's answer (JSON), score =
+// AUTO grade, feedback = manual essay feedback.
+// status: "open" | "submitted"
+model HomeworkCard {
+  id           String            @id @default(cuid())
+  assignmentId String
+  assignment   ContentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  // taskSnapshot: full copy of LessonTask fields (type/gradingMode/aspect/
+  // estimatedMinutes/payload/answerKey) as a JSON string.
+  taskSnapshot String
+  order        Int      @default(0)
+  state        String?
+  status       String   @default("open")
+  score        Float?
+  feedback     String?
+  submittedAt  DateTime?
+
+  @@index([assignmentId])
+}
+
+// Aggregated result of an assignment (INV-3/INV-4).
+model LessonResult {
+  id             String            @id @default(cuid())
+  assignmentId   String            @unique
+  assignment     ContentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  overall        Float?
+  // perAspect: JSON string, e.g. {"Reading":8.8,"Grammar":9.7}
+  perAspect      String
+  completion     Float
+  motivationTier String
+  createdAt      DateTime          @default(now())
+}

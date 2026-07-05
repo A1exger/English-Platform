@@ -77,3 +77,56 @@ export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
 export const NOTIFICATION_CHANNELS = ['email', 'telegram', 'in_app'] as const;
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
+
+// --- Course content (Skyeng-like lesson system) ---
+
+export const CONTENT_LEVELS = [
+  'Beginner',
+  'Elementary',
+  'PreIntermediate',
+  'Intermediate',
+  'UpperIntermediate',
+  'Advanced',
+] as const;
+export type ContentLevel = (typeof CONTENT_LEVELS)[number];
+
+export const CONTENT_STATUSES = ['draft', 'published'] as const;
+export type ContentStatus = (typeof CONTENT_STATUSES)[number];
+
+export const PAGE_TYPES = [
+  'grammar',
+  'practice',
+  'listening',
+  'reading',
+  'discussion',
+  'essay',
+] as const;
+export type PageType = (typeof PAGE_TYPES)[number];
+
+export const TASK_TYPES = [
+  'sentence_ordering',
+  'word_matching',
+  'gap_fill',
+  'categorization',
+  'multiple_choice',
+  'audio',
+  'essay',
+  'discussion',
+] as const;
+export type TaskType = (typeof TASK_TYPES)[number];
+
+export const GRADING_MODES = ['AUTO', 'MANUAL', 'COMPLETION'] as const;
+export type GradingMode = (typeof GRADING_MODES)[number];
+
+export const ASPECTS = [
+  'Grammar',
+  'Reading',
+  'Listening',
+  'Vocabulary',
+  'Speaking',
+  'Writing',
+] as const;
+export type Aspect = (typeof ASPECTS)[number];
+
+export const ASSIGNMENT_KINDS = ['lesson', 'homework'] as const;
+export type AssignmentKind = (typeof ASSIGNMENT_KINDS)[number];

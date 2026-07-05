@@ -183,11 +183,194 @@ async function main(): Promise<void> {
     });
   }
 
+  // --- Demo course content (Category -> Course -> Section -> Unit -> Lessons)
+  const existingCourse = await prisma.course.findFirst({
+    where: { title: 'General English' },
+  });
+  if (!existingCourse) {
+    const category = await prisma.category.create({
+      data: { title: 'General', order: 0 },
+    });
+    const course = await prisma.course.create({
+      data: {
+        categoryId: category.id,
+        title: 'General English',
+        status: 'published',
+        ownerUserId: tutor.id,
+      },
+    });
+    const level = 'Elementary';
+    const section = await prisma.section.create({
+      data: { courseId: course.id, level, title: 'Everyday life', order: 0 },
+    });
+    const unit1 = await prisma.unit.create({
+      data: { sectionId: section.id, title: 'Daily routines', order: 0 },
+    });
+    const unit2 = await prisma.unit.create({
+      data: { sectionId: section.id, title: 'Food & drinks', order: 1 },
+    });
+
+    // INV-1: order is level-wide across units; INV-2: lesson 3 is optional.
+    const lesson1 = await prisma.courseLesson.create({
+      data: {
+        courseId: course.id,
+        level,
+        unitId: unit1.id,
+        title: 'Present Simple: my day',
+        order: 1,
+        objectives: JSON.stringify([
+          'Talk about your daily routine',
+          'Use Present Simple with I/you/we/they',
+        ]),
+      },
+    });
+    await prisma.courseLesson.create({
+      data: {
+        courseId: course.id,
+        level,
+        unitId: unit1.id,
+        title: 'Telling the time',
+        order: 2,
+      },
+    });
+    await prisma.courseLesson.create({
+      data: {
+        courseId: course.id,
+        level,
+        unitId: unit2.id,
+        title: 'Extra practice: food vocabulary',
+        order: 3,
+        optional: true, // INV-2: graded but excluded from courseCompletion
+      },
+    });
+
+    await prisma.wordlist.create({
+      data: {
+        courseLessonId: lesson1.id,
+        entries: {
+          create: [
+            { word: 'wake up', translation: 'просыпаться', order: 0 },
+            { word: 'have breakfast', translation: 'завтракать', order: 1 },
+            { word: 'commute', translation: 'добираться до работы', order: 2 },
+          ],
+        },
+      },
+    });
+    await prisma.grammarReference.create({
+      data: {
+        courseLessonId: lesson1.id,
+        title: 'Present Simple',
+        meaning: 'Regular habits and routines: things you do every day/week.',
+        form: 'I/you/we/they + verb; he/she/it + verb+s. Negative: do/does + not.',
+      },
+    });
+
+    const page = await prisma.lessonPage.create({
+      data: {
+        courseLessonId: lesson1.id,
+        type: 'practice',
+        order: 0,
+        includedInHomework: true,
+      },
+    });
+    await prisma.lessonTask.createMany({
+      data: [
+        {
+          pageId: page.id,
+          type: 'sentence_ordering',
+          gradingMode: 'AUTO',
+          aspect: 'Grammar',
+          estimatedMinutes: 3,
+          order: 0,
+          payload: JSON.stringify({ words: ['I', 'wake', 'up', 'at', 'seven'] }),
+          answerKey: JSON.stringify({ order: ['I', 'wake', 'up', 'at', 'seven'] }),
+        },
+        {
+          pageId: page.id,
+          type: 'gap_fill',
+          gradingMode: 'AUTO',
+          aspect: 'Grammar',
+          estimatedMinutes: 4,
+          order: 1,
+          payload: JSON.stringify({ text: 'She [wakes] up early and [has] breakfast.' }),
+          answerKey: JSON.stringify({ answers: ['wakes', 'has'] }),
+        },
+        {
+          pageId: page.id,
+          type: 'word_matching',
+          gradingMode: 'AUTO',
+          aspect: 'Vocabulary',
+          estimatedMinutes: 3,
+          order: 2,
+          payload: JSON.stringify({
+            pairs: [
+              { left: 'wake up', right: 'просыпаться' },
+              { left: 'commute', right: 'добираться' },
+            ],
+          }),
+          answerKey: JSON.stringify({
+            map: { 'wake up': 'просыпаться', commute: 'добираться' },
+          }),
+        },
+        {
+          pageId: page.id,
+          type: 'categorization',
+          gradingMode: 'AUTO',
+          aspect: 'Vocabulary',
+          estimatedMinutes: 4,
+          order: 3,
+          payload: JSON.stringify({
+            categories: ['morning', 'evening'],
+            items: [
+              { text: 'have breakfast', category: 'morning' },
+              { text: 'go to bed', category: 'evening' },
+            ],
+          }),
+          answerKey: JSON.stringify({
+            placement: { 'have breakfast': 'morning', 'go to bed': 'evening' },
+          }),
+        },
+        {
+          pageId: page.id,
+          type: 'multiple_choice',
+          gradingMode: 'AUTO',
+          aspect: 'Reading',
+          estimatedMinutes: 2,
+          order: 4,
+          payload: JSON.stringify({
+            question: 'He ___ up at 6.',
+            options: ['wake', 'wakes', 'waking'],
+          }),
+          answerKey: JSON.stringify({ correct: 'wakes' }),
+        },
+        {
+          pageId: page.id,
+          type: 'essay',
+          gradingMode: 'MANUAL',
+          aspect: 'Writing',
+          estimatedMinutes: 15,
+          order: 5,
+          payload: JSON.stringify({ prompt: 'Describe your typical day (5–7 sentences).' }),
+        },
+        {
+          pageId: page.id,
+          type: 'discussion',
+          gradingMode: 'COMPLETION',
+          aspect: 'Speaking',
+          estimatedMinutes: 10,
+          order: 6,
+          payload: JSON.stringify({ prompt: 'Discuss: is routine good or boring?' }),
+        },
+      ],
+    });
+  }
+
   // eslint-disable-next-line no-console
   console.log('Seed complete:', {
     admin: 'admin@example.com',
     tutor: tutor.email,
     students: [student1.email, student2.email],
+    demoCourse: 'General English (Elementary): 2 required + 1 optional lesson',
   });
 }
 
