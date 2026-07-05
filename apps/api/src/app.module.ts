@@ -21,6 +21,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AdminModule } from './admin/admin.module';
 import { ExercisesModule } from './exercises/exercises.module';
+import { ContentModule } from './content/content.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -53,6 +54,7 @@ import { HealthModule } from './health/health.module';
     AnalyticsModule,
     AdminModule,
     ExercisesModule,
+    ContentModule,
     HealthModule,
   ],
 })
