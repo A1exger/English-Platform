@@ -3,7 +3,7 @@ const BASE =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
 
 export interface ApiOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
   token?: string | null;
   locale?: string;

@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
@@ -7,6 +9,7 @@ import {
   IsString,
   Length,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import {
   ASPECTS,
@@ -141,6 +144,39 @@ export class ReorderLessonDto {
   @IsInt()
   @Min(1)
   order!: number;
+}
+
+export class WordlistEntryDto {
+  @IsString()
+  @Length(1, 120)
+  word!: string;
+
+  @IsOptional()
+  @IsString()
+  translation?: string;
+
+  @IsOptional()
+  @IsString()
+  example?: string;
+}
+
+export class SetWordlistDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WordlistEntryDto)
+  entries!: WordlistEntryDto[];
+}
+
+export class SetGrammarDto {
+  @IsString()
+  @Length(1, 200)
+  title!: string;
+
+  @IsString()
+  meaning!: string;
+
+  @IsString()
+  form!: string;
 }
 
 export class CreatePageDto {

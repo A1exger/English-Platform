@@ -929,6 +929,81 @@ select.err {
   border-color: var(--low);
 }
 
+/* ——— course builder ——— */
+.status-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  margin-inline-start: 6px;
+}
+.status-pill.draft {
+  background: var(--cloud);
+  color: var(--slate);
+}
+.status-pill.published {
+  background: var(--high-100);
+  color: #0f7a4f;
+}
+.badge-opt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--spark-700);
+  background: var(--spark-100);
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+}
+.mono-num {
+  font-family: var(--font-mono);
+  color: var(--mist);
+  font-size: 13px;
+  margin-inline-end: 4px;
+}
+.unit-block {
+  border-inline-start: 3px solid var(--indigo-100);
+  padding-inline-start: 14px;
+  margin-top: 14px;
+}
+.lesson-editor {
+  background: var(--cloud);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ed-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slate);
+}
+.ed-field textarea {
+  min-height: 90px;
+}
+.ed-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ed-page {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px;
+}
+.ed-task-form {
+  border-top: 1px dashed var(--line-strong);
+  margin-top: 8px;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 /* ——— modal ——— */
 .modal-overlay {
   position: fixed;

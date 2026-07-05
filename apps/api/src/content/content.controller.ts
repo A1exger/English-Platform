@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -19,6 +20,8 @@ import {
   CreateTaskDto,
   CreateUnitDto,
   ReorderLessonDto,
+  SetGrammarDto,
+  SetWordlistDto,
   UpdateCourseDto,
   UpdateCourseLessonDto,
   UpdateTaskDto,
@@ -121,6 +124,26 @@ export class ContentController {
   @Delete('lessons/:id')
   deleteLesson(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.content.deleteLesson(user, id);
+  }
+
+  @Roles('tutor', 'admin')
+  @Put('lessons/:id/wordlist')
+  setWordlist(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: SetWordlistDto,
+  ) {
+    return this.content.setWordlist(user, id, dto.entries);
+  }
+
+  @Roles('tutor', 'admin')
+  @Put('lessons/:id/grammar')
+  setGrammar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: SetGrammarDto,
+  ) {
+    return this.content.setGrammarReference(user, id, dto);
   }
 
   @Roles('tutor', 'admin')

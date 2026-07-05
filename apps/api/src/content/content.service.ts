@@ -262,6 +262,54 @@ export class ContentService {
     return { deleted: true };
   }
 
+  /** Replace the lesson wordlist with the given entries. */
+  async setWordlist(
+    user: AuthenticatedUser,
+    lessonId: string,
+    entries: { word: string; translation?: string; example?: string }[],
+  ) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+    const wl = await this.prisma.wordlist.upsert({
+      where: { courseLessonId: lessonId },
+      update: {},
+      create: { courseLessonId: lessonId },
+    });
+    await this.prisma.wordlistEntry.deleteMany({ where: { wordlistId: wl.id } });
+    if (entries.length) {
+      await this.prisma.wordlistEntry.createMany({
+        data: entries.map((e, i) => ({
+          wordlistId: wl.id,
+          word: e.word,
+          translation: e.translation,
+          example: e.example,
+          order: i,
+        })),
+      });
+    }
+    return this.prisma.wordlist.findUnique({
+      where: { id: wl.id },
+      include: { entries: { orderBy: { order: 'asc' } } },
+    });
+  }
+
+  /** Create or update the lesson grammar reference (Meaning / Form). */
+  async setGrammarReference(
+    user: AuthenticatedUser,
+    lessonId: string,
+    dto: { title: string; meaning: string; form: string },
+  ) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+    return this.prisma.grammarReference.upsert({
+      where: { courseLessonId: lessonId },
+      update: dto,
+      create: { courseLessonId: lessonId, ...dto },
+    });
+  }
+
   async createPage(user: AuthenticatedUser, dto: CreatePageDto) {
     const lesson = await this.prisma.courseLesson.findUnique({
       where: { id: dto.courseLessonId },

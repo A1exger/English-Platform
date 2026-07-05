@@ -148,6 +148,32 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().post('/api/v1/content/courses').set(auth(student.accessToken)).send({ categoryId: 'x', title: 'nope' }).expect(403);
   });
 
+  it('wordlist and grammar reference are editable and returned in lesson detail', async () => {
+    await api()
+      .put(`/api/v1/content/lessons/${lesson1}/wordlist`)
+      .set(auth(tutor.accessToken))
+      .send({ entries: [{ word: 'wake up', translation: 'просыпаться' }, { word: 'commute' }] })
+      .expect(200);
+    await api()
+      .put(`/api/v1/content/lessons/${lesson1}/grammar`)
+      .set(auth(tutor.accessToken))
+      .send({ title: 'Present Simple', meaning: 'Habits.', form: 'V / V+s' })
+      .expect(200);
+
+    const detail = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth(student.accessToken)).expect(200);
+    expect(detail.body.wordlist.entries.map((e: { word: string }) => e.word)).toEqual(['wake up', 'commute']);
+    expect(detail.body.grammarReference.title).toBe('Present Simple');
+
+    // Replacing overwrites, not appends.
+    await api()
+      .put(`/api/v1/content/lessons/${lesson1}/wordlist`)
+      .set(auth(tutor.accessToken))
+      .send({ entries: [{ word: 'routine' }] })
+      .expect(200);
+    const detail2 = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth(tutor.accessToken)).expect(200);
+    expect(detail2.body.wordlist.entries.length).toBe(1);
+  });
+
   it('deleting a lesson closes the level-wide order gap', async () => {
     await api().delete(`/api/v1/content/lessons/${lesson2}`).set(auth(tutor.accessToken)).expect(200);
     expect(await orders()).toEqual(['1:L1', '2:L1.5', '3:L3']);
