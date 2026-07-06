@@ -1,0 +1,27 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# Single-domain setup: frontend and API share one domain.
+#   /api/*       -> NestJS API (global prefix /api/v1)
+#   /uploads/*   -> uploaded materials served by the API
+#   /socket.io/* -> Socket.IO (whiteboard/lesson realtime; WebSocket upgrade
+#                   is proxied automatically)
+#   everything else -> Next.js frontend
+{$DOMAIN} {
+	encode gzip
+
+	@api path /api/* /uploads/* /socket.io/*
+	handle @api {
+		reverse_proxy api:3001
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
+
+# Redirect www -> apex
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

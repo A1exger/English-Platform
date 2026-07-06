@@ -1,0 +1,26 @@
+# Adds a Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
+# Use ONCE you have real domains pointing at the server:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.caddy.yml \
+#     --env-file .env.prod up -d --build
+# Then close ports 3000/3001 in your firewall so traffic only goes through Caddy.
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

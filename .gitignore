@@ -1,0 +1,21 @@
+# Secrets / env
+.env
+.env.*
+!.env*.example
+
+# Dependencies / build artifacts
+node_modules/
+dist/
+.next/
+*.tsbuildinfo
+
+# Local databases
+*.db
+*.db-journal
+
+# Uploaded materials (served from /uploads; mounted as a volume in prod)
+apps/api/uploads/
+
+# Misc
+.DS_Store
+*.log

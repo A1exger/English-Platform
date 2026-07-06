@@ -1,0 +1,620 @@
+// English-Platform Prisma schema
+//
+// DATABASE PORTABILITY NOTES
+// --------------------------
+// Dev/test use SQLite (file:./dev.db). PRODUCTION uses PostgreSQL.
+// The datasource always reads env("DATABASE_URL"); only the connection string
+// differs between environments (sqlite "file:..." vs postgres "postgresql://...").
+//
+// SQLite limitations we work around so the SAME schema runs on Postgres:
+//   * No native Prisma `enum` support on SQLite -> all "enum-like" fields are
+//     modeled as `String`. Allowed values are documented inline and enforced in
+//     code via TypeScript string-literal union types / constants
+//     (see src/common/constants/enums.ts).
+//   * JSON blobs are stored as `String` (serialized JSON) for maximum
+//     portability, documented with the field. Parse/stringify in services.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Dev/test: sqlite. Production: postgresql. Driven entirely by DATABASE_URL.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  // role: "tutor" | "student" | "parent" | "admin"
+  role         String
+  firstName    String
+  lastName     String
+  locale       String   @default("en")
+  timezone     String   @default("UTC")
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tutorProfile   TutorProfile?
+  studentProfile StudentProfile?
+  refreshTokens  RefreshToken[]
+  notifications  Notification[]
+
+  @@index([role])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TutorProfile {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline   String?
+  bio        String?
+  hourlyRate Float   @default(0)
+  currency   String  @default("EUR")
+
+  lessons  Lesson[]
+  packages Package[]
+  students TutorStudent[]
+  notes    TutorNote[]
+}
+
+model StudentProfile {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // cefrLevel: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"
+  cefrLevel      String?
+  goals          String?
+  nativeLanguage String?
+  country        String?
+  address        String?
+  birthDate      DateTime?
+  parentUserId   String?
+  balanceCents   Int     @default(0)
+
+  tutors          TutorStudent[]
+  participants    LessonParticipant[]
+  ledgerEntries   LedgerEntry[]
+  studentPackages StudentPackage[]
+}
+
+model TutorStudent {
+  id               String   @id @default(cuid())
+  tutorProfileId   String
+  tutorProfile     TutorProfile   @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  // status: "active" | "paused" | "ended"
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+
+  @@unique([tutorProfileId, studentProfileId])
+  @@index([studentProfileId])
+}
+
+model Lesson {
+  id               String   @id @default(cuid())
+  tutorProfileId   String
+  tutorProfile     TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  // type: "individual" | "group" | "trial"
+  type             String   @default("individual")
+  title            String?
+  startsAt         DateTime
+  endsAt           DateTime
+  // status: "scheduled" | "completed" | "cancelled" | "no_show"
+  status           String   @default("scheduled")
+  priceCents       Int      @default(0)
+  currency         String   @default("EUR")
+  meetingUrl       String?
+  boardId          String?
+  recurrenceRuleId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  participants LessonParticipant[]
+  attendance   Attendance[]
+  homeworks    Homework[]
+
+  @@index([tutorProfileId])
+  @@index([startsAt])
+}
+
+model LessonParticipant {
+  id               String   @id @default(cuid())
+  lessonId         String
+  lesson           Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  bookedAt         DateTime @default(now())
+
+  @@unique([lessonId, studentProfileId])
+  @@index([studentProfileId])
+}
+
+model Attendance {
+  id       String    @id @default(cuid())
+  lessonId String
+  lesson   Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userId   String
+  // status: "present" | "absent" | "late"
+  status   String    @default("present")
+  joinedAt DateTime?
+  leftAt   DateTime?
+
+  @@index([lessonId])
+}
+
+model Homework {
+  id               String    @id @default(cuid())
+  lessonId         String?
+  lesson           Lesson?   @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  tutorProfileId   String
+  studentProfileId String
+  title            String
+  description      String?
+  dueAt            DateTime?
+  // status: "assigned" | "submitted" | "graded"
+  status           String    @default("assigned")
+  createdAt        DateTime  @default(now())
+
+  submissions HomeworkSubmission[]
+
+  @@index([studentProfileId])
+}
+
+model HomeworkSubmission {
+  id          String   @id @default(cuid())
+  homeworkId  String
+  homework    Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  content     String?
+  // fileUrls: JSON-serialized string array, e.g. '["https://..."]'
+  fileUrls    String?
+  grade       String?
+  feedback    String?
+  submittedAt DateTime @default(now())
+
+  @@index([homeworkId])
+}
+
+model Material {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  // type: "pdf" | "video" | "audio" | "image" | "exercise" | "link"
+  type        String
+  title       String
+  url         String?
+  language    String?
+  createdAt   DateTime @default(now())
+
+  @@index([ownerUserId])
+}
+
+model Package {
+  id             String  @id @default(cuid())
+  tutorProfileId String
+  tutorProfile   TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  name           String
+  lessonsCount   Int
+  priceCents     Int
+  currency       String  @default("EUR")
+  validityDays   Int?
+  isActive       Boolean @default(true)
+
+  studentPackages StudentPackage[]
+
+  @@index([tutorProfileId])
+}
+
+model Transaction {
+  id         String   @id @default(cuid())
+  userId     String
+  // type: "topup" | "charge" | "refund" | "payout"
+  type       String
+  // provider: "stripe" | "paypal" | "manual"
+  provider   String
+  amountCents Int
+  currency   String   @default("EUR")
+  // status: "pending" | "succeeded" | "failed" | "refunded"
+  status     String   @default("pending")
+  // externalId: payment session/intent id at the provider (Stripe/PayPal).
+  externalId String?  @unique
+  // metadata: JSON-serialized string, e.g. '{"packageId":"..."}'
+  metadata   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Source of truth for a student's balance: each money movement is one entry.
+// balanceCents on StudentProfile is a denormalized cache updated in the same
+// transaction. amountCents is signed (+topup/refund, -charge).
+model LedgerEntry {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  amountCents      Int
+  currency         String   @default("EUR")
+  // reason: "topup" | "charge" | "refund" | "adjustment"
+  reason           String
+  // referenceType/Id: what this entry relates to, e.g. "lesson"/"transaction".
+  referenceType    String?
+  referenceId      String?
+  balanceAfterCents Int
+  createdAt        DateTime @default(now())
+
+  @@index([studentProfileId])
+  @@index([referenceType, referenceId])
+}
+
+// A purchased package: lessonsRemaining is decremented as lessons complete.
+model StudentPackage {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  packageId        String
+  package          Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  lessonsTotal     Int
+  lessonsRemaining Int
+  expiresAt        DateTime?
+  transactionId    String?
+  createdAt        DateTime @default(now())
+
+  @@index([studentProfileId])
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  userId        String
+  number        String   @unique
+  amountCents   Int
+  currency      String   @default("EUR")
+  // status: "draft" | "issued" | "paid" | "void"
+  status        String   @default("paid")
+  locale        String   @default("en")
+  transactionId String?
+  pdfUrl        String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // channel: "email" | "telegram" | "in_app"
+  channel     String
+  templateKey String
+  locale      String
+  // payload: JSON-serialized string, e.g. '{"lessonId":"..."}'
+  payload     String?
+  // status: "queued" | "sent" | "failed"
+  status      String    @default("queued")
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model TutorNote {
+  id               String   @id @default(cuid())
+  tutorProfileId   String
+  tutorProfile     TutorProfile @relation(fields: [tutorProfileId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  body             String
+  createdAt        DateTime @default(now())
+
+  @@index([tutorProfileId])
+}
+
+// Reusable interactive exercise template built by a tutor/admin.
+// type: "order" | "match" | "fill" | "categorize"
+// payload: JSON string with the content AND the solution (never sent to students).
+model Exercise {
+  id          String   @id @default(cuid())
+  ownerUserId String
+  type        String
+  title       String
+  payload     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  instances ExerciseInstance[]
+
+  @@index([ownerUserId])
+}
+
+// A handed-out copy of an exercise: live on a lesson board, or in homework
+// (one per student). context: "lesson" | "homework". state = student's current
+// arrangement (JSON). status: "open" | "submitted".
+model ExerciseInstance {
+  id               String   @id @default(cuid())
+  exerciseId       String
+  exercise         Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  context          String
+  lessonId         String?
+  homeworkId       String?
+  studentProfileId String?
+  state            String?
+  status           String   @default("open")
+  score            Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([lessonId])
+  @@index([homeworkId])
+  @@index([studentProfileId])
+}
+
+// Links a user to their Telegram chat so notifications can be delivered there.
+model TelegramLink {
+  id       String   @id @default(cuid())
+  userId   String   @unique
+  chatId   String
+  linkedAt DateTime @default(now())
+}
+
+// Interactive whiteboard state for a lesson. latestSnapshot holds the current
+// document (serialized Yjs/tldraw state); the gateway relays live updates and
+// snapshots are persisted periodically and on lesson end.
+model Board {
+  id             String          @id @default(cuid())
+  lessonId       String          @unique
+  latestSnapshot String?
+  // Shared lesson notepad (plain text), synced live and persisted.
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  snapshots      BoardSnapshot[]
+}
+
+// Version history of a board, enabling undo/restore after the lesson.
+model BoardSnapshot {
+  id           String   @id @default(cuid())
+  boardId      String
+  board        Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  snapshot     String
+  authorUserId String?
+  label        String?
+  createdAt    DateTime @default(now())
+
+  @@index([boardId])
+}
+
+// ============================================================================
+// COURSE CONTENT (Skyeng-like lesson system)
+// Hierarchy: Category -> Course -> (level) -> Section -> Unit -> CourseLesson
+//            -> LessonPage -> LessonTask
+// NOTE: the scheduling entity is `Lesson` (a calendar meeting); the CONTENT
+// entity is `CourseLesson`. Enum-like fields are String (SQLite): see
+// src/common/constants/enums.ts for allowed values.
+// ============================================================================
+
+model Category {
+  id      String   @id @default(cuid())
+  title   String
+  order   Int      @default(0)
+  courses Course[]
+}
+
+model Course {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  title      String
+  selfStudy  Boolean  @default(false)
+  isNew      Boolean  @default(false)
+  // status: "draft" | "published"
+  status     String   @default("draft")
+  ownerUserId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sections Section[]
+  lessons  CourseLesson[]
+
+  @@index([categoryId])
+}
+
+// level: "Beginner" | "Elementary" | "PreIntermediate" | "Intermediate" |
+//        "UpperIntermediate" | "Advanced"  (content binds to (courseId, level))
+model Section {
+  id       String @id @default(cuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  level    String
+  title    String
+  order    Int    @default(0)
+  units    Unit[]
+
+  @@index([courseId, level])
+}
+
+model Unit {
+  id        String  @id @default(cuid())
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title     String
+  order     Int     @default(0)
+  lessons   CourseLesson[]
+
+  @@index([sectionId])
+}
+
+model CourseLesson {
+  id       String  @id @default(cuid())
+  courseId String
+  course   Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  level    String
+  unitId   String
+  unit     Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title    String
+  // INV-2: optional lessons sit in the ordered list like any other; the flag
+  // never disables grading (only excludes them from courseCompletion).
+  optional Boolean @default(false)
+  // INV-1: order is level-wide, unique per (courseId, level) across all units.
+  order    Int
+  // objectives: JSON string array (Preparation phase content)
+  objectives String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pages            LessonPage[]
+  wordlist         Wordlist?
+  grammarReference GrammarReference?
+
+  @@unique([courseId, level, order])
+  @@index([unitId])
+}
+
+// type: "grammar" | "practice" | "listening" | "reading" | "discussion" | "essay"
+model LessonPage {
+  id                 String       @id @default(cuid())
+  courseLessonId     String
+  courseLesson       CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  type               String
+  order              Int          @default(0)
+  includedInHomework Boolean      @default(false)
+  mediaUrl           String?
+  text               String?
+  tasks              LessonTask[]
+
+  @@index([courseLessonId])
+}
+
+// type: "sentence_ordering" | "word_matching" | "gap_fill" | "categorization" |
+//       "multiple_choice" | "audio" | "essay" | "discussion"
+// gradingMode: "AUTO" | "MANUAL" | "COMPLETION"   (INV-5)
+// aspect: explicit tag, never derived from titles (INV-6):
+//         "Grammar" | "Reading" | "Listening" | "Vocabulary" | "Speaking" | "Writing"
+model LessonTask {
+  id               String     @id @default(cuid())
+  pageId           String
+  page             LessonPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type             String
+  gradingMode      String
+  aspect           String
+  estimatedMinutes Int        @default(5)
+  order            Int        @default(0)
+  // payload / answerKey: JSON strings; answerKey never leaves the server.
+  payload          String
+  answerKey        String?
+
+  @@index([pageId])
+}
+
+model Wordlist {
+  id             String          @id @default(cuid())
+  courseLessonId String          @unique
+  courseLesson   CourseLesson    @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  entries        WordlistEntry[]
+}
+
+model WordlistEntry {
+  id          String   @id @default(cuid())
+  wordlistId  String
+  wordlist    Wordlist @relation(fields: [wordlistId], references: [id], onDelete: Cascade)
+  word        String
+  translation String?
+  example     String?
+  order       Int      @default(0)
+
+  @@index([wordlistId])
+}
+
+// Structured explanation (Meaning / Form table).
+model GrammarReference {
+  id             String       @id @default(cuid())
+  courseLessonId String       @unique
+  courseLesson   CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  title          String
+  meaning        String
+  form           String
+}
+
+// Personal dictionary + spaced-repetition trainer state.
+model DictionaryEntry {
+  id               String    @id @default(cuid())
+  studentProfileId String
+  word             String
+  translation      String?
+  sourceLessonId   String?
+  repetitions      Int       @default(0)
+  lastReviewedAt   DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@unique([studentProfileId, word])
+  @@index([studentProfileId])
+}
+
+// Assignment of content to a student (live lesson or async homework).
+// INV-7: tasks are SNAPSHOTTED into HomeworkCard at assignment time, so later
+// edits to master content never affect already-assigned work.
+// kind: "lesson" | "homework"; status: "assigned" | "in_progress" | "done"
+model ContentAssignment {
+  id               String   @id @default(cuid())
+  courseLessonId   String?
+  studentProfileId String
+  assignedByUserId String
+  kind             String
+  topicTag         String?
+  dueAt            DateTime?
+  status           String   @default("assigned")
+  createdAt        DateTime @default(now())
+
+  cards  HomeworkCard[]
+  result LessonResult?
+
+  @@index([studentProfileId])
+}
+
+// One snapshotted task inside an assignment. Submission/Grade/Feedback are
+// consolidated here for the MVP: state = student's answer (JSON), score =
+// AUTO grade, feedback = manual essay feedback.
+// status: "open" | "submitted"
+model HomeworkCard {
+  id           String            @id @default(cuid())
+  assignmentId String
+  assignment   ContentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  // taskSnapshot: full copy of LessonTask fields (type/gradingMode/aspect/
+  // estimatedMinutes/payload/answerKey) as a JSON string.
+  taskSnapshot String
+  order        Int      @default(0)
+  state        String?
+  status       String   @default("open")
+  score        Float?
+  feedback     String?
+  submittedAt  DateTime?
+
+  @@index([assignmentId])
+}
+
+// Aggregated result of an assignment (INV-3/INV-4).
+model LessonResult {
+  id             String            @id @default(cuid())
+  assignmentId   String            @unique
+  assignment     ContentAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  overall        Float?
+  // perAspect: JSON string, e.g. {"Reading":8.8,"Grammar":9.7}
+  perAspect      String
+  completion     Float
+  motivationTier String
+  createdAt      DateTime          @default(now())
+}
