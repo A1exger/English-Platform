@@ -159,7 +159,13 @@
     "connecting": "Connecting to video…",
     "connectError": "Could not connect to video. Is LIVEKIT_URL configured?",
     "board": "Board",
-    "video": "Video"
+    "video": "Video",
+    "material": "Material",
+    "live": "Live",
+    "loadLessons": "Load lessons",
+    "pickMaterial": "Pick a course lesson to teach.",
+    "waiting": "Waiting for the teacher…",
+    "studentAnswer": "Answer"
   },
   "board": {
     "title": "Whiteboard",

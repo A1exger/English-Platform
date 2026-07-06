@@ -5,40 +5,62 @@ import { useTranslations } from 'next-intl';
 import { BoardCanvas } from './BoardCanvas';
 import { VideoRoom } from './VideoRoom';
 import { DraggablePanel } from './DraggablePanel';
-import { LessonExercisePanel } from './LessonExercisePanel';
+import { LiveLessonPanel } from './LiveLessonPanel';
 
-// Unified lesson screen: the interactive whiteboard fills the area, and the
-// video call is a draggable, resizable floating window you can move anywhere.
+// Unified live-lesson screen with a layout automaton:
+//   normal   -> big teacher video on the left, material panel on the right
+//   board on -> whiteboard fills the left, both videos shrink to a PiP window,
+//               material panel stays on the right
+// The material panel is teacher-driven and synchronized over the /session
+// envelope channel; drawing stays on the untouched /board channel.
 export function LessonRoom({ lessonId }: { lessonId: string }) {
   const t = useTranslations('room');
+  const [boardOn, setBoardOn] = useState(false);
   const [showVideo, setShowVideo] = useState(true);
-  // Default the call window to the bottom-left corner.
-  const [videoPos, setVideoPos] = useState({ x: 16, y: 360, width: 280, height: 230 });
+  const [pip, setPip] = useState({ x: 16, y: 360, width: 260, height: 200 });
 
   useEffect(() => {
-    setVideoPos((p) => ({ ...p, y: Math.max(80, window.innerHeight - p.height - 24) }));
+    setPip((p) => ({ ...p, y: Math.max(80, window.innerHeight - p.height - 24) }));
   }, []);
 
   return (
-    <div className="lesson-room split">
+    <div className={`lesson-room split ${boardOn ? 'board-on' : 'normal'}`}>
       <div className="lesson-left">
-        <BoardCanvas lessonId={lessonId} />
+        <div className="live-toolbar">
+          <button
+            type="button"
+            className={boardOn ? 'active' : ''}
+            onClick={() => setBoardOn((v) => !v)}
+          >
+            ✏️ {t('board')}
+          </button>
+          <button
+            type="button"
+            className={showVideo ? 'active' : ''}
+            onClick={() => setShowVideo((v) => !v)}
+          >
+            🎥 {t('video')}
+          </button>
+        </div>
+
+        {boardOn ? (
+          <BoardCanvas lessonId={lessonId} />
+        ) : (
+          <div className="stage-video">
+            {showVideo ? <VideoRoom lessonId={lessonId} /> : <div className="stage-empty" />}
+          </div>
+        )}
       </div>
+
       <div className="lesson-right">
-        <LessonExercisePanel lessonId={lessonId} />
+        <LiveLessonPanel lessonId={lessonId} />
       </div>
-      {showVideo ? (
-        <DraggablePanel
-          title={t('video')}
-          onClose={() => setShowVideo(false)}
-          initial={videoPos}
-        >
+
+      {/* PiP video only in board mode (in normal mode the video is the stage). */}
+      {boardOn && showVideo && (
+        <DraggablePanel title={t('video')} onClose={() => setShowVideo(false)} initial={pip}>
           <VideoRoom lessonId={lessonId} />
         </DraggablePanel>
-      ) : (
-        <button type="button" className="reopen-video" onClick={() => setShowVideo(true)}>
-          🎥 {t('video')}
-        </button>
       )}
     </div>
   );

@@ -159,7 +159,13 @@
     "connecting": "جارٍ الاتصال بالفيديو…",
     "connectError": "تعذّر الاتصال بالفيديو. هل تم ضبط LIVEKIT_URL؟",
     "board": "اللوحة",
-    "video": "فيديو"
+    "video": "فيديو",
+    "material": "المادة",
+    "live": "مباشر",
+    "loadLessons": "تحميل الدروس",
+    "pickMaterial": "اختر درسًا من الدورة.",
+    "waiting": "في انتظار المعلم…",
+    "studentAnswer": "الإجابة"
   },
   "board": {
     "title": "اللوحة",

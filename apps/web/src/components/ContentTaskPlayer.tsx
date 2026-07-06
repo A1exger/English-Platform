@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { apiFetch, fileUrl } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
@@ -35,7 +35,8 @@ export function ContentTaskPlayer({
   submit,
   initialState,
   initialResult,
-  feedback
+  feedback,
+  onStateChange
 }: {
   task: ContentTask;
   onResult?: (r: { taskId: string; score?: number; completed: boolean }) => void;
@@ -46,6 +47,8 @@ export function ContentTaskPlayer({
   initialResult?: CheckResponse | null;
   // Tutor's manual feedback shown under a graded card.
   feedback?: string | null;
+  // Live-session progress stream (exercise:progress): fires on every edit.
+  onStateChange?: (taskId: string, state: ExerciseState) => void;
 }) {
   const t = useTranslations('learn');
   const locale = useLocale();
@@ -54,6 +57,12 @@ export function ContentTaskPlayer({
   const [busy, setBusy] = useState(false);
 
   const done = result !== null;
+
+  // Stream in-progress answers to the teacher while the task is still open.
+  useEffect(() => {
+    if (!done && onStateChange) onStateChange(task.id, state);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   async function check(extraState?: ExerciseState) {
     const token = tokenStore.get();

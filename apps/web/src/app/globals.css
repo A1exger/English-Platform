@@ -1307,3 +1307,72 @@ select.err {
   font-size: 14px;
   margin: 0;
 }
+
+/* ——— Phase 5: live lesson (layout automaton + synced material) ——— */
+.lesson-room.split .lesson-left {
+  flex-direction: column;
+  gap: 8px;
+}
+.lesson-left .board-wrap {
+  flex: 1;
+  min-height: 0;
+}
+.live-toolbar {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.live-toolbar button {
+  padding: 6px 12px;
+}
+.live-toolbar button.active {
+  background: var(--indigo);
+  color: #fff;
+}
+.stage-video {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: #0e1020;
+}
+.stage-video > * {
+  flex: 1;
+  min-width: 0;
+}
+.stage-empty {
+  flex: 1;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(75, 87, 230, 0.15), transparent 60%),
+    #0e1020;
+}
+.live-panel h3 {
+  margin: 4px 0;
+}
+.live-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-block-end: 1px solid var(--line);
+}
+.live-lesson-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.live-lesson-list .ghost.active {
+  border-color: var(--indigo);
+  color: var(--indigo-700);
+}
+.live-answer {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--indigo-50);
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  word-break: break-word;
+}
