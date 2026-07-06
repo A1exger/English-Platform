@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
+import { scoreContentTask, toContentQuestion } from './task-check';
 import {
   CreateCategoryDto,
   CreateCourseDto,
@@ -97,14 +98,98 @@ export class ContentService {
       objectives: lesson.objectives ? JSON.parse(lesson.objectives) : [],
       pages: lesson.pages.map((p) => ({
         ...p,
-        tasks: p.tasks.map((t) => ({
-          ...t,
-          payload: JSON.parse(t.payload),
-          // The answer key never leaves the server for students.
-          answerKey: hideKeys ? undefined : t.answerKey ? JSON.parse(t.answerKey) : null,
-        })),
+        tasks: p.tasks.map((t) => {
+          const payload = JSON.parse(t.payload);
+          if (hideKeys) {
+            // Students get a sanitized question only: no payload (which can
+            // reveal the solution, e.g. word order) and no answer key.
+            return {
+              id: t.id,
+              type: t.type,
+              gradingMode: t.gradingMode,
+              aspect: t.aspect,
+              estimatedMinutes: t.estimatedMinutes,
+              order: t.order,
+              question: toContentQuestion(t.type, payload),
+            };
+          }
+          return {
+            ...t,
+            payload,
+            answerKey: t.answerKey ? JSON.parse(t.answerKey) : null,
+            question: toContentQuestion(t.type, payload),
+          };
+        }),
       })),
     };
+  }
+
+  /** Server-side check of one task (AUTO scores; MANUAL/COMPLETION complete). */
+  async checkTask(
+    user: AuthenticatedUser,
+    taskId: string,
+    state: Record<string, unknown>,
+  ) {
+    const task = await this.prisma.lessonTask.findUnique({
+      where: { id: taskId },
+      include: { page: { include: { courseLesson: { include: { course: true } } } } },
+    });
+    if (!task) throw new NotFoundException('Task not found');
+    if (user.role === 'student' && task.page.courseLesson.course.status !== 'published') {
+      throw new ForbiddenException('Course is not published');
+    }
+
+    if (task.gradingMode !== 'AUTO') {
+      // INV-5: MANUAL/COMPLETION never produce a number, only completion.
+      return { completed: true, gradingMode: task.gradingMode };
+    }
+    const answerKey = task.answerKey ? JSON.parse(task.answerKey) : {};
+    const result = scoreContentTask(task.type, answerKey, state);
+    return {
+      completed: true,
+      gradingMode: task.gradingMode,
+      score: result.score,
+      correct: result.correct,
+      // After checking, the solution may be revealed for review.
+      solution: answerKey,
+    };
+  }
+
+  // --- personal dictionary (Preparation -> "add to dictionary") -------------
+
+  private async studentProfileForUser(userId: string) {
+    const profile = await this.prisma.studentProfile.findUnique({
+      where: { userId },
+    });
+    if (!profile) throw new ForbiddenException('No student profile');
+    return profile;
+  }
+
+  async addDictionaryEntry(
+    user: AuthenticatedUser,
+    dto: { word: string; translation?: string; sourceLessonId?: string },
+  ) {
+    const student = await this.studentProfileForUser(user.id);
+    return this.prisma.dictionaryEntry.upsert({
+      where: {
+        studentProfileId_word: { studentProfileId: student.id, word: dto.word },
+      },
+      update: { translation: dto.translation },
+      create: {
+        studentProfileId: student.id,
+        word: dto.word,
+        translation: dto.translation,
+        sourceLessonId: dto.sourceLessonId,
+      },
+    });
+  }
+
+  async listDictionary(user: AuthenticatedUser) {
+    const student = await this.studentProfileForUser(user.id);
+    return this.prisma.dictionaryEntry.findMany({
+      where: { studentProfileId: student.id },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   // --- authoring (tutor/admin) ----------------------------------------------

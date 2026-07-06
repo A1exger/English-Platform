@@ -329,5 +329,26 @@
     "options": "Options (séparées par des virgules)",
     "correct": "Bonne réponse",
     "saved": "Enregistré"
+  },
+  "learn": {
+    "title": "Leçon",
+    "preparation": "Préparation",
+    "objectives": "Objectifs",
+    "wordlist": "Vocabulaire",
+    "grammar": "Grammaire",
+    "meaning": "Sens",
+    "form": "Forme",
+    "addToDict": "Dans mon dictionnaire",
+    "added": "Ajouté ✓",
+    "page": "Page",
+    "prev": "Précédent",
+    "next": "Suivant",
+    "check": "Vérifier",
+    "score": "Score",
+    "markDone": "Marquer comme fait",
+    "done": "Fait ✓",
+    "essayPlaceholder": "Écrivez votre réponse…",
+    "back": "Retour au cours",
+    "min": "min"
   }
 }

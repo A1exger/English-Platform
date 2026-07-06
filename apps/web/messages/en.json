@@ -329,5 +329,26 @@
     "options": "Options (comma-separated)",
     "correct": "Correct answer",
     "saved": "Saved"
+  },
+  "learn": {
+    "title": "Lesson",
+    "preparation": "Preparation",
+    "objectives": "Objectives",
+    "wordlist": "Wordlist",
+    "grammar": "Grammar",
+    "meaning": "Meaning",
+    "form": "Form",
+    "addToDict": "To my dictionary",
+    "added": "Added ✓",
+    "page": "Page",
+    "prev": "Previous",
+    "next": "Next",
+    "check": "Check",
+    "score": "Score",
+    "markDone": "Mark as done",
+    "done": "Done ✓",
+    "essayPlaceholder": "Write your answer…",
+    "back": "Back to course",
+    "min": "min"
   }
 }

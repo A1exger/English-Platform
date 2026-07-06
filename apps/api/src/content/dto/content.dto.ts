@@ -146,6 +146,25 @@ export class ReorderLessonDto {
   order!: number;
 }
 
+export class CheckTaskDto {
+  @IsObject()
+  state!: Record<string, unknown>;
+}
+
+export class AddDictionaryDto {
+  @IsString()
+  @Length(1, 120)
+  word!: string;
+
+  @IsOptional()
+  @IsString()
+  translation?: string;
+
+  @IsOptional()
+  @IsString()
+  sourceLessonId?: string;
+}
+
 export class WordlistEntryDto {
   @IsString()
   @Length(1, 120)

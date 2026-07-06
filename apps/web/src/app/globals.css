@@ -1004,6 +1004,106 @@ select.err {
   gap: 8px;
 }
 
+/* ——— lesson player (learn) ——— */
+.learn-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+.learn-steps {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.step {
+  background: var(--cloud);
+  color: var(--slate);
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: var(--r-pill);
+}
+.step:hover {
+  background: var(--indigo-50);
+  color: var(--indigo-700);
+}
+.step.active {
+  background: var(--indigo);
+  color: #fff;
+  border-color: var(--indigo);
+}
+.learn-prep,
+.learn-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.grammar-table {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.grammar-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 12px;
+  padding: 10px 14px;
+}
+.grammar-row + .grammar-row {
+  border-top: 1px solid var(--line);
+}
+.grammar-key {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--indigo);
+}
+
+/* aspect chips (design-direction skill tags) */
+.chip .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  margin-inline-end: 6px;
+}
+.aspect-grammar {
+  background: var(--indigo-100);
+  color: var(--indigo-700);
+  border-color: var(--indigo-100);
+}
+.aspect-reading {
+  background: var(--spark-100);
+  color: var(--spark-700);
+  border-color: var(--spark-100);
+}
+.aspect-listening {
+  background: var(--high-100);
+  color: #0f7a4f;
+  border-color: var(--high-100);
+}
+.aspect-vocabulary {
+  background: #efeafb;
+  color: #5b3fb0;
+  border-color: #efeafb;
+}
+.aspect-speaking,
+.aspect-writing {
+  background: var(--cloud);
+  color: var(--slate);
+  border-color: var(--line);
+}
+.chip.active-choice {
+  border-color: var(--indigo);
+  background: var(--indigo-100);
+  color: var(--indigo-900);
+}
+
 /* ——— modal ——— */
 .modal-overlay {
   position: fixed;

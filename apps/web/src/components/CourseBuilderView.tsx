@@ -186,7 +186,8 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                   <li key={l.id} className="stacked">
                     <div className="row-between">
                       <span>
-                        <span className="mono-num">{l.order}</span> {l.title}{' '}
+                        <span className="mono-num">{l.order}</span>{' '}
+                        <Link className="link" href={`/learn/${l.id}`}>{l.title}</Link>{' '}
                         {l.optional && <span className="badge-opt">optional</span>}
                       </span>
                       {canAuthor && (

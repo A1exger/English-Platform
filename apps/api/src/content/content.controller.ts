@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { ContentService } from './content.service';
 import {
+  AddDictionaryDto,
+  CheckTaskDto,
   CreateCategoryDto,
   CreateCourseDto,
   CreateCourseLessonDto,
@@ -56,6 +58,32 @@ export class ContentController {
   @Get('lessons/:id')
   lesson(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.content.lessonDetail(user, id);
+  }
+
+  // Server-side task check (AUTO scores 0-10; MANUAL/COMPLETION -> completed).
+  @Post('tasks/:id/check')
+  checkTask(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: CheckTaskDto,
+  ) {
+    return this.content.checkTask(user, id, dto.state);
+  }
+
+  // Personal dictionary (Preparation -> "add to dictionary").
+  @Roles('student')
+  @Post('dictionary')
+  addDictionary(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: AddDictionaryDto,
+  ) {
+    return this.content.addDictionaryEntry(user, dto);
+  }
+
+  @Roles('student')
+  @Get('dictionary')
+  listDictionary(@CurrentUser() user: AuthenticatedUser) {
+    return this.content.listDictionary(user);
   }
 
   // --- authoring (tutor/admin) ---

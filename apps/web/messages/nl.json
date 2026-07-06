@@ -329,5 +329,26 @@
     "options": "Opties (kommagescheiden)",
     "correct": "Juist antwoord",
     "saved": "Opgeslagen"
+  },
+  "learn": {
+    "title": "Les",
+    "preparation": "Voorbereiding",
+    "objectives": "Doelen",
+    "wordlist": "Woordenlijst",
+    "grammar": "Grammatica",
+    "meaning": "Betekenis",
+    "form": "Vorm",
+    "addToDict": "Naar mijn woordenboek",
+    "added": "Toegevoegd ✓",
+    "page": "Pagina",
+    "prev": "Vorige",
+    "next": "Volgende",
+    "check": "Controleren",
+    "score": "Score",
+    "markDone": "Markeren als klaar",
+    "done": "Klaar ✓",
+    "essayPlaceholder": "Schrijf je antwoord…",
+    "back": "Terug naar cursus",
+    "min": "min"
   }
 }

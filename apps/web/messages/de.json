@@ -329,5 +329,26 @@
     "options": "Optionen (kommagetrennt)",
     "correct": "Richtige Antwort",
     "saved": "Gespeichert"
+  },
+  "learn": {
+    "title": "Lektion",
+    "preparation": "Vorbereitung",
+    "objectives": "Ziele",
+    "wordlist": "Wortliste",
+    "grammar": "Grammatik",
+    "meaning": "Bedeutung",
+    "form": "Form",
+    "addToDict": "In mein Wörterbuch",
+    "added": "Hinzugefügt ✓",
+    "page": "Seite",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "check": "Prüfen",
+    "score": "Punkte",
+    "markDone": "Als erledigt markieren",
+    "done": "Erledigt ✓",
+    "essayPlaceholder": "Schreibe deine Antwort…",
+    "back": "Zum Kurs",
+    "min": "Min"
   }
 }
