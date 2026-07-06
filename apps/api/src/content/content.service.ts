@@ -7,6 +7,13 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { scoreContentTask, toContentQuestion } from './task-check';
+import { applyReview, isDue, nextReviewAt } from './spaced-repetition';
+import {
+  computeCourseCompletion,
+  computeGoalForecast,
+  computeGoalProgress,
+  LessonProgressInput,
+} from './scoring';
 import {
   CreateCategoryDto,
   CreateCourseDto,
@@ -186,10 +193,126 @@ export class ContentService {
 
   async listDictionary(user: AuthenticatedUser) {
     const student = await this.studentProfileForUser(user.id);
-    return this.prisma.dictionaryEntry.findMany({
+    const entries = await this.prisma.dictionaryEntry.findMany({
       where: { studentProfileId: student.id },
       orderBy: { createdAt: 'desc' },
     });
+    const now = new Date();
+    // Enrich with spaced-repetition scheduling for the trainer (Phase 6).
+    return entries.map((e) => ({
+      ...e,
+      due: isDue(e.repetitions, e.lastReviewedAt, now),
+      nextReviewAt: nextReviewAt(e.repetitions, e.lastReviewedAt),
+    }));
+  }
+
+  /** Trainer review: promote on remember, reset the streak on a miss. */
+  async reviewDictionaryEntry(
+    user: AuthenticatedUser,
+    entryId: string,
+    remembered: boolean,
+  ) {
+    const student = await this.studentProfileForUser(user.id);
+    const entry = await this.prisma.dictionaryEntry.findUnique({ where: { id: entryId } });
+    if (!entry || entry.studentProfileId !== student.id) {
+      throw new NotFoundException('Dictionary entry not found');
+    }
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { id: entryId },
+      data: {
+        repetitions: applyReview(entry.repetitions, remembered),
+        lastReviewedAt: new Date(),
+      },
+    });
+    return {
+      ...updated,
+      due: isDue(updated.repetitions, updated.lastReviewedAt),
+      nextReviewAt: nextReviewAt(updated.repetitions, updated.lastReviewedAt),
+    };
+  }
+
+  /**
+   * Both progress counters + goal forecast for the cabinet (INV-3), grouped by
+   * the courses the student has been assigned lessons in. A lesson counts as
+   * completed when the student has a finished (status=done) assignment for it;
+   * its grade comes from that assignment's LessonResult.
+   */
+  async studentProgress(user: AuthenticatedUser) {
+    const student = await this.studentProfileForUser(user.id);
+    const assignments = await this.prisma.contentAssignment.findMany({
+      where: { studentProfileId: student.id, courseLessonId: { not: null } },
+      include: { result: true },
+    });
+
+    // Best (highest overall) finished assignment per course lesson.
+    const doneByLesson = new Map<string, number | null>();
+    for (const a of assignments) {
+      if (a.status !== 'done' || !a.courseLessonId) continue;
+      const overall = a.result?.overall ?? null;
+      const prev = doneByLesson.get(a.courseLessonId);
+      if (prev === undefined || (overall ?? -1) > (prev ?? -1)) {
+        doneByLesson.set(a.courseLessonId, overall);
+      }
+    }
+
+    // Which (course, level) pairs the student is working in.
+    const lessonIds = Array.from(
+      new Set(assignments.map((a) => a.courseLessonId).filter((x): x is string => !!x)),
+    );
+    const assignedLessons = await this.prisma.courseLesson.findMany({
+      where: { id: { in: lessonIds } },
+      include: { course: { select: { id: true, title: true } } },
+    });
+    const pairs = new Map<string, { courseId: string; title: string; level: string }>();
+    for (const l of assignedLessons) {
+      pairs.set(`${l.courseId}:${l.level}`, {
+        courseId: l.courseId,
+        title: l.course.title,
+        level: l.level,
+      });
+    }
+
+    const courses: {
+      courseId: string;
+      title: string;
+      level: string;
+      courseCompletion: number;
+      goalProgress: number | null;
+      forecast: ReturnType<typeof computeGoalForecast>;
+      lessonsRequired: number;
+      lessonsDone: number;
+    }[] = [];
+    const allScored: LessonProgressInput[] = [];
+    for (const { courseId, title, level } of pairs.values()) {
+      const lessons = await this.prisma.courseLesson.findMany({
+        where: { courseId, level },
+        select: { id: true, optional: true },
+      });
+      const inputs: LessonProgressInput[] = lessons.map((l) => ({
+        optional: l.optional,
+        completed: doneByLesson.has(l.id),
+        overall: doneByLesson.get(l.id) ?? null,
+      }));
+      allScored.push(...inputs);
+      courses.push({
+        courseId,
+        title,
+        level,
+        courseCompletion: computeCourseCompletion(inputs),
+        goalProgress: computeGoalProgress(inputs),
+        forecast: computeGoalForecast(inputs),
+        lessonsRequired: inputs.filter((i) => !i.optional).length,
+        lessonsDone: inputs.filter((i) => i.completed).length,
+      });
+    }
+
+    return {
+      courses,
+      overall: {
+        goalProgress: computeGoalProgress(allScored),
+        forecast: computeGoalForecast(allScored),
+      },
+    };
   }
 
   // --- authoring (tutor/admin) ----------------------------------------------

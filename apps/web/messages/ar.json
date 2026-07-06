@@ -205,7 +205,8 @@
     "payment": "الدفع",
     "exercises": "التمارين",
     "courses": "الدورات",
-    "assignments": "الواجبات"
+    "assignments": "الواجبات",
+    "dictionary": "القاموس"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",
@@ -248,7 +249,13 @@
     "badge_five_lessons": "5 دروس",
     "badge_ten_lessons": "10 دروس",
     "badge_homework_hero": "بطل الواجبات",
-    "badge_perfect_attendance": "حضور مثالي"
+    "badge_perfect_attendance": "حضور مثالي",
+    "courseProgress": "تقدم الدورة",
+    "structural": "الإنجاز",
+    "goal": "الهدف",
+    "forecast": "التوقع",
+    "projected": "متوقع",
+    "remaining": "إلزامي متبقٍ"
   },
   "exercises": {
     "title": "التمارين",
@@ -382,5 +389,15 @@
     "assign": "تعيين",
     "saveFeedback": "حفظ الملاحظات",
     "feedbackPlaceholder": "ملاحظات للطالب…"
+  },
+  "dictionary": {
+    "title": "القاموس",
+    "empty": "لا توجد كلمات بعد. أضِفها من قوائم مفردات الدروس.",
+    "train": "تدريب",
+    "due": "للمراجعة",
+    "reveal": "إظهار",
+    "remembered": "عرفتها",
+    "forgot": "لم أعرفها",
+    "back": "العودة إلى القائمة"
   }
 }

@@ -205,7 +205,8 @@
     "payment": "Paiement",
     "exercises": "Exercices",
     "courses": "Cours",
-    "assignments": "Devoirs"
+    "assignments": "Devoirs",
+    "dictionary": "Dictionnaire"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
@@ -248,7 +249,13 @@
     "badge_five_lessons": "5 cours",
     "badge_ten_lessons": "10 cours",
     "badge_homework_hero": "Héros des devoirs",
-    "badge_perfect_attendance": "Présence parfaite"
+    "badge_perfect_attendance": "Présence parfaite",
+    "courseProgress": "Progression du cours",
+    "structural": "Progression",
+    "goal": "Objectif",
+    "forecast": "Prévision",
+    "projected": "prévu",
+    "remaining": "requis restants"
   },
   "exercises": {
     "title": "Exercices",
@@ -382,5 +389,15 @@
     "assign": "Assigner",
     "saveFeedback": "Enregistrer le retour",
     "feedbackPlaceholder": "Retour pour l'élève…"
+  },
+  "dictionary": {
+    "title": "Dictionnaire",
+    "empty": "Aucun mot. Ajoutez-en depuis les listes de vocabulaire.",
+    "train": "S'entraîner",
+    "due": "À réviser",
+    "reveal": "Révéler",
+    "remembered": "Je savais",
+    "forgot": "Je ne savais pas",
+    "back": "Retour à la liste"
   }
 }

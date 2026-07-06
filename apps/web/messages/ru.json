@@ -205,7 +205,8 @@
     "payment": "Оплата",
     "exercises": "Упражнения",
     "courses": "Курсы",
-    "assignments": "Задания"
+    "assignments": "Задания",
+    "dictionary": "Словарь"
   },
   "dashboard": {
     "greeting": "С возвращением, {name}!",
@@ -248,7 +249,13 @@
     "badge_five_lessons": "5 уроков",
     "badge_ten_lessons": "10 уроков",
     "badge_homework_hero": "Герой домашек",
-    "badge_perfect_attendance": "Идеальная посещаемость"
+    "badge_perfect_attendance": "Идеальная посещаемость",
+    "courseProgress": "Прогресс по курсам",
+    "structural": "Выполнение",
+    "goal": "Цель",
+    "forecast": "Прогноз",
+    "projected": "прогноз",
+    "remaining": "обязательных осталось"
   },
   "exercises": {
     "title": "Упражнения",
@@ -382,5 +389,15 @@
     "assign": "Назначить",
     "saveFeedback": "Сохранить фидбек",
     "feedbackPlaceholder": "Фидбек ученику…"
+  },
+  "dictionary": {
+    "title": "Словарь",
+    "empty": "Пока нет слов. Добавляйте их из словарей урока.",
+    "train": "Тренировка",
+    "due": "К повторению",
+    "reveal": "Показать",
+    "remembered": "Знал",
+    "forgot": "Не знал",
+    "back": "К списку"
   }
 }

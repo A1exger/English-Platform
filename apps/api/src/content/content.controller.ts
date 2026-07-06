@@ -22,6 +22,7 @@ import {
   CreateTaskDto,
   CreateUnitDto,
   ReorderLessonDto,
+  ReviewDictionaryDto,
   SetGrammarDto,
   SetWordlistDto,
   UpdateCourseDto,
@@ -84,6 +85,24 @@ export class ContentController {
   @Get('dictionary')
   listDictionary(@CurrentUser() user: AuthenticatedUser) {
     return this.content.listDictionary(user);
+  }
+
+  // Spaced-repetition review of one dictionary word.
+  @Roles('student')
+  @Post('dictionary/:id/review')
+  reviewDictionary(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ReviewDictionaryDto,
+  ) {
+    return this.content.reviewDictionaryEntry(user, id, dto.remembered);
+  }
+
+  // Both progress counters + goal forecast for the cabinet (INV-3).
+  @Roles('student')
+  @Get('progress')
+  progress(@CurrentUser() user: AuthenticatedUser) {
+    return this.content.studentProgress(user);
   }
 
   // --- authoring (tutor/admin) ---

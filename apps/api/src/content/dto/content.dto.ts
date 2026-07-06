@@ -165,6 +165,12 @@ export class AddDictionaryDto {
   sourceLessonId?: string;
 }
 
+export class ReviewDictionaryDto {
+  // true = remembered (promote), false = missed (reset the streak).
+  @IsBoolean()
+  remembered!: boolean;
+}
+
 export class WordlistEntryDto {
   @IsString()
   @Length(1, 120)

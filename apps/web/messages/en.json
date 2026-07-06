@@ -205,7 +205,8 @@
     "payment": "Payment",
     "exercises": "Exercises",
     "courses": "Courses",
-    "assignments": "Assignments"
+    "assignments": "Assignments",
+    "dictionary": "Dictionary"
   },
   "dashboard": {
     "greeting": "Welcome back, {name}!",
@@ -248,7 +249,13 @@
     "badge_five_lessons": "5 lessons",
     "badge_ten_lessons": "10 lessons",
     "badge_homework_hero": "Homework hero",
-    "badge_perfect_attendance": "Perfect attendance"
+    "badge_perfect_attendance": "Perfect attendance",
+    "courseProgress": "Course progress",
+    "structural": "Completion",
+    "goal": "Goal",
+    "forecast": "Forecast",
+    "projected": "projected",
+    "remaining": "required left"
   },
   "exercises": {
     "title": "Exercises",
@@ -382,5 +389,15 @@
     "assign": "Assign",
     "saveFeedback": "Save feedback",
     "feedbackPlaceholder": "Feedback for the student…"
+  },
+  "dictionary": {
+    "title": "Dictionary",
+    "empty": "No words yet. Add them from lesson wordlists.",
+    "train": "Train",
+    "due": "Due",
+    "reveal": "Reveal",
+    "remembered": "I knew it",
+    "forgot": "Didn't know",
+    "back": "Back to list"
   }
 }

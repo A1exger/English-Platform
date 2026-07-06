@@ -205,7 +205,8 @@
     "payment": "Zahlung",
     "exercises": "Übungen",
     "courses": "Kurse",
-    "assignments": "Aufgaben"
+    "assignments": "Aufgaben",
+    "dictionary": "Wörterbuch"
   },
   "dashboard": {
     "greeting": "Willkommen zurück, {name}!",
@@ -248,7 +249,13 @@
     "badge_five_lessons": "5 Stunden",
     "badge_ten_lessons": "10 Stunden",
     "badge_homework_hero": "Hausaufgaben-Held",
-    "badge_perfect_attendance": "Perfekte Anwesenheit"
+    "badge_perfect_attendance": "Perfekte Anwesenheit",
+    "courseProgress": "Kursfortschritt",
+    "structural": "Fortschritt",
+    "goal": "Ziel",
+    "forecast": "Prognose",
+    "projected": "Prognose",
+    "remaining": "Pflicht übrig"
   },
   "exercises": {
     "title": "Übungen",
@@ -382,5 +389,15 @@
     "assign": "Zuweisen",
     "saveFeedback": "Feedback speichern",
     "feedbackPlaceholder": "Feedback für den Schüler…"
+  },
+  "dictionary": {
+    "title": "Wörterbuch",
+    "empty": "Noch keine Wörter. Füge sie aus den Wortlisten hinzu.",
+    "train": "Üben",
+    "due": "Fällig",
+    "reveal": "Aufdecken",
+    "remembered": "Gewusst",
+    "forgot": "Nicht gewusst",
+    "back": "Zur Liste"
   }
 }

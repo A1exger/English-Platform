@@ -205,7 +205,8 @@
     "payment": "Betaling",
     "exercises": "Oefeningen",
     "courses": "Cursussen",
-    "assignments": "Opdrachten"
+    "assignments": "Opdrachten",
+    "dictionary": "Woordenboek"
   },
   "dashboard": {
     "greeting": "Welkom terug, {name}!",
@@ -248,7 +249,13 @@
     "badge_five_lessons": "5 lessen",
     "badge_ten_lessons": "10 lessen",
     "badge_homework_hero": "Huiswerkheld",
-    "badge_perfect_attendance": "Perfecte aanwezigheid"
+    "badge_perfect_attendance": "Perfecte aanwezigheid",
+    "courseProgress": "Cursusvoortgang",
+    "structural": "Voltooiing",
+    "goal": "Doel",
+    "forecast": "Prognose",
+    "projected": "verwacht",
+    "remaining": "verplicht over"
   },
   "exercises": {
     "title": "Oefeningen",
@@ -382,5 +389,15 @@
     "assign": "Toewijzen",
     "saveFeedback": "Feedback opslaan",
     "feedbackPlaceholder": "Feedback voor de leerling…"
+  },
+  "dictionary": {
+    "title": "Woordenboek",
+    "empty": "Nog geen woorden. Voeg ze toe vanuit woordenlijsten.",
+    "train": "Oefenen",
+    "due": "Te herhalen",
+    "reveal": "Tonen",
+    "remembered": "Ik wist het",
+    "forgot": "Wist ik niet",
+    "back": "Terug naar lijst"
   }
 }

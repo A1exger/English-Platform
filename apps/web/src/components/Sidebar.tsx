@@ -36,6 +36,7 @@ function itemsForRole(role: string | null): Item[] {
   }
   if (role === 'student') {
     extra.push({ key: 'courses', href: '/courses' });
+    extra.push({ key: 'dictionary', href: '/dictionary' });
     extra.push({ key: 'progress', href: '/progress' });
   }
   return [common[0], ...extra, ...common.slice(1)];
