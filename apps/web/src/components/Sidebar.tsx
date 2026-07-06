@@ -19,6 +19,7 @@ function itemsForRole(role: string | null): Item[] {
     { key: 'schedule', href: '/schedule' },
     { key: 'materials', href: '/materials' },
     { key: 'homework', href: '/homework' },
+    { key: 'assignments', href: '/assignments' },
     billing,
     { key: 'settings', href: '/settings' }
   ];

@@ -198,7 +198,8 @@
     "progress": "Voortgang",
     "payment": "Betaling",
     "exercises": "Oefeningen",
-    "courses": "Cursussen"
+    "courses": "Cursussen",
+    "assignments": "Opdrachten"
   },
   "dashboard": {
     "greeting": "Welkom terug, {name}!",
@@ -350,5 +351,30 @@
     "essayPlaceholder": "Schrijf je antwoord…",
     "back": "Terug naar cursus",
     "min": "min"
+  },
+  "assignments": {
+    "title": "Opdrachten",
+    "empty": "Nog geen opdrachten.",
+    "homework": "Huiswerk",
+    "lesson": "Les",
+    "tasks": "taken",
+    "due": "Inleveren",
+    "status_assigned": "Toegewezen",
+    "status_in_progress": "Bezig",
+    "status_done": "Klaar",
+    "back": "Terug naar opdrachten",
+    "perAspect": "Per aspect",
+    "completion": "Voltooiing",
+    "tier_excellent": "Uitstekend!",
+    "tier_good": "Goed gedaan",
+    "tier_keepGoing": "Ga zo door",
+    "assignHomework": "Als huiswerk toewijzen",
+    "student": "Leerling",
+    "topicTag": "Onderwerp",
+    "topicPlaceholder": "bijv. Present Simple",
+    "pickTasks": "Taken om op te nemen",
+    "assign": "Toewijzen",
+    "saveFeedback": "Feedback opslaan",
+    "feedbackPlaceholder": "Feedback voor de leerling…"
   }
 }

@@ -20,7 +20,7 @@ export interface ContentTask {
   question: Record<string, unknown>;
 }
 
-interface CheckResponse {
+export interface CheckResponse {
   completed: boolean;
   score?: number;
   correct?: boolean;
@@ -31,15 +31,26 @@ const DND_TYPES = ['sentence_ordering', 'word_matching', 'gap_fill', 'categoriza
 
 export function ContentTaskPlayer({
   task,
-  onResult
+  onResult,
+  submit,
+  initialState,
+  initialResult,
+  feedback
 }: {
   task: ContentTask;
   onResult?: (r: { taskId: string; score?: number; completed: boolean }) => void;
+  // Override where the answer goes. Default: self-study / live check endpoint.
+  // Homework passes a submit that persists the card (see AssignmentPlayerView).
+  submit?: (state: ExerciseState) => Promise<CheckResponse>;
+  initialState?: ExerciseState;
+  initialResult?: CheckResponse | null;
+  // Tutor's manual feedback shown under a graded card.
+  feedback?: string | null;
 }) {
   const t = useTranslations('learn');
   const locale = useLocale();
-  const [state, setState] = useState<ExerciseState>({});
-  const [result, setResult] = useState<CheckResponse | null>(null);
+  const [state, setState] = useState<ExerciseState>(initialState ?? {});
+  const [result, setResult] = useState<CheckResponse | null>(initialResult ?? null);
   const [busy, setBusy] = useState(false);
 
   const done = result !== null;
@@ -49,12 +60,15 @@ export function ContentTaskPlayer({
     if (!token) return;
     setBusy(true);
     try {
-      const r = await apiFetch<CheckResponse>(`/content/tasks/${task.id}/check`, {
-        method: 'POST',
-        token,
-        locale,
-        body: { state: extraState ?? state }
-      });
+      const payload = extraState ?? state;
+      const r = submit
+        ? await submit(payload)
+        : await apiFetch<CheckResponse>(`/content/tasks/${task.id}/check`, {
+            method: 'POST',
+            token,
+            locale,
+            body: { state: payload }
+          });
       setResult(r);
       onResult?.({ taskId: task.id, score: r.score, completed: true });
     } finally {
@@ -143,13 +157,16 @@ export function ContentTaskPlayer({
       {task.type === 'discussion' && typeof q.prompt === 'string' && <p>{q.prompt}</p>}
 
       {done ? (
-        result?.score !== undefined ? (
-          <p className={result.correct ? 'ex-ok' : 'ex-partial'}>
-            {t('score')}: {result.score} / 10
-          </p>
-        ) : (
-          <p className="ex-ok">{t('done')}</p>
-        )
+        <>
+          {result?.score !== undefined ? (
+            <p className={result.correct ? 'ex-ok' : 'ex-partial'}>
+              {t('score')}: {result.score} / 10
+            </p>
+          ) : (
+            <p className="ex-ok">{t('done')}</p>
+          )}
+          {feedback ? <p className="ex-feedback">✎ {feedback}</p> : null}
+        </>
       ) : task.gradingMode === 'AUTO' ? (
         <button type="button" disabled={busy} onClick={() => check()}>
           {busy ? '…' : t('check')}

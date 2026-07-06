@@ -6,6 +6,7 @@ import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
+import { AssignmentBuilder } from './AssignmentBuilder';
 
 interface PageRow {
   id: string;
@@ -30,6 +31,7 @@ interface LessonDetail {
 // followed by the lesson pages with their tasks.
 export function LessonPlayerView({ lessonId }: { lessonId: string }) {
   const t = useTranslations('learn');
+  const tAssign = useTranslations('assignments');
   const tApp = useTranslations('app');
   const locale = useLocale();
   const router = useRouter();
@@ -39,6 +41,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [pageIdx, setPageIdx] = useState(0); // 0 = Preparation
   const [added, setAdded] = useState<Record<string, boolean>>({});
+  const [showAssign, setShowAssign] = useState(false);
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -81,11 +84,27 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
 
   const totalSteps = lesson.pages.length + 1; // + Preparation
   const page = pageIdx > 0 ? lesson.pages[pageIdx - 1] : null;
+  const allTasks = lesson.pages.flatMap((p) => p.tasks);
 
   return (
     <div className="content learn">
       <Link className="link" href={`/courses/${lesson.courseId}`}>← {t('back')}</Link>
-      <h2>{lesson.title}</h2>
+      <div className="row-between">
+        <h2>{lesson.title}</h2>
+        {!isStudent && allTasks.length > 0 && (
+          <button type="button" onClick={() => setShowAssign((v) => !v)}>
+            {tAssign('assignHomework')}
+          </button>
+        )}
+      </div>
+
+      {showAssign && !isStudent && (
+        <AssignmentBuilder
+          lessonId={lessonId}
+          tasks={allTasks.map((tk) => ({ id: tk.id, type: tk.type, aspect: tk.aspect }))}
+          onClose={() => setShowAssign(false)}
+        />
+      )}
 
       <div className="learn-nav">
         <button type="button" className="ghost" disabled={pageIdx === 0} onClick={() => setPageIdx(pageIdx - 1)}>

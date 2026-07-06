@@ -198,7 +198,8 @@
     "progress": "Прогресс",
     "payment": "Оплата",
     "exercises": "Упражнения",
-    "courses": "Курсы"
+    "courses": "Курсы",
+    "assignments": "Задания"
   },
   "dashboard": {
     "greeting": "С возвращением, {name}!",
@@ -350,5 +351,30 @@
     "essayPlaceholder": "Напишите ваш ответ…",
     "back": "К курсу",
     "min": "мин"
+  },
+  "assignments": {
+    "title": "Задания",
+    "empty": "Пока нет заданий.",
+    "homework": "Домашка",
+    "lesson": "Урок",
+    "tasks": "заданий",
+    "due": "Срок",
+    "status_assigned": "Назначено",
+    "status_in_progress": "В процессе",
+    "status_done": "Готово",
+    "back": "К заданиям",
+    "perAspect": "По аспектам",
+    "completion": "Выполнение",
+    "tier_excellent": "Отлично!",
+    "tier_good": "Хорошо",
+    "tier_keepGoing": "Продолжай",
+    "assignHomework": "Назначить ДЗ",
+    "student": "Ученик",
+    "topicTag": "Тема",
+    "topicPlaceholder": "напр. Present Simple",
+    "pickTasks": "Какие задания включить",
+    "assign": "Назначить",
+    "saveFeedback": "Сохранить фидбек",
+    "feedbackPlaceholder": "Фидбек ученику…"
   }
 }

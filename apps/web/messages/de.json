@@ -198,7 +198,8 @@
     "progress": "Fortschritt",
     "payment": "Zahlung",
     "exercises": "Übungen",
-    "courses": "Kurse"
+    "courses": "Kurse",
+    "assignments": "Aufgaben"
   },
   "dashboard": {
     "greeting": "Willkommen zurück, {name}!",
@@ -350,5 +351,30 @@
     "essayPlaceholder": "Schreibe deine Antwort…",
     "back": "Zum Kurs",
     "min": "Min"
+  },
+  "assignments": {
+    "title": "Aufgaben",
+    "empty": "Noch keine Aufgaben.",
+    "homework": "Hausaufgabe",
+    "lesson": "Lektion",
+    "tasks": "Aufgaben",
+    "due": "Fällig",
+    "status_assigned": "Zugewiesen",
+    "status_in_progress": "In Bearbeitung",
+    "status_done": "Erledigt",
+    "back": "Zurück zu den Aufgaben",
+    "perAspect": "Nach Aspekt",
+    "completion": "Fortschritt",
+    "tier_excellent": "Ausgezeichnet!",
+    "tier_good": "Gut gemacht",
+    "tier_keepGoing": "Weiter so",
+    "assignHomework": "Als Hausaufgabe zuweisen",
+    "student": "Schüler",
+    "topicTag": "Thema",
+    "topicPlaceholder": "z. B. Present Simple",
+    "pickTasks": "Aufgaben auswählen",
+    "assign": "Zuweisen",
+    "saveFeedback": "Feedback speichern",
+    "feedbackPlaceholder": "Feedback für den Schüler…"
   }
 }

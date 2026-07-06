@@ -198,7 +198,8 @@
     "progress": "التقدم",
     "payment": "الدفع",
     "exercises": "التمارين",
-    "courses": "الدورات"
+    "courses": "الدورات",
+    "assignments": "الواجبات"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",
@@ -350,5 +351,30 @@
     "essayPlaceholder": "اكتب إجابتك…",
     "back": "العودة إلى الدورة",
     "min": "دقيقة"
+  },
+  "assignments": {
+    "title": "الواجبات",
+    "empty": "لا توجد واجبات بعد.",
+    "homework": "واجب",
+    "lesson": "درس",
+    "tasks": "مهام",
+    "due": "الموعد",
+    "status_assigned": "معيَّن",
+    "status_in_progress": "قيد التنفيذ",
+    "status_done": "مكتمل",
+    "back": "العودة إلى الواجبات",
+    "perAspect": "حسب المهارة",
+    "completion": "الإنجاز",
+    "tier_excellent": "ممتاز!",
+    "tier_good": "أحسنت",
+    "tier_keepGoing": "واصل",
+    "assignHomework": "تعيين كواجب",
+    "student": "الطالب",
+    "topicTag": "الموضوع",
+    "topicPlaceholder": "مثال: Present Simple",
+    "pickTasks": "المهام المراد تضمينها",
+    "assign": "تعيين",
+    "saveFeedback": "حفظ الملاحظات",
+    "feedbackPlaceholder": "ملاحظات للطالب…"
   }
 }

@@ -198,7 +198,8 @@
     "progress": "Progression",
     "payment": "Paiement",
     "exercises": "Exercices",
-    "courses": "Cours"
+    "courses": "Cours",
+    "assignments": "Devoirs"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
@@ -350,5 +351,30 @@
     "essayPlaceholder": "Écrivez votre réponse…",
     "back": "Retour au cours",
     "min": "min"
+  },
+  "assignments": {
+    "title": "Devoirs",
+    "empty": "Aucun devoir pour l'instant.",
+    "homework": "Devoir",
+    "lesson": "Leçon",
+    "tasks": "exercices",
+    "due": "Échéance",
+    "status_assigned": "Assigné",
+    "status_in_progress": "En cours",
+    "status_done": "Terminé",
+    "back": "Retour aux devoirs",
+    "perAspect": "Par aspect",
+    "completion": "Progression",
+    "tier_excellent": "Excellent !",
+    "tier_good": "Bien joué",
+    "tier_keepGoing": "Continue",
+    "assignHomework": "Assigner comme devoir",
+    "student": "Élève",
+    "topicTag": "Thème",
+    "topicPlaceholder": "ex. Present Simple",
+    "pickTasks": "Exercices à inclure",
+    "assign": "Assigner",
+    "saveFeedback": "Enregistrer le retour",
+    "feedbackPlaceholder": "Retour pour l'élève…"
   }
 }

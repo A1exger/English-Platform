@@ -198,7 +198,8 @@
     "progress": "Progress",
     "payment": "Payment",
     "exercises": "Exercises",
-    "courses": "Courses"
+    "courses": "Courses",
+    "assignments": "Assignments"
   },
   "dashboard": {
     "greeting": "Welcome back, {name}!",
@@ -350,5 +351,30 @@
     "essayPlaceholder": "Write your answer…",
     "back": "Back to course",
     "min": "min"
+  },
+  "assignments": {
+    "title": "Assignments",
+    "empty": "No assignments yet.",
+    "homework": "Homework",
+    "lesson": "Lesson",
+    "tasks": "tasks",
+    "due": "Due",
+    "status_assigned": "Assigned",
+    "status_in_progress": "In progress",
+    "status_done": "Done",
+    "back": "Back to assignments",
+    "perAspect": "By aspect",
+    "completion": "Completion",
+    "tier_excellent": "Excellent!",
+    "tier_good": "Good job",
+    "tier_keepGoing": "Keep going",
+    "assignHomework": "Assign as homework",
+    "student": "Student",
+    "topicTag": "Topic",
+    "topicPlaceholder": "e.g. Present Simple",
+    "pickTasks": "Tasks to include",
+    "assign": "Assign",
+    "saveFeedback": "Save feedback",
+    "feedbackPlaceholder": "Feedback for the student…"
   }
 }
