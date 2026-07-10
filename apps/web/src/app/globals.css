@@ -1693,3 +1693,173 @@ select.err {
   gap: 18px;
   margin-block-end: 8px;
 }
+
+/* ——— Phase 3: editorial live room (material hero + dark video rail) ——— */
+.lesson-room.room-editorial {
+  position: fixed;
+  inset: 64px 0 0 0;
+  display: grid;
+  grid-template-columns: 1fr minmax(300px, 30vw);
+  gap: 12px;
+  padding: 12px;
+  background: var(--paper);
+}
+.room-stage {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.room-stage-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  border-block-end: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.room-stage-body {
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+  padding: 18px;
+}
+.room-stage-body .board-wrap {
+  block-size: 100%;
+}
+.live-material {
+  max-inline-size: 760px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* segmented control (Material | Board) */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.segmented button {
+  background: transparent;
+  color: var(--slate);
+  border: none;
+  border-radius: 0;
+  padding: 6px 14px;
+  font-size: 14px;
+}
+.segmented button.active {
+  background: var(--indigo);
+  color: #fff;
+}
+
+/* page stepper */
+.page-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.page-stepper .ghost {
+  padding: 2px 9px;
+}
+.room-driver {
+  font-size: 12px;
+}
+.room-live {
+  margin-inline-start: auto;
+}
+
+/* right rail: dark video + tabbed panel */
+.room-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-inline-size: 0;
+}
+.room-video {
+  position: relative;
+  background: #0e1020;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  flex: 0 0 auto;
+}
+.room-video > *:first-child {
+  position: absolute;
+  inset: 0;
+}
+.room-theatre-btn {
+  position: absolute;
+  inset-block-end: 8px;
+  inset-inline-end: 8px;
+  z-index: 2;
+  background: rgba(14, 16, 32, 0.72);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.room-rail-panel {
+  flex: 1;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.tabs {
+  display: flex;
+  border-block-end: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.tabs button {
+  flex: 1;
+  background: transparent;
+  color: var(--slate);
+  border: none;
+  border-radius: 0;
+  padding: 10px;
+  font-size: 14px;
+}
+.tabs button.active {
+  color: var(--indigo-700);
+  border-block-end: 2px solid var(--indigo);
+}
+.room-rail-body {
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+  padding: 12px;
+}
+.live-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.live-answer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* focus-on-video theatre mode */
+.room-editorial.theatre .room-video {
+  position: fixed;
+  inset: 64px 0 0 0;
+  z-index: 30;
+  border-radius: 0;
+  aspect-ratio: auto;
+}
+
+@media (max-width: 860px) {
+  .lesson-room.room-editorial {
+    grid-template-columns: 1fr;
+    grid-auto-rows: minmax(0, 1fr);
+  }
+}

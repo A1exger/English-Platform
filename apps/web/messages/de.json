@@ -165,7 +165,14 @@
     "loadLessons": "Lektionen laden",
     "pickMaterial": "Wählen Sie eine Kurslektion.",
     "waiting": "Warten auf den Lehrer…",
-    "studentAnswer": "Antwort"
+    "studentAnswer": "Antwort",
+    "answersTab": "Antworten",
+    "exerciseTab": "Übung",
+    "focusVideo": "Video-Fokus",
+    "exitFocus": "Fokus verlassen",
+    "pageLabel": "S.",
+    "teacherLeads": "Lehrer führt",
+    "answersHint": "Antworten erscheinen hier, während der Schüler arbeitet."
   },
   "board": {
     "title": "Whiteboard",

@@ -165,7 +165,14 @@
     "loadLessons": "Load lessons",
     "pickMaterial": "Pick a course lesson to teach.",
     "waiting": "Waiting for the teacher…",
-    "studentAnswer": "Answer"
+    "studentAnswer": "Answer",
+    "answersTab": "Answers",
+    "exerciseTab": "Exercise",
+    "focusVideo": "Focus on video",
+    "exitFocus": "Exit focus",
+    "pageLabel": "p.",
+    "teacherLeads": "teacher is leading",
+    "answersHint": "Answers appear here as the student works."
   },
   "board": {
     "title": "Whiteboard",

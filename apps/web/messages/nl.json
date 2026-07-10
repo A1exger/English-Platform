@@ -165,7 +165,14 @@
     "loadLessons": "Lessen laden",
     "pickMaterial": "Kies een cursusles.",
     "waiting": "Wachten op de docent…",
-    "studentAnswer": "Antwoord"
+    "studentAnswer": "Antwoord",
+    "answersTab": "Antwoorden",
+    "exerciseTab": "Oefening",
+    "focusVideo": "Focus op video",
+    "exitFocus": "Focus verlaten",
+    "pageLabel": "p.",
+    "teacherLeads": "docent leidt",
+    "answersHint": "Antwoorden verschijnen hier terwijl de leerling werkt."
   },
   "board": {
     "title": "Whiteboard",

@@ -165,7 +165,14 @@
     "loadLessons": "تحميل الدروس",
     "pickMaterial": "اختر درسًا من الدورة.",
     "waiting": "في انتظار المعلم…",
-    "studentAnswer": "الإجابة"
+    "studentAnswer": "الإجابة",
+    "answersTab": "الإجابات",
+    "exerciseTab": "تمرين",
+    "focusVideo": "التركيز على الفيديو",
+    "exitFocus": "إنهاء التركيز",
+    "pageLabel": "ص.",
+    "teacherLeads": "المعلّم يقود",
+    "answersHint": "تظهر الإجابات هنا أثناء عمل الطالب."
   },
   "board": {
     "title": "اللوحة",

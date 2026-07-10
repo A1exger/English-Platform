@@ -165,7 +165,14 @@
     "loadLessons": "Загрузить уроки",
     "pickMaterial": "Выберите урок курса.",
     "waiting": "Ждём учителя…",
-    "studentAnswer": "Ответ"
+    "studentAnswer": "Ответ",
+    "answersTab": "Ответы",
+    "exerciseTab": "Упражнение",
+    "focusVideo": "Фокус на видео",
+    "exitFocus": "Выйти из фокуса",
+    "pageLabel": "стр.",
+    "teacherLeads": "ведёт учитель",
+    "answersHint": "Ответы появятся здесь по ходу работы ученика."
   },
   "board": {
     "title": "Доска",
