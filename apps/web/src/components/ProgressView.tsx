@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
+import { ScoreRing } from './ScoreRing';
 
 interface Achievement { key: string; earned: boolean }
 interface Progress {
@@ -88,14 +89,20 @@ export function ProgressView() {
 
       {content && content.courses.length > 0 && (
         <div className="card">
-          <div className="row-between">
-            <strong>{t('courseProgress')}</strong>
-            {content.overall.goalProgress !== null && (
-              <span className="muted">
-                {t('goal')}: <span className="mono-num">{content.overall.goalProgress}</span> · {t('projected')}{' '}
-                <span className="mono-num">{content.overall.forecast.projected ?? '—'}</span>
-              </span>
-            )}
+          <div className="progress-overall">
+            <ScoreRing
+              value={(content.overall.goalProgress ?? 0) * 10}
+              display={content.overall.goalProgress === null ? '—' : String(content.overall.goalProgress)}
+              label={t('goal')}
+            />
+            <div>
+              <strong>{t('courseProgress')}</strong>
+              {content.overall.forecast.projected !== null && (
+                <p className="muted">
+                  {t('projected')}: <span className="mono-num">{content.overall.forecast.projected}</span>
+                </p>
+              )}
+            </div>
           </div>
           <div className="course-progress-list">
             {content.courses.map((c) => (

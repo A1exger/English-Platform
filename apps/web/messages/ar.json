@@ -165,7 +165,14 @@
     "loadLessons": "تحميل الدروس",
     "pickMaterial": "اختر درسًا من الدورة.",
     "waiting": "في انتظار المعلم…",
-    "studentAnswer": "الإجابة"
+    "studentAnswer": "الإجابة",
+    "answersTab": "الإجابات",
+    "exerciseTab": "تمرين",
+    "focusVideo": "التركيز على الفيديو",
+    "exitFocus": "إنهاء التركيز",
+    "pageLabel": "ص.",
+    "teacherLeads": "المعلّم يقود",
+    "answersHint": "تظهر الإجابات هنا أثناء عمل الطالب."
   },
   "board": {
     "title": "اللوحة",
@@ -189,7 +196,10 @@
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "dashboard": "لوحة التحكم",
-    "createAccount": "إنشاء حساب"
+    "createAccount": "إنشاء حساب",
+    "search": "بحث",
+    "searchPlaceholder": "ابحث في الصفحات…",
+    "noResults": "لا نتائج"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -206,7 +216,13 @@
     "exercises": "التمارين",
     "courses": "الدورات",
     "assignments": "الواجبات",
-    "dictionary": "القاموس"
+    "dictionary": "القاموس",
+    "section_learn": "التعلّم",
+    "section_progress": "التقدّم",
+    "section_teach": "التدريس",
+    "section_build": "الإنشاء",
+    "section_insights": "التحليلات",
+    "section_admin": "الإدارة"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",
@@ -218,7 +234,13 @@
     "joinLesson": "الانضمام إلى الدرس",
     "everyoneOwnLanguage": "يرى كل مشارك الواجهة بلغته الخاصة — الدرس مشترك بغضّ النظر عن اللغة.",
     "homeworkPending": "لديك {count} واجبات.",
-    "notifications": "الإشعارات"
+    "notifications": "الإشعارات",
+    "goal": "الهدف",
+    "level": "المستوى",
+    "lessonsDone": "الدروس المنجزة",
+    "homework": "الواجبات",
+    "upcoming": "القادم",
+    "seeAll": "عرض الكل"
   },
   "studentProfile": {
     "title": "ملف الطالب",

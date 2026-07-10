@@ -165,7 +165,14 @@
     "loadLessons": "Загрузить уроки",
     "pickMaterial": "Выберите урок курса.",
     "waiting": "Ждём учителя…",
-    "studentAnswer": "Ответ"
+    "studentAnswer": "Ответ",
+    "answersTab": "Ответы",
+    "exerciseTab": "Упражнение",
+    "focusVideo": "Фокус на видео",
+    "exitFocus": "Выйти из фокуса",
+    "pageLabel": "стр.",
+    "teacherLeads": "ведёт учитель",
+    "answersHint": "Ответы появятся здесь по ходу работы ученика."
   },
   "board": {
     "title": "Доска",
@@ -189,7 +196,10 @@
     "email": "Эл. почта",
     "password": "Пароль",
     "dashboard": "Кабинет",
-    "createAccount": "Создать аккаунт"
+    "createAccount": "Создать аккаунт",
+    "search": "Поиск",
+    "searchPlaceholder": "Искать страницы…",
+    "noResults": "Ничего не найдено"
   },
   "nav": {
     "overview": "Обзор",
@@ -206,7 +216,13 @@
     "exercises": "Упражнения",
     "courses": "Курсы",
     "assignments": "Задания",
-    "dictionary": "Словарь"
+    "dictionary": "Словарь",
+    "section_learn": "Обучение",
+    "section_progress": "Прогресс",
+    "section_teach": "Преподавание",
+    "section_build": "Создание",
+    "section_insights": "Аналитика",
+    "section_admin": "Админ"
   },
   "dashboard": {
     "greeting": "С возвращением, {name}!",
@@ -218,7 +234,13 @@
     "joinLesson": "Войти в урок",
     "everyoneOwnLanguage": "Каждый участник видит интерфейс на своём языке — урок общий независимо от языка.",
     "homeworkPending": "У вас {count} домашних заданий.",
-    "notifications": "Уведомления"
+    "notifications": "Уведомления",
+    "goal": "Цель",
+    "level": "Уровень",
+    "lessonsDone": "Пройдено уроков",
+    "homework": "Домашка",
+    "upcoming": "Ближайшее",
+    "seeAll": "Все"
   },
   "studentProfile": {
     "title": "Профиль ученика",
