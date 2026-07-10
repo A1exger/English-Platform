@@ -157,11 +157,15 @@ h2 { font-weight: 700; }
   display: flex;
   flex-direction: column;
   gap: 16px;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
+  max-inline-size: 400px;
+  margin-inline: auto;
+  padding-block-start: 8vh;
 }
 .tagline {
   color: var(--slate);
-  max-width: 52ch;
+  max-inline-size: 52ch;
   font-size: 17px;
 }
 .login {
@@ -1420,13 +1424,14 @@ select.err {
   margin-top: 16px;
 }
 .flash-word {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 800;
+  font-family: var(--font-serif);
+  font-size: 34px;
+  font-weight: 600;
   color: var(--ink);
 }
 .flash-translation {
   font-size: 22px;
+  font-family: var(--font-mono);
   color: var(--indigo-700);
 }
 .flash-actions {
