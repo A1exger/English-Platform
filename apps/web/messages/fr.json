@@ -189,7 +189,10 @@
     "email": "E-mail",
     "password": "Mot de passe",
     "dashboard": "Tableau de bord",
-    "createAccount": "Créer un compte"
+    "createAccount": "Créer un compte",
+    "search": "Rechercher",
+    "searchPlaceholder": "Rechercher des pages…",
+    "noResults": "Aucun résultat"
   },
   "nav": {
     "overview": "Aperçu",
@@ -206,7 +209,13 @@
     "exercises": "Exercices",
     "courses": "Cours",
     "assignments": "Devoirs",
-    "dictionary": "Dictionnaire"
+    "dictionary": "Dictionnaire",
+    "section_learn": "Apprendre",
+    "section_progress": "Progression",
+    "section_teach": "Enseigner",
+    "section_build": "Créer",
+    "section_insights": "Analyses",
+    "section_admin": "Admin"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
@@ -218,7 +227,13 @@
     "joinLesson": "Rejoindre le cours",
     "everyoneOwnLanguage": "Chaque participant voit l'interface dans sa propre langue — le cours est partagé quelle que soit la langue.",
     "homeworkPending": "Vous avez {count} devoirs.",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "goal": "Objectif",
+    "level": "Niveau",
+    "lessonsDone": "Leçons faites",
+    "homework": "Devoirs",
+    "upcoming": "À venir",
+    "seeAll": "Tout voir"
   },
   "studentProfile": {
     "title": "Profil de l'élève",

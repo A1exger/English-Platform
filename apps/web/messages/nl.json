@@ -189,7 +189,10 @@
     "email": "E-mail",
     "password": "Wachtwoord",
     "dashboard": "Dashboard",
-    "createAccount": "Account aanmaken"
+    "createAccount": "Account aanmaken",
+    "search": "Zoeken",
+    "searchPlaceholder": "Zoek pagina's…",
+    "noResults": "Niets gevonden"
   },
   "nav": {
     "overview": "Overzicht",
@@ -206,7 +209,13 @@
     "exercises": "Oefeningen",
     "courses": "Cursussen",
     "assignments": "Opdrachten",
-    "dictionary": "Woordenboek"
+    "dictionary": "Woordenboek",
+    "section_learn": "Leren",
+    "section_progress": "Voortgang",
+    "section_teach": "Lesgeven",
+    "section_build": "Maken",
+    "section_insights": "Inzichten",
+    "section_admin": "Beheer"
   },
   "dashboard": {
     "greeting": "Welkom terug, {name}!",
@@ -218,7 +227,13 @@
     "joinLesson": "Deelnemen aan les",
     "everyoneOwnLanguage": "Elke deelnemer ziet de interface in zijn eigen taal — de les is gedeeld, ongeacht de taal.",
     "homeworkPending": "Je hebt {count} huiswerk.",
-    "notifications": "Meldingen"
+    "notifications": "Meldingen",
+    "goal": "Doel",
+    "level": "Niveau",
+    "lessonsDone": "Lessen gedaan",
+    "homework": "Huiswerk",
+    "upcoming": "Binnenkort",
+    "seeAll": "Alles"
   },
   "studentProfile": {
     "title": "Leerlingprofiel",

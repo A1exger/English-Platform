@@ -189,7 +189,10 @@
     "email": "Email",
     "password": "Password",
     "dashboard": "Dashboard",
-    "createAccount": "Create an account"
+    "createAccount": "Create an account",
+    "search": "Search",
+    "searchPlaceholder": "Search pages…",
+    "noResults": "Nothing found"
   },
   "nav": {
     "overview": "Overview",
@@ -206,7 +209,13 @@
     "exercises": "Exercises",
     "courses": "Courses",
     "assignments": "Assignments",
-    "dictionary": "Dictionary"
+    "dictionary": "Dictionary",
+    "section_learn": "Learn",
+    "section_progress": "Progress",
+    "section_teach": "Teach",
+    "section_build": "Build",
+    "section_insights": "Insights",
+    "section_admin": "Admin"
   },
   "dashboard": {
     "greeting": "Welcome back, {name}!",
@@ -218,7 +227,13 @@
     "joinLesson": "Join lesson",
     "everyoneOwnLanguage": "Every participant sees the interface in their own language — this lesson is shared regardless of language.",
     "homeworkPending": "You have {count} homework to do.",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "goal": "Goal",
+    "level": "Level",
+    "lessonsDone": "Lessons done",
+    "homework": "Homework",
+    "upcoming": "Upcoming",
+    "seeAll": "See all"
   },
   "studentProfile": {
     "title": "Student profile",

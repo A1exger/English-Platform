@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { ScoreRing } from './ScoreRing';
 
 export interface AssignmentResult {
   overall: number | null;
@@ -31,10 +32,11 @@ export function AssignmentResultView({ result }: { result: AssignmentResult }) {
             {t('completion')}: <span className="mono-num">{result.completion}%</span>
           </p>
         </div>
-        <div className="result-overall">
-          <span className="mono-num">{result.overall ?? '—'}</span>
-          <small>/ 10</small>
-        </div>
+        <ScoreRing
+          value={(result.overall ?? 0) * 10}
+          display={result.overall === null ? '—' : String(result.overall)}
+          size={72}
+        />
       </div>
 
       {aspects.length > 0 && (

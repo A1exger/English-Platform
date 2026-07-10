@@ -28,12 +28,12 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir}>
       <body>
-        {/* Design-direction fonts: Manrope (display), Inter (body),
+        {/* Editorial fonts: Source Serif 4 (headings), Inter (UI/body),
             IBM Plex Mono (scores/labels), Cairo (Arabic RTL). */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cairo:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cairo:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
         <NextIntlClientProvider messages={messages}>
