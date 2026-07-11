@@ -176,7 +176,14 @@
     "pickMaterial": "Choisissez une leçon du cours.",
     "waiting": "En attente du professeur…",
     "studentAnswer": "Réponse",
-    "exit": "Quitter le cours"
+    "exit": "Quitter le cours",
+    "answersTab": "Réponses",
+    "exerciseTab": "Exercice",
+    "focusVideo": "Focus vidéo",
+    "exitFocus": "Quitter le focus",
+    "pageLabel": "p.",
+    "teacherLeads": "le professeur dirige",
+    "answersHint": "Les réponses apparaissent ici au fil du travail de l'élève."
   },
   "board": {
     "title": "Tableau",
@@ -190,7 +197,8 @@
     "connected": "Connecté",
     "back": "Retour",
     "notes": "Notes",
-    "notesPlaceholder": "Notes partagées (visibles par le professeur et l’élève)…"
+    "notesPlaceholder": "Notes partagées (visibles par le professeur et l’élève)…",
+    "cleared": "Tableau effacé"
   },
   "common": {
     "appName": "English Spark Studio",

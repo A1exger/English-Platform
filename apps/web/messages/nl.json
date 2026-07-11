@@ -176,7 +176,14 @@
     "pickMaterial": "Kies een cursusles.",
     "waiting": "Wachten op de docent…",
     "studentAnswer": "Antwoord",
-    "exit": "Les verlaten"
+    "exit": "Les verlaten",
+    "answersTab": "Antwoorden",
+    "exerciseTab": "Oefening",
+    "focusVideo": "Focus op video",
+    "exitFocus": "Focus verlaten",
+    "pageLabel": "p.",
+    "teacherLeads": "docent leidt",
+    "answersHint": "Antwoorden verschijnen hier terwijl de leerling werkt."
   },
   "board": {
     "title": "Whiteboard",
@@ -190,7 +197,8 @@
     "connected": "Verbonden",
     "back": "Terug",
     "notes": "Notities",
-    "notesPlaceholder": "Gedeelde notities (zichtbaar voor docent en leerling)…"
+    "notesPlaceholder": "Gedeelde notities (zichtbaar voor docent en leerling)…",
+    "cleared": "Bord gewist"
   },
   "common": {
     "appName": "English Spark Studio",

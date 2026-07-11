@@ -176,7 +176,14 @@
     "pickMaterial": "Выберите урок курса.",
     "waiting": "Ждём учителя…",
     "studentAnswer": "Ответ",
-    "exit": "Выйти из урока"
+    "exit": "Выйти из урока",
+    "answersTab": "Ответы",
+    "exerciseTab": "Упражнение",
+    "focusVideo": "Фокус на видео",
+    "exitFocus": "Выйти из фокуса",
+    "pageLabel": "стр.",
+    "teacherLeads": "ведёт учитель",
+    "answersHint": "Ответы появятся здесь по ходу работы ученика."
   },
   "board": {
     "title": "Доска",
@@ -190,7 +197,8 @@
     "connected": "Подключено",
     "back": "Назад",
     "notes": "Заметки",
-    "notesPlaceholder": "Общие заметки (видят преподаватель и ученик)…"
+    "notesPlaceholder": "Общие заметки (видят преподаватель и ученик)…",
+    "cleared": "Доска очищена"
   },
   "common": {
     "appName": "English Spark Studio",

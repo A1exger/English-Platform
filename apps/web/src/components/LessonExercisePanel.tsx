@@ -20,7 +20,15 @@ interface ExRow {
 // Right half of the lesson: the teacher pushes interactive exercises live and
 // the student solves them. New exercises arrive over the existing /board gateway
 // via a `board:update` envelope ({type:'exercise'}).
-export function LessonExercisePanel({ lessonId }: { lessonId: string }) {
+export function LessonExercisePanel({
+  lessonId,
+  socket: sharedSocket
+}: {
+  lessonId: string;
+  // Sprint 3 #5: the room passes its single /board connection; standalone use
+  // opens its own. Same board:update payloads either way.
+  socket?: Socket | null;
+}) {
   const t = useTranslations('exercises');
   const locale = useLocale();
   const [canPush, setCanPush] = useState(false);
@@ -50,14 +58,11 @@ export function LessonExercisePanel({ lessonId }: { lessonId: string }) {
       }
     })();
 
-    const socket = io(`${apiOrigin()}/board`, {
-      auth: { token },
-      transports: ['websocket'],
-      forceNew: true
-    });
+    const socket =
+      sharedSocket ??
+      io(`${apiOrigin()}/board`, { auth: { token }, transports: ['websocket'], forceNew: true });
     socketRef.current = socket;
-    socket.on('connect', () => socket.emit('board:join', { lessonId }));
-    socket.on('board:update', (msg: { update?: { type?: string; instanceId?: string } }) => {
+    const onUpdate = (msg: { update?: { type?: string; instanceId?: string } }) => {
       const u = msg?.update;
       if (u?.type === 'exercise' && u.instanceId) {
         const id = u.instanceId;
@@ -66,12 +71,15 @@ export function LessonExercisePanel({ lessonId }: { lessonId: string }) {
         const id = u.instanceId;
         setInstances((prev) => prev.filter((x) => x !== id));
       }
-    });
+    };
+    socket.on('board:update', onUpdate);
+    if (!sharedSocket) socket.on('connect', () => socket.emit('board:join', { lessonId }));
     return () => {
-      socket.close();
+      socket.off('board:update', onUpdate);
+      if (!sharedSocket) socket.close();
       socketRef.current = null;
     };
-  }, [lessonId, locale]);
+  }, [lessonId, locale, sharedSocket]);
 
   async function push() {
     const token = tokenStore.get();

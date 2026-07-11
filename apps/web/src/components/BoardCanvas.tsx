@@ -7,6 +7,7 @@ import { Link, useRouter } from '@/i18n/routing';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { DraggablePanel } from './DraggablePanel';
+import { useToast } from './Toast';
 
 // Normalized (0..1) segment so the drawing looks the same regardless of each
 // client's canvas pixel size.
@@ -29,9 +30,18 @@ function apiOrigin(): string {
   return base.replace(/\/api\/v1\/?$/, '');
 }
 
-export function BoardCanvas({ lessonId }: { lessonId: string }) {
+export function BoardCanvas({
+  lessonId,
+  socket: sharedSocket
+}: {
+  lessonId: string;
+  // When the room lifts a single /board connection (Sprint 3 #5) it passes it
+  // here; standalone (the /board route) opens its own.
+  socket?: Socket | null;
+}) {
   const t = useTranslations('board');
   const router = useRouter();
+  const toast = useToast();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -97,11 +107,11 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
     return () => window.removeEventListener('resize', resize);
   }, [redrawAll]);
 
-  // Connect socket + load the saved snapshot.
+  // Connect (or reuse the room's socket) + load the saved snapshot.
   useEffect(() => {
     const token = tokenStore.get();
     if (!token) {
-      router.push('/');
+      if (!sharedSocket) router.push('/');
       return;
     }
 
@@ -122,23 +132,33 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
       })
       .catch(() => undefined);
 
-    const socket = io(`${apiOrigin()}/board`, {
-      auth: { token },
-      transports: ['websocket'],
-      forceNew: true,
-    });
+    // Sprint 3 #5: reuse the room's single /board connection when given one;
+    // otherwise (the standalone board route) open our own. Same events either way.
+    const socket =
+      sharedSocket ??
+      io(`${apiOrigin()}/board`, { auth: { token }, transports: ['websocket'], forceNew: true });
     socketRef.current = socket;
 
-    socket.on('connect', () => socket.emit('board:join', { lessonId }));
-    socket.on('board:joined', () => setStatus('connected'));
-    socket.on('board:update', (msg: { update: BoardOp }) => applyOp(msg.update));
-    socket.on('board:note', (msg: { notes: string }) => setNotes(msg.notes));
+    const onJoined = () => setStatus('connected');
+    const onUpdate = (msg: { update: BoardOp }) => applyOp(msg.update);
+    const onNote = (msg: { notes: string }) => setNotes(msg.notes);
+    socket.on('board:joined', onJoined);
+    socket.on('board:update', onUpdate);
+    socket.on('board:note', onNote);
+    if (sharedSocket) {
+      if (sharedSocket.connected) setStatus('connected');
+    } else {
+      socket.on('connect', () => socket.emit('board:join', { lessonId }));
+    }
 
     return () => {
-      socket.close();
+      socket.off('board:joined', onJoined);
+      socket.off('board:update', onUpdate);
+      socket.off('board:note', onNote);
+      if (!sharedSocket) socket.close();
       socketRef.current = null;
     };
-  }, [lessonId, applyOp, redrawAll, router]);
+  }, [lessonId, applyOp, redrawAll, router, sharedSocket]);
 
   function norm(e: React.PointerEvent<HTMLCanvasElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -179,10 +199,22 @@ export function BoardCanvas({ lessonId }: { lessonId: string }) {
     last.current = null;
   }
 
+  // Sprint 3 #6: clearing a shared canvas is destructive — route it through
+  // showUndo. The board clears locally at once, but peers are only wiped (and the
+  // clear becomes permanent) when the undo window closes.
   function clear() {
+    const prevOps = opsRef.current.slice();
     applyOp({ type: 'clear' });
-    socketRef.current?.emit('board:update', { lessonId, update: { type: 'clear' } });
     setSaved(false);
+    toast.showUndo(t('cleared'), {
+      onUndo: () => {
+        opsRef.current = prevOps;
+        redrawAll();
+      },
+      onCommit: () => {
+        socketRef.current?.emit('board:update', { lessonId, update: { type: 'clear' } });
+      }
+    });
   }
 
   async function save() {

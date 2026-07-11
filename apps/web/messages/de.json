@@ -176,7 +176,14 @@
     "pickMaterial": "Wählen Sie eine Kurslektion.",
     "waiting": "Warten auf den Lehrer…",
     "studentAnswer": "Antwort",
-    "exit": "Unterricht verlassen"
+    "exit": "Unterricht verlassen",
+    "answersTab": "Antworten",
+    "exerciseTab": "Übung",
+    "focusVideo": "Video-Fokus",
+    "exitFocus": "Fokus verlassen",
+    "pageLabel": "S.",
+    "teacherLeads": "Lehrer führt",
+    "answersHint": "Antworten erscheinen hier, während der Schüler arbeitet."
   },
   "board": {
     "title": "Whiteboard",
@@ -190,7 +197,8 @@
     "connected": "Verbunden",
     "back": "Zurück",
     "notes": "Notizen",
-    "notesPlaceholder": "Gemeinsame Notizen (für Lehrer und Schüler sichtbar)…"
+    "notesPlaceholder": "Gemeinsame Notizen (für Lehrer und Schüler sichtbar)…",
+    "cleared": "Tafel gelöscht"
   },
   "common": {
     "appName": "English Spark Studio",

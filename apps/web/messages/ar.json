@@ -176,7 +176,14 @@
     "pickMaterial": "اختر درسًا من الدورة.",
     "waiting": "في انتظار المعلم…",
     "studentAnswer": "الإجابة",
-    "exit": "مغادرة الدرس"
+    "exit": "مغادرة الدرس",
+    "answersTab": "الإجابات",
+    "exerciseTab": "تمرين",
+    "focusVideo": "التركيز على الفيديو",
+    "exitFocus": "إنهاء التركيز",
+    "pageLabel": "ص.",
+    "teacherLeads": "المعلّم يقود",
+    "answersHint": "تظهر الإجابات هنا أثناء عمل الطالب."
   },
   "board": {
     "title": "اللوحة",
@@ -190,7 +197,8 @@
     "connected": "متصل",
     "back": "رجوع",
     "notes": "ملاحظات",
-    "notesPlaceholder": "ملاحظات مشتركة (يراها المعلّم والطالب)…"
+    "notesPlaceholder": "ملاحظات مشتركة (يراها المعلّم والطالب)…",
+    "cleared": "تم مسح اللوحة"
   },
   "common": {
     "appName": "English Spark Studio",

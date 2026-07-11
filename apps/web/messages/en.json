@@ -176,7 +176,14 @@
     "pickMaterial": "Pick a course lesson to teach.",
     "waiting": "Waiting for the teacher…",
     "studentAnswer": "Answer",
-    "exit": "Leave lesson"
+    "exit": "Leave lesson",
+    "answersTab": "Answers",
+    "exerciseTab": "Exercise",
+    "focusVideo": "Focus on video",
+    "exitFocus": "Exit focus",
+    "pageLabel": "p.",
+    "teacherLeads": "teacher is leading",
+    "answersHint": "Answers appear here as the student works."
   },
   "board": {
     "title": "Whiteboard",
@@ -190,7 +197,8 @@
     "connected": "Connected",
     "back": "Back",
     "notes": "Notes",
-    "notesPlaceholder": "Shared notes (visible to teacher and student)…"
+    "notesPlaceholder": "Shared notes (visible to teacher and student)…",
+    "cleared": "Board cleared"
   },
   "common": {
     "appName": "English Spark Studio",
