@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
 
 interface Row {
   id: string;
@@ -54,7 +55,7 @@ export function AssignmentsView() {
     void load();
   }, [load]);
 
-  if (phase === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (phase === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (phase === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   return (

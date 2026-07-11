@@ -5,6 +5,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
 
 interface Overview {
   revenueCents: number;
@@ -46,7 +47,7 @@ export function AnalyticsView() {
       });
   }, [locale, router]);
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !data) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const pct = (v: number | null) => (v === null ? '—' : `${v}%`);

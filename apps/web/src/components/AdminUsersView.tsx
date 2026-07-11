@@ -5,6 +5,8 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
 
 interface UserRow {
   id: string;
@@ -24,6 +26,7 @@ export function AdminUsersView() {
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [users, setUsers] = useState<UserRow[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'forbidden' | 'ready'>('loading');
@@ -77,19 +80,23 @@ export function AdminUsersView() {
     }
   }
 
-  async function remove(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/admin/users/${id}`, { method: 'DELETE', token, locale });
-      await load();
-    } finally {
-      setBusy(false);
-    }
+  // Optimistic + undoable. Deleting a user used to be one unconfirmed click.
+  function remove(id: string) {
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/admin/users/${id}`, { method: 'DELETE', token, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'forbidden') return <div className="content"><p className="error">{t('forbidden')}</p></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 

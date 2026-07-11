@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { ExercisePlayer } from './ExercisePlayer';
+import { Skeleton } from './Skeleton';
 
 interface Submission {
   id: string;
@@ -29,6 +30,10 @@ interface StudentRow {
   studentProfileId: string;
   name: string;
 }
+
+// Grades are a 0–10 scale everywhere in the product. A free-text input let a
+// tutor type anything, which made grades incomparable across students.
+const GRADES = Array.from({ length: 11 }, (_, i) => String(i));
 
 export function HomeworkView() {
   const t = useTranslations('homework');
@@ -132,7 +137,7 @@ export function HomeworkView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const isTutor = me?.role === 'tutor';
@@ -236,13 +241,22 @@ export function HomeworkView() {
                   {isTutor && h.status === 'submitted' && (
                     <div className="inline-form">
                       {sub?.content && <p className="muted">{sub.content}</p>}
-                      <input
-                        placeholder={t('grade')}
+                      <select
+                        aria-label={t('grade')}
                         value={grades[h.id]?.grade || ''}
                         onChange={(e) =>
                           setGrades({ ...grades, [h.id]: { grade: e.target.value, feedback: grades[h.id]?.feedback || '' } })
                         }
-                      />
+                      >
+                        <option value="" disabled>
+                          {t('grade')}
+                        </option>
+                        {GRADES.map((g) => (
+                          <option key={g} value={g}>
+                            {g}
+                          </option>
+                        ))}
+                      </select>
                       <input
                         placeholder={t('feedback')}
                         value={grades[h.id]?.feedback || ''}

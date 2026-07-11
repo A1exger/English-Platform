@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ScoreRing } from './ScoreRing';
+import { Skeleton } from './Skeleton';
 
 interface Achievement { key: string; earned: boolean }
 interface Progress {
@@ -64,7 +65,7 @@ export function ProgressView() {
       .catch(() => undefined);
   }, [locale, router]);
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !data) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const cards = [

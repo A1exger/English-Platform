@@ -111,17 +111,6 @@ strong {
 h2 { font-weight: 700; }
 
 /* ——— header ——— */
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
-  background: var(--card);
-  border-bottom: 1px solid var(--line);
-  position: sticky;
-  top: 0;
-  z-index: 40;
-}
 
 .brand {
   font-weight: 800;
@@ -135,12 +124,6 @@ h2 { font-weight: 700; }
 .brand::before {
   content: '✦';
   color: var(--spark);
-}
-
-.container {
-  max-width: 1160px;
-  margin: 0 auto;
-  padding: 28px 24px;
 }
 
 /* ——— cards ——— */
@@ -157,15 +140,11 @@ h2 { font-weight: 700; }
   display: flex;
   flex-direction: column;
   gap: 16px;
-  align-items: center;
-  text-align: center;
-  max-inline-size: 400px;
-  margin-inline: auto;
-  padding-block-start: 8vh;
+  align-items: flex-start;
 }
 .tagline {
   color: var(--slate);
-  max-inline-size: 52ch;
+  max-width: 52ch;
   font-size: 17px;
 }
 .login {
@@ -259,11 +238,6 @@ button:disabled {
 }
 
 /* ——— layout: dashboard ——— */
-.dashboard {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 24px;
-}
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -345,11 +319,6 @@ button:disabled {
   font-size: 14px;
 }
 
-.header-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
 .logout-btn {
   padding: 8px 14px;
   font-size: 14px;
@@ -748,7 +717,7 @@ textarea {
 }
 .lesson-room.split {
   position: fixed;
-  inset: 64px 0 0 0;
+  inset: 56px 0 0 0;
   display: grid;
   grid-template-columns: 1fr minmax(300px, 30vw);
   gap: 8px;
@@ -1424,14 +1393,13 @@ select.err {
   margin-top: 16px;
 }
 .flash-word {
-  font-family: var(--font-serif);
-  font-size: 34px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
   color: var(--ink);
 }
 .flash-translation {
   font-size: 22px;
-  font-family: var(--font-mono);
   color: var(--indigo-700);
 }
 .flash-actions {
@@ -1507,58 +1475,6 @@ select.err {
 }
 
 /* ——— Editorial: top-bar search + avatar menu ——— */
-.kbd-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--slate);
-  padding: 6px 10px;
-  font-size: 13px;
-}
-.kbd-btn:hover {
-  background: var(--cloud);
-  color: var(--ink);
-}
-.kbd-btn kbd {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 0 5px;
-  color: var(--mist);
-  background: transparent;
-}
-.avatar-menu {
-  position: relative;
-}
-.avatar-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--indigo-100);
-  color: var(--indigo-700);
-  padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: var(--font-display);
-}
-.avatar-dropdown {
-  position: absolute;
-  inset-inline-end: 0;
-  inset-block-start: calc(100% + 8px);
-  min-width: 210px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  box-shadow: var(--sh-md);
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 50;
-}
 .menu-item {
   display: block;
   width: 100%;
@@ -1699,172 +1615,291 @@ select.err {
   margin-block-end: 8px;
 }
 
-/* ——— Phase 3: editorial live room (material hero + dark video rail) ——— */
-.lesson-room.room-editorial {
-  position: fixed;
-  inset: 64px 0 0 0;
-  display: grid;
-  grid-template-columns: 1fr minmax(300px, 30vw);
-  gap: 12px;
-  padding: 12px;
-  background: var(--paper);
+/* ═══════════════════════════════════════════════════════════════════
+   APP SHELL — a persistent left rail, a centred content measure.
+   Rendered once by (app)/layout.tsx: no remount, no reflash, one profile
+   fetch per session. All offsets are logical properties, so RTL mirrors.
+   ═══════════════════════════════════════════════════════════════════ */
+.app-shell {
+  min-block-size: 100vh;
 }
-.room-stage {
+
+.rail {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 248px;
   display: flex;
   flex-direction: column;
-  min-inline-size: 0;
+  gap: 18px;
+  padding: 20px 14px;
+  background: var(--card);
+  border-inline-end: 1px solid var(--line);
+  z-index: 20;
+}
+.rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 8px;
+}
+.rail-burger {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--slate);
+  font-size: 18px;
+  padding: 4px 8px;
+}
+.rail-search {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  inline-size: 100%;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--mist);
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.rail-search:hover {
+  background: var(--cloud);
+  color: var(--ink);
+}
+.rail-search kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 5px;
+  color: var(--mist);
+}
+.rail-nav {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.rail-foot {
+  border-block-start: 1px solid var(--line);
+  padding-block-start: 12px;
+}
+
+/* Main column: offset by the rail, content centred in what remains. */
+.app-main {
+  margin-inline-start: 248px;
+  padding: 32px 28px 64px;
+}
+.measure {
+  max-inline-size: 860px;
+  margin-inline: auto;
+}
+
+/* ——— account block (rail footer) ——— */
+.account {
+  position: relative;
+}
+.account-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  inline-size: 100%;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: start;
+}
+.account-btn:hover {
+  background: var(--cloud);
+}
+.avatar {
+  flex: none;
+  inline-size: 30px;
+  block-size: 30px;
+  border-radius: 50%;
+  background: var(--indigo-100);
+  color: var(--indigo-700);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+.account-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-caret {
+  color: var(--mist);
+  font-size: 12px;
+}
+.account-menu {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: calc(100% + 8px);
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  overflow: hidden;
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-md);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 40;
 }
-.room-stage-bar {
+
+/* ——— auth shell: no rail, no search, no account ——— */
+.auth-shell {
+  min-block-size: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.auth-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+}
+.auth-main {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.auth-main .hero {
+  inline-size: min(400px, 100%);
+  align-items: stretch;
+  text-align: center;
+}
+.auth-main .hero .login {
+  text-align: start;
+}
+
+/* ——— room shell: immersive, but always a way out ——— */
+.room-shell {
+  min-block-size: 100vh;
+}
+.room-bar {
+  block-size: 56px;
+  display: flex;
+  align-items: center;
+  padding-inline: 20px;
+  border-block-end: 1px solid var(--line);
+  background: var(--card);
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 20;
+}
+.room-exit {
+  color: var(--slate);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+.room-exit:hover {
+  color: var(--ink);
+}
+
+/* ——— toasts: optimistic actions with a real undo ——— */
+.toasts {
+  position: fixed;
+  inset-block-end: 24px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 80;
+}
+.toast {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 14px;
-  border-block-end: 1px solid var(--line);
-  flex: 0 0 auto;
-}
-.room-stage-body {
-  flex: 1;
-  min-block-size: 0;
-  overflow: auto;
-  padding: 18px;
-}
-.room-stage-body .board-wrap {
-  block-size: 100%;
-}
-.live-material {
-  max-inline-size: 760px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* segmented control (Material | Board) */
-.segmented {
-  display: inline-flex;
-  border: 1px solid var(--line);
+  background: var(--ink);
+  color: #fff;
   border-radius: var(--r-md);
-  overflow: hidden;
-}
-.segmented button {
-  background: transparent;
-  color: var(--slate);
-  border: none;
-  border-radius: 0;
-  padding: 6px 14px;
+  padding: 12px 16px;
   font-size: 14px;
+  box-shadow: var(--sh-md);
 }
-.segmented button.active {
-  background: var(--indigo);
-  color: #fff;
-}
-
-/* page stepper */
-.page-stepper {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.page-stepper .ghost {
-  padding: 2px 9px;
-}
-.room-driver {
-  font-size: 12px;
-}
-.room-live {
-  margin-inline-start: auto;
-}
-
-/* right rail: dark video + tabbed panel */
-.room-rail {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-inline-size: 0;
-}
-.room-video {
-  position: relative;
-  background: #0e1020;
-  border-radius: var(--r-lg);
-  overflow: hidden;
-  aspect-ratio: 16 / 10;
-  flex: 0 0 auto;
-}
-.room-video > *:first-child {
-  position: absolute;
-  inset: 0;
-}
-.room-theatre-btn {
-  position: absolute;
-  inset-block-end: 8px;
-  inset-inline-end: 8px;
-  z-index: 2;
-  background: rgba(14, 16, 32, 0.72);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  padding: 4px 10px;
-  font-size: 12px;
-}
-.room-rail-panel {
-  flex: 1;
-  min-block-size: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-}
-.tabs {
-  display: flex;
-  border-block-end: 1px solid var(--line);
-  flex: 0 0 auto;
-}
-.tabs button {
-  flex: 1;
+.toast-undo {
   background: transparent;
-  color: var(--slate);
   border: none;
-  border-radius: 0;
-  padding: 10px;
+  color: #fff;
+  text-decoration: underline;
+  padding: 0;
   font-size: 14px;
-}
-.tabs button.active {
-  color: var(--indigo-700);
-  border-block-end: 2px solid var(--indigo);
-}
-.room-rail-body {
-  flex: 1;
-  min-block-size: 0;
-  overflow: auto;
-  padding: 12px;
-}
-.live-answers {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.live-answer-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  font-weight: 600;
 }
 
-/* focus-on-video theatre mode */
-.room-editorial.theatre .room-video {
-  position: fixed;
-  inset: 64px 0 0 0;
-  z-index: 30;
-  border-radius: 0;
-  aspect-ratio: auto;
+/* ——— skeletons: the shape of the answer, before the answer ——— */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skeleton-line {
+  block-size: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--cloud), var(--line), var(--cloud));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.skeleton-line:nth-child(3n) {
+  inline-size: 70%;
+}
+.skeleton-line:nth-child(3n + 2) {
+  inline-size: 90%;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line { animation: none; }
 }
 
-@media (max-width: 860px) {
-  .lesson-room.room-editorial {
-    grid-template-columns: 1fr;
-    grid-auto-rows: minmax(0, 1fr);
+/* ——— responsive: the rail folds into a top bar ——— */
+@media (max-width: 900px) {
+  .rail {
+    position: sticky;
+    inset-block-start: 0;
+    inline-size: 100%;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+    border-inline-end: none;
+    border-block-end: 1px solid var(--line);
+  }
+  .rail-burger {
+    display: block;
+  }
+  .rail-search,
+  .rail-nav,
+  .rail-foot {
+    display: none;
+  }
+  .rail.open .rail-search,
+  .rail.open .rail-nav,
+  .rail.open .rail-foot {
+    display: flex;
+  }
+  .rail.open .rail-nav {
+    flex-direction: column;
+  }
+  .app-main {
+    margin-inline-start: 0;
+    padding: 20px 16px 48px;
+  }
+  .account-menu {
+    inset-block-end: auto;
+    inset-block-start: calc(100% + 8px);
   }
 }

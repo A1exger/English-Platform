@@ -38,7 +38,8 @@
     "creating": "Добавление…",
     "empty": "Материалов нет.",
     "delete": "Удалить",
-    "uploadFile": "Загрузить файл"
+    "uploadFile": "Загрузить файл",
+    "deleted": "Материал удалён"
   },
   "students": {
     "title": "Ученики",
@@ -58,7 +59,8 @@
     "firstName": "Имя",
     "lastName": "Фамилия",
     "delete": "Удалить",
-    "remove": "Открепить"
+    "remove": "Открепить",
+    "deleted": "Ученик удалён"
   },
   "analytics": {
     "title": "Аналитика",
@@ -104,7 +106,8 @@
     "creating": "Создание…",
     "empty": "Пользователей нет.",
     "delete": "Удалить",
-    "forbidden": "Только для администраторов."
+    "forbidden": "Только для администраторов.",
+    "deleted": "Пользователь удалён"
   },
   "schedule": {
     "title": "Расписание",
@@ -125,7 +128,8 @@
     "viewList": "Список",
     "viewWeek": "Неделя",
     "student": "Ученик",
-    "delete": "Удалить"
+    "delete": "Удалить",
+    "deleted": "Урок удалён"
   },
   "billing": {
     "title": "Оплата",
@@ -166,13 +170,7 @@
     "pickMaterial": "Выберите урок курса.",
     "waiting": "Ждём учителя…",
     "studentAnswer": "Ответ",
-    "answersTab": "Ответы",
-    "exerciseTab": "Упражнение",
-    "focusVideo": "Фокус на видео",
-    "exitFocus": "Выйти из фокуса",
-    "pageLabel": "стр.",
-    "teacherLeads": "ведёт учитель",
-    "answersHint": "Ответы появятся здесь по ходу работы ученика."
+    "exit": "Выйти из урока"
   },
   "board": {
     "title": "Доска",
@@ -199,7 +197,9 @@
     "createAccount": "Создать аккаунт",
     "search": "Поиск",
     "searchPlaceholder": "Искать страницы…",
-    "noResults": "Ничего не найдено"
+    "noResults": "Ничего не найдено",
+    "undo": "Отменить",
+    "menu": "Меню"
   },
   "nav": {
     "overview": "Обзор",

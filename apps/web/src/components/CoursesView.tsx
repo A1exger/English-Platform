@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
 
 interface Course {
   id: string;
@@ -101,7 +102,7 @@ export function CoursesView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   return (

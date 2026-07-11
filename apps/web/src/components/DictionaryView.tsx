@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { useRouter } from '@/i18n/routing';
+import { Skeleton } from './Skeleton';
 
 interface Entry {
   id: string;
@@ -80,7 +81,7 @@ export function DictionaryView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   if (mode === 'train') {

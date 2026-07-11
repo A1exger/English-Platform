@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
+import { Skeleton } from './Skeleton';
 
 interface ExerciseRow {
   id: string;
@@ -253,7 +254,7 @@ export function ExercisesView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   return (

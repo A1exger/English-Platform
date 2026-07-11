@@ -5,6 +5,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
@@ -129,7 +130,7 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !card) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const age = ageFrom(card.profile.birthDate);

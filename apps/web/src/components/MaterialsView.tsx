@@ -5,6 +5,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch, apiUpload, fileUrl } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
 
 interface Material {
   id: string;
@@ -21,6 +23,7 @@ export function MaterialsView() {
   const tApp = useTranslations('app');
   const locale = useLocale();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [me, setMe] = useState<Me | null>(null);
   const [items, setItems] = useState<Material[]>([]);
@@ -96,19 +99,23 @@ export function MaterialsView() {
     }
   }
 
-  async function remove(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/materials/${id}`, { method: 'DELETE', token, locale });
-      await load();
-    } finally {
-      setBusy(false);
-    }
+  // Optimistic + undoable: the DELETE only fires once the undo window closes.
+  function remove(id: string) {
+    setItems((prev) => prev.filter((m) => m.id !== id));
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/materials/${id}`, { method: 'DELETE', token, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const canManage = me?.role === 'tutor' || me?.role === 'admin';

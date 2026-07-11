@@ -38,7 +38,8 @@
     "creating": "Ajout…",
     "empty": "Aucun support.",
     "delete": "Supprimer",
-    "uploadFile": "Téléverser un fichier"
+    "uploadFile": "Téléverser un fichier",
+    "deleted": "Document supprimé"
   },
   "students": {
     "title": "Élèves",
@@ -58,7 +59,8 @@
     "firstName": "Prénom",
     "lastName": "Nom",
     "delete": "Supprimer",
-    "remove": "Retirer"
+    "remove": "Retirer",
+    "deleted": "Élève retiré"
   },
   "analytics": {
     "title": "Analytique",
@@ -104,7 +106,8 @@
     "creating": "Création…",
     "empty": "Aucun utilisateur.",
     "delete": "Supprimer",
-    "forbidden": "Réservé aux administrateurs."
+    "forbidden": "Réservé aux administrateurs.",
+    "deleted": "Utilisateur supprimé"
   },
   "schedule": {
     "title": "Planning",
@@ -125,7 +128,8 @@
     "viewList": "Liste",
     "viewWeek": "Semaine",
     "student": "Élève",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "deleted": "Leçon supprimée"
   },
   "billing": {
     "title": "Facturation",
@@ -166,13 +170,7 @@
     "pickMaterial": "Choisissez une leçon du cours.",
     "waiting": "En attente du professeur…",
     "studentAnswer": "Réponse",
-    "answersTab": "Réponses",
-    "exerciseTab": "Exercice",
-    "focusVideo": "Focus vidéo",
-    "exitFocus": "Quitter le focus",
-    "pageLabel": "p.",
-    "teacherLeads": "le professeur dirige",
-    "answersHint": "Les réponses apparaissent ici au fil du travail de l'élève."
+    "exit": "Quitter le cours"
   },
   "board": {
     "title": "Tableau",
@@ -199,7 +197,9 @@
     "createAccount": "Créer un compte",
     "search": "Rechercher",
     "searchPlaceholder": "Rechercher des pages…",
-    "noResults": "Aucun résultat"
+    "noResults": "Aucun résultat",
+    "undo": "Annuler",
+    "menu": "Menu"
   },
   "nav": {
     "overview": "Aperçu",

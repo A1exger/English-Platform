@@ -5,6 +5,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
 
 interface Pkg {
   id: string;
@@ -219,7 +220,7 @@ export function BillingView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error')
     return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 

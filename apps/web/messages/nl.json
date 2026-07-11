@@ -38,7 +38,8 @@
     "creating": "Bezig…",
     "empty": "Geen materialen.",
     "delete": "Verwijderen",
-    "uploadFile": "Bestand uploaden"
+    "uploadFile": "Bestand uploaden",
+    "deleted": "Materiaal verwijderd"
   },
   "students": {
     "title": "Leerlingen",
@@ -58,7 +59,8 @@
     "firstName": "Voornaam",
     "lastName": "Achternaam",
     "delete": "Verwijderen",
-    "remove": "Verwijderen"
+    "remove": "Verwijderen",
+    "deleted": "Leerling verwijderd"
   },
   "analytics": {
     "title": "Analyse",
@@ -104,7 +106,8 @@
     "creating": "Bezig…",
     "empty": "Geen gebruikers.",
     "delete": "Verwijderen",
-    "forbidden": "Alleen voor beheerders."
+    "forbidden": "Alleen voor beheerders.",
+    "deleted": "Gebruiker verwijderd"
   },
   "schedule": {
     "title": "Rooster",
@@ -125,7 +128,8 @@
     "viewList": "Lijst",
     "viewWeek": "Week",
     "student": "Leerling",
-    "delete": "Verwijderen"
+    "delete": "Verwijderen",
+    "deleted": "Les verwijderd"
   },
   "billing": {
     "title": "Facturatie",
@@ -166,13 +170,7 @@
     "pickMaterial": "Kies een cursusles.",
     "waiting": "Wachten op de docent…",
     "studentAnswer": "Antwoord",
-    "answersTab": "Antwoorden",
-    "exerciseTab": "Oefening",
-    "focusVideo": "Focus op video",
-    "exitFocus": "Focus verlaten",
-    "pageLabel": "p.",
-    "teacherLeads": "docent leidt",
-    "answersHint": "Antwoorden verschijnen hier terwijl de leerling werkt."
+    "exit": "Les verlaten"
   },
   "board": {
     "title": "Whiteboard",
@@ -199,7 +197,9 @@
     "createAccount": "Account aanmaken",
     "search": "Zoeken",
     "searchPlaceholder": "Zoek pagina's…",
-    "noResults": "Niets gevonden"
+    "noResults": "Niets gevonden",
+    "undo": "Ongedaan maken",
+    "menu": "Menu"
   },
   "nav": {
     "overview": "Overzicht",

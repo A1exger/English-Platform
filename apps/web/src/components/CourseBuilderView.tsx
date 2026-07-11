@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
 
 const LEVELS = [
   'Beginner',
@@ -143,7 +144,7 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
     setLessonForms({ ...lessonForms, [unitId]: { title: '', position: '', optional: false } });
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !tree) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   return (

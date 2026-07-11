@@ -5,6 +5,8 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
 
 interface Lesson {
   id: string;
@@ -13,8 +15,6 @@ interface Lesson {
   endsAt: string;
   status: string;
 }
-
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 08:00–21:00
 
 function startOfWeek(d: Date): Date {
   const x = new Date(d);
@@ -31,6 +31,7 @@ export function ScheduleView() {
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [canManage, setCanManage] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -84,11 +85,27 @@ export function ScheduleView() {
     void load();
   }, [load]);
 
+  const weekEnd = useMemo(() => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + 7);
+    return d;
+  }, [weekStart]);
+
+  // The visible hour range follows the data. A fixed 08:00–21:00 grid silently
+  // hid any lesson outside it — the lesson existed but had no row to render in.
+  const hours = useMemo(() => {
+    const inWeek = lessons
+      .map((l) => new Date(l.startsAt))
+      .filter((s) => s >= weekStart && s < weekEnd)
+      .map((s) => s.getHours());
+    const from = Math.min(8, ...inWeek);
+    const to = Math.max(21, ...inWeek);
+    return Array.from({ length: to - from + 1 }, (_, i) => i + from);
+  }, [lessons, weekStart, weekEnd]);
+
   // Index lessons by "dayIndex-hour" within the visible week.
   const byCell = useMemo(() => {
     const map = new Map<string, Lesson[]>();
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 7);
     for (const l of lessons) {
       const s = new Date(l.startsAt);
       if (s < weekStart || s >= weekEnd) continue;
@@ -99,7 +116,7 @@ export function ScheduleView() {
       map.set(key, arr);
     }
     return map;
-  }, [lessons, weekStart]);
+  }, [lessons, weekStart, weekEnd]);
 
   function shiftWeek(deltaDays: number) {
     const d = new Date(weekStart);
@@ -143,14 +160,24 @@ export function ScheduleView() {
     }
   }
 
-  async function deleteLesson(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    await apiFetch(`/lessons/${id}`, { method: 'DELETE', token, locale }).catch(() => undefined);
-    await load();
+  // Optimistic + undoable. The row disappears at once, but the DELETE only
+  // fires when the undo window closes — a mis-click costs nothing.
+  function deleteLesson(id: string) {
+    setLessons((prev) => prev.filter((l) => l.id !== id));
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/lessons/${id}`, { method: 'DELETE', token, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={6} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const weekLabel = `${format.dateTime(days[0], { day: 'numeric', month: 'short' })} – ${format.dateTime(days[6], { day: 'numeric', month: 'short' })}`;
@@ -176,7 +203,7 @@ export function ScheduleView() {
           </div>
         ))}
 
-        {HOURS.map((hour) => (
+        {hours.map((hour) => (
           <FragmentRow
             key={hour}
             hour={hour}

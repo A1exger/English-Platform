@@ -7,6 +7,7 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
 import { AssignmentBuilder } from './AssignmentBuilder';
+import { Skeleton } from './Skeleton';
 
 interface PageRow {
   id: string;
@@ -79,7 +80,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
     setAdded({ ...added, [word]: true });
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !lesson) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const totalSteps = lesson.pages.length + 1; // + Preparation

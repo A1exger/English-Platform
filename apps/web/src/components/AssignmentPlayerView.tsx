@@ -8,6 +8,7 @@ import { fetchMe, tokenStore } from '@/lib/auth';
 import { CheckResponse, ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
 import { ExerciseState } from './ExerciseRenderer';
 import { AssignmentResult, AssignmentResultView } from './AssignmentResultView';
+import { Skeleton } from './Skeleton';
 
 interface Card extends ContentTask {
   order: number;
@@ -85,7 +86,7 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
     await load();
   }
 
-  if (phase === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (phase === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (phase === 'error' || !data) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   return (

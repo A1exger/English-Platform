@@ -11,9 +11,8 @@ export function LoginForm() {
   const locale = useLocale();
   const router = useRouter();
 
-  // Prefilled with a seeded account for an easy demo (see apps/api seed).
-  const [email, setEmail] = useState('tutor@example.com');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

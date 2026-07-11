@@ -38,7 +38,8 @@
     "creating": "Adding…",
     "empty": "No materials.",
     "delete": "Delete",
-    "uploadFile": "Upload a file"
+    "uploadFile": "Upload a file",
+    "deleted": "Material deleted"
   },
   "students": {
     "title": "Students",
@@ -58,7 +59,8 @@
     "firstName": "First name",
     "lastName": "Last name",
     "delete": "Delete",
-    "remove": "Remove"
+    "remove": "Remove",
+    "deleted": "Student removed"
   },
   "analytics": {
     "title": "Analytics",
@@ -104,7 +106,8 @@
     "creating": "Creating…",
     "empty": "No users.",
     "delete": "Delete",
-    "forbidden": "Admins only."
+    "forbidden": "Admins only.",
+    "deleted": "User deleted"
   },
   "schedule": {
     "title": "Schedule",
@@ -125,7 +128,8 @@
     "viewList": "List",
     "viewWeek": "Week",
     "student": "Student",
-    "delete": "Delete"
+    "delete": "Delete",
+    "deleted": "Lesson deleted"
   },
   "billing": {
     "title": "Billing",
@@ -166,13 +170,7 @@
     "pickMaterial": "Pick a course lesson to teach.",
     "waiting": "Waiting for the teacher…",
     "studentAnswer": "Answer",
-    "answersTab": "Answers",
-    "exerciseTab": "Exercise",
-    "focusVideo": "Focus on video",
-    "exitFocus": "Exit focus",
-    "pageLabel": "p.",
-    "teacherLeads": "teacher is leading",
-    "answersHint": "Answers appear here as the student works."
+    "exit": "Leave lesson"
   },
   "board": {
     "title": "Whiteboard",
@@ -199,7 +197,9 @@
     "createAccount": "Create an account",
     "search": "Search",
     "searchPlaceholder": "Search pages…",
-    "noResults": "Nothing found"
+    "noResults": "Nothing found",
+    "undo": "Undo",
+    "menu": "Menu"
   },
   "nav": {
     "overview": "Overview",

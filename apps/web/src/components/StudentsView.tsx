@@ -5,6 +5,8 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
 
 interface Row {
   studentProfileId: string;
@@ -23,6 +25,7 @@ export function StudentsView() {
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [rows, setRows] = useState<Row[]>([]);
   const [role, setRole] = useState<string>('');
@@ -83,19 +86,23 @@ export function StudentsView() {
     }
   }
 
-  async function removeStudent(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/crm/students/${id}`, { method: 'DELETE', token, locale });
-      await load();
-    } finally {
-      setBusy(false);
-    }
+  // Optimistic + undoable. Removing a student used to be one unconfirmed click.
+  function removeStudent(id: string) {
+    setRows((prev) => prev.filter((r) => r.studentProfileId !== id));
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/crm/students/${id}`, { method: 'DELETE', token, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const isAdmin = role === 'admin';
