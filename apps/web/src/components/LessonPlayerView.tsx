@@ -8,6 +8,7 @@ import { fetchMe, tokenStore } from '@/lib/auth';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
 import { AssignmentBuilder } from './AssignmentBuilder';
 import { Skeleton } from './Skeleton';
+import { Stepper } from './Stepper';
 
 interface PageRow {
   id: string;
@@ -83,7 +84,6 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
   if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !lesson) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
-  const totalSteps = lesson.pages.length + 1; // + Preparation
   const page = pageIdx > 0 ? lesson.pages[pageIdx - 1] : null;
   const allTasks = lesson.pages.flatMap((p) => p.tasks);
 
@@ -107,38 +107,14 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
         />
       )}
 
-      <div className="learn-nav">
-        <button type="button" className="ghost" disabled={pageIdx === 0} onClick={() => setPageIdx(pageIdx - 1)}>
-          ‹ {t('prev')}
-        </button>
-        <div className="learn-steps">
-          <button
-            type="button"
-            className={`step${pageIdx === 0 ? ' active' : ''}`}
-            onClick={() => setPageIdx(0)}
-          >
-            {t('preparation')}
-          </button>
-          {lesson.pages.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`step${pageIdx === i + 1 ? ' active' : ''}`}
-              onClick={() => setPageIdx(i + 1)}
-            >
-              {i + 1} · {p.type}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="ghost"
-          disabled={pageIdx >= totalSteps - 1}
-          onClick={() => setPageIdx(pageIdx + 1)}
-        >
-          {t('next')} ›
-        </button>
-      </div>
+      <Stepper
+        current={pageIdx}
+        onChange={setPageIdx}
+        steps={[
+          { key: 'prep', label: t('preparation') },
+          ...lesson.pages.map((p, i) => ({ key: p.id, label: `${i + 1} · ${p.type}` }))
+        ]}
+      />
 
       {pageIdx === 0 ? (
         <div className="learn-prep">

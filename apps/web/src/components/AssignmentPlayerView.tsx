@@ -9,6 +9,7 @@ import { CheckResponse, ContentTask, ContentTaskPlayer } from './ContentTaskPlay
 import { ExerciseState } from './ExerciseRenderer';
 import { AssignmentResult, AssignmentResultView } from './AssignmentResultView';
 import { Skeleton } from './Skeleton';
+import { Stepper } from './Stepper';
 
 interface Card extends ContentTask {
   order: number;
@@ -39,6 +40,7 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
   const [isStudent, setIsStudent] = useState(false);
   const [phase, setPhase] = useState<'loading' | 'error' | 'ready'>('loading');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [step, setStep] = useState(0); // one task per step; last step = result
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -89,6 +91,17 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
   if (phase === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (phase === 'error' || !data) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
+  // One task per step, then a final result step — so the score is never shown
+  // before the work is done (Sprint 2.2).
+  const cards = data.cards;
+  const steps = [
+    ...cards.map((c, i) => ({ key: c.id, label: String(i + 1) })),
+    { key: 'result', label: t('resultStep') }
+  ];
+  const current = Math.min(step, steps.length - 1);
+  const onResultStep = current === cards.length;
+  const card = onResultStep ? null : cards[current];
+
   return (
     <div className="content learn">
       <Link className="link" href="/assignments">← {t('back')}</Link>
@@ -103,45 +116,56 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
         </p>
       )}
 
-      {data.result && <AssignmentResultView result={data.result} />}
+      <Stepper steps={steps} current={current} onChange={setStep} />
 
-      <div className="learn-page">
-        {data.cards.map((card) => {
-          const submitted = card.status === 'submitted';
-          const initialResult: CheckResponse | null = submitted
-            ? {
-                completed: true,
-                score: card.score ?? undefined,
-                correct: (card.score ?? 0) >= 10,
-                solution: card.solution ?? undefined
-              }
-            : null;
-          return (
-            <div key={card.id}>
-              <ContentTaskPlayer
-                task={card}
-                submit={isStudent && !submitted ? submitCard(card.id) : undefined}
-                initialState={card.state ?? undefined}
-                initialResult={isStudent ? initialResult : initialResult ?? { completed: true }}
-                feedback={card.feedback}
-              />
-              {/* Tutor grading box for MANUAL (essay) cards. */}
-              {!isStudent && card.gradingMode === 'MANUAL' && (
-                <div className="grade-box">
-                  <textarea
-                    placeholder={t('feedbackPlaceholder')}
-                    defaultValue={card.feedback ?? ''}
-                    onChange={(e) => setDrafts({ ...drafts, [card.id]: e.target.value })}
+      {onResultStep ? (
+        data.result ? (
+          <AssignmentResultView result={data.result} />
+        ) : (
+          <p className="note">{t('resultPending')}</p>
+        )
+      ) : (
+        card && (
+          <div className="learn-page">
+            {(() => {
+              const submitted = card.status === 'submitted';
+              const initialResult: CheckResponse | null = submitted
+                ? {
+                    completed: true,
+                    score: card.score ?? undefined,
+                    correct: (card.score ?? 0) >= 10,
+                    solution: card.solution ?? undefined
+                  }
+                : null;
+              return (
+                <>
+                  <ContentTaskPlayer
+                    key={card.id}
+                    task={card}
+                    submit={isStudent && !submitted ? submitCard(card.id) : undefined}
+                    initialState={card.state ?? undefined}
+                    initialResult={isStudent ? initialResult : initialResult ?? { completed: true }}
+                    feedback={card.feedback}
                   />
-                  <button type="button" onClick={() => saveGrade(card.id)}>
-                    {t('saveFeedback')}
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                  {/* Tutor grading box for the viewed MANUAL (essay) card only. */}
+                  {!isStudent && card.gradingMode === 'MANUAL' && (
+                    <div className="grade-box">
+                      <textarea
+                        placeholder={t('feedbackPlaceholder')}
+                        defaultValue={card.feedback ?? ''}
+                        onChange={(e) => setDrafts({ ...drafts, [card.id]: e.target.value })}
+                      />
+                      <button type="button" onClick={() => saveGrade(card.id)}>
+                        {t('saveFeedback')}
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )
+      )}
     </div>
   );
 }

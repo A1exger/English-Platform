@@ -25,7 +25,13 @@
     "statusAssigned": "Assigned",
     "statusSubmitted": "Submitted",
     "statusGraded": "Graded",
-    "viewAnswers": "View answers"
+    "viewAnswers": "View answers",
+    "tab_all": "All",
+    "tab_todo": "To do",
+    "tab_submitted": "Submitted",
+    "tab_graded": "Graded",
+    "overdue": "Overdue",
+    "back": "Back to homework"
   },
   "materials": {
     "title": "Materials",
@@ -199,7 +205,8 @@
     "searchPlaceholder": "Search pages…",
     "noResults": "Nothing found",
     "undo": "Undo",
-    "menu": "Menu"
+    "menu": "Menu",
+    "close": "Close"
   },
   "nav": {
     "overview": "Overview",
@@ -385,7 +392,8 @@
     "done": "Done ✓",
     "essayPlaceholder": "Write your answer…",
     "back": "Back to course",
-    "min": "min"
+    "min": "min",
+    "saved": "Saved"
   },
   "assignments": {
     "title": "Assignments",
@@ -410,7 +418,9 @@
     "pickTasks": "Tasks to include",
     "assign": "Assign",
     "saveFeedback": "Save feedback",
-    "feedbackPlaceholder": "Feedback for the student…"
+    "feedbackPlaceholder": "Feedback for the student…",
+    "resultStep": "Result",
+    "resultPending": "Complete the tasks to see your result."
   },
   "dictionary": {
     "title": "Dictionary",

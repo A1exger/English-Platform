@@ -25,7 +25,13 @@
     "statusAssigned": "Назначено",
     "statusSubmitted": "Сдано",
     "statusGraded": "Проверено",
-    "viewAnswers": "Посмотреть ответы"
+    "viewAnswers": "Посмотреть ответы",
+    "tab_all": "Все",
+    "tab_todo": "К выполнению",
+    "tab_submitted": "Сдано",
+    "tab_graded": "Оценено",
+    "overdue": "Просрочено",
+    "back": "К списку ДЗ"
   },
   "materials": {
     "title": "Материалы",
@@ -199,7 +205,8 @@
     "searchPlaceholder": "Искать страницы…",
     "noResults": "Ничего не найдено",
     "undo": "Отменить",
-    "menu": "Меню"
+    "menu": "Меню",
+    "close": "Закрыть"
   },
   "nav": {
     "overview": "Обзор",
@@ -385,7 +392,8 @@
     "done": "Выполнено ✓",
     "essayPlaceholder": "Напишите ваш ответ…",
     "back": "К курсу",
-    "min": "мин"
+    "min": "мин",
+    "saved": "Сохранено"
   },
   "assignments": {
     "title": "Задания",
@@ -410,7 +418,9 @@
     "pickTasks": "Какие задания включить",
     "assign": "Назначить",
     "saveFeedback": "Сохранить фидбек",
-    "feedbackPlaceholder": "Фидбек ученику…"
+    "feedbackPlaceholder": "Фидбек ученику…",
+    "resultStep": "Результат",
+    "resultPending": "Выполните задания, чтобы увидеть результат."
   },
   "dictionary": {
     "title": "Словарь",

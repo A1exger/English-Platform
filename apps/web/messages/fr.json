@@ -25,7 +25,13 @@
     "statusAssigned": "Attribué",
     "statusSubmitted": "Envoyé",
     "statusGraded": "Noté",
-    "viewAnswers": "Voir les réponses"
+    "viewAnswers": "Voir les réponses",
+    "tab_all": "Tout",
+    "tab_todo": "À faire",
+    "tab_submitted": "Rendu",
+    "tab_graded": "Noté",
+    "overdue": "En retard",
+    "back": "Retour aux devoirs"
   },
   "materials": {
     "title": "Supports",
@@ -199,7 +205,8 @@
     "searchPlaceholder": "Rechercher des pages…",
     "noResults": "Aucun résultat",
     "undo": "Annuler",
-    "menu": "Menu"
+    "menu": "Menu",
+    "close": "Fermer"
   },
   "nav": {
     "overview": "Aperçu",
@@ -385,7 +392,8 @@
     "done": "Fait ✓",
     "essayPlaceholder": "Écrivez votre réponse…",
     "back": "Retour au cours",
-    "min": "min"
+    "min": "min",
+    "saved": "Enregistré"
   },
   "assignments": {
     "title": "Devoirs",
@@ -410,7 +418,9 @@
     "pickTasks": "Exercices à inclure",
     "assign": "Assigner",
     "saveFeedback": "Enregistrer le retour",
-    "feedbackPlaceholder": "Retour pour l'élève…"
+    "feedbackPlaceholder": "Retour pour l'élève…",
+    "resultStep": "Résultat",
+    "resultPending": "Terminez les tâches pour voir votre résultat."
   },
   "dictionary": {
     "title": "Dictionnaire",

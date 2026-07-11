@@ -1903,3 +1903,107 @@ select.err {
     inset-block-start: calc(100% + 8px);
   }
 }
+
+/* ——— Sprint 2: tabs · drawer · stepper · score ——— */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-block-end: 1px solid var(--line);
+}
+.tabs button {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--slate);
+  padding: 8px 14px;
+  font-size: 14px;
+  border-block-end: 2px solid transparent;
+  margin-block-end: -1px;
+}
+.tabs button.active {
+  color: var(--indigo-700);
+  border-block-end-color: var(--indigo);
+}
+.tabs-inline {
+  margin-block: 8px 16px;
+}
+.page-head {
+  margin-block-end: 4px;
+}
+
+/* drawer — creation forms live here */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 25, 43, 0.28);
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+}
+.drawer {
+  inline-size: min(420px, 100%);
+  block-size: 100%;
+  background: var(--card);
+  border-inline-start: 1px solid var(--line);
+  box-shadow: var(--sh-md);
+  display: flex;
+  flex-direction: column;
+  animation: drawer-in var(--t-base) var(--e-out);
+}
+@keyframes drawer-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-block-end: 1px solid var(--line);
+}
+.drawer-body {
+  padding: 18px;
+  overflow: auto;
+  flex: 1;
+}
+
+/* stepper — shared step navigation with a sticky progress count */
+.stepper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: sticky;
+  inset-block-start: 0;
+  background: var(--paper);
+  padding-block: 8px;
+  z-index: 5;
+}
+.stepper .learn-nav {
+  inline-size: 100%;
+}
+.stepper-progress {
+  color: var(--mist);
+  font-size: 12px;
+}
+
+/* score — the one 0–10 user-facing scale */
+.score-value {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+.score-max {
+  color: var(--mist);
+}
+.overdue {
+  color: var(--low);
+}
+.task-actions {
+  align-items: center;
+}
+.saved-tag {
+  font-size: 13px;
+}
+.audio-full {
+  inline-size: 100%;
+}

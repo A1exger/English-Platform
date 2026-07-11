@@ -25,7 +25,13 @@
     "statusAssigned": "مُسند",
     "statusSubmitted": "تم الإرسال",
     "statusGraded": "تم التقييم",
-    "viewAnswers": "عرض الإجابات"
+    "viewAnswers": "عرض الإجابات",
+    "tab_all": "الكل",
+    "tab_todo": "للتنفيذ",
+    "tab_submitted": "مُسلَّم",
+    "tab_graded": "مُقيَّم",
+    "overdue": "متأخر",
+    "back": "العودة إلى الواجبات"
   },
   "materials": {
     "title": "المواد",
@@ -199,7 +205,8 @@
     "searchPlaceholder": "ابحث في الصفحات…",
     "noResults": "لا نتائج",
     "undo": "تراجع",
-    "menu": "القائمة"
+    "menu": "القائمة",
+    "close": "إغلاق"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -385,7 +392,8 @@
     "done": "تم ✓",
     "essayPlaceholder": "اكتب إجابتك…",
     "back": "العودة إلى الدورة",
-    "min": "دقيقة"
+    "min": "دقيقة",
+    "saved": "تم الحفظ"
   },
   "assignments": {
     "title": "الواجبات",
@@ -410,7 +418,9 @@
     "pickTasks": "المهام المراد تضمينها",
     "assign": "تعيين",
     "saveFeedback": "حفظ الملاحظات",
-    "feedbackPlaceholder": "ملاحظات للطالب…"
+    "feedbackPlaceholder": "ملاحظات للطالب…",
+    "resultStep": "النتيجة",
+    "resultPending": "أكمل المهام لرؤية نتيجتك."
   },
   "dictionary": {
     "title": "القاموس",

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
+import { Score } from './Score';
 
 interface InstanceView {
   id: string;
@@ -120,7 +121,8 @@ export function ExercisePlayer({
       />
       {result ? (
         <p className={result.correct ? 'ex-ok' : 'ex-partial'}>
-          {t('score')}: {result.score}%
+          {/* One 0–10 scale everywhere (2.4); instance scores are 0–100 internally. */}
+          {t('score')}: <Score value={result.score / 10} />
         </p>
       ) : (
         <button type="button" disabled={busy} onClick={check}>

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { apiFetch, fileUrl } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
+import { Score } from './Score';
 
 // One content task, rendered identically in every runtime context (live /
 // async homework / self-study). Drag-drop types reuse ExerciseRenderer;
@@ -55,12 +56,41 @@ export function ContentTaskPlayer({
   const [state, setState] = useState<ExerciseState>(initialState ?? {});
   const [result, setResult] = useState<CheckResponse | null>(initialResult ?? null);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftKey = `answer:${task.id}`;
 
   const done = result !== null;
 
-  // Stream in-progress answers to the teacher while the task is still open.
+  // Autosave (Sprint 2.3): restore any local draft so a reload never loses work.
+  // ContentTaskPlayer has no server draft endpoint (backend is out of scope), so
+  // in-progress answers persist to localStorage; the draft is cleared on submit.
   useEffect(() => {
-    if (!done && onStateChange) onStateChange(task.id, state);
+    if (done) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) setState(JSON.parse(raw) as ExerciseState);
+    } catch {
+      /* ignore malformed draft */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Stream in-progress answers to the teacher + debounce-save the draft.
+  useEffect(() => {
+    if (done) return;
+    if (onStateChange) onStateChange(task.id, state);
+    if (!Object.keys(state).length) return;
+    setSaved(false);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(state));
+        setSaved(true);
+      } catch {
+        /* storage unavailable */
+      }
+    }, 500);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
@@ -79,6 +109,11 @@ export function ContentTaskPlayer({
             body: { state: payload }
           });
       setResult(r);
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        /* ignore */
+      }
       onResult?.({ taskId: task.id, score: r.score, completed: true });
     } finally {
       setBusy(false);
@@ -145,7 +180,7 @@ export function ContentTaskPlayer({
         <div className="ex">
           {typeof q.mediaUrl === 'string' && q.mediaUrl && (
             // eslint-disable-next-line jsx-a11y/media-has-caption
-            <audio controls src={fileUrl(q.mediaUrl)} style={{ width: '100%' }} />
+            <audio controls src={fileUrl(q.mediaUrl)} className="audio-full" />
           )}
           {typeof q.prompt === 'string' && <p>{q.prompt}</p>}
         </div>
@@ -169,21 +204,20 @@ export function ContentTaskPlayer({
         <>
           {result?.score !== undefined ? (
             <p className={result.correct ? 'ex-ok' : 'ex-partial'}>
-              {t('score')}: {result.score} / 10
+              {t('score')}: <Score value={result.score} />
             </p>
           ) : (
             <p className="ex-ok">{t('done')}</p>
           )}
           {feedback ? <p className="ex-feedback">✎ {feedback}</p> : null}
         </>
-      ) : task.gradingMode === 'AUTO' ? (
-        <button type="button" disabled={busy} onClick={() => check()}>
-          {busy ? '…' : t('check')}
-        </button>
       ) : (
-        <button type="button" disabled={busy} onClick={() => check()}>
-          {busy ? '…' : t('markDone')}
-        </button>
+        <div className="row-between task-actions">
+          <button type="button" disabled={busy} onClick={() => check()}>
+            {busy ? '…' : task.gradingMode === 'AUTO' ? t('check') : t('markDone')}
+          </button>
+          {saved && <span className="muted saved-tag">{t('saved')}</span>}
+        </div>
       )}
     </div>
   );

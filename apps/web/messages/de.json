@@ -25,7 +25,13 @@
     "statusAssigned": "Zugewiesen",
     "statusSubmitted": "Abgegeben",
     "statusGraded": "Bewertet",
-    "viewAnswers": "Antworten ansehen"
+    "viewAnswers": "Antworten ansehen",
+    "tab_all": "Alle",
+    "tab_todo": "Zu erledigen",
+    "tab_submitted": "Eingereicht",
+    "tab_graded": "Bewertet",
+    "overdue": "Überfällig",
+    "back": "Zurück zu Hausaufgaben"
   },
   "materials": {
     "title": "Materialien",
@@ -199,7 +205,8 @@
     "searchPlaceholder": "Seiten suchen…",
     "noResults": "Nichts gefunden",
     "undo": "Rückgängig",
-    "menu": "Menü"
+    "menu": "Menü",
+    "close": "Schließen"
   },
   "nav": {
     "overview": "Übersicht",
@@ -385,7 +392,8 @@
     "done": "Erledigt ✓",
     "essayPlaceholder": "Schreibe deine Antwort…",
     "back": "Zum Kurs",
-    "min": "Min"
+    "min": "Min",
+    "saved": "Gespeichert"
   },
   "assignments": {
     "title": "Aufgaben",
@@ -410,7 +418,9 @@
     "pickTasks": "Aufgaben auswählen",
     "assign": "Zuweisen",
     "saveFeedback": "Feedback speichern",
-    "feedbackPlaceholder": "Feedback für den Schüler…"
+    "feedbackPlaceholder": "Feedback für den Schüler…",
+    "resultStep": "Ergebnis",
+    "resultPending": "Erledige die Aufgaben, um dein Ergebnis zu sehen."
   },
   "dictionary": {
     "title": "Wörterbuch",

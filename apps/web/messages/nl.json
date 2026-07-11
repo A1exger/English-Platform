@@ -25,7 +25,13 @@
     "statusAssigned": "Toegewezen",
     "statusSubmitted": "Ingeleverd",
     "statusGraded": "Beoordeeld",
-    "viewAnswers": "Antwoorden bekijken"
+    "viewAnswers": "Antwoorden bekijken",
+    "tab_all": "Alle",
+    "tab_todo": "Te doen",
+    "tab_submitted": "Ingeleverd",
+    "tab_graded": "Beoordeeld",
+    "overdue": "Te laat",
+    "back": "Terug naar huiswerk"
   },
   "materials": {
     "title": "Materialen",
@@ -199,7 +205,8 @@
     "searchPlaceholder": "Zoek pagina's…",
     "noResults": "Niets gevonden",
     "undo": "Ongedaan maken",
-    "menu": "Menu"
+    "menu": "Menu",
+    "close": "Sluiten"
   },
   "nav": {
     "overview": "Overzicht",
@@ -385,7 +392,8 @@
     "done": "Klaar ✓",
     "essayPlaceholder": "Schrijf je antwoord…",
     "back": "Terug naar cursus",
-    "min": "min"
+    "min": "min",
+    "saved": "Opgeslagen"
   },
   "assignments": {
     "title": "Opdrachten",
@@ -410,7 +418,9 @@
     "pickTasks": "Taken om op te nemen",
     "assign": "Toewijzen",
     "saveFeedback": "Feedback opslaan",
-    "feedbackPlaceholder": "Feedback voor de leerling…"
+    "feedbackPlaceholder": "Feedback voor de leerling…",
+    "resultStep": "Resultaat",
+    "resultPending": "Voltooi de taken om je resultaat te zien."
   },
   "dictionary": {
     "title": "Woordenboek",
