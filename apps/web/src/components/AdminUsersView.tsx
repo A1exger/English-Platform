@@ -7,6 +7,8 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
+import { PageHeader } from './PageHeader';
+import { Drawer } from './Drawer';
 
 interface UserRow {
   id: string;
@@ -31,6 +33,7 @@ export function AdminUsersView() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'forbidden' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({
     role: 'student',
     firstName: '',
@@ -74,6 +77,7 @@ export function AdminUsersView() {
     try {
       await apiFetch('/admin/users', { method: 'POST', token, locale, body: form });
       setForm({ role: 'student', firstName: '', lastName: '', email: '', password: '' });
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
@@ -102,46 +106,47 @@ export function AdminUsersView() {
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader title={t('title')} primary={{ label: t('create'), onClick: () => setDrawerOpen(true) }} />
 
-      <form className="card form-grid" onSubmit={create}>
-        <strong>{t('newUser')}</strong>
-        <label>
-          {t('role')}
-          <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-            {ROLES.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t('firstName')}
-          <input required value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
-        </label>
-        <label>
-          {t('lastName')}
-          <input required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-        </label>
-        <label>
-          {t('email')}
-          <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-        </label>
-        <label>
-          {t('password')}
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-          />
-        </label>
-        <button type="submit" disabled={busy}>
-          {busy ? t('creating') : t('create')}
-        </button>
-      </form>
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('newUser')}>
+        <form className="form-grid" onSubmit={create}>
+          <label>
+            {t('role')}
+            <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t('firstName')}
+            <input required value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+          </label>
+          <label>
+            {t('lastName')}
+            <input required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+          </label>
+          <label>
+            {t('email')}
+            <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          </label>
+          <label>
+            {t('password')}
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
+          </label>
+          <button type="submit" disabled={busy}>
+            {busy ? t('creating') : t('create')}
+          </button>
+        </form>
+      </Drawer>
 
       <div className="card">
         {users.length === 0 ? (

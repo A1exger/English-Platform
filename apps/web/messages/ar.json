@@ -162,7 +162,8 @@
     "pendingTransfers": "تحويلات بانتظار التأكيد",
     "confirm": "تأكيد",
     "currency": "العملة",
-    "delete": "حذف"
+    "delete": "حذف",
+    "deleted": "تم حذف الباقة"
   },
   "room": {
     "title": "غرفة الدرس",
@@ -332,7 +333,9 @@
     "chooseStudents": "الطلاب",
     "none": "لا توجد تمارين بعد.",
     "view": "عرض",
-    "edit": "تعديل"
+    "edit": "تعديل",
+    "deleted": "تم حذف التمرين",
+    "allTypes": "الكل"
   },
   "courses": {
     "title": "الدورات",
@@ -379,7 +382,15 @@
     "question": "السؤال",
     "options": "الخيارات (مفصولة بفواصل)",
     "correct": "الإجابة الصحيحة",
-    "saved": "تم الحفظ"
+    "saved": "تم الحفظ",
+    "new": "جديد",
+    "continue": "متابعة",
+    "more": "المزيد",
+    "unpublished": "غير منشور",
+    "reorder": "إعادة ترتيب",
+    "selectLesson": "اختر درسًا للتعديل",
+    "lessonDeleted": "تم حذف الدرس",
+    "taskDeleted": "تمت إزالة المهمة"
   },
   "learn": {
     "title": "الدرس",

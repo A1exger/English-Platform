@@ -2169,3 +2169,289 @@ select.err {
     grid-auto-rows: minmax(0, 1fr);
   }
 }
+
+/* ——— Sprint 4: page header · course cards · builder ——— */
+.page-header {
+  margin-block-end: 16px;
+}
+.page-header > .page-head h2 {
+  font-size: 22px;
+}
+.page-header-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-block-start: 12px;
+}
+.search-input {
+  flex: 1;
+  min-inline-size: 200px;
+  max-inline-size: 340px;
+}
+/* type filter as inline chips (exercises library) */
+.filter-chips {
+  border-block-end: 0;
+  margin-block: 0;
+  flex-wrap: wrap;
+}
+.ex-form .field {
+  margin-block-end: 8px;
+}
+.inline-form-col {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* courses — student/author cards (4.2) */
+.course-cat {
+  margin-block-start: 16px;
+}
+.course-cat > strong {
+  display: block;
+  margin-block-end: 12px;
+  font-size: 16px;
+}
+.course-cards {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.course-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--card);
+}
+.course-card-main {
+  flex: 1;
+  min-inline-size: 0;
+}
+.course-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.course-card-title strong {
+  font-size: 15px;
+}
+.badge-new,
+.badge-self {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+}
+.badge-new {
+  color: var(--indigo-700);
+  background: var(--indigo-100);
+}
+.badge-self {
+  color: var(--spark-700);
+  background: var(--spark-100);
+}
+
+/* row overflow menu (⋯) — publish/unpublish */
+.row-menu {
+  position: relative;
+}
+.row-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  color: var(--slate);
+  border: 1px solid var(--line-strong);
+  background: var(--card);
+  font-size: 15px;
+  line-height: 1;
+}
+.row-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.row-menu > summary:hover {
+  background: var(--cloud);
+  color: var(--ink);
+}
+.row-menu-pop {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + 4px);
+  min-inline-size: 160px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-md);
+  padding: 6px;
+  z-index: 20;
+}
+
+/* course builder — sortable tree + editor (4.3) */
+.builder {
+  display: grid;
+  grid-template-columns: minmax(240px, 340px) 1fr;
+  gap: 16px;
+  align-items: start;
+  margin-block-start: 8px;
+}
+.builder-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.builder-editor {
+  min-inline-size: 0;
+}
+.level-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--slate);
+}
+.tree-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tree-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tree-section-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.tree-unit {
+  border-inline-start: 2px solid var(--indigo-100);
+  padding-inline-start: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tree-unit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tree-unit-head strong {
+  font-size: 13px;
+  color: var(--slate);
+}
+.tree-add {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--slate);
+  padding: 0;
+  inline-size: 26px;
+  block-size: 26px;
+  border-radius: var(--r-sm);
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tree-add:hover {
+  background: var(--cloud);
+  color: var(--ink);
+}
+.tree-lessons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tree-empty {
+  margin: 0;
+  font-size: 12px;
+}
+.tree-lesson {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+}
+.tree-lesson:hover {
+  background: var(--cloud);
+}
+.tree-lesson.active {
+  background: var(--indigo-50);
+  border-color: var(--indigo-100);
+}
+.tree-lesson.dragging {
+  opacity: 0.5;
+}
+.drag-handle {
+  background: transparent;
+  border: none;
+  color: var(--mist);
+  cursor: grab;
+  padding: 2px 4px;
+  font-size: 13px;
+  line-height: 1;
+}
+.drag-handle:hover {
+  background: transparent;
+  color: var(--slate);
+}
+.tree-lesson-title {
+  flex: 1;
+  min-inline-size: 0;
+  text-align: start;
+  background: transparent;
+  border: none;
+  color: var(--ink);
+  padding: 2px 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.tree-lesson-title:hover {
+  background: transparent;
+  color: var(--indigo-700);
+}
+.tree-rename {
+  flex: 1;
+  min-inline-size: 0;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+.tree-del {
+  padding: 2px 8px;
+  font-size: 13px;
+}
+.empty-pane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 160px;
+}
+.save-lesson {
+  align-self: flex-start;
+}
+
+@media (max-width: 860px) {
+  .builder {
+    grid-template-columns: 1fr;
+  }
+}

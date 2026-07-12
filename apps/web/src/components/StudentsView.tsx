@@ -7,6 +7,8 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
+import { PageHeader } from './PageHeader';
+import { Drawer } from './Drawer';
 
 interface Row {
   studentProfileId: string;
@@ -31,6 +33,7 @@ export function StudentsView() {
   const [role, setRole] = useState<string>('');
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [newStudent, setNewStudent] = useState({ firstName: '', lastName: '', email: '', password: '' });
 
@@ -66,6 +69,7 @@ export function StudentsView() {
     try {
       await apiFetch('/crm/students', { method: 'POST', token, locale, body: { email } });
       setEmail('');
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
@@ -80,6 +84,7 @@ export function StudentsView() {
     try {
       await apiFetch('/crm/students/new', { method: 'POST', token, locale, body: newStudent });
       setNewStudent({ firstName: '', lastName: '', email: '', password: '' });
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
@@ -108,32 +113,38 @@ export function StudentsView() {
   const isAdmin = role === 'admin';
   const isTutor = role === 'tutor';
 
+  const canAdd = isAdmin || isTutor;
+
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader
+        title={t('title')}
+        primary={canAdd ? { label: t('add'), onClick: () => setDrawerOpen(true) } : undefined}
+      />
 
-      {isTutor && (
-        <form className="card form-grid" onSubmit={enroll}>
-          <strong>{t('enroll')}</strong>
-          <label>
-            {t('email')}
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-          <button type="submit" disabled={busy}>
-            {busy ? t('adding') : t('add')}
-          </button>
-        </form>
-      )}
-
-      {(isAdmin || isTutor) && (
-        <form className="card form-grid" onSubmit={createStudent}>
-          <strong>{t('create')}</strong>
-          <label>{t('firstName')}<input required value={newStudent.firstName} onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })} /></label>
-          <label>{t('lastName')}<input required value={newStudent.lastName} onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })} /></label>
-          <label>{t('email')}<input type="email" required value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} /></label>
-          <label>{t('password')}<input type="password" required minLength={8} value={newStudent.password} onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })} /></label>
-          <button type="submit" disabled={busy}>{busy ? t('adding') : t('create')}</button>
-        </form>
+      {canAdd && (
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('add')}>
+          {isTutor && (
+            <form className="form-grid" onSubmit={enroll}>
+              <strong>{t('enroll')}</strong>
+              <label>
+                {t('email')}
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </label>
+              <button type="submit" disabled={busy}>
+                {busy ? t('adding') : t('add')}
+              </button>
+            </form>
+          )}
+          <form className="form-grid" onSubmit={createStudent}>
+            <strong>{t('create')}</strong>
+            <label>{t('firstName')}<input required value={newStudent.firstName} onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })} /></label>
+            <label>{t('lastName')}<input required value={newStudent.lastName} onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })} /></label>
+            <label>{t('email')}<input type="email" required value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} /></label>
+            <label>{t('password')}<input type="password" required minLength={8} value={newStudent.password} onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })} /></label>
+            <button type="submit" disabled={busy}>{busy ? t('adding') : t('create')}</button>
+          </form>
+        </Drawer>
       )}
 
       <div className="card">

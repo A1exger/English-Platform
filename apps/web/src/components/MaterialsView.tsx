@@ -7,6 +7,8 @@ import { ApiError, apiFetch, apiUpload, fileUrl } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
+import { PageHeader } from './PageHeader';
+import { Drawer } from './Drawer';
 
 interface Material {
   id: string;
@@ -29,6 +31,7 @@ export function MaterialsView() {
   const [items, setItems] = useState<Material[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({ type: 'pdf', title: '', url: '', language: '' });
 
   const load = useCallback(async () => {
@@ -76,6 +79,7 @@ export function MaterialsView() {
         }
       });
       setForm({ type: 'pdf', title: '', url: '', language: '' });
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
@@ -122,45 +126,10 @@ export function MaterialsView() {
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
-
-      {canManage && (
-        <div className="card upload-row">
-          <strong>{t('uploadFile')}</strong>
-          <input type="file" disabled={busy} onChange={upload} />
-        </div>
-      )}
-
-      {canManage && (
-        <form className="card form-grid" onSubmit={create}>
-          <strong>{t('add')}</strong>
-          <label>
-            {t('type')}
-            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-              {TYPES.map((ty) => (
-                <option key={ty} value={ty}>
-                  {ty}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t('titleField')}
-            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          </label>
-          <label>
-            {t('url')}
-            <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
-          </label>
-          <label>
-            {t('language')}
-            <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} placeholder="en" />
-          </label>
-          <button type="submit" disabled={busy}>
-            {busy ? t('creating') : t('create')}
-          </button>
-        </form>
-      )}
+      <PageHeader
+        title={t('title')}
+        primary={canManage ? { label: t('add'), onClick: () => setDrawerOpen(true) } : undefined}
+      />
 
       <div className="card">
         {items.length === 0 ? (
@@ -192,6 +161,42 @@ export function MaterialsView() {
           </ul>
         )}
       </div>
+
+      {canManage && (
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('add')}>
+          <div className="upload-row">
+            <strong>{t('uploadFile')}</strong>
+            <input type="file" disabled={busy} onChange={upload} />
+          </div>
+          <form className="form-grid" onSubmit={create}>
+            <label>
+              {t('type')}
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                {TYPES.map((ty) => (
+                  <option key={ty} value={ty}>
+                    {ty}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('titleField')}
+              <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </label>
+            <label>
+              {t('url')}
+              <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+            </label>
+            <label>
+              {t('language')}
+              <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} placeholder="en" />
+            </label>
+            <button type="submit" disabled={busy}>
+              {busy ? t('creating') : t('create')}
+            </button>
+          </form>
+        </Drawer>
+      )}
     </div>
   );
 }

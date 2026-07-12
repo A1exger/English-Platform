@@ -162,7 +162,8 @@
     "pendingTransfers": "Transferts en attente de confirmation",
     "confirm": "Confirmer",
     "currency": "Devise",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "deleted": "Forfait supprimé"
   },
   "room": {
     "title": "Salle de cours",
@@ -332,7 +333,9 @@
     "chooseStudents": "Élèves",
     "none": "Aucun exercice.",
     "view": "Voir",
-    "edit": "Modifier"
+    "edit": "Modifier",
+    "deleted": "Exercice supprimé",
+    "allTypes": "Tous"
   },
   "courses": {
     "title": "Cours",
@@ -379,7 +382,15 @@
     "question": "Question",
     "options": "Options (séparées par des virgules)",
     "correct": "Bonne réponse",
-    "saved": "Enregistré"
+    "saved": "Enregistré",
+    "new": "Nouveau",
+    "continue": "Continuer",
+    "more": "Plus",
+    "unpublished": "dépublié",
+    "reorder": "Réordonner",
+    "selectLesson": "Choisissez une leçon à modifier",
+    "lessonDeleted": "Leçon supprimée",
+    "taskDeleted": "Tâche supprimée"
   },
   "learn": {
     "title": "Leçon",

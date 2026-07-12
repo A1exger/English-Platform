@@ -162,7 +162,8 @@
     "pendingTransfers": "Überweisungen zur Bestätigung",
     "confirm": "Bestätigen",
     "currency": "Währung",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "deleted": "Paket gelöscht"
   },
   "room": {
     "title": "Unterrichtsraum",
@@ -332,7 +333,9 @@
     "chooseStudents": "Schüler",
     "none": "Noch keine Übungen.",
     "view": "Ansehen",
-    "edit": "Bearbeiten"
+    "edit": "Bearbeiten",
+    "deleted": "Übung gelöscht",
+    "allTypes": "Alle"
   },
   "courses": {
     "title": "Kurse",
@@ -379,7 +382,15 @@
     "question": "Frage",
     "options": "Optionen (kommagetrennt)",
     "correct": "Richtige Antwort",
-    "saved": "Gespeichert"
+    "saved": "Gespeichert",
+    "new": "Neu",
+    "continue": "Fortsetzen",
+    "more": "Mehr",
+    "unpublished": "unveröffentlicht",
+    "reorder": "Umsortieren",
+    "selectLesson": "Lektion zum Bearbeiten wählen",
+    "lessonDeleted": "Lektion gelöscht",
+    "taskDeleted": "Aufgabe entfernt"
   },
   "learn": {
     "title": "Lektion",

@@ -7,6 +7,8 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
 import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
+import { PageHeader } from './PageHeader';
 
 interface ExerciseRow {
   id: string;
@@ -72,14 +74,18 @@ function parseItems(text: string) {
 export function ExercisesView() {
   const t = useTranslations('exercises');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [list, setList] = useState<ExerciseRow[]>([]);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [state, setStateName] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState({});
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | (typeof TYPES)[number]>('all');
 
   const [type, setType] = useState<(typeof TYPES)[number]>('order');
   const [title, setTitle] = useState('');
@@ -209,6 +215,25 @@ export function ExercisesView() {
     }
   }
 
+  // Optimistic + undoable delete (global rule: no deletion without showUndo).
+  function removeExercise(id: string) {
+    setList((prev) => prev.filter((x) => x.id !== id));
+    if (assignFor === id) setAssignFor(null);
+    if (editingId === id) {
+      setEditingId(null);
+      setTitle('');
+    }
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/exercises/${id}`, { method: 'DELETE', token, locale }).catch(() => undefined);
+        await load();
+      }
+    });
+  }
+
   async function openAssign(id: string) {
     if (assignFor === id) {
       setAssignFor(null);
@@ -257,21 +282,36 @@ export function ExercisesView() {
   if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
+  const filtered = list.filter(
+    (ex) =>
+      (typeFilter === 'all' || ex.type === typeFilter) &&
+      ex.title.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader title={t('title')} />
 
       <div className="two-col">
         <form className="card ex-form" onSubmit={create}>
-          <strong>{t('create')}</strong>
-          <label>
-            {t('type')}
-            <select value={type} onChange={(e) => setType(e.target.value as typeof type)}>
+          <strong>{editingId ? t('edit') : t('create')}</strong>
+          <div className="field">
+            <span>{t('type')}</span>
+            <div className="tabs tabs-inline" role="tablist" aria-label={t('type')}>
               {TYPES.map((ty) => (
-                <option key={ty} value={ty}>{t(ty)}</option>
+                <button
+                  key={ty}
+                  type="button"
+                  role="tab"
+                  aria-selected={type === ty}
+                  className={type === ty ? 'active' : ''}
+                  onClick={() => setType(ty)}
+                >
+                  {t(ty)}
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
           <label>
             {t('title')}
             <input value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -336,11 +376,46 @@ export function ExercisesView() {
 
       <div className="card">
         <strong>{t('library')}</strong>
+        <div className="page-header-tools">
+          <input
+            type="search"
+            className="search-input"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={tc('search')}
+            aria-label={tc('search')}
+          />
+          <div className="tabs tabs-inline filter-chips" role="tablist" aria-label={t('type')}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={typeFilter === 'all'}
+              className={typeFilter === 'all' ? 'active' : ''}
+              onClick={() => setTypeFilter('all')}
+            >
+              {t('allTypes')}
+            </button>
+            {TYPES.map((ty) => (
+              <button
+                key={ty}
+                type="button"
+                role="tab"
+                aria-selected={typeFilter === ty}
+                className={typeFilter === ty ? 'active' : ''}
+                onClick={() => setTypeFilter(ty)}
+              >
+                {t(ty)}
+              </button>
+            ))}
+          </div>
+        </div>
         {list.length === 0 ? (
           <p className="note">{t('empty')}</p>
+        ) : filtered.length === 0 ? (
+          <p className="note">{tc('noResults')}</p>
         ) : (
           <ul className="lesson-list">
-            {list.map((ex) => (
+            {filtered.map((ex) => (
               <li key={ex.id} className="stacked">
                 <div className="row-between">
                   <span>{ex.title} <span className="muted">· {t(ex.type)}</span></span>
@@ -349,11 +424,11 @@ export function ExercisesView() {
                     <button type="button" onClick={() => edit(ex.id)}>{t('edit')}</button>
                     <button type="button" onClick={() => act(`/exercises/${ex.id}/duplicate`, 'POST')}>{t('duplicate')}</button>
                     <button type="button" onClick={() => openAssign(ex.id)}>{t('assign')}</button>
-                    <button type="button" onClick={() => act(`/exercises/${ex.id}`, 'DELETE')}>{t('delete')}</button>
+                    <button type="button" onClick={() => removeExercise(ex.id)}>{t('delete')}</button>
                   </span>
                 </div>
                 {assignFor === ex.id && (
-                  <div className="inline-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                  <div className="inline-form inline-form-col">
                     <span className="muted">{t('chooseStudents')}</span>
                     {students.map((s) => (
                       <label key={s.studentProfileId} className="check">

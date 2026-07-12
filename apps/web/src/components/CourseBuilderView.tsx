@@ -1,11 +1,14 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { DragEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
+import { PageHeader } from './PageHeader';
+import { Drawer } from './Drawer';
+import { useToast } from './Toast';
 
 const LEVELS = [
   'Beginner',
@@ -50,6 +53,11 @@ interface Tree {
   sections: SectionRow[];
 }
 
+type CreateTarget =
+  | { mode: 'section' }
+  | { mode: 'unit'; sectionId: string }
+  | { mode: 'lesson'; unitId: string };
+
 const parsePairs = (s: string) =>
   s.split('\n').map((l) => l.split('=')).filter((p) => p.length === 2 && p[0].trim() && p[1].trim())
     .map((p) => ({ left: p[0].trim(), right: p[1].trim() }));
@@ -70,16 +78,21 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   const tApp = useTranslations('app');
   const locale = useLocale();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [level, setLevel] = useState('Elementary');
   const [tree, setTree] = useState<Tree | null>(null);
   const [canAuthor, setCanAuthor] = useState(false);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
-  const [sectionTitle, setSectionTitle] = useState('');
-  const [unitForms, setUnitForms] = useState<Record<string, string>>({});
-  const [lessonForms, setLessonForms] = useState<Record<string, { title: string; position: string; optional: boolean }>>({});
-  const [openLesson, setOpenLesson] = useState<string | null>(null);
+
+  // Author-only interaction state.
+  const [selected, setSelected] = useState<string | null>(null);
+  const [create, setCreate] = useState<CreateTarget | null>(null);
+  const [draft, setDraft] = useState({ title: '', optional: false });
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [drag, setDrag] = useState<{ id: string; unitId: string } | null>(null);
 
   const token = () => tokenStore.get();
 
@@ -119,151 +132,261 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
     }
   };
 
-  async function addSection(e: FormEvent) {
+  function openCreate(target: CreateTarget) {
+    setDraft({ title: '', optional: false });
+    setCreate(target);
+  }
+
+  async function submitCreate(e: FormEvent) {
     e.preventDefault();
-    await call('/content/sections', 'POST', { courseId, level, title: sectionTitle });
-    setSectionTitle('');
+    if (!create || !draft.title.trim()) return;
+    if (create.mode === 'section') {
+      await call('/content/sections', 'POST', { courseId, level, title: draft.title.trim() });
+    } else if (create.mode === 'unit') {
+      await call('/content/units', 'POST', { sectionId: create.sectionId, title: draft.title.trim() });
+    } else {
+      await call('/content/lessons', 'POST', {
+        unitId: create.unitId,
+        title: draft.title.trim(),
+        optional: draft.optional
+      });
+    }
+    setCreate(null);
   }
 
-  async function addUnit(sectionId: string) {
-    const title = unitForms[sectionId];
-    if (!title) return;
-    await call('/content/units', 'POST', { sectionId, title });
-    setUnitForms({ ...unitForms, [sectionId]: '' });
+  // Reorder by absolute target order (backend re-sequences). Drag and keyboard share this.
+  function doReorder(id: string, order: number) {
+    if (order < 1 || busy) return;
+    void call(`/content/lessons/${id}/reorder`, 'POST', { order });
   }
 
-  async function addLesson(unitId: string) {
-    const f = lessonForms[unitId];
-    if (!f?.title) return;
-    await call('/content/lessons', 'POST', {
-      unitId,
-      title: f.title,
-      optional: f.optional,
-      order: f.position ? Number(f.position) : undefined
+  function onLessonDrop(target: LessonRow, unitId: string) {
+    if (drag && drag.unitId === unitId && drag.id !== target.id) doReorder(drag.id, target.order);
+    setDrag(null);
+  }
+
+  function onHandleKey(e: KeyboardEvent, lesson: LessonRow) {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      doReorder(lesson.id, lesson.order - 1);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      doReorder(lesson.id, lesson.order + 1);
+    }
+  }
+
+  function startRename(lesson: LessonRow) {
+    setRenaming(lesson.id);
+    setRenameValue(lesson.title);
+  }
+
+  async function commitRename() {
+    if (!renaming) return;
+    const id = renaming;
+    const title = renameValue.trim();
+    setRenaming(null);
+    const current = allLessons().find((l) => l.id === id);
+    if (!title || (current && current.title === title)) return;
+    await call(`/content/lessons/${id}`, 'PATCH', { title });
+  }
+
+  const allLessons = () =>
+    tree ? tree.sections.flatMap((s) => s.units.flatMap((u) => u.lessons)) : [];
+
+  // Optimistic + undoable delete (global rule: no deletion without showUndo).
+  function removeLesson(lesson: LessonRow) {
+    setTree((prev) =>
+      prev
+        ? {
+            ...prev,
+            sections: prev.sections.map((s) => ({
+              ...s,
+              units: s.units.map((u) => ({ ...u, lessons: u.lessons.filter((l) => l.id !== lesson.id) }))
+            }))
+          }
+        : prev
+    );
+    if (selected === lesson.id) setSelected(null);
+    showUndo(t('lessonDeleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const tok = token();
+        if (!tok) return;
+        await apiFetch(`/content/lessons/${lesson.id}`, { method: 'DELETE', token: tok, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
     });
-    setLessonForms({ ...lessonForms, [unitId]: { title: '', position: '', optional: false } });
   }
 
   if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !tree) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
+  const levelFilter = (
+    <label className="level-filter">
+      {t('level')}
+      <select value={level} onChange={(e) => setLevel(e.target.value)}>
+        {LEVELS.map((l) => (
+          <option key={l} value={l}>{l}</option>
+        ))}
+      </select>
+    </label>
+  );
+
+  const treePanel = (
+    <div className="builder-tree card">
+      {tree.sections.length === 0 ? (
+        <p className="note">{t('empty')}</p>
+      ) : (
+        tree.sections.map((s) => (
+          <div key={s.id} className="tree-section">
+            <div className="tree-section-head">
+              <h3>{s.title}</h3>
+              {canAuthor && (
+                <button type="button" className="tree-add" aria-label={t('newUnit')} onClick={() => openCreate({ mode: 'unit', sectionId: s.id })}>
+                  +
+                </button>
+              )}
+            </div>
+
+            {s.units.map((u) => (
+              <div key={u.id} className="tree-unit">
+                <div className="tree-unit-head">
+                  <strong>{u.title}</strong>
+                  {canAuthor && (
+                    <button type="button" className="tree-add" aria-label={t('newLesson')} onClick={() => openCreate({ mode: 'lesson', unitId: u.id })}>
+                      +
+                    </button>
+                  )}
+                </div>
+
+                {u.lessons.length === 0 ? (
+                  <p className="note tree-empty">{t('empty')}</p>
+                ) : (
+                  <ul className="tree-lessons">
+                    {u.lessons.map((l) => {
+                      const isRenaming = renaming === l.id;
+                      return (
+                        <li
+                          key={l.id}
+                          className={`tree-lesson${selected === l.id ? ' active' : ''}${drag?.id === l.id ? ' dragging' : ''}`}
+                          draggable={canAuthor && !isRenaming}
+                          onDragStart={() => canAuthor && setDrag({ id: l.id, unitId: u.id })}
+                          onDragOver={(e: DragEvent) => canAuthor && e.preventDefault()}
+                          onDrop={() => canAuthor && onLessonDrop(l, u.id)}
+                          onDragEnd={() => setDrag(null)}
+                        >
+                          {canAuthor && (
+                            <button
+                              type="button"
+                              className="drag-handle"
+                              aria-label={t('reorder')}
+                              title={t('reorder')}
+                              onKeyDown={(e) => onHandleKey(e, l)}
+                            >
+                              ⠿
+                            </button>
+                          )}
+                          <span className="mono-num">{l.order}</span>
+
+                          {isRenaming ? (
+                            <input
+                              className="tree-rename"
+                              autoFocus
+                              value={renameValue}
+                              onChange={(e) => setRenameValue(e.target.value)}
+                              onBlur={commitRename}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitRename();
+                                else if (e.key === 'Escape') setRenaming(null);
+                              }}
+                            />
+                          ) : canAuthor ? (
+                            <button
+                              type="button"
+                              className="tree-lesson-title"
+                              onClick={() => setSelected(l.id)}
+                              onDoubleClick={() => startRename(l)}
+                            >
+                              {l.title}
+                              {l.optional && <span className="badge-opt">{t('optionalLesson')}</span>}
+                            </button>
+                          ) : (
+                            <Link className="tree-lesson-title link" href={`/learn/${l.id}`}>
+                              {l.title}
+                              {l.optional && <span className="badge-opt">{t('optionalLesson')}</span>}
+                            </Link>
+                          )}
+
+                          {canAuthor && (
+                            <button type="button" className="tree-del ghost" aria-label={t('del')} disabled={busy} onClick={() => removeLesson(l)}>
+                              ✕
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   return (
     <div className="content">
       <Link className="link" href="/courses">← {t('back')}</Link>
-      <div className="row-between">
-        <h2>{tree.course.title}</h2>
-        <label className="row-actions">
-          {t('level')}
-          <select value={level} onChange={(e) => setLevel(e.target.value)}>
-            {LEVELS.map((l) => (
-              <option key={l} value={l}>{l}</option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <PageHeader
+        title={tree.course.title}
+        primary={canAuthor ? { label: t('newSection'), onClick: () => openCreate({ mode: 'section' }) } : undefined}
+        filters={levelFilter}
+      />
 
-      {canAuthor && (
-        <form className="card form-grid" onSubmit={addSection}>
-          <strong>{t('newSection')}</strong>
-          <label>
-            {t('courseTitle')}
-            <input required value={sectionTitle} onChange={(e) => setSectionTitle(e.target.value)} />
-          </label>
-          <button type="submit" disabled={busy}>{t('create')}</button>
-        </form>
+      {canAuthor ? (
+        <div className="builder">
+          {treePanel}
+          <div className="builder-editor">
+            {selected ? (
+              <LessonEditor lessonId={selected} onChanged={load} t={t} tEx={tEx} locale={locale} />
+            ) : (
+              <div className="card empty-pane"><p className="note">{t('selectLesson')}</p></div>
+            )}
+          </div>
+        </div>
+      ) : (
+        treePanel
       )}
 
-      {tree.sections.length === 0 && <div className="card"><p className="note">{t('empty')}</p></div>}
-
-      {tree.sections.map((s) => (
-        <div key={s.id} className="card" style={{ marginTop: 16 }}>
-          <h3 style={{ margin: 0 }}>{s.title}</h3>
-
-          {s.units.map((u) => (
-            <div key={u.id} className="unit-block">
-              <strong>{u.title}</strong>
-              <ul className="lesson-list">
-                {u.lessons.map((l) => (
-                  <li key={l.id} className="stacked">
-                    <div className="row-between">
-                      <span>
-                        <span className="mono-num">{l.order}</span>{' '}
-                        <Link className="link" href={`/learn/${l.id}`}>{l.title}</Link>{' '}
-                        {l.optional && <span className="badge-opt">optional</span>}
-                      </span>
-                      {canAuthor && (
-                        <span className="row-actions">
-                          <button type="button" className="ghost" disabled={busy || l.order <= 1}
-                            onClick={() => call(`/content/lessons/${l.id}/reorder`, 'POST', { order: l.order - 1 })}>
-                            ↑
-                          </button>
-                          <button type="button" className="ghost" disabled={busy}
-                            onClick={() => call(`/content/lessons/${l.id}/reorder`, 'POST', { order: l.order + 1 })}>
-                            ↓
-                          </button>
-                          <button type="button" className="ghost" onClick={() => setOpenLesson(openLesson === l.id ? null : l.id)}>
-                            {t('edit')}
-                          </button>
-                          <button type="button" className="ghost" disabled={busy}
-                            onClick={() => call(`/content/lessons/${l.id}`, 'DELETE')}>
-                            {t('del')}
-                          </button>
-                        </span>
-                      )}
-                    </div>
-                    {openLesson === l.id && (
-                      <LessonEditor lessonId={l.id} onChanged={load} t={t} tEx={tEx} locale={locale} />
-                    )}
-                  </li>
-                ))}
-              </ul>
-
-              {canAuthor && (
-                <div className="inline-form">
-                  <input
-                    placeholder={t('newLesson')}
-                    value={lessonForms[u.id]?.title ?? ''}
-                    onChange={(e) => setLessonForms({ ...lessonForms, [u.id]: { title: e.target.value, position: lessonForms[u.id]?.position ?? '', optional: lessonForms[u.id]?.optional ?? false } })}
-                  />
-                  <input
-                    style={{ maxWidth: 130 }}
-                    type="number"
-                    min={1}
-                    placeholder={t('position')}
-                    value={lessonForms[u.id]?.position ?? ''}
-                    onChange={(e) => setLessonForms({ ...lessonForms, [u.id]: { title: lessonForms[u.id]?.title ?? '', position: e.target.value, optional: lessonForms[u.id]?.optional ?? false } })}
-                  />
-                  <label className="check" style={{ padding: '6px 10px' }}>
-                    <input
-                      type="checkbox"
-                      checked={lessonForms[u.id]?.optional ?? false}
-                      onChange={(e) => setLessonForms({ ...lessonForms, [u.id]: { title: lessonForms[u.id]?.title ?? '', position: lessonForms[u.id]?.position ?? '', optional: e.target.checked } })}
-                    />
-                    {t('optionalLesson')}
-                  </label>
-                  <button type="button" disabled={busy} onClick={() => addLesson(u.id)}>{t('create')}</button>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {canAuthor && (
-            <div className="inline-form">
-              <input
-                placeholder={t('newUnit')}
-                value={unitForms[s.id] ?? ''}
-                onChange={(e) => setUnitForms({ ...unitForms, [s.id]: e.target.value })}
-              />
-              <button type="button" disabled={busy} onClick={() => addUnit(s.id)}>{t('create')}</button>
-            </div>
-          )}
-        </div>
-      ))}
+      {canAuthor && (
+        <Drawer
+          open={!!create}
+          onClose={() => setCreate(null)}
+          title={create?.mode === 'unit' ? t('newUnit') : create?.mode === 'lesson' ? t('newLesson') : t('newSection')}
+        >
+          <form className="form-grid" onSubmit={submitCreate}>
+            <label>
+              {t('courseTitle')}
+              <input required autoFocus value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+            </label>
+            {create?.mode === 'lesson' && (
+              <label className="check">
+                <input type="checkbox" checked={draft.optional} onChange={(e) => setDraft({ ...draft, optional: e.target.checked })} />
+                {t('optionalLesson')}
+              </label>
+            )}
+            <button type="submit" disabled={busy}>{t('create')}</button>
+          </form>
+        </Drawer>
+      )}
     </div>
   );
 }
 
-// ——— inline lesson editor: objectives, wordlist, grammar, pages, tasks ———
+// ——— lesson editor: objectives, wordlist, grammar, pages, tasks ———
 
 interface TaskRow {
   id: string;
@@ -300,6 +423,7 @@ function LessonEditor({
   tEx: ReturnType<typeof useTranslations<'exercises'>>;
   locale: string;
 }) {
+  const { showUndo } = useToast();
   const [detail, setDetail] = useState<LessonDetail | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -373,19 +497,23 @@ function LessonEditor({
     }
   }
 
-  async function deleteTask(id: string) {
-    const tok = token();
-    if (!tok) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/content/tasks/${id}`, { method: 'DELETE', token: tok, locale });
-      await load();
-    } finally {
-      setBusy(false);
-    }
+  // Optimistic + undoable (global rule: no deletion without showUndo).
+  function deleteTask(id: string) {
+    setDetail((prev) =>
+      prev ? { ...prev, pages: prev.pages.map((p) => ({ ...p, tasks: p.tasks.filter((tk) => tk.id !== id) })) } : prev
+    );
+    showUndo(t('taskDeleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const tok = token();
+        if (!tok) return;
+        await apiFetch(`/content/tasks/${id}`, { method: 'DELETE', token: tok, locale }).catch(() => undefined);
+        await load();
+      }
+    });
   }
 
-  if (!detail) return <p className="note">…</p>;
+  if (!detail) return <div className="card"><Skeleton lines={4} /></div>;
 
   return (
     <div className="lesson-editor">
@@ -405,11 +533,11 @@ function LessonEditor({
         <label>{t('meaning')}<input value={grammar.meaning} onChange={(e) => setGrammar({ ...grammar, meaning: e.target.value })} /></label>
         <label>{t('form')}<input value={grammar.form} onChange={(e) => setGrammar({ ...grammar, form: e.target.value })} /></label>
       </div>
-      <SavePrepButton
-        busy={busy}
-        saved={saved}
-        label={saved ? t('saved') : t('save')}
-        onSave={async () => {
+      <button
+        type="button"
+        className="save-lesson"
+        disabled={busy}
+        onClick={async () => {
           const tok = token();
           if (!tok) return;
           setBusy(true);
@@ -433,12 +561,15 @@ function LessonEditor({
               await apiPut(`/content/lessons/${lessonId}/grammar`, grammar, tok, locale);
             }
             setSaved(true);
+            onChanged();
             await load();
           } finally {
             setBusy(false);
           }
         }}
-      />
+      >
+        {saved ? t('saved') : t('save')}
+      </button>
 
       <div className="ed-pages">
         <strong>{t('pages')}</strong>
@@ -478,7 +609,7 @@ function LessonEditor({
               <option key={pt} value={pt}>{pt}</option>
             ))}
           </select>
-          <label className="check" style={{ padding: '6px 10px' }}>
+          <label className="check">
             <input type="checkbox" checked={pageForm.inHw} onChange={(e) => setPageForm({ ...pageForm, inHw: e.target.checked })} />
             {t('inHomework')}
           </label>
@@ -486,15 +617,6 @@ function LessonEditor({
         </div>
       </div>
     </div>
-  );
-}
-
-function SavePrepButton({ busy, saved, label, onSave }: { busy: boolean; saved: boolean; label: string; onSave: () => void }) {
-  void saved;
-  return (
-    <button type="button" disabled={busy} onClick={onSave} style={{ alignSelf: 'flex-start' }}>
-      {label}
-    </button>
   );
 }
 

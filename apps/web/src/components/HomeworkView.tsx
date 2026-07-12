@@ -8,6 +8,7 @@ import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { Drawer } from './Drawer';
 import { ScoreRing } from './ScoreRing';
+import { PageHeader } from './PageHeader';
 
 interface Submission {
   id: string;
@@ -119,14 +120,10 @@ export function HomeworkView() {
 
   return (
     <div className="content">
-      <div className="row-between page-head">
-        <h2>{t('title')}</h2>
-        {isStaff && (
-          <button type="button" onClick={() => setDrawerOpen(true)}>
-            {t('assign')}
-          </button>
-        )}
-      </div>
+      <PageHeader
+        title={t('title')}
+        primary={isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined}
+      />
 
       <div className="tabs tabs-inline" role="tablist">
         {TABS.map((tb) => (

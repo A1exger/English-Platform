@@ -162,7 +162,8 @@
     "pendingTransfers": "Overboekingen die op bevestiging wachten",
     "confirm": "Bevestigen",
     "currency": "Valuta",
-    "delete": "Verwijderen"
+    "delete": "Verwijderen",
+    "deleted": "Pakket verwijderd"
   },
   "room": {
     "title": "Lesruimte",
@@ -332,7 +333,9 @@
     "chooseStudents": "Leerlingen",
     "none": "Nog geen oefeningen.",
     "view": "Bekijken",
-    "edit": "Bewerken"
+    "edit": "Bewerken",
+    "deleted": "Oefening verwijderd",
+    "allTypes": "Alle"
   },
   "courses": {
     "title": "Cursussen",
@@ -379,7 +382,15 @@
     "question": "Vraag",
     "options": "Opties (kommagescheiden)",
     "correct": "Juist antwoord",
-    "saved": "Opgeslagen"
+    "saved": "Opgeslagen",
+    "new": "Nieuw",
+    "continue": "Doorgaan",
+    "more": "Meer",
+    "unpublished": "gedepubliceerd",
+    "reorder": "Herordenen",
+    "selectLesson": "Kies een les om te bewerken",
+    "lessonDeleted": "Les verwijderd",
+    "taskDeleted": "Taak verwijderd"
   },
   "learn": {
     "title": "Les",

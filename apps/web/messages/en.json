@@ -162,7 +162,8 @@
     "pendingTransfers": "Transfers awaiting confirmation",
     "confirm": "Confirm",
     "currency": "Currency",
-    "delete": "Delete"
+    "delete": "Delete",
+    "deleted": "Package deleted"
   },
   "room": {
     "title": "Lesson room",
@@ -332,7 +333,9 @@
     "chooseStudents": "Students",
     "none": "No exercises pushed yet.",
     "view": "View",
-    "edit": "Edit"
+    "edit": "Edit",
+    "deleted": "Exercise deleted",
+    "allTypes": "All"
   },
   "courses": {
     "title": "Courses",
@@ -379,7 +382,15 @@
     "question": "Question",
     "options": "Options (comma-separated)",
     "correct": "Correct answer",
-    "saved": "Saved"
+    "saved": "Saved",
+    "new": "New",
+    "continue": "Continue",
+    "more": "More",
+    "unpublished": "unpublished",
+    "reorder": "Reorder",
+    "selectLesson": "Select a lesson to edit",
+    "lessonDeleted": "Lesson deleted",
+    "taskDeleted": "Task removed"
   },
   "learn": {
     "title": "Lesson",
