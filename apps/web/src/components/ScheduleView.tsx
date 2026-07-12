@@ -44,7 +44,10 @@ export function ScheduleView() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [view, setView] = useState<'week' | 'day'>('week');
-  const [anchor, setAnchor] = useState<Date>(() => startOfWeek(new Date()));
+  // Initialised on the client (see effect below) so "today" and the week start
+  // use the viewer's own timezone — computing it during SSR pins it to the
+  // server clock (UTC) and drifts a day near midnight for east-of-UTC users.
+  const [anchor, setAnchor] = useState<Date | null>(null);
   const [busy, setBusy] = useState(false);
   const [slot, setSlot] = useState<{ date: Date; key: string } | null>(null);
   const [form, setForm] = useState({ title: '', duration: '60', price: '25', studentProfileId: '' });
@@ -59,17 +62,20 @@ export function ScheduleView() {
     }
   }, []);
 
-  const days = useMemo(
-    () =>
-      view === 'day'
-        ? [new Date(anchor)]
-        : Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(anchor);
-            d.setDate(d.getDate() + i);
-            return d;
-          }),
-    [anchor, view]
-  );
+  useEffect(() => {
+    if (!anchor) setAnchor(startOfWeek(new Date()));
+  }, [anchor]);
+
+  const days = useMemo(() => {
+    if (!anchor) return [] as Date[];
+    return view === 'day'
+      ? [new Date(anchor)]
+      : Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(anchor);
+          d.setDate(d.getDate() + i);
+          return d;
+        });
+  }, [anchor, view]);
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -107,6 +113,7 @@ export function ScheduleView() {
 
   const rangeStart = days[0];
   const rangeEnd = useMemo(() => {
+    if (days.length === 0) return new Date();
     const d = new Date(days[days.length - 1]);
     d.setDate(d.getDate() + 1);
     return d;
@@ -139,7 +146,7 @@ export function ScheduleView() {
   }, [lessons, rangeStart, rangeEnd]);
 
   function shift(dir: number) {
-    const d = new Date(anchor);
+    const d = new Date(anchor ?? new Date());
     d.setDate(d.getDate() + dir * (view === 'day' ? 1 : 7));
     setAnchor(view === 'day' ? startOfDay(d) : startOfWeek(d));
   }
@@ -148,7 +155,7 @@ export function ScheduleView() {
   }
   function switchView(next: 'week' | 'day') {
     // Day view opens on the actual current day; week view on the current week.
-    setAnchor(next === 'day' ? startOfDay(new Date()) : startOfWeek(anchor));
+    setAnchor(next === 'day' ? startOfDay(new Date()) : startOfWeek(anchor ?? new Date()));
     setView(next);
     setSlot(null);
   }
@@ -201,7 +208,7 @@ export function ScheduleView() {
     });
   }
 
-  if (state === 'loading') return <div className="content"><Skeleton lines={6} /></div>;
+  if (state === 'loading' || !anchor) return <div className="content"><Skeleton lines={6} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const rangeLabel =

@@ -61,18 +61,18 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
     let cancelled = false;
     (async () => {
       const staff = role === 'tutor' || role === 'admin';
-      const [lessons, materials, students, dict] = await Promise.all([
+      const [lessons, materials, students, dict, catalog] = await Promise.all([
         apiFetch<{ id: string; title?: string | null }[]>('/lessons', { token, locale }).catch(() => []),
         apiFetch<{ id: string; title: string }[]>('/materials', { token, locale }).catch(() => []),
         staff
           ? apiFetch<{ studentProfileId: string; name: string }[]>('/crm/students', { token, locale }).catch(() => [])
           : Promise.resolve([]),
-        role === 'student'
-          ? apiFetch<{ id: string; word: string }[]>('/content/dictionary', { token, locale }).catch(() => [])
-          : Promise.resolve([])
+        apiFetch<{ id: string; word: string }[]>('/content/dictionary', { token, locale }).catch(() => []),
+        apiFetch<{ courses: { id: string; title: string }[] }[]>('/content/catalog', { token, locale }).catch(() => [])
       ]);
       if (cancelled) return;
       const out: Item[] = [];
+      for (const cat of catalog) for (const c of cat.courses) out.push({ id: `c:${c.id}`, label: c.title, href: `/courses/${c.id}`, hint: tCommon('course') });
       for (const l of lessons) out.push({ id: `l:${l.id}`, label: l.title || l.id, href: `/lessons/${l.id}/room`, hint: tCommon('lesson') });
       for (const m of materials) out.push({ id: `m:${m.id}`, label: m.title, href: '/materials', hint: tCommon('material') });
       for (const s of students) out.push({ id: `s:${s.studentProfileId}`, label: s.name, href: `/students/${s.studentProfileId}`, hint: tCommon('student') });
@@ -92,11 +92,15 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
   const filteredContent = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return [];
-    return content.filter((c) => c.label.toLowerCase().includes(needle)).slice(0, 8);
+    return content.filter((c) => c.label.toLowerCase().includes(needle)).slice(0, 12);
   }, [q, content]);
 
-  // Content first — the page names are already visible in the rail.
-  const filtered = useMemo(() => [...filteredContent, ...filteredPages], [filteredContent, filteredPages]);
+  // A search matches CONTENT only (courses, words, lessons, materials, students).
+  // The page shortcuts show only on the empty palette — they are already in the rail.
+  const filtered = useMemo(
+    () => (q.trim() ? filteredContent : filteredPages),
+    [q, filteredContent, filteredPages]
+  );
 
   useEffect(() => setActive(0), [q]);
 
@@ -126,8 +130,6 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
     onClose();
   };
 
-  const contentCount = filteredContent.length;
-
   return (
     <div className="modal-overlay" onMouseDown={onClose}>
       <div className="palette" onMouseDown={(e) => e.stopPropagation()}>
@@ -142,9 +144,6 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
           {filtered.length === 0 && <li className="palette-empty">{tCommon('noResults')}</li>}
           {filtered.map((c, idx) => (
             <li key={c.id}>
-              {idx === contentCount && contentCount > 0 && filteredPages.length > 0 && (
-                <span className="palette-group">{tCommon('pages')}</span>
-              )}
               <button
                 type="button"
                 className={`palette-item${idx === active ? ' active' : ''}`}

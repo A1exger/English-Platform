@@ -248,7 +248,8 @@
     "material": "Material",
     "student": "Student",
     "word": "Word",
-    "pages": "Pages"
+    "pages": "Pages",
+    "course": "Course"
   },
   "nav": {
     "overview": "Overview",

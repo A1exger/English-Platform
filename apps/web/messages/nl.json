@@ -248,7 +248,8 @@
     "material": "Materiaal",
     "student": "Leerling",
     "word": "Woord",
-    "pages": "Pagina's"
+    "pages": "Pagina's",
+    "course": "Cursus"
   },
   "nav": {
     "overview": "Overzicht",

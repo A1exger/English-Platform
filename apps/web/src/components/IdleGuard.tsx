@@ -4,12 +4,12 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { tokenStore } from '@/lib/auth';
 
-// Sign a signed-in user out after 10 minutes of *inactivity*. Any interaction
+// Sign a signed-in user out after 15 minutes of *inactivity*. Any interaction
 // (pointer, key, scroll, touch, tab focus) resets the timer, so an active user
 // who keeps moving around the app is never interrupted; a walked-away session
 // is closed. Token refresh (lib/api) keeps active sessions alive across the
 // 15-minute access-token expiry, so this idle window is the only logout.
-const IDLE_MS = 10 * 60 * 1000;
+const IDLE_MS = 15 * 60 * 1000;
 
 export function IdleGuard() {
   const router = useRouter();
