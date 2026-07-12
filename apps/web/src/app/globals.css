@@ -621,17 +621,23 @@ textarea {
 }
 .palette {
   display: inline-flex;
-  gap: 4px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
 }
-.swatch {
-  width: 24px;
-  height: 24px;
+/* Beat the generic `.board-toolbar button` padding so swatches stay a tight row
+   (that padding was inflating them and wrapping the palette into a column). */
+.board-toolbar .swatch {
+  inline-size: 22px;
+  block-size: 22px;
+  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
-  padding: 0;
   cursor: pointer;
+  flex: none;
 }
-.swatch.active {
+.board-toolbar .swatch.active {
   outline: 2px solid var(--indigo);
   outline-offset: 1px;
 }
@@ -1535,7 +1541,10 @@ select.err {
   overflow: auto;
 }
 .palette-item {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   width: 100%;
   text-align: start;
   background: transparent;
@@ -1545,6 +1554,21 @@ select.err {
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 500;
+}
+.palette-item-label {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.palette-item-hint {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mist);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 .palette-item.active {
   background: var(--indigo-100);

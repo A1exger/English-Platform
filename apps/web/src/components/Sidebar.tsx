@@ -86,7 +86,7 @@ export function Sidebar() {
         setMe(profile);
         if (profile.role === 'student') {
           apiFetch<{ status: string }[]>('/homework', { token, locale })
-            .then((hw) => alive && setHwCount(hw.filter((h) => h.status !== 'graded').length))
+            .then((hw) => alive && setHwCount(hw.filter((h) => h.status === 'assigned').length))
             .catch(() => undefined);
         }
       })

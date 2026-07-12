@@ -243,7 +243,12 @@
     "close": "إغلاق",
     "all": "الكل",
     "sortBy": "ترتيب",
-    "content": "المحتوى"
+    "content": "المحتوى",
+    "lesson": "درس",
+    "material": "مادة",
+    "student": "طالب",
+    "word": "كلمة",
+    "pages": "الصفحات"
   },
   "nav": {
     "overview": "نظرة عامة",

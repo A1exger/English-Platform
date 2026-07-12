@@ -225,14 +225,20 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   if (state === 'error' || !tree) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const levelFilter = (
-    <label className="level-filter">
-      {t('level')}
-      <select value={level} onChange={(e) => setLevel(e.target.value)}>
-        {LEVELS.map((l) => (
-          <option key={l} value={l}>{l}</option>
-        ))}
-      </select>
-    </label>
+    <div className="tabs tabs-inline filter-chips level-tabs" role="tablist" aria-label={t('level')}>
+      {LEVELS.map((l) => (
+        <button
+          key={l}
+          type="button"
+          role="tab"
+          aria-selected={level === l}
+          className={level === l ? 'active' : ''}
+          onClick={() => setLevel(l)}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
   );
 
   const treePanel = (

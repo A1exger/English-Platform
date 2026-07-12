@@ -243,7 +243,12 @@
     "close": "Fermer",
     "all": "Tous",
     "sortBy": "Trier",
-    "content": "Contenu"
+    "content": "Contenu",
+    "lesson": "Leçon",
+    "material": "Matériel",
+    "student": "Élève",
+    "word": "Mot",
+    "pages": "Pages"
   },
   "nav": {
     "overview": "Aperçu",

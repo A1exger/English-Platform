@@ -243,7 +243,12 @@
     "close": "Schließen",
     "all": "Alle",
     "sortBy": "Sortieren",
-    "content": "Inhalt"
+    "content": "Inhalt",
+    "lesson": "Lektion",
+    "material": "Material",
+    "student": "Schüler",
+    "word": "Wort",
+    "pages": "Seiten"
   },
   "nav": {
     "overview": "Übersicht",

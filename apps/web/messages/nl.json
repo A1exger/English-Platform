@@ -243,7 +243,12 @@
     "close": "Sluiten",
     "all": "Alle",
     "sortBy": "Sorteren",
-    "content": "Inhoud"
+    "content": "Inhoud",
+    "lesson": "Les",
+    "material": "Materiaal",
+    "student": "Leerling",
+    "word": "Woord",
+    "pages": "Pagina's"
   },
   "nav": {
     "overview": "Overzicht",

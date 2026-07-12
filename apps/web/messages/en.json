@@ -243,7 +243,12 @@
     "close": "Close",
     "all": "All",
     "sortBy": "Sort",
-    "content": "Content"
+    "content": "Content",
+    "lesson": "Lesson",
+    "material": "Material",
+    "student": "Student",
+    "word": "Word",
+    "pages": "Pages"
   },
   "nav": {
     "overview": "Overview",

@@ -6,6 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import { Link, useRouter } from '@/i18n/routing';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
+import { Icon } from './Icon';
 import { DraggablePanel } from './DraggablePanel';
 import { useToast } from './Toast';
 
@@ -290,7 +291,7 @@ export function BoardCanvas({
           className={notesOpen ? 'active' : ''}
           onClick={() => setNotesOpen((v) => !v)}
         >
-          📝 {t('notes')}
+          <Icon name="edit" /> {t('notes')}
         </button>
         <span className="muted">
           {status === 'connected' ? `● ${t('connected')}` : `○ ${t('connecting')}`}

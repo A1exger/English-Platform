@@ -240,16 +240,20 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
           {homework.length === 0 ? (
             <p className="note">{t('noHomework')}</p>
           ) : (
-            <ul className="lesson-list">
+            <ul className="assign-list">
               {homework.map((h) => {
                 const grade = h.submissions[0]?.grade;
                 return (
                   <li key={h.id}>
-                    <span>{h.title ?? h.id}</span>
-                    <span className="muted">
-                      {grade != null && grade !== '' ? <span className="mono-num">{grade}/10 · </span> : ''}
-                      <span className={`chip status-${h.status}`}>{hwStatus(h.status)}</span>
-                    </span>
+                    <Link className="assign-row" href={`/homework/${h.id}`}>
+                      <div className="assign-row-main">
+                        <strong>{h.title ?? h.id}</strong>
+                      </div>
+                      <div className="assign-row-side">
+                        {grade != null && grade !== '' && <span className="mono-num">{grade}/10</span>}
+                        <span className={`chip status-${h.status}`}>{hwStatus(h.status)}</span>
+                      </div>
+                    </Link>
                   </li>
                 );
               })}
