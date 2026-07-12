@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
@@ -47,13 +47,13 @@ export function DashboardData() {
   const [goal, setGoal] = useState<number | null>(null);
   const [state, setState] = useState<State>('loading');
 
-  useEffect(() => {
-    const token = tokenStore.get();
-    if (!token) {
-      setState('unauth');
-      return;
-    }
-    (async () => {
+  const load = useCallback(
+    async (silent = false) => {
+      const token = tokenStore.get();
+      if (!token) {
+        if (!silent) setState('unauth');
+        return;
+      }
       try {
         const profile = await fetchMe(token, locale);
         setMe(profile);
@@ -71,10 +71,27 @@ export function DashboardData() {
         }
         setState('ready');
       } catch (e) {
-        setState(e instanceof ApiError && e.status === 401 ? 'unauth' : 'error');
+        if (!silent) setState(e instanceof ApiError && e.status === 401 ? 'unauth' : 'error');
       }
-    })();
-  }, [locale]);
+    },
+    [locale]
+  );
+
+  useEffect(() => {
+    void load();
+    // Re-fetch when the tab/page regains focus so a lesson deleted elsewhere
+    // (e.g. on the schedule) is reflected here without a hard reload.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void load(true);
+    };
+    const onFocus = () => void load(true);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [load]);
 
   if (state === 'loading') return <div className="content"><Skeleton lines={4} /></div>;
   if (state === 'unauth')
@@ -86,11 +103,17 @@ export function DashboardData() {
   if (state === 'error') return <p className="error">{tApp('loadError')}</p>;
 
   const now = Date.now();
-  const upcoming = [...lessons]
-    .filter((l) => new Date(l.startsAt).getTime() >= now)
+  const DAY = 24 * 60 * 60 * 1000;
+  // A lesson stays on the overview until 24h after it starts, then drops off.
+  const relevant = [...lessons]
+    .filter((l) => new Date(l.startsAt).getTime() >= now - DAY)
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-  const next = upcoming[0];
-  const rest = upcoming.slice(1, 4);
+  // The hero is the soonest upcoming lesson; if none, a just-started one still
+  // showing within its 24h window (so you can still join a lesson you're late to).
+  const next = relevant.find((l) => new Date(l.startsAt).getTime() >= now) ?? relevant[0];
+  const rest = relevant
+    .filter((l) => l.id !== next?.id && new Date(l.startsAt).getTime() >= now)
+    .slice(0, 3);
   const pendingHw = homework.filter((h) => h.status !== 'graded');
   const dt = (s: string) => format.dateTime(new Date(s), { dateStyle: 'medium', timeStyle: 'short' });
   const isStudent = me?.role === 'student';

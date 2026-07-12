@@ -147,7 +147,8 @@ export function ScheduleView() {
     setAnchor(view === 'day' ? startOfDay(new Date()) : startOfWeek(new Date()));
   }
   function switchView(next: 'week' | 'day') {
-    setAnchor(next === 'day' ? startOfDay(anchor) : startOfWeek(anchor));
+    // Day view opens on the actual current day; week view on the current week.
+    setAnchor(next === 'day' ? startOfDay(new Date()) : startOfWeek(anchor));
     setView(next);
     setSlot(null);
   }
@@ -290,7 +291,6 @@ export function ScheduleView() {
             onSlot={openSlot}
             onDelete={deleteLesson}
             joinLabel={tDash('joinLesson')}
-            boardLabel={t('openBoard')}
             delLabel={t('delete')}
           />
         ))}
@@ -309,7 +309,6 @@ function FragmentRow({
   onSlot,
   onDelete,
   joinLabel,
-  boardLabel,
   delLabel
 }: {
   hour: number;
@@ -321,7 +320,6 @@ function FragmentRow({
   onSlot: (dayIndex: number, hour: number) => void;
   onDelete: (id: string) => void;
   joinLabel: string;
-  boardLabel: string;
   delLabel: string;
 }) {
   return (
@@ -342,9 +340,6 @@ function FragmentRow({
                 <div className="cal-event-actions">
                   <Link className="link" href={`/lessons/${l.id}/room`} onClick={(e) => e.stopPropagation()}>
                     {joinLabel}
-                  </Link>
-                  <Link className="link" href={`/lessons/${l.id}/board`} onClick={(e) => e.stopPropagation()}>
-                    {boardLabel}
                   </Link>
                   {canManage && (
                     <button

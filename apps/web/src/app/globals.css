@@ -619,7 +619,10 @@ textarea {
   color: var(--indigo-700);
   border-color: var(--indigo);
 }
-.palette {
+/* Scoped to .board-toolbar so it outranks the ⌘K `.palette` (a flex COLUMN
+   modal) that is defined later with the same class name — without this the
+   command-palette rule wins and stacks the swatches vertically. */
+.board-toolbar .palette {
   display: inline-flex;
   flex-direction: row;
   flex-wrap: nowrap;
