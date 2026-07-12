@@ -78,7 +78,14 @@
     "lessonsUpcoming": "الدروس القادمة",
     "activeStudents": "الطلاب النشطون",
     "attendance": "نسبة الحضور",
-    "conversion": "تحويل الدروس التجريبية"
+    "conversion": "تحويل الدروس التجريبية",
+    "period": "الفترة",
+    "periodMonths": "{count} أشهر",
+    "metric": "المقياس",
+    "lessons": "الدروس",
+    "thisPeriod": "هذه الفترة",
+    "vsPrevious": "مقابل السابق",
+    "trend": "الاتجاه"
   },
   "settings": {
     "title": "الإعدادات",
@@ -101,7 +108,14 @@
     "submit": "تسجيل",
     "creating": "جارٍ الإنشاء…",
     "haveAccount": "لديك حساب بالفعل؟",
-    "error": "فشل التسجيل. جرّب بريدًا آخر."
+    "error": "فشل التسجيل. جرّب بريدًا آخر.",
+    "passwordStrength": "قوة كلمة المرور",
+    "strengthWeak": "ضعيفة",
+    "strengthFair": "مقبولة",
+    "strengthGood": "جيدة",
+    "strengthStrong": "قوية",
+    "terms": "أوافق على شروط الخدمة",
+    "tutorNote": "يتم إنشاء حسابات المعلمين بواسطة المسؤول."
   },
   "adminUsers": {
     "title": "المستخدمون",
@@ -140,7 +154,13 @@
     "viewWeek": "أسبوع",
     "student": "الطالب",
     "delete": "حذف",
-    "deleted": "تم حذف الدرس"
+    "deleted": "تم حذف الدرس",
+    "week": "أسبوع",
+    "day": "يوم",
+    "view": "العرض",
+    "book": "احجز درسًا",
+    "cancel": "إلغاء",
+    "timezone": "الأوقات بتوقيت {tz}"
   },
   "billing": {
     "title": "الفواتير",
@@ -283,7 +303,16 @@
     "age": "العمر",
     "notes": "الملاحظات",
     "noteBody": "ملاحظة",
-    "lessons": "الدروس"
+    "lessons": "الدروس",
+    "overview": "نظرة عامة",
+    "homework": "الواجب",
+    "profile": "الملف",
+    "attendance": "الحضور",
+    "balance": "الرصيد",
+    "addNote": "إضافة ملاحظة",
+    "noLessons": "لا دروس بعد",
+    "noHomework": "لا واجبات بعد",
+    "noNotes": "لا ملاحظات بعد"
   },
   "progress": {
     "title": "تقدمي",
@@ -459,6 +488,41 @@
     "reveal": "إظهار",
     "remembered": "عرفتها",
     "forgot": "لم أعرفها",
-    "back": "العودة إلى القائمة"
+    "back": "العودة إلى القائمة",
+    "learned": "متعلَّم",
+    "nothingDue": "لا شيء مستحق اليوم",
+    "nextReview": "المراجعة القادمة {date}",
+    "shortcuts": "مسافة للكشف · 1 لم أعرف · 2 عرفت",
+    "repsHint": "عدد المراجعات"
+  },
+  "enum": {
+    "role": {
+      "tutor": "معلم",
+      "student": "طالب",
+      "parent": "ولي أمر",
+      "admin": "مسؤول"
+    },
+    "lessonStatus": {
+      "scheduled": "مجدول",
+      "completed": "مكتمل",
+      "cancelled": "ملغى",
+      "no_show": "لم يحضر"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "فيديو",
+      "audio": "صوت",
+      "image": "صورة",
+      "exercise": "تمرين",
+      "link": "رابط"
+    },
+    "pageType": {
+      "grammar": "قواعد",
+      "practice": "تدريب",
+      "listening": "استماع",
+      "reading": "قراءة",
+      "discussion": "نقاش",
+      "essay": "مقال"
+    }
   }
 }

@@ -78,7 +78,14 @@
     "lessonsUpcoming": "Upcoming lessons",
     "activeStudents": "Active students",
     "attendance": "Attendance rate",
-    "conversion": "Trial conversion"
+    "conversion": "Trial conversion",
+    "period": "Period",
+    "periodMonths": "{count} months",
+    "metric": "Metric",
+    "lessons": "Lessons",
+    "thisPeriod": "This period",
+    "vsPrevious": "vs previous",
+    "trend": "Trend"
   },
   "settings": {
     "title": "Settings",
@@ -101,7 +108,14 @@
     "submit": "Sign up",
     "creating": "Creating…",
     "haveAccount": "Already have an account?",
-    "error": "Registration failed. Try a different email."
+    "error": "Registration failed. Try a different email.",
+    "passwordStrength": "Password strength",
+    "strengthWeak": "Weak",
+    "strengthFair": "Fair",
+    "strengthGood": "Good",
+    "strengthStrong": "Strong",
+    "terms": "I agree to the terms of service",
+    "tutorNote": "Tutor accounts are created by an administrator."
   },
   "adminUsers": {
     "title": "Users",
@@ -140,7 +154,13 @@
     "viewWeek": "Week",
     "student": "Student",
     "delete": "Delete",
-    "deleted": "Lesson deleted"
+    "deleted": "Lesson deleted",
+    "week": "Week",
+    "day": "Day",
+    "view": "View",
+    "book": "Book a lesson",
+    "cancel": "Cancel",
+    "timezone": "Times shown in {tz}"
   },
   "billing": {
     "title": "Billing",
@@ -283,7 +303,16 @@
     "age": "Age",
     "notes": "Notes",
     "noteBody": "Note",
-    "lessons": "Lessons"
+    "lessons": "Lessons",
+    "overview": "Overview",
+    "homework": "Homework",
+    "profile": "Profile",
+    "attendance": "Attendance",
+    "balance": "Balance",
+    "addNote": "Add note",
+    "noLessons": "No lessons yet",
+    "noHomework": "No homework yet",
+    "noNotes": "No notes yet"
   },
   "progress": {
     "title": "My progress",
@@ -459,6 +488,41 @@
     "reveal": "Reveal",
     "remembered": "I knew it",
     "forgot": "Didn't know",
-    "back": "Back to list"
+    "back": "Back to list",
+    "learned": "Learned",
+    "nothingDue": "Nothing due today",
+    "nextReview": "next review {date}",
+    "shortcuts": "Space to reveal · 1 didn’t know · 2 knew it",
+    "repsHint": "Times reviewed"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Tutor",
+      "student": "Student",
+      "parent": "Parent",
+      "admin": "Admin"
+    },
+    "lessonStatus": {
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "no_show": "No-show"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Video",
+      "audio": "Audio",
+      "image": "Image",
+      "exercise": "Exercise",
+      "link": "Link"
+    },
+    "pageType": {
+      "grammar": "Grammar",
+      "practice": "Practice",
+      "listening": "Listening",
+      "reading": "Reading",
+      "discussion": "Discussion",
+      "essay": "Essay"
+    }
   }
 }

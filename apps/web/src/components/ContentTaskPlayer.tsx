@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { apiFetch, fileUrl } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
+import { Icon } from './Icon';
 import { Score } from './Score';
 
 // One content task, rendered identically in every runtime context (live /
@@ -209,7 +210,7 @@ export function ContentTaskPlayer({
           ) : (
             <p className="ex-ok">{t('done')}</p>
           )}
-          {feedback ? <p className="ex-feedback">✎ {feedback}</p> : null}
+          {feedback ? <p className="ex-feedback"><Icon name="edit" size={14} /> {feedback}</p> : null}
         </>
       ) : (
         <div className="row-between task-actions">

@@ -7,6 +7,7 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { ScoreRing } from './ScoreRing';
 import { EmptyState } from './EmptyState';
+import { Skeleton } from './Skeleton';
 
 interface Lesson {
   id: string;
@@ -75,7 +76,7 @@ export function DashboardData() {
     })();
   }, [locale]);
 
-  if (state === 'loading') return <p className="note">…</p>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={4} /></div>;
   if (state === 'unauth')
     return (
       <p className="note">

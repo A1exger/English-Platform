@@ -78,7 +78,14 @@
     "lessonsUpcoming": "Kommende Stunden",
     "activeStudents": "Aktive Schüler",
     "attendance": "Anwesenheitsquote",
-    "conversion": "Probe-Konversion"
+    "conversion": "Probe-Konversion",
+    "period": "Zeitraum",
+    "periodMonths": "{count} Monate",
+    "metric": "Kennzahl",
+    "lessons": "Stunden",
+    "thisPeriod": "Dieser Zeitraum",
+    "vsPrevious": "vs. vorher",
+    "trend": "Trend"
   },
   "settings": {
     "title": "Einstellungen",
@@ -101,7 +108,14 @@
     "submit": "Registrieren",
     "creating": "Wird erstellt…",
     "haveAccount": "Schon ein Konto?",
-    "error": "Registrierung fehlgeschlagen. Andere E-Mail versuchen."
+    "error": "Registrierung fehlgeschlagen. Andere E-Mail versuchen.",
+    "passwordStrength": "Passwortstärke",
+    "strengthWeak": "Schwach",
+    "strengthFair": "Mittel",
+    "strengthGood": "Gut",
+    "strengthStrong": "Stark",
+    "terms": "Ich akzeptiere die Nutzungsbedingungen",
+    "tutorNote": "Tutor-Konten werden von einem Administrator erstellt."
   },
   "adminUsers": {
     "title": "Benutzer",
@@ -140,7 +154,13 @@
     "viewWeek": "Woche",
     "student": "Schüler",
     "delete": "Löschen",
-    "deleted": "Lektion gelöscht"
+    "deleted": "Lektion gelöscht",
+    "week": "Woche",
+    "day": "Tag",
+    "view": "Ansicht",
+    "book": "Stunde buchen",
+    "cancel": "Abbrechen",
+    "timezone": "Zeiten in {tz}"
   },
   "billing": {
     "title": "Abrechnung",
@@ -283,7 +303,16 @@
     "age": "Alter",
     "notes": "Notizen",
     "noteBody": "Notiz",
-    "lessons": "Stunden"
+    "lessons": "Stunden",
+    "overview": "Übersicht",
+    "homework": "Hausaufgaben",
+    "profile": "Profil",
+    "attendance": "Anwesenheit",
+    "balance": "Guthaben",
+    "addNote": "Notiz hinzufügen",
+    "noLessons": "Noch keine Stunden",
+    "noHomework": "Noch keine Hausaufgaben",
+    "noNotes": "Noch keine Notizen"
   },
   "progress": {
     "title": "Mein Fortschritt",
@@ -459,6 +488,41 @@
     "reveal": "Aufdecken",
     "remembered": "Gewusst",
     "forgot": "Nicht gewusst",
-    "back": "Zur Liste"
+    "back": "Zur Liste",
+    "learned": "Gelernt",
+    "nothingDue": "Heute nichts fällig",
+    "nextReview": "nächste Wiederholung {date}",
+    "shortcuts": "Leertaste zum Aufdecken · 1 nicht gewusst · 2 gewusst",
+    "repsHint": "Wiederholungen"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Tutor",
+      "student": "Schüler",
+      "parent": "Elternteil",
+      "admin": "Admin"
+    },
+    "lessonStatus": {
+      "scheduled": "Geplant",
+      "completed": "Abgeschlossen",
+      "cancelled": "Abgesagt",
+      "no_show": "Nicht erschienen"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Video",
+      "audio": "Audio",
+      "image": "Bild",
+      "exercise": "Übung",
+      "link": "Link"
+    },
+    "pageType": {
+      "grammar": "Grammatik",
+      "practice": "Übung",
+      "listening": "Hörverstehen",
+      "reading": "Lesen",
+      "discussion": "Diskussion",
+      "essay": "Aufsatz"
+    }
   }
 }

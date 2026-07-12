@@ -78,7 +78,14 @@
     "lessonsUpcoming": "Komende lessen",
     "activeStudents": "Actieve leerlingen",
     "attendance": "Aanwezigheidspercentage",
-    "conversion": "Proefconversie"
+    "conversion": "Proefconversie",
+    "period": "Periode",
+    "periodMonths": "{count} maanden",
+    "metric": "Statistiek",
+    "lessons": "Lessen",
+    "thisPeriod": "Deze periode",
+    "vsPrevious": "t.o.v. vorige",
+    "trend": "Trend"
   },
   "settings": {
     "title": "Instellingen",
@@ -101,7 +108,14 @@
     "submit": "Registreren",
     "creating": "Bezig…",
     "haveAccount": "Al een account?",
-    "error": "Registratie mislukt. Probeer een ander e-mailadres."
+    "error": "Registratie mislukt. Probeer een ander e-mailadres.",
+    "passwordStrength": "Wachtwoordsterkte",
+    "strengthWeak": "Zwak",
+    "strengthFair": "Redelijk",
+    "strengthGood": "Goed",
+    "strengthStrong": "Sterk",
+    "terms": "Ik ga akkoord met de voorwaarden",
+    "tutorNote": "Docentaccounts worden aangemaakt door een beheerder."
   },
   "adminUsers": {
     "title": "Gebruikers",
@@ -140,7 +154,13 @@
     "viewWeek": "Week",
     "student": "Leerling",
     "delete": "Verwijderen",
-    "deleted": "Les verwijderd"
+    "deleted": "Les verwijderd",
+    "week": "Week",
+    "day": "Dag",
+    "view": "Weergave",
+    "book": "Een les boeken",
+    "cancel": "Annuleren",
+    "timezone": "Tijden in {tz}"
   },
   "billing": {
     "title": "Facturatie",
@@ -283,7 +303,16 @@
     "age": "Leeftijd",
     "notes": "Notities",
     "noteBody": "Notitie",
-    "lessons": "Lessen"
+    "lessons": "Lessen",
+    "overview": "Overzicht",
+    "homework": "Huiswerk",
+    "profile": "Profiel",
+    "attendance": "Aanwezigheid",
+    "balance": "Saldo",
+    "addNote": "Notitie toevoegen",
+    "noLessons": "Nog geen lessen",
+    "noHomework": "Nog geen huiswerk",
+    "noNotes": "Nog geen notities"
   },
   "progress": {
     "title": "Mijn voortgang",
@@ -459,6 +488,41 @@
     "reveal": "Tonen",
     "remembered": "Ik wist het",
     "forgot": "Wist ik niet",
-    "back": "Terug naar lijst"
+    "back": "Terug naar lijst",
+    "learned": "Geleerd",
+    "nothingDue": "Niets te doen vandaag",
+    "nextReview": "volgende herhaling {date}",
+    "shortcuts": "Spatie om te tonen · 1 niet geweten · 2 geweten",
+    "repsHint": "Aantal herhalingen"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Docent",
+      "student": "Leerling",
+      "parent": "Ouder",
+      "admin": "Beheerder"
+    },
+    "lessonStatus": {
+      "scheduled": "Gepland",
+      "completed": "Voltooid",
+      "cancelled": "Geannuleerd",
+      "no_show": "Niet verschenen"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Video",
+      "audio": "Audio",
+      "image": "Afbeelding",
+      "exercise": "Oefening",
+      "link": "Link"
+    },
+    "pageType": {
+      "grammar": "Grammatica",
+      "practice": "Oefening",
+      "listening": "Luisteren",
+      "reading": "Lezen",
+      "discussion": "Discussie",
+      "essay": "Essay"
+    }
   }
 }

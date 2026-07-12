@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
@@ -34,6 +34,7 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
   const t = useTranslations('assignments');
   const tApp = useTranslations('app');
   const locale = useLocale();
+  const format = useFormatter();
   const router = useRouter();
 
   const [data, setData] = useState<AssignmentDetail | null>(null);
@@ -112,7 +113,7 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
       {!isStudent && data.studentName && <p className="muted">{data.studentName}</p>}
       {data.dueAt && (
         <p className="muted">
-          {t('due')}: {new Date(data.dueAt).toLocaleDateString(locale)}
+          {t('due')}: {format.dateTime(new Date(data.dueAt), { dateStyle: 'medium' })}
         </p>
       )}
 

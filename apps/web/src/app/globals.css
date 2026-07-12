@@ -510,12 +510,12 @@ textarea {
 }
 .cal {
   display: grid;
-  grid-template-columns: 56px repeat(7, 1fr);
+  grid-template-columns: 56px repeat(var(--cal-days, 7), 1fr);
   gap: 1px;
   background: var(--line);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  overflow: visible;
   box-shadow: var(--sh-xs);
 }
 .cal-head {
@@ -2573,4 +2573,239 @@ select.err {
 }
 .dict-due-filter {
   white-space: nowrap;
+}
+
+/* ——— Sprint 6: icons · a11y · analytics · profile · trainer · schedule ——— */
+.icon {
+  display: inline-block;
+  vertical-align: -0.15em;
+  flex: none;
+}
+
+/* 6.8 visible focus rings on every interactive element */
+a:focus-visible,
+summary:focus-visible,
+[role='tab']:focus-visible,
+.swatch:focus-visible,
+.chip:focus-visible,
+.menu-item:focus-visible,
+.tree-lesson-title:focus-visible,
+.palette-item:focus-visible,
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--r-sm);
+}
+
+/* 6.1 status chips localised — keep the colour cue */
+.chip.status-scheduled { background: var(--indigo-100); color: var(--indigo-700); }
+.chip.status-no_show { background: var(--low-100); color: #b23a33; }
+
+/* 6.3 analytics */
+.analytics-hero {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) 1fr;
+  gap: 20px;
+  align-items: center;
+  margin-block: 16px;
+}
+.analytics-hero-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.analytics-hero-value {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.analytics-hero-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.delta {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.delta.tier-high { color: var(--high); }
+.delta.tier-low { color: var(--low); }
+.analytics-chart {
+  inline-size: 100%;
+  overflow-x: auto;
+}
+.chart-bar {
+  fill: var(--indigo);
+}
+.chart-label {
+  fill: var(--mist);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* 6.4 student profile — context-first header + tabs */
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-block: 12px;
+}
+.avatar {
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: var(--r-pill);
+  background: var(--indigo-100);
+  color: var(--indigo-700);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  flex: none;
+}
+.profile-head-main {
+  flex: 1;
+  min-inline-size: 180px;
+}
+.profile-head-main h2 {
+  margin: 0;
+}
+.profile-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-block-start: 4px;
+}
+.level-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: var(--cloud);
+  color: var(--slate);
+}
+.profile-head-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* 6.6 register — password strength meter */
+.pw-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-block-end: 4px;
+}
+.pw-bars {
+  display: flex;
+  gap: 4px;
+}
+.pw-bar {
+  block-size: 5px;
+  flex: 1;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+}
+.pw-bar.on.tier-low { background: var(--low); }
+.pw-bar.on.tier-mid { background: var(--mid); }
+.pw-bar.on.tier-high { background: var(--high); }
+.pw-label {
+  font-size: 12px;
+  color: var(--slate);
+}
+.pw-label.tier-low { color: var(--low); }
+.pw-label.tier-mid { color: var(--mid); }
+.pw-label.tier-high { color: var(--high); }
+
+/* 6.5 dictionary trainer */
+.dict-head-side {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.dict-nothing {
+  text-align: end;
+  max-inline-size: 22ch;
+}
+.dict-shortcuts {
+  text-align: center;
+  margin-block-start: 12px;
+}
+.dict-reps {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* 6.10 schedule — slot popover · day view · header */
+.sched-head {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.sched-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sched-tz {
+  margin-block: 4px 12px;
+}
+.cal-cell {
+  position: relative;
+}
+.cal-cell.picked {
+  background: var(--indigo-50);
+}
+.slot-popover {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 50;
+  inline-size: min(260px, 78vw);
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-md);
+  padding: 12px;
+}
+.slot-popover .form-grid {
+  grid-template-columns: 1fr;
+  margin-bottom: 0;
+}
+.slot-popover-head strong {
+  font-size: 13px;
+}
+
+/* 6.9 mobile — verify the dense grids at ~380px */
+@media (max-width: 560px) {
+  .cal {
+    grid-template-columns: 44px repeat(var(--cal-days, 7), minmax(84px, 1fr));
+    overflow-x: auto;
+  }
+  .analytics-hero {
+    grid-template-columns: 1fr;
+  }
+  .profile-head-stats {
+    inline-size: 100%;
+    justify-content: space-between;
+  }
+  .two-col,
+  .builder {
+    grid-template-columns: 1fr;
+  }
+  .lesson-room.room-editorial {
+    grid-template-columns: 1fr;
+  }
+  .slot-popover {
+    inline-size: min(240px, 70vw);
+  }
 }

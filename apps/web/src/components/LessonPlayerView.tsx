@@ -9,6 +9,7 @@ import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
 import { AssignmentBuilder } from './AssignmentBuilder';
 import { Skeleton } from './Skeleton';
 import { Stepper } from './Stepper';
+import { Icon } from './Icon';
 
 interface PageRow {
   id: string;
@@ -35,6 +36,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
   const t = useTranslations('learn');
   const tAssign = useTranslations('assignments');
   const tApp = useTranslations('app');
+  const te = useTranslations('enum');
   const locale = useLocale();
   const router = useRouter();
 
@@ -112,7 +114,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
         onChange={setPageIdx}
         steps={[
           { key: 'prep', label: t('preparation') },
-          ...lesson.pages.map((p, i) => ({ key: p.id, label: `${i + 1} · ${p.type}` }))
+          ...lesson.pages.map((p, i) => ({ key: p.id, label: `${i + 1} · ${te(`pageType.${p.type}`)}` }))
         ]}
       />
 
@@ -146,7 +148,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
                         disabled={!!added[e.word]}
                         onClick={() => addToDictionary(e.word, e.translation)}
                       >
-                        {added[e.word] ? t('added') : `✦ ${t('addToDict')}`}
+                        {added[e.word] ? t('added') : <><Icon name="spark" /> {t('addToDict')}</>}
                       </button>
                     )}
                   </li>

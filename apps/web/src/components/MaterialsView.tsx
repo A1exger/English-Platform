@@ -25,6 +25,7 @@ export function MaterialsView() {
   const t = useTranslations('materials');
   const tApp = useTranslations('app');
   const tc = useTranslations('common');
+  const te = useTranslations('enum');
   const locale = useLocale();
   const router = useRouter();
   const { showUndo } = useToast();
@@ -164,7 +165,7 @@ export function MaterialsView() {
                 className={typeFilter === ty ? 'active' : ''}
                 onClick={() => setTypeFilter(ty)}
               >
-                {ty}
+                {te(`materialType.${ty}`)}
               </button>
             ))}
           </div>
@@ -185,7 +186,7 @@ export function MaterialsView() {
               )}
             </span>
             <span className="muted">
-              {m.type}
+              {te(`materialType.${m.type}`)}
               {m.language ? ` · ${m.language}` : ''}
             </span>
             {canManage && (
@@ -209,7 +210,7 @@ export function MaterialsView() {
               <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                 {TYPES.map((ty) => (
                   <option key={ty} value={ty}>
-                    {ty}
+                    {te(`materialType.${ty}`)}
                   </option>
                 ))}
               </select>

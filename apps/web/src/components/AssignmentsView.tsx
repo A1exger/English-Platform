@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
@@ -27,6 +27,7 @@ export function AssignmentsView() {
   const t = useTranslations('assignments');
   const tApp = useTranslations('app');
   const locale = useLocale();
+  const format = useFormatter();
   const router = useRouter();
 
   const [rows, setRows] = useState<Row[]>([]);
@@ -85,7 +86,7 @@ export function AssignmentsView() {
               <span className="muted">
                 {!isStudent && r.studentName ? `${r.studentName} · ` : ''}
                 {r.submittedCount}/{r.cardCount} · {t('tasks')}
-                {r.dueAt ? ` · ${t('due')} ${new Date(r.dueAt).toLocaleDateString(locale)}` : ''}
+                {r.dueAt ? ` · ${t('due')} ${format.dateTime(new Date(r.dueAt), { dateStyle: 'medium' })}` : ''}
               </span>
             </div>
             <div className="assign-row-side">

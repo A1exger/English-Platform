@@ -6,6 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import { apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ExercisePlayer } from './ExercisePlayer';
+import { Icon } from './Icon';
 
 function apiOrigin(): string {
   const b = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
@@ -135,8 +136,8 @@ export function LessonExercisePanel({
         instances.map((id) => (
           <div key={id} className="lesson-ex-item">
             {canPush && (
-              <button type="button" className="ghost ex-remove" onClick={() => removeInstance(id)}>
-                ✕
+              <button type="button" className="ghost ex-remove" onClick={() => removeInstance(id)} aria-label={t('delete')}>
+                <Icon name="close" />
               </button>
             )}
             <ExercisePlayer

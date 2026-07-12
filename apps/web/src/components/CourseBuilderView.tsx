@@ -9,6 +9,7 @@ import { Skeleton } from './Skeleton';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
 import { useToast } from './Toast';
+import { Icon } from './Icon';
 
 const LEVELS = [
   'Beginner',
@@ -321,7 +322,7 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
 
                           {canAuthor && (
                             <button type="button" className="tree-del ghost" aria-label={t('del')} disabled={busy} onClick={() => removeLesson(l)}>
-                              ✕
+                              <Icon name="close" />
                             </button>
                           )}
                         </li>
@@ -587,8 +588,8 @@ function LessonEditor({
                     {tEx(taskLabelKey(task.type))}{' '}
                     <span className="muted">· {task.gradingMode} · {task.aspect} · {task.estimatedMinutes}′</span>
                   </span>
-                  <button type="button" className="ghost" disabled={busy} onClick={() => deleteTask(task.id)}>
-                    ✕
+                  <button type="button" className="ghost" disabled={busy} aria-label={t('del')} onClick={() => deleteTask(task.id)}>
+                    <Icon name="close" />
                   </button>
                 </li>
               ))}

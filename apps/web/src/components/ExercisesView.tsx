@@ -9,6 +9,7 @@ import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
 import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
+import { Icon } from './Icon';
 
 interface ExerciseRow {
   id: string;
@@ -347,7 +348,7 @@ export function ExercisesView() {
           <div className="row-actions">
             <button type="submit" disabled={busy}>{busy ? t('creating') : t('save')}</button>
             {editingId && (
-              <button type="button" className="ghost" onClick={() => { setEditingId(null); setTitle(''); }}>✕</button>
+              <button type="button" className="ghost" aria-label={tc('close')} onClick={() => { setEditingId(null); setTitle(''); }}><Icon name="close" /></button>
             )}
           </div>
         </form>
@@ -363,7 +364,7 @@ export function ExercisesView() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="row-between">
               <strong>{viewing.q.title}</strong>
-              <button type="button" className="ghost" onClick={() => setViewing(null)}>✕</button>
+              <button type="button" className="ghost" aria-label={tc('close')} onClick={() => setViewing(null)}><Icon name="close" /></button>
             </div>
             <ExerciseRenderer
               question={viewing.q}

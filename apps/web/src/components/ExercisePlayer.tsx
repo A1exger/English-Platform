@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
 import { Score } from './Score';
+import { Skeleton } from './Skeleton';
 
 interface InstanceView {
   id: string;
@@ -106,7 +107,7 @@ export function ExercisePlayer({
     }
   }
 
-  if (!view) return <p className="note">…</p>;
+  if (!view) return <Skeleton lines={3} />;
   const done = result !== null || view.status === 'submitted' || !!reviewOnly;
 
   return (

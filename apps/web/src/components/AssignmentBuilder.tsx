@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { Icon } from './Icon';
 import { useRouter } from '@/i18n/routing';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
@@ -28,6 +29,7 @@ export function AssignmentBuilder({
   onClose: () => void;
 }) {
   const t = useTranslations('assignments');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
 
@@ -85,8 +87,8 @@ export function AssignmentBuilder({
     <div className="card assign-builder">
       <div className="row-between">
         <strong>{t('assignHomework')}</strong>
-        <button type="button" className="ghost" onClick={onClose}>
-          ✕
+        <button type="button" className="ghost" onClick={onClose} aria-label={tc('close')}>
+          <Icon name="close" />
         </button>
       </div>
 

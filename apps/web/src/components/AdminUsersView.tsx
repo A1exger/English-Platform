@@ -26,6 +26,7 @@ const ROLES = ['student', 'tutor', 'parent', 'admin'];
 export function AdminUsersView() {
   const t = useTranslations('adminUsers');
   const tApp = useTranslations('app');
+  const te = useTranslations('enum');
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
@@ -114,7 +115,7 @@ export function AdminUsersView() {
       render: (u) => <span>{u.firstName} {u.lastName}</span>
     },
     { key: 'email', label: t('email'), sortValue: (u) => u.email.toLowerCase(), render: (u) => <span className="muted">{u.email}</span> },
-    { key: 'role', label: t('role'), sortValue: (u) => u.role, render: (u) => u.role },
+    { key: 'role', label: t('role'), sortValue: (u) => u.role, render: (u) => te(`role.${u.role}`) },
     {
       key: 'created',
       label: t('created'),
@@ -145,7 +146,7 @@ export function AdminUsersView() {
             <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
               {ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {r}
+                  {te(`role.${r}`)}
                 </option>
               ))}
             </select>
@@ -186,7 +187,7 @@ export function AdminUsersView() {
         filter={{
           label: t('role'),
           value: roleFilter,
-          options: ROLES.map((r) => ({ value: r, label: r })),
+          options: ROLES.map((r) => ({ value: r, label: te(`role.${r}`) })),
           onChange: setRoleFilter
         }}
         filterFn={roleFilter ? (u) => u.role === roleFilter : undefined}

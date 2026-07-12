@@ -78,7 +78,14 @@
     "lessonsUpcoming": "Предстоящие уроки",
     "activeStudents": "Активных учеников",
     "attendance": "Посещаемость",
-    "conversion": "Конверсия пробных"
+    "conversion": "Конверсия пробных",
+    "period": "Период",
+    "periodMonths": "{count} мес.",
+    "metric": "Показатель",
+    "lessons": "Уроки",
+    "thisPeriod": "За период",
+    "vsPrevious": "к предыдущему",
+    "trend": "Динамика"
   },
   "settings": {
     "title": "Настройки",
@@ -101,7 +108,14 @@
     "submit": "Зарегистрироваться",
     "creating": "Создание…",
     "haveAccount": "Уже есть аккаунт?",
-    "error": "Не удалось зарегистрироваться. Попробуйте другой email."
+    "error": "Не удалось зарегистрироваться. Попробуйте другой email.",
+    "passwordStrength": "Надёжность пароля",
+    "strengthWeak": "Слабый",
+    "strengthFair": "Средний",
+    "strengthGood": "Хороший",
+    "strengthStrong": "Надёжный",
+    "terms": "Я принимаю условия обслуживания",
+    "tutorNote": "Аккаунты преподавателей создаёт администратор."
   },
   "adminUsers": {
     "title": "Пользователи",
@@ -140,7 +154,13 @@
     "viewWeek": "Неделя",
     "student": "Ученик",
     "delete": "Удалить",
-    "deleted": "Урок удалён"
+    "deleted": "Урок удалён",
+    "week": "Неделя",
+    "day": "День",
+    "view": "Вид",
+    "book": "Записаться на урок",
+    "cancel": "Отмена",
+    "timezone": "Время показано в {tz}"
   },
   "billing": {
     "title": "Оплата",
@@ -283,7 +303,16 @@
     "age": "Возраст",
     "notes": "Заметки",
     "noteBody": "Заметка",
-    "lessons": "Уроки"
+    "lessons": "Уроки",
+    "overview": "Обзор",
+    "homework": "Домашнее задание",
+    "profile": "Профиль",
+    "attendance": "Посещаемость",
+    "balance": "Баланс",
+    "addNote": "Добавить заметку",
+    "noLessons": "Пока нет уроков",
+    "noHomework": "Пока нет заданий",
+    "noNotes": "Пока нет заметок"
   },
   "progress": {
     "title": "Мой прогресс",
@@ -459,6 +488,41 @@
     "reveal": "Показать",
     "remembered": "Знал",
     "forgot": "Не знал",
-    "back": "К списку"
+    "back": "К списку",
+    "learned": "Изучено",
+    "nothingDue": "На сегодня ничего нет",
+    "nextReview": "следующее повторение {date}",
+    "shortcuts": "Пробел — показать · 1 — не знал · 2 — знал",
+    "repsHint": "Число повторений"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Преподаватель",
+      "student": "Студент",
+      "parent": "Родитель",
+      "admin": "Администратор"
+    },
+    "lessonStatus": {
+      "scheduled": "Запланирован",
+      "completed": "Завершён",
+      "cancelled": "Отменён",
+      "no_show": "Неявка"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Видео",
+      "audio": "Аудио",
+      "image": "Изображение",
+      "exercise": "Упражнение",
+      "link": "Ссылка"
+    },
+    "pageType": {
+      "grammar": "Грамматика",
+      "practice": "Практика",
+      "listening": "Аудирование",
+      "reading": "Чтение",
+      "discussion": "Обсуждение",
+      "essay": "Эссе"
+    }
   }
 }

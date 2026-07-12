@@ -78,7 +78,14 @@
     "lessonsUpcoming": "Prochains cours",
     "activeStudents": "Élèves actifs",
     "attendance": "Taux de présence",
-    "conversion": "Conversion d'essai"
+    "conversion": "Conversion d'essai",
+    "period": "Période",
+    "periodMonths": "{count} mois",
+    "metric": "Métrique",
+    "lessons": "Leçons",
+    "thisPeriod": "Cette période",
+    "vsPrevious": "vs précédent",
+    "trend": "Tendance"
   },
   "settings": {
     "title": "Paramètres",
@@ -101,7 +108,14 @@
     "submit": "S'inscrire",
     "creating": "Création…",
     "haveAccount": "Déjà un compte ?",
-    "error": "Échec de l'inscription. Essayez un autre e-mail."
+    "error": "Échec de l'inscription. Essayez un autre e-mail.",
+    "passwordStrength": "Force du mot de passe",
+    "strengthWeak": "Faible",
+    "strengthFair": "Moyen",
+    "strengthGood": "Bon",
+    "strengthStrong": "Fort",
+    "terms": "J’accepte les conditions d’utilisation",
+    "tutorNote": "Les comptes tuteurs sont créés par un administrateur."
   },
   "adminUsers": {
     "title": "Utilisateurs",
@@ -140,7 +154,13 @@
     "viewWeek": "Semaine",
     "student": "Élève",
     "delete": "Supprimer",
-    "deleted": "Leçon supprimée"
+    "deleted": "Leçon supprimée",
+    "week": "Semaine",
+    "day": "Jour",
+    "view": "Vue",
+    "book": "Réserver une leçon",
+    "cancel": "Annuler",
+    "timezone": "Heures affichées en {tz}"
   },
   "billing": {
     "title": "Facturation",
@@ -283,7 +303,16 @@
     "age": "Âge",
     "notes": "Notes",
     "noteBody": "Note",
-    "lessons": "Cours"
+    "lessons": "Cours",
+    "overview": "Aperçu",
+    "homework": "Devoirs",
+    "profile": "Profil",
+    "attendance": "Présence",
+    "balance": "Solde",
+    "addNote": "Ajouter une note",
+    "noLessons": "Aucune leçon",
+    "noHomework": "Aucun devoir",
+    "noNotes": "Aucune note"
   },
   "progress": {
     "title": "Ma progression",
@@ -459,6 +488,41 @@
     "reveal": "Révéler",
     "remembered": "Je savais",
     "forgot": "Je ne savais pas",
-    "back": "Retour à la liste"
+    "back": "Retour à la liste",
+    "learned": "Appris",
+    "nothingDue": "Rien à réviser aujourd’hui",
+    "nextReview": "prochaine révision {date}",
+    "shortcuts": "Espace pour révéler · 1 pas su · 2 su",
+    "repsHint": "Nombre de révisions"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Tuteur",
+      "student": "Élève",
+      "parent": "Parent",
+      "admin": "Admin"
+    },
+    "lessonStatus": {
+      "scheduled": "Planifié",
+      "completed": "Terminé",
+      "cancelled": "Annulé",
+      "no_show": "Absent"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Vidéo",
+      "audio": "Audio",
+      "image": "Image",
+      "exercise": "Exercice",
+      "link": "Lien"
+    },
+    "pageType": {
+      "grammar": "Grammaire",
+      "practice": "Pratique",
+      "listening": "Écoute",
+      "reading": "Lecture",
+      "discussion": "Discussion",
+      "essay": "Rédaction"
+    }
   }
 }

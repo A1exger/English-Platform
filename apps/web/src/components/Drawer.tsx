@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { Icon } from './Icon';
 
 // Side panel where every creation form lives (Sprint 2.1 builds it; Sprint 4.1
 // reuses it). Closes on overlay click or Escape. RTL-safe (slides from the
@@ -42,7 +43,7 @@ export function Drawer({
         <div className="drawer-head">
           <strong>{title}</strong>
           <button type="button" className="ghost" onClick={onClose} aria-label={tc('close')}>
-            ✕
+            <Icon name="close" />
           </button>
         </div>
         <div className="drawer-body">{children}</div>

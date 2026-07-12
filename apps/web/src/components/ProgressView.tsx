@@ -7,6 +7,7 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ScoreRing } from './ScoreRing';
 import { Skeleton } from './Skeleton';
+import { Icon } from './Icon';
 
 interface Achievement { key: string; earned: boolean }
 interface Progress {
@@ -148,7 +149,7 @@ export function ProgressView() {
         <ul className="badges">
           {data.achievements.map((a) => (
             <li key={a.key} className={`badge${a.earned ? ' earned' : ''}`}>
-              <span className="badge-icon">{a.earned ? '🏅' : '🔒'}</span>
+              <span className="badge-icon"><Icon name={a.earned ? 'award' : 'lock'} size={18} /></span>
               {t(`badge_${a.key}`)}
             </li>
           ))}
