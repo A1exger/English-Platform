@@ -6,6 +6,7 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { useRouter } from '@/i18n/routing';
 import { Skeleton } from './Skeleton';
+import { DataList } from './DataList';
 
 interface Entry {
   id: string;
@@ -30,6 +31,7 @@ export function DictionaryView() {
   const [queue, setQueue] = useState<Entry[]>([]);
   const [idx, setIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [dueOnly, setDueOnly] = useState(false);
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -131,24 +133,33 @@ export function DictionaryView() {
         </button>
       </div>
 
-      {entries.length === 0 ? (
-        <p className="note">{t('empty')}</p>
-      ) : (
-        <ul className="dict-list">
-          {entries.map((e) => (
-            <li key={e.id} className="dict-row">
-              <span>
-                <b>{e.word}</b>
-                {e.translation ? <span className="muted"> — {e.translation}</span> : null}
-              </span>
-              <span className="dict-meta">
-                {e.due ? <span className="chip status-in_progress">{t('due')}</span> : null}
-                <span className="muted mono-num">★ {e.repetitions}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <DataList
+        items={entries}
+        getKey={(e) => e.id}
+        searchText={(e) => `${e.word} ${e.translation ?? ''}`}
+        listClassName="dict-list"
+        rowClassName="dict-row"
+        filterFn={dueOnly ? (e) => e.due : undefined}
+        toolbar={
+          <label className="check dict-due-filter">
+            <input type="checkbox" checked={dueOnly} onChange={(e) => setDueOnly(e.target.checked)} />
+            {t('due')}
+          </label>
+        }
+        empty={{ title: t('empty') }}
+        renderRow={(e) => (
+          <>
+            <span>
+              <b>{e.word}</b>
+              {e.translation ? <span className="muted"> — {e.translation}</span> : null}
+            </span>
+            <span className="dict-meta">
+              {e.due ? <span className="chip status-in_progress">{t('due')}</span> : null}
+              <span className="muted mono-num">★ {e.repetitions}</span>
+            </span>
+          </>
+        )}
+      />
     </div>
   );
 }

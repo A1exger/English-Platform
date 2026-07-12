@@ -66,7 +66,10 @@
     "lastName": "Last name",
     "delete": "Delete",
     "remove": "Remove",
-    "deleted": "Student removed"
+    "deleted": "Student removed",
+    "name": "Name",
+    "level": "Level",
+    "balance": "Balance"
   },
   "analytics": {
     "title": "Analytics",
@@ -113,7 +116,9 @@
     "empty": "No users.",
     "delete": "Delete",
     "forbidden": "Admins only.",
-    "deleted": "User deleted"
+    "deleted": "User deleted",
+    "name": "Name",
+    "created": "Created"
   },
   "schedule": {
     "title": "Schedule",
@@ -215,7 +220,10 @@
     "noResults": "Nothing found",
     "undo": "Undo",
     "menu": "Menu",
-    "close": "Close"
+    "close": "Close",
+    "all": "All",
+    "sortBy": "Sort",
+    "content": "Content"
   },
   "nav": {
     "overview": "Overview",
@@ -256,7 +264,9 @@
     "lessonsDone": "Lessons done",
     "homework": "Homework",
     "upcoming": "Upcoming",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "noLessons": "No upcoming lessons",
+    "bookLesson": "Book a lesson"
   },
   "studentProfile": {
     "title": "Student profile",

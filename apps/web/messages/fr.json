@@ -66,7 +66,10 @@
     "lastName": "Nom",
     "delete": "Supprimer",
     "remove": "Retirer",
-    "deleted": "Élève retiré"
+    "deleted": "Élève retiré",
+    "name": "Nom",
+    "level": "Niveau",
+    "balance": "Solde"
   },
   "analytics": {
     "title": "Analytique",
@@ -113,7 +116,9 @@
     "empty": "Aucun utilisateur.",
     "delete": "Supprimer",
     "forbidden": "Réservé aux administrateurs.",
-    "deleted": "Utilisateur supprimé"
+    "deleted": "Utilisateur supprimé",
+    "name": "Nom",
+    "created": "Créé"
   },
   "schedule": {
     "title": "Planning",
@@ -215,7 +220,10 @@
     "noResults": "Aucun résultat",
     "undo": "Annuler",
     "menu": "Menu",
-    "close": "Fermer"
+    "close": "Fermer",
+    "all": "Tous",
+    "sortBy": "Trier",
+    "content": "Contenu"
   },
   "nav": {
     "overview": "Aperçu",
@@ -256,7 +264,9 @@
     "lessonsDone": "Leçons faites",
     "homework": "Devoirs",
     "upcoming": "À venir",
-    "seeAll": "Tout voir"
+    "seeAll": "Tout voir",
+    "noLessons": "Aucune leçon à venir",
+    "bookLesson": "Réserver une leçon"
   },
   "studentProfile": {
     "title": "Profil de l'élève",

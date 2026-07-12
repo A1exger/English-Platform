@@ -9,6 +9,7 @@ import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
+import { DataTable, Column } from './DataTable';
 
 interface Row {
   studentProfileId: string;
@@ -34,6 +35,7 @@ export function StudentsView() {
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [levelFilter, setLevelFilter] = useState('');
   const [email, setEmail] = useState('');
   const [newStudent, setNewStudent] = useState({ firstName: '', lastName: '', email: '', password: '' });
 
@@ -115,6 +117,54 @@ export function StudentsView() {
 
   const canAdd = isAdmin || isTutor;
 
+  const levels = Array.from(new Set(rows.map((r) => r.cefrLevel).filter((l): l is string => !!l)));
+  const columns: Column<Row>[] = [
+    {
+      key: 'name',
+      label: t('name'),
+      sortValue: (r) => r.name.toLowerCase(),
+      render: (r) => (
+        <Link className="link" href={`/students/${r.studentProfileId}`}>{r.name}</Link>
+      )
+    },
+    { key: 'level', label: t('level'), sortValue: (r) => r.cefrLevel ?? '', render: (r) => r.cefrLevel ?? '—' },
+    {
+      key: 'lessons',
+      label: t('lessonsCount'),
+      align: 'end',
+      sortValue: (r) => r.lessonsCount,
+      render: (r) => <span className="mono-num">{r.lessonsCount}</span>
+    },
+    {
+      key: 'attendance',
+      label: t('attendance'),
+      align: 'end',
+      sortValue: (r) => r.attendanceRate ?? -1,
+      render: (r) => <span className="mono-num">{r.attendanceRate === null ? '—' : `${r.attendanceRate}%`}</span>
+    },
+    {
+      key: 'balance',
+      label: t('balance'),
+      align: 'end',
+      sortValue: (r) => r.balanceCents,
+      render: (r) => (
+        <span className="mono-num">
+          {format.number(r.balanceCents / 100, { style: 'currency', currency: 'EUR' })}
+        </span>
+      )
+    },
+    {
+      key: 'actions',
+      label: '',
+      align: 'end',
+      render: (r) => (
+        <button type="button" className="ghost" disabled={busy} onClick={() => removeStudent(r.studentProfileId)}>
+          {isAdmin ? t('delete') : t('remove')}
+        </button>
+      )
+    }
+  ];
+
   return (
     <div className="content">
       <PageHeader
@@ -147,30 +197,23 @@ export function StudentsView() {
         </Drawer>
       )}
 
-      <div className="card">
-        {rows.length === 0 ? (
-          <p className="note">{t('empty')}</p>
-        ) : (
-          <ul className="lesson-list">
-            {rows.map((r) => (
-              <li key={r.studentProfileId}>
-                <Link className="link" href={`/students/${r.studentProfileId}`}>
-                  {r.name}
-                </Link>
-                <span className="muted">
-                  {r.country ? `${r.country} · ` : ''}
-                  {r.cefrLevel ?? '—'} · {t('lessonsCount')}: {r.lessonsCount} ·{' '}
-                  {r.attendanceRate === null ? '—' : `${r.attendanceRate}%`} ·{' '}
-                  {format.number(r.balanceCents / 100, { style: 'currency', currency: 'EUR' })}
-                </span>
-                <button type="button" disabled={busy} onClick={() => removeStudent(r.studentProfileId)}>
-                  {isAdmin ? t('delete') : t('remove')}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getKey={(r) => r.studentProfileId}
+        searchText={(r) => `${r.name} ${r.email} ${r.country ?? ''}`}
+        filter={{
+          label: t('level'),
+          value: levelFilter,
+          options: levels.map((l) => ({ value: l, label: l })),
+          onChange: setLevelFilter
+        }}
+        filterFn={levelFilter ? (r) => r.cefrLevel === levelFilter : undefined}
+        empty={{
+          title: t('empty'),
+          action: canAdd ? { label: t('add'), onClick: () => setDrawerOpen(true) } : undefined
+        }}
+      />
     </div>
   );
 }

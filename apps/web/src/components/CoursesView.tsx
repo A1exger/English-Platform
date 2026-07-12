@@ -10,6 +10,7 @@ import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
 import { ScoreRing } from './ScoreRing';
+import { EmptyState } from './EmptyState';
 
 interface Course {
   id: string;
@@ -30,11 +31,13 @@ interface ContentProgress {
 export function CoursesView() {
   const t = useTranslations('courses');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const { showUndo } = useToast();
 
   const [cats, setCats] = useState<Category[]>([]);
+  const [q, setQ] = useState('');
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [canAuthor, setCanAuthor] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
@@ -146,11 +149,19 @@ export function CoursesView() {
         allCourses[0]?.id)) ||
     undefined;
 
+  const needle = q.trim().toLowerCase();
+  const visibleCats = needle
+    ? cats
+        .map((cat) => ({ ...cat, courses: cat.courses.filter((c) => c.title.toLowerCase().includes(needle)) }))
+        .filter((cat) => cat.courses.length > 0)
+    : cats;
+
   return (
     <div className="content">
       <PageHeader
         title={t('title')}
         primary={canAuthor ? { label: t('newCourse'), onClick: () => setDrawerOpen(true) } : undefined}
+        search={{ value: q, onChange: setQ }}
       />
 
       {canAuthor && (
@@ -188,9 +199,14 @@ export function CoursesView() {
       )}
 
       {cats.length === 0 ? (
-        <div className="card"><p className="note">{t('empty')}</p></div>
+        <EmptyState
+          title={t('empty')}
+          action={canAuthor ? { label: t('newCourse'), onClick: () => setDrawerOpen(true) } : undefined}
+        />
+      ) : visibleCats.length === 0 ? (
+        <p className="note">{tc('noResults')}</p>
       ) : (
-        cats.map((cat) => (
+        visibleCats.map((cat) => (
           <div key={cat.id} className="card course-cat">
             <strong>{cat.title}</strong>
             {cat.courses.length === 0 ? (

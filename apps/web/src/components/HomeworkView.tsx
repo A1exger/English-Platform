@@ -9,6 +9,7 @@ import { Skeleton } from './Skeleton';
 import { Drawer } from './Drawer';
 import { ScoreRing } from './ScoreRing';
 import { PageHeader } from './PageHeader';
+import { DataList } from './DataList';
 
 interface Submission {
   id: string;
@@ -140,36 +141,42 @@ export function HomeworkView() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
-        <p className="note">{t('empty')}</p>
-      ) : (
-        <ul className="assign-list">
-          {filtered.map((h) => {
-            const grade = h.submissions[0]?.grade;
-            const graded = h.status === 'graded' && grade != null && grade !== '';
-            const overdue = !!h.dueAt && h.status === 'assigned' && new Date(h.dueAt).getTime() < now;
-            return (
-              <li key={h.id}>
-                <Link className="assign-row" href={`/homework/${h.id}`}>
-                  <div className="assign-row-main">
-                    <strong>{h.title}</strong>
-                    {h.dueAt && (
-                      <span className={`mono-num${overdue ? ' overdue' : ' muted'}`}>
-                        {t('due')} {format.dateTime(new Date(h.dueAt), { dateStyle: 'medium' })}
-                        {overdue ? ` · ${t('overdue')}` : ''}
-                      </span>
-                    )}
-                  </div>
-                  <div className="assign-row-side">
-                    {graded && <ScoreRing value={Number(grade) * 10} display={String(grade)} size={44} stroke={4} />}
-                    <span className={`chip status-${h.status}`}>{statusLabel(h.status)}</span>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <DataList
+        items={filtered}
+        getKey={(h) => h.id}
+        listClassName="assign-list"
+        searchText={(h) => h.title}
+        sorts={[
+          { key: 'due', label: t('due'), value: (h) => h.dueAt ?? '9999-12-31' },
+          { key: 'title', label: t('titleField'), value: (h) => h.title.toLowerCase() }
+        ]}
+        empty={{
+          title: t('empty'),
+          action: isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined
+        }}
+        renderRow={(h) => {
+          const grade = h.submissions[0]?.grade;
+          const graded = h.status === 'graded' && grade != null && grade !== '';
+          const overdue = !!h.dueAt && h.status === 'assigned' && new Date(h.dueAt).getTime() < now;
+          return (
+            <Link className="assign-row" href={`/homework/${h.id}`}>
+              <div className="assign-row-main">
+                <strong>{h.title}</strong>
+                {h.dueAt && (
+                  <span className={`mono-num${overdue ? ' overdue' : ' muted'}`}>
+                    {t('due')} {format.dateTime(new Date(h.dueAt), { dateStyle: 'medium' })}
+                    {overdue ? ` · ${t('overdue')}` : ''}
+                  </span>
+                )}
+              </div>
+              <div className="assign-row-side">
+                {graded && <ScoreRing value={Number(grade) * 10} display={String(grade)} size={44} stroke={4} />}
+                <span className={`chip status-${h.status}`}>{statusLabel(h.status)}</span>
+              </div>
+            </Link>
+          );
+        }}
+      />
 
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('assign')}>
         <form className="form-grid" onSubmit={assign}>

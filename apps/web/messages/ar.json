@@ -66,7 +66,10 @@
     "lastName": "اسم العائلة",
     "delete": "حذف",
     "remove": "إزالة",
-    "deleted": "تمت إزالة الطالب"
+    "deleted": "تمت إزالة الطالب",
+    "name": "الاسم",
+    "level": "المستوى",
+    "balance": "الرصيد"
   },
   "analytics": {
     "title": "التحليلات",
@@ -113,7 +116,9 @@
     "empty": "لا يوجد مستخدمون.",
     "delete": "حذف",
     "forbidden": "للمشرفين فقط.",
-    "deleted": "تم حذف المستخدم"
+    "deleted": "تم حذف المستخدم",
+    "name": "الاسم",
+    "created": "تاريخ الإنشاء"
   },
   "schedule": {
     "title": "الجدول",
@@ -215,7 +220,10 @@
     "noResults": "لا نتائج",
     "undo": "تراجع",
     "menu": "القائمة",
-    "close": "إغلاق"
+    "close": "إغلاق",
+    "all": "الكل",
+    "sortBy": "ترتيب",
+    "content": "المحتوى"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -256,7 +264,9 @@
     "lessonsDone": "الدروس المنجزة",
     "homework": "الواجبات",
     "upcoming": "القادم",
-    "seeAll": "عرض الكل"
+    "seeAll": "عرض الكل",
+    "noLessons": "لا دروس قادمة",
+    "bookLesson": "احجز درسًا"
   },
   "studentProfile": {
     "title": "ملف الطالب",

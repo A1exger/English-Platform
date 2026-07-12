@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
+import { apiFetch } from '@/lib/api';
+import { tokenStore } from '@/lib/auth';
 
 type Cmd = { key: string; href: string };
+type Item = { id: string; label: string; href: string };
 
 function commandsForRole(role: string | null): Cmd[] {
   const base: Cmd[] = [
@@ -39,15 +42,60 @@ function commandsForRole(role: string | null): Cmd[] {
 export function CommandPalette({ role, onClose }: { role: string | null; onClose: () => void }) {
   const nav = useTranslations('nav');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
   const router = useRouter();
   const [q, setQ] = useState('');
   const [active, setActive] = useState(0);
+  const [content, setContent] = useState<Item[]>([]);
 
-  const commands = useMemo(() => commandsForRole(role), [role]);
-  const filtered = useMemo(() => {
+  const pageItems = useMemo(
+    () => commandsForRole(role).map((c) => ({ id: `p:${c.key}`, label: nav(c.key), href: c.href })),
+    [role, nav]
+  );
+
+  // Sprint 5.3: the palette reaches past page names into content — lessons,
+  // materials, students, dictionary words — so ⌘K finds a student by name.
+  useEffect(() => {
+    const token = tokenStore.get();
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      const staff = role === 'tutor' || role === 'admin';
+      const [lessons, materials, students, dict] = await Promise.all([
+        apiFetch<{ id: string; title?: string | null }[]>('/lessons', { token, locale }).catch(() => []),
+        apiFetch<{ id: string; title: string }[]>('/materials', { token, locale }).catch(() => []),
+        staff
+          ? apiFetch<{ studentProfileId: string; name: string }[]>('/crm/students', { token, locale }).catch(() => [])
+          : Promise.resolve([]),
+        role === 'student'
+          ? apiFetch<{ id: string; word: string }[]>('/content/dictionary', { token, locale }).catch(() => [])
+          : Promise.resolve([])
+      ]);
+      if (cancelled) return;
+      const out: Item[] = [];
+      for (const l of lessons) out.push({ id: `l:${l.id}`, label: l.title || l.id, href: `/lessons/${l.id}/room` });
+      for (const m of materials) out.push({ id: `m:${m.id}`, label: m.title, href: '/materials' });
+      for (const s of students) out.push({ id: `s:${s.studentProfileId}`, label: s.name, href: `/students/${s.studentProfileId}` });
+      for (const d of dict) out.push({ id: `d:${d.id}`, label: d.word, href: '/dictionary' });
+      setContent(out);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [role, locale]);
+
+  const filteredPages = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return commands.filter((c) => nav(c.key).toLowerCase().includes(needle));
-  }, [q, commands, nav]);
+    return pageItems.filter((c) => c.label.toLowerCase().includes(needle));
+  }, [q, pageItems]);
+
+  const filteredContent = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return [];
+    return content.filter((c) => c.label.toLowerCase().includes(needle)).slice(0, 8);
+  }, [q, content]);
+
+  const filtered = useMemo(() => [...filteredPages, ...filteredContent], [filteredPages, filteredContent]);
 
   useEffect(() => setActive(0), [q]);
 
@@ -77,6 +125,8 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
     onClose();
   };
 
+  const pageCount = filteredPages.length;
+
   return (
     <div className="modal-overlay" onMouseDown={onClose}>
       <div className="palette" onMouseDown={(e) => e.stopPropagation()}>
@@ -90,14 +140,17 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
         <ul className="palette-list">
           {filtered.length === 0 && <li className="palette-empty">{tCommon('noResults')}</li>}
           {filtered.map((c, idx) => (
-            <li key={c.key}>
+            <li key={c.id}>
+              {idx === pageCount && filteredContent.length > 0 && (
+                <span className="palette-group">{tCommon('content')}</span>
+              )}
               <button
                 type="button"
                 className={`palette-item${idx === active ? ' active' : ''}`}
                 onMouseEnter={() => setActive(idx)}
                 onClick={() => go(c.href)}
               >
-                {nav(c.key)}
+                {c.label}
               </button>
             </li>
           ))}

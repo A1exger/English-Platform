@@ -9,6 +9,7 @@ import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
+import { DataTable, Column } from './DataTable';
 
 interface UserRow {
   id: string;
@@ -34,6 +35,7 @@ export function AdminUsersView() {
   const [state, setState] = useState<'loading' | 'error' | 'forbidden' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [roleFilter, setRoleFilter] = useState('');
   const [form, setForm] = useState({
     role: 'student',
     firstName: '',
@@ -104,6 +106,34 @@ export function AdminUsersView() {
   if (state === 'forbidden') return <div className="content"><p className="error">{t('forbidden')}</p></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
+  const columns: Column<UserRow>[] = [
+    {
+      key: 'name',
+      label: t('name'),
+      sortValue: (u) => `${u.lastName} ${u.firstName}`.toLowerCase(),
+      render: (u) => <span>{u.firstName} {u.lastName}</span>
+    },
+    { key: 'email', label: t('email'), sortValue: (u) => u.email.toLowerCase(), render: (u) => <span className="muted">{u.email}</span> },
+    { key: 'role', label: t('role'), sortValue: (u) => u.role, render: (u) => u.role },
+    {
+      key: 'created',
+      label: t('created'),
+      align: 'end',
+      sortValue: (u) => u.createdAt,
+      render: (u) => <span className="mono-num">{format.dateTime(new Date(u.createdAt), { dateStyle: 'short' })}</span>
+    },
+    {
+      key: 'actions',
+      label: '',
+      align: 'end',
+      render: (u) => (
+        <button type="button" className="ghost" disabled={busy} onClick={() => remove(u.id)}>
+          {t('delete')}
+        </button>
+      )
+    }
+  ];
+
   return (
     <div className="content">
       <PageHeader title={t('title')} primary={{ label: t('create'), onClick: () => setDrawerOpen(true) }} />
@@ -148,27 +178,20 @@ export function AdminUsersView() {
         </form>
       </Drawer>
 
-      <div className="card">
-        {users.length === 0 ? (
-          <p className="note">{t('empty')}</p>
-        ) : (
-          <ul className="lesson-list">
-            {users.map((u) => (
-              <li key={u.id}>
-                <span>
-                  {u.firstName} {u.lastName} <span className="muted">· {u.email}</span>
-                </span>
-                <span className="muted">
-                  {u.role} · {format.dateTime(new Date(u.createdAt), { dateStyle: 'short' })}
-                </span>
-                <button type="button" disabled={busy} onClick={() => remove(u.id)}>
-                  {t('delete')}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <DataTable
+        columns={columns}
+        rows={users}
+        getKey={(u) => u.id}
+        searchText={(u) => `${u.firstName} ${u.lastName} ${u.email}`}
+        filter={{
+          label: t('role'),
+          value: roleFilter,
+          options: ROLES.map((r) => ({ value: r, label: r })),
+          onChange: setRoleFilter
+        }}
+        filterFn={roleFilter ? (u) => u.role === roleFilter : undefined}
+        empty={{ title: t('empty'), action: { label: t('create'), onClick: () => setDrawerOpen(true) } }}
+      />
     </div>
   );
 }

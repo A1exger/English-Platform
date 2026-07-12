@@ -6,6 +6,8 @@ import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
+import { PageHeader } from './PageHeader';
+import { DataList } from './DataList';
 
 interface Row {
   id: string;
@@ -60,33 +62,41 @@ export function AssignmentsView() {
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
-      {rows.length === 0 ? (
-        <p className="note">{t('empty')}</p>
-      ) : (
-        <ul className="assign-list">
-          {rows.map((r) => (
-            <li key={r.id}>
-              <Link className="assign-row" href={`/assignments/${r.id}`}>
-                <div className="assign-row-main">
-                  <strong>{r.topicTag || t(r.kind === 'homework' ? 'homework' : 'lesson')}</strong>
-                  <span className="muted">
-                    {!isStudent && r.studentName ? `${r.studentName} · ` : ''}
-                    {r.submittedCount}/{r.cardCount} · {t('tasks')}
-                    {r.dueAt ? ` · ${t('due')} ${new Date(r.dueAt).toLocaleDateString(locale)}` : ''}
-                  </span>
-                </div>
-                <div className="assign-row-side">
-                  {r.result && r.result.overall !== null && (
-                    <span className="mono-num result-pill">{r.result.overall}</span>
-                  )}
-                  <span className={`chip status-${r.status}`}>{t(`status_${r.status}`)}</span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <PageHeader title={t('title')} />
+      <DataList
+        items={rows}
+        getKey={(r) => r.id}
+        listClassName="assign-list"
+        searchText={(r) => `${r.topicTag ?? ''} ${r.studentName ?? ''} ${r.kind}`}
+        sorts={[
+          { key: 'due', label: t('due'), value: (r) => r.dueAt ?? '9999-12-31' },
+          {
+            key: 'progress',
+            label: t('tasks'),
+            value: (r) => (r.cardCount ? r.submittedCount / r.cardCount : 0),
+            dir: 'desc'
+          }
+        ]}
+        empty={{ title: t('empty') }}
+        renderRow={(r) => (
+          <Link className="assign-row" href={`/assignments/${r.id}`}>
+            <div className="assign-row-main">
+              <strong>{r.topicTag || t(r.kind === 'homework' ? 'homework' : 'lesson')}</strong>
+              <span className="muted">
+                {!isStudent && r.studentName ? `${r.studentName} · ` : ''}
+                {r.submittedCount}/{r.cardCount} · {t('tasks')}
+                {r.dueAt ? ` · ${t('due')} ${new Date(r.dueAt).toLocaleDateString(locale)}` : ''}
+              </span>
+            </div>
+            <div className="assign-row-side">
+              {r.result && r.result.overall !== null && (
+                <span className="mono-num result-pill">{r.result.overall}</span>
+              )}
+              <span className={`chip status-${r.status}`}>{t(`status_${r.status}`)}</span>
+            </div>
+          </Link>
+        )}
+      />
     </div>
   );
 }

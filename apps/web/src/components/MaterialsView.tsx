@@ -9,6 +9,7 @@ import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
+import { DataList } from './DataList';
 
 interface Material {
   id: string;
@@ -23,6 +24,7 @@ const TYPES = ['pdf', 'video', 'audio', 'image', 'exercise', 'link'];
 export function MaterialsView() {
   const t = useTranslations('materials');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const { showUndo } = useToast();
@@ -32,6 +34,7 @@ export function MaterialsView() {
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('');
   const [form, setForm] = useState({ type: 'pdf', title: '', url: '', language: '' });
 
   const load = useCallback(async () => {
@@ -131,36 +134,68 @@ export function MaterialsView() {
         primary={canManage ? { label: t('add'), onClick: () => setDrawerOpen(true) } : undefined}
       />
 
-      <div className="card">
-        {items.length === 0 ? (
-          <p className="note">{t('empty')}</p>
-        ) : (
-          <ul className="lesson-list">
-            {items.map((m) => (
-              <li key={m.id}>
-                <span>
-                  {m.url ? (
-                    <a className="link" href={fileUrl(m.url)} target="_blank" rel="noreferrer">
-                      {m.title}
-                    </a>
-                  ) : (
-                    m.title
-                  )}
-                </span>
-                <span className="muted">
-                  {m.type}
-                  {m.language ? ` · ${m.language}` : ''}
-                </span>
-                {canManage && (
-                  <button type="button" disabled={busy} onClick={() => remove(m.id)}>
-                    {t('delete')}
-                  </button>
-                )}
-              </li>
+      <DataList
+        items={items}
+        getKey={(m) => m.id}
+        searchText={(m) => `${m.title} ${m.type} ${m.language ?? ''}`}
+        listClassName="lesson-list"
+        filterFn={typeFilter ? (m) => m.type === typeFilter : undefined}
+        sorts={[
+          { key: 'title', label: t('titleField'), value: (m) => m.title.toLowerCase() },
+          { key: 'type', label: t('type'), value: (m) => m.type }
+        ]}
+        toolbar={
+          <div className="tabs tabs-inline filter-chips" role="tablist" aria-label={t('type')}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={typeFilter === ''}
+              className={typeFilter === '' ? 'active' : ''}
+              onClick={() => setTypeFilter('')}
+            >
+              {tc('all')}
+            </button>
+            {TYPES.map((ty) => (
+              <button
+                key={ty}
+                type="button"
+                role="tab"
+                aria-selected={typeFilter === ty}
+                className={typeFilter === ty ? 'active' : ''}
+                onClick={() => setTypeFilter(ty)}
+              >
+                {ty}
+              </button>
             ))}
-          </ul>
+          </div>
+        }
+        empty={{
+          title: t('empty'),
+          action: canManage ? { label: t('add'), onClick: () => setDrawerOpen(true) } : undefined
+        }}
+        renderRow={(m) => (
+          <>
+            <span>
+              {m.url ? (
+                <a className="link" href={fileUrl(m.url)} target="_blank" rel="noreferrer">
+                  {m.title}
+                </a>
+              ) : (
+                m.title
+              )}
+            </span>
+            <span className="muted">
+              {m.type}
+              {m.language ? ` · ${m.language}` : ''}
+            </span>
+            {canManage && (
+              <button type="button" disabled={busy} onClick={() => remove(m.id)}>
+                {t('delete')}
+              </button>
+            )}
+          </>
         )}
-      </div>
+      />
 
       {canManage && (
         <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('add')}>

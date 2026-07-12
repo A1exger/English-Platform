@@ -66,7 +66,10 @@
     "lastName": "Achternaam",
     "delete": "Verwijderen",
     "remove": "Verwijderen",
-    "deleted": "Leerling verwijderd"
+    "deleted": "Leerling verwijderd",
+    "name": "Naam",
+    "level": "Niveau",
+    "balance": "Saldo"
   },
   "analytics": {
     "title": "Analyse",
@@ -113,7 +116,9 @@
     "empty": "Geen gebruikers.",
     "delete": "Verwijderen",
     "forbidden": "Alleen voor beheerders.",
-    "deleted": "Gebruiker verwijderd"
+    "deleted": "Gebruiker verwijderd",
+    "name": "Naam",
+    "created": "Aangemaakt"
   },
   "schedule": {
     "title": "Rooster",
@@ -215,7 +220,10 @@
     "noResults": "Niets gevonden",
     "undo": "Ongedaan maken",
     "menu": "Menu",
-    "close": "Sluiten"
+    "close": "Sluiten",
+    "all": "Alle",
+    "sortBy": "Sorteren",
+    "content": "Inhoud"
   },
   "nav": {
     "overview": "Overzicht",
@@ -256,7 +264,9 @@
     "lessonsDone": "Lessen gedaan",
     "homework": "Huiswerk",
     "upcoming": "Binnenkort",
-    "seeAll": "Alles"
+    "seeAll": "Alles",
+    "noLessons": "Geen aankomende lessen",
+    "bookLesson": "Een les boeken"
   },
   "studentProfile": {
     "title": "Leerlingprofiel",

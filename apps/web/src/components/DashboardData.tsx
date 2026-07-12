@@ -6,6 +6,7 @@ import { Link } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { ScoreRing } from './ScoreRing';
+import { EmptyState } from './EmptyState';
 
 interface Lesson {
   id: string;
@@ -109,6 +110,15 @@ export function DashboardData() {
           <Link href={`/lessons/${next.id}/room`} className="cta-primary">
             {tDash('joinLesson')}
           </Link>
+        </div>
+      )}
+
+      {!next && (
+        <div className="card">
+          <EmptyState
+            title={tDash('noLessons')}
+            action={{ label: tDash('bookLesson'), href: '/schedule' }}
+          />
         </div>
       )}
 
