@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { scoreContentTask, toContentQuestion } from './task-check';
@@ -26,6 +27,7 @@ import {
   ReorderLessonDto,
   UpdateCourseDto,
   UpdateCourseLessonDto,
+  UpdatePageDto,
   UpdatePageMediaDto,
   UpdateTaskDto,
 } from './dto/content.dto';
@@ -366,6 +368,57 @@ export class ContentService {
     return { reordered: ordered.length };
   }
 
+  // --- editor tree reorder (sections/units/pages/tasks) ---------------------
+  // Lessons keep their level-wide endpoint (reorderLesson / INV-1); these order
+  // a set of siblings by the position of their id in the submitted list.
+
+  async reorderSections(user: AuthenticatedUser, courseId: string, ids: string[]) {
+    await this.assertCourseEditable(user, courseId);
+    const rows = await this.prisma.section.findMany({ where: { id: { in: ids }, courseId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.section.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderUnits(user: AuthenticatedUser, sectionId: string, ids: string[]) {
+    const section = await this.prisma.section.findUnique({ where: { id: sectionId } });
+    if (!section) throw new NotFoundException('Section not found');
+    await this.assertCourseEditable(user, section.courseId);
+    const rows = await this.prisma.unit.findMany({ where: { id: { in: ids }, sectionId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.unit.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderPages(user: AuthenticatedUser, courseLessonId: string, ids: string[]) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: courseLessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+    const rows = await this.prisma.lessonPage.findMany({ where: { id: { in: ids }, courseLessonId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.lessonPage.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderTasks(user: AuthenticatedUser, pageId: string, ids: string[]) {
+    await this.assertPageEditable(user, pageId);
+    const rows = await this.prisma.lessonTask.findMany({ where: { id: { in: ids }, pageId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.lessonTask.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  private async applyOrder(
+    valid: string[],
+    ids: string[],
+    update: (id: string, order: number) => Prisma.PrismaPromise<unknown>,
+  ) {
+    const allowed = new Set(valid);
+    const ordered = ids.filter((id) => allowed.has(id));
+    await this.prisma.$transaction(ordered.map((id, i) => update(id, i)));
+    return { reordered: ordered.length };
+  }
+
   async updateCourse(user: AuthenticatedUser, id: string, dto: UpdateCourseDto) {
     await this.assertCourseEditable(user, id);
     return this.prisma.course.update({ where: { id }, data: { ...dto } });
@@ -567,6 +620,11 @@ export class ContentService {
         text: dto.text,
       },
     });
+  }
+
+  async updatePage(user: AuthenticatedUser, id: string, dto: UpdatePageDto) {
+    await this.assertPageEditable(user, id);
+    return this.prisma.lessonPage.update({ where: { id }, data: { ...dto } });
   }
 
   // --- page media (§7): image/video/audio attachments -----------------------

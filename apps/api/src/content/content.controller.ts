@@ -26,7 +26,12 @@ import {
   ReorderCoursesDto,
   ReorderLessonDto,
   ReorderMediaDto,
+  ReorderPagesDto,
+  ReorderSectionsDto,
+  ReorderTasksDto,
+  ReorderUnitsDto,
   ReviewDictionaryDto,
+  UpdatePageDto,
   UpdatePageMediaDto,
   SetGrammarDto,
   SetWordlistDto,
@@ -139,6 +144,30 @@ export class ContentController {
   }
 
   @Roles('tutor', 'admin')
+  @Post('sections/reorder')
+  reorderSections(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderSectionsDto) {
+    return this.content.reorderSections(user, dto.courseId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('units/reorder')
+  reorderUnits(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderUnitsDto) {
+    return this.content.reorderUnits(user, dto.sectionId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('pages/reorder')
+  reorderPages(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderPagesDto) {
+    return this.content.reorderPages(user, dto.courseLessonId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('tasks/reorder')
+  reorderTasks(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderTasksDto) {
+    return this.content.reorderTasks(user, dto.pageId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
   @Patch('courses/:id')
   updateCourse(
     @CurrentUser() user: AuthenticatedUser,
@@ -216,6 +245,16 @@ export class ContentController {
   @Post('pages')
   createPage(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreatePageDto) {
     return this.content.createPage(user, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Patch('pages/:id')
+  updatePage(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePageDto,
+  ) {
+    return this.content.updatePage(user, id, dto);
   }
 
   // --- page media (§7) ---

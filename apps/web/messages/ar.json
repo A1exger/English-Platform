@@ -465,6 +465,9 @@
     "transcript": "النص",
     "showTranscript": "إظهار النص",
     "hideTranscript": "إخفاء النص",
+    "preview": "معاينة",
+    "saving": "جارٍ الحفظ…",
+    "pageText": "النص",
     "selectLesson": "اختر درسًا للتعديل",
     "lessonDeleted": "تم حذف الدرس",
     "taskDeleted": "تمت إزالة المهمة"

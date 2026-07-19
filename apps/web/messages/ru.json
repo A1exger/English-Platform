@@ -465,6 +465,9 @@
     "transcript": "Транскрипт",
     "showTranscript": "Показать транскрипт",
     "hideTranscript": "Скрыть транскрипт",
+    "preview": "Предпросмотр",
+    "saving": "Сохранение…",
+    "pageText": "Текст",
     "selectLesson": "Выберите урок для редактирования",
     "lessonDeleted": "Урок удалён",
     "taskDeleted": "Задание удалено"

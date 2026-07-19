@@ -1,7 +1,17 @@
 'use client';
 
-import { DragEvent, FormEvent, KeyboardEvent, useCallback, useEffect, useState } from 'react';
+import { DragEvent, FormEvent, KeyboardEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
@@ -11,7 +21,8 @@ import { Drawer } from './Drawer';
 import { useToast } from './Toast';
 import { Icon } from './Icon';
 import { PageMediaEditor } from './PageMediaEditor';
-import type { PageMediaItem } from './PageMediaBlock';
+import { PageMediaBlock, type PageMediaItem } from './PageMediaBlock';
+import { LessonPlayerView } from './LessonPlayerView';
 
 const LEVELS = [
   'Beginner',
@@ -75,6 +86,33 @@ const parseFillAnswers = (text: string) => {
   return out;
 };
 
+// A drag-reorderable wrapper whose handle starts the drag (pages and tasks).
+function Sortable({
+  id,
+  className,
+  handleLabel,
+  children
+}: {
+  id: string;
+  className: string;
+  handleLabel: string;
+  children: (handle: ReactNode) => ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const handle = (
+    <button type="button" className="drag-handle" aria-label={handleLabel} {...attributes} {...listeners}>⠿</button>
+  );
+  return (
+    <div
+      ref={setNodeRef}
+      className={className}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 }}
+    >
+      {children(handle)}
+    </div>
+  );
+}
+
 export function CourseBuilderView({ courseId }: { courseId: string }) {
   const t = useTranslations('courses');
   const tEx = useTranslations('exercises');
@@ -95,7 +133,8 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   const [draft, setDraft] = useState({ title: '', optional: false });
   const [renaming, setRenaming] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
-  const [drag, setDrag] = useState<{ id: string; unitId: string } | null>(null);
+  const [drag, setDrag] = useState<{ kind: 'section' | 'unit' | 'lesson'; id: string; parentId: string } | null>(null);
+  const [previewKey, setPreviewKey] = useState(0);
 
   const token = () => tokenStore.get();
 
@@ -164,9 +203,42 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   }
 
   function onLessonDrop(target: LessonRow, unitId: string) {
-    if (drag && drag.unitId === unitId && drag.id !== target.id) doReorder(drag.id, target.order);
+    if (drag?.kind === 'lesson' && drag.parentId === unitId && drag.id !== target.id) doReorder(drag.id, target.order);
     setDrag(null);
   }
+
+  // Reorder a set of siblings by moving the dragged id in front of the target,
+  // then persisting the full id order (sections/units share this).
+  function siblingReorder(kind: 'section' | 'unit', parentId: string, siblings: { id: string }[], targetId: string) {
+    if (!drag || drag.id === targetId || busy) return;
+    const ids = siblings.map((s) => s.id);
+    const from = ids.indexOf(drag.id);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    ids.splice(from, 1);
+    ids.splice(to, 0, drag.id);
+    void call(
+      kind === 'section' ? '/content/sections/reorder' : '/content/units/reorder',
+      'POST',
+      kind === 'section' ? { courseId, ids } : { sectionId: parentId, ids }
+    );
+  }
+
+  function onSectionDrop(targetId: string) {
+    if (tree && drag?.kind === 'section') siblingReorder('section', courseId, tree.sections, targetId);
+    setDrag(null);
+  }
+
+  function onUnitDrop(sectionId: string, units: UnitRow[], targetId: string) {
+    if (drag?.kind === 'unit' && drag.parentId === sectionId) siblingReorder('unit', sectionId, units, targetId);
+    setDrag(null);
+  }
+
+  // Re-render the live preview after an edit lands.
+  const refresh = () => {
+    void load();
+    setPreviewKey((k) => k + 1);
+  };
 
   function onHandleKey(e: KeyboardEvent, lesson: LessonRow) {
     if (e.key === 'ArrowUp') {
@@ -195,6 +267,18 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
 
   const allLessons = () =>
     tree ? tree.sections.flatMap((s) => s.units.flatMap((u) => u.lessons)) : [];
+
+  // course › section › unit › lesson for the selected node (ФТ-К206).
+  function breadcrumb(lessonId: string): string {
+    if (!tree) return '';
+    for (const s of tree.sections) {
+      for (const u of s.units) {
+        const l = u.lessons.find((x) => x.id === lessonId);
+        if (l) return `${tree.course.title} › ${s.title} › ${u.title} › ${l.title}`;
+      }
+    }
+    return tree.course.title;
+  }
 
   // Optimistic + undoable delete (global rule: no deletion without showUndo).
   function removeLesson(lesson: LessonRow) {
@@ -249,8 +333,16 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
         <p className="note">{t('empty')}</p>
       ) : (
         tree.sections.map((s) => (
-          <div key={s.id} className="tree-section">
-            <div className="tree-section-head">
+          <div key={s.id} className={`tree-section${drag?.id === s.id ? ' dragging' : ''}`}>
+            <div
+              className="tree-section-head"
+              draggable={canAuthor}
+              onDragStart={() => canAuthor && setDrag({ kind: 'section', id: s.id, parentId: courseId })}
+              onDragOver={(e: DragEvent) => canAuthor && drag?.kind === 'section' && e.preventDefault()}
+              onDrop={() => canAuthor && onSectionDrop(s.id)}
+              onDragEnd={() => setDrag(null)}
+            >
+              {canAuthor && <span className="drag-handle" aria-hidden>⠿</span>}
               <h3>{s.title}</h3>
               {canAuthor && (
                 <button type="button" className="tree-add" aria-label={t('newUnit')} onClick={() => openCreate({ mode: 'unit', sectionId: s.id })}>
@@ -260,8 +352,16 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
             </div>
 
             {s.units.map((u) => (
-              <div key={u.id} className="tree-unit">
-                <div className="tree-unit-head">
+              <div key={u.id} className={`tree-unit${drag?.id === u.id ? ' dragging' : ''}`}>
+                <div
+                  className="tree-unit-head"
+                  draggable={canAuthor}
+                  onDragStart={() => canAuthor && setDrag({ kind: 'unit', id: u.id, parentId: s.id })}
+                  onDragOver={(e: DragEvent) => canAuthor && drag?.kind === 'unit' && drag.parentId === s.id && e.preventDefault()}
+                  onDrop={() => canAuthor && onUnitDrop(s.id, s.units, u.id)}
+                  onDragEnd={() => setDrag(null)}
+                >
+                  {canAuthor && <span className="drag-handle" aria-hidden>⠿</span>}
                   <strong>{u.title}</strong>
                   {canAuthor && (
                     <button type="button" className="tree-add" aria-label={t('newLesson')} onClick={() => openCreate({ mode: 'lesson', unitId: u.id })}>
@@ -281,8 +381,8 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                           key={l.id}
                           className={`tree-lesson${selected === l.id ? ' active' : ''}${drag?.id === l.id ? ' dragging' : ''}`}
                           draggable={canAuthor && !isRenaming}
-                          onDragStart={() => canAuthor && setDrag({ id: l.id, unitId: u.id })}
-                          onDragOver={(e: DragEvent) => canAuthor && e.preventDefault()}
+                          onDragStart={() => canAuthor && setDrag({ kind: 'lesson', id: l.id, parentId: u.id })}
+                          onDragOver={(e: DragEvent) => canAuthor && drag?.kind === 'lesson' && e.preventDefault()}
                           onDrop={() => canAuthor && onLessonDrop(l, u.id)}
                           onDragEnd={() => setDrag(null)}
                         >
@@ -356,15 +456,26 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
       />
 
       {canAuthor ? (
-        <div className="builder">
+        <div className={`builder${selected ? ' builder-3' : ''}`}>
           {treePanel}
           <div className="builder-editor">
             {selected ? (
-              <LessonEditor lessonId={selected} onChanged={load} t={t} tEx={tEx} locale={locale} />
+              <>
+                <nav className="builder-crumbs" aria-label="breadcrumb">{breadcrumb(selected)}</nav>
+                <LessonEditor lessonId={selected} onChanged={refresh} t={t} tEx={tEx} locale={locale} />
+              </>
             ) : (
               <div className="card empty-pane"><p className="note">{t('selectLesson')}</p></div>
             )}
           </div>
+          {selected && (
+            <div className="builder-preview">
+              <div className="builder-preview-head muted">{t('preview')}</div>
+              <div className="builder-preview-body">
+                <LessonPlayerView key={previewKey} lessonId={selected} />
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         treePanel
@@ -408,6 +519,7 @@ interface PageRow {
   id: string;
   type: string;
   includedInHomework: boolean;
+  text?: string | null;
   tasks: TaskRow[];
   media?: PageMediaItem[];
 }
@@ -462,6 +574,78 @@ function LessonEditor({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // Reload pages/tasks/media only, keeping in-progress objectives/wordlist/
+  // grammar text; also refreshes the live preview via onChanged.
+  const reloadPages = useCallback(async () => {
+    const tok = token();
+    if (!tok) return;
+    setDetail(await apiFetch<LessonDetail>(`/content/lessons/${lessonId}`, { token: tok, locale }));
+    onChanged();
+  }, [lessonId, locale, onChanged]);
+
+  // Autosave objectives / wordlist / grammar (ФТ-К206); called on blur + Save.
+  const saveLesson = useCallback(async () => {
+    const tok = token();
+    if (!tok) return;
+    setBusy(true);
+    setSaved(false);
+    try {
+      await apiFetch(`/content/lessons/${lessonId}`, {
+        method: 'PATCH',
+        token: tok,
+        locale,
+        body: { objectives: objectives.split('\n').map((s) => s.trim()).filter(Boolean) }
+      });
+      const entries = wordlist
+        .split('\n')
+        .map((line) => {
+          const [word, translation] = line.split('=').map((s) => s.trim());
+          return word ? { word, translation: translation || undefined } : null;
+        })
+        .filter((x): x is { word: string; translation: string | undefined } => x !== null);
+      await apiPut(`/content/lessons/${lessonId}/wordlist`, { entries }, tok, locale);
+      if (grammar.title && grammar.meaning && grammar.form) {
+        await apiPut(`/content/lessons/${lessonId}/grammar`, grammar, tok, locale);
+      }
+      setSaved(true);
+      onChanged();
+    } finally {
+      setBusy(false);
+    }
+  }, [lessonId, locale, objectives, wordlist, grammar, onChanged]);
+
+  async function patchPage(id: string, body: Record<string, unknown>) {
+    const tok = token();
+    if (!tok) return;
+    await apiFetch(`/content/pages/${id}`, { method: 'PATCH', token: tok, locale, body }).catch(() => undefined);
+    await reloadPages();
+  }
+
+  async function postReorder(path: string, body: unknown) {
+    const tok = token();
+    if (!tok) return;
+    await apiFetch(path, { method: 'POST', token: tok, locale, body }).catch(() => undefined);
+    await reloadPages();
+  }
+
+  function onPageDragEnd(e: DragEndEvent) {
+    if (!detail || !e.over || e.active.id === e.over.id) return;
+    const ids = detail.pages.map((p) => p.id);
+    const next = arrayMove(ids, ids.indexOf(String(e.active.id)), ids.indexOf(String(e.over.id)));
+    void postReorder('/content/pages/reorder', { courseLessonId: lessonId, ids: next });
+  }
+
+  function onTaskDragEnd(pageId: string, e: DragEndEvent) {
+    if (!detail || !e.over || e.active.id === e.over.id) return;
+    const page = detail.pages.find((p) => p.id === pageId);
+    if (!page) return;
+    const ids = page.tasks.map((tk) => tk.id);
+    const next = arrayMove(ids, ids.indexOf(String(e.active.id)), ids.indexOf(String(e.over.id)));
+    void postReorder('/content/tasks/reorder', { pageId, ids: next });
+  }
 
   async function addPage() {
     const tok = token();
@@ -527,93 +711,95 @@ function LessonEditor({
 
   return (
     <div className="lesson-editor">
+      <div className="ed-toolbar">
+        <span className={`save-status${busy ? ' saving' : saved ? ' ok' : ''}`} aria-live="polite">
+          {busy ? t('saving') : saved ? t('saved') : ''}
+        </span>
+        <button type="button" className="save-lesson" disabled={busy} onClick={() => void saveLesson()}>
+          {t('save')}
+        </button>
+      </div>
       <div className="two-col">
         <label className="ed-field">
           {t('objectives')}
-          <textarea value={objectives} onChange={(e) => setObjectives(e.target.value)} />
+          <textarea value={objectives} onChange={(e) => { setObjectives(e.target.value); setSaved(false); }} onBlur={() => void saveLesson()} />
         </label>
         <label className="ed-field">
           {t('wordlist')}
-          <textarea value={wordlist} onChange={(e) => setWordlist(e.target.value)} />
+          <textarea value={wordlist} onChange={(e) => { setWordlist(e.target.value); setSaved(false); }} onBlur={() => void saveLesson()} />
         </label>
       </div>
       <div className="form-grid">
         <strong>{t('grammar')}</strong>
-        <label>{t('grammarTitle')}<input value={grammar.title} onChange={(e) => setGrammar({ ...grammar, title: e.target.value })} /></label>
-        <label>{t('meaning')}<input value={grammar.meaning} onChange={(e) => setGrammar({ ...grammar, meaning: e.target.value })} /></label>
-        <label>{t('form')}<input value={grammar.form} onChange={(e) => setGrammar({ ...grammar, form: e.target.value })} /></label>
+        <label>{t('grammarTitle')}<input value={grammar.title} onChange={(e) => { setGrammar({ ...grammar, title: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
+        <label>{t('meaning')}<input value={grammar.meaning} onChange={(e) => { setGrammar({ ...grammar, meaning: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
+        <label>{t('form')}<input value={grammar.form} onChange={(e) => { setGrammar({ ...grammar, form: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
       </div>
-      <button
-        type="button"
-        className="save-lesson"
-        disabled={busy}
-        onClick={async () => {
-          const tok = token();
-          if (!tok) return;
-          setBusy(true);
-          setSaved(false);
-          try {
-            await apiFetch(`/content/lessons/${lessonId}`, {
-              method: 'PATCH',
-              token: tok,
-              locale,
-              body: { objectives: objectives.split('\n').map((s) => s.trim()).filter(Boolean) }
-            });
-            const entries = wordlist
-              .split('\n')
-              .map((line) => {
-                const [word, translation] = line.split('=').map((s) => s.trim());
-                return word ? { word, translation: translation || undefined } : null;
-              })
-              .filter((x): x is { word: string; translation: string | undefined } => x !== null);
-            await apiPut(`/content/lessons/${lessonId}/wordlist`, { entries }, tok, locale);
-            if (grammar.title && grammar.meaning && grammar.form) {
-              await apiPut(`/content/lessons/${lessonId}/grammar`, grammar, tok, locale);
-            }
-            setSaved(true);
-            onChanged();
-            await load();
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        {saved ? t('saved') : t('save')}
-      </button>
 
       <div className="ed-pages">
         <strong>{t('pages')}</strong>
-        {detail.pages.map((p) => (
-          <div key={p.id} className="ed-page">
-            <div className="row-between">
-              <span className="muted">
-                {p.type} {p.includedInHomework ? `· ${t('inHomework')}` : ''}
-              </span>
-            </div>
-            <ul className="lesson-list">
-              {p.tasks.map((task) => (
-                <li key={task.id}>
-                  <span>
-                    {tEx(taskLabelKey(task.type))}{' '}
-                    <span className="muted">· {task.gradingMode} · {task.aspect} · {task.estimatedMinutes}′</span>
-                  </span>
-                  <button type="button" className="ghost" disabled={busy} aria-label={t('del')} onClick={() => deleteTask(task.id)}>
-                    <Icon name="close" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <TaskForm
-              form={taskForms[p.id] ?? defaultTaskForm()}
-              onChange={(f) => setTaskForms({ ...taskForms, [p.id]: f })}
-              onSubmit={() => addTask(p.id)}
-              busy={busy}
-              t={t}
-              tEx={tEx}
-            />
-            <PageMediaEditor pageId={p.id} media={p.media ?? []} onChanged={load} />
-          </div>
-        ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onPageDragEnd}>
+          <SortableContext items={detail.pages.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+            {detail.pages.map((p) => (
+              <Sortable key={p.id} id={p.id} className="ed-page" handleLabel={t('reorder')}>
+                {(handle) => (
+                  <>
+                    <div className="ed-page-head">
+                      {handle}
+                      <select value={p.type} onChange={(e) => patchPage(p.id, { type: e.target.value })} aria-label={t('pageType')}>
+                        {PAGE_TYPES.map((pt) => (
+                          <option key={pt} value={pt}>{pt}</option>
+                        ))}
+                      </select>
+                      <label className="check">
+                        <input type="checkbox" checked={p.includedInHomework} onChange={(e) => patchPage(p.id, { includedInHomework: e.target.checked })} />
+                        {t('inHomework')}
+                      </label>
+                    </div>
+                    <label className="ed-field">
+                      {t('pageText')}
+                      <textarea
+                        defaultValue={p.text ?? ''}
+                        onBlur={(e) => e.target.value !== (p.text ?? '') && patchPage(p.id, { text: e.target.value })}
+                      />
+                    </label>
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onTaskDragEnd(p.id, e)}>
+                      <SortableContext items={p.tasks.map((tk) => tk.id)} strategy={verticalListSortingStrategy}>
+                        <div className="lesson-list">
+                          {p.tasks.map((task) => (
+                            <Sortable key={task.id} id={task.id} className="ed-task-row" handleLabel={t('reorder')}>
+                              {(th) => (
+                                <>
+                                  {th}
+                                  <span className="ed-task-label">
+                                    {tEx(taskLabelKey(task.type))}{' '}
+                                    <span className="muted">· {task.gradingMode} · {task.aspect} · {task.estimatedMinutes}′</span>
+                                  </span>
+                                  <button type="button" className="ghost" disabled={busy} aria-label={t('del')} onClick={() => deleteTask(task.id)}>
+                                    <Icon name="close" />
+                                  </button>
+                                </>
+                              )}
+                            </Sortable>
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                    <TaskForm
+                      form={taskForms[p.id] ?? defaultTaskForm()}
+                      onChange={(f) => setTaskForms({ ...taskForms, [p.id]: f })}
+                      onSubmit={() => addTask(p.id)}
+                      busy={busy}
+                      t={t}
+                      tEx={tEx}
+                    />
+                    <PageMediaEditor pageId={p.id} media={p.media ?? []} onChanged={reloadPages} />
+                  </>
+                )}
+              </Sortable>
+            ))}
+          </SortableContext>
+        </DndContext>
         <div className="inline-form">
           <select value={pageForm.type} onChange={(e) => setPageForm({ ...pageForm, type: e.target.value })}>
             {PAGE_TYPES.map((pt) => (

@@ -162,6 +162,44 @@ export class ReorderCoursesDto {
   ids!: string[];
 }
 
+// Editor drag-reorder within a parent (order = index). Lessons keep their own
+// level-wide endpoint (INV-1); these cover the remaining tree levels.
+export class ReorderSectionsDto {
+  @IsString()
+  courseId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class ReorderUnitsDto {
+  @IsString()
+  sectionId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class ReorderPagesDto {
+  @IsString()
+  courseLessonId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class ReorderTasksDto {
+  @IsString()
+  pageId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
 export class CreateSectionDto {
   @IsString()
   courseId!: string;
@@ -318,6 +356,25 @@ export class CreatePageDto {
   @IsOptional()
   @IsString()
   text?: string;
+}
+
+export class UpdatePageDto {
+  @IsOptional()
+  @IsIn(PAGE_TYPES as unknown as string[])
+  type?: PageType;
+
+  @IsOptional()
+  @IsBoolean()
+  includedInHomework?: boolean;
+
+  @IsOptional()
+  @IsString()
+  text?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  order?: number;
 }
 
 export class CreateTaskDto {

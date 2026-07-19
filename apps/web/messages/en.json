@@ -465,6 +465,9 @@
     "transcript": "Transcript",
     "showTranscript": "Show transcript",
     "hideTranscript": "Hide transcript",
+    "preview": "Preview",
+    "saving": "Saving…",
+    "pageText": "Text",
     "selectLesson": "Select a lesson to edit",
     "lessonDeleted": "Lesson deleted",
     "taskDeleted": "Task removed"
