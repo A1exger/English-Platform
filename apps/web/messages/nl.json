@@ -458,6 +458,13 @@
     "allLevels": "Alle niveaus",
     "allStatuses": "Alle",
     "allCategories": "Alle categorieën",
+    "media": "Media",
+    "addMedia": "Toevoegen",
+    "mediaUrl": "URL (of upload hierboven)",
+    "caption": "Bijschrift",
+    "transcript": "Transcript",
+    "showTranscript": "Transcript tonen",
+    "hideTranscript": "Transcript verbergen",
     "selectLesson": "Kies een les om te bewerken",
     "lessonDeleted": "Les verwijderd",
     "taskDeleted": "Taak verwijderd"

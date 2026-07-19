@@ -505,11 +505,29 @@ model LessonPage {
   type               String
   order              Int          @default(0)
   includedInHomework Boolean      @default(false)
+  // Legacy single media (kept for compatibility); new content uses PageMedia.
   mediaUrl           String?
   text               String?
   tasks              LessonTask[]
+  media              PageMedia[]
 
   @@index([courseLessonId])
+}
+
+// Several attachments per page (SPEC §7): image/video/audio, with a caption and
+// an optional transcript for listening audio. Only a URL lives in the content;
+// files are uploaded via POST /materials/upload or reused from Materials.
+model PageMedia {
+  id         String     @id @default(cuid())
+  pageId     String
+  page       LessonPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  kind       String // "image" | "video" | "audio"
+  url        String
+  caption    String?
+  transcript String? // for kind="audio" (listening)
+  order      Int        @default(0)
+
+  @@index([pageId])
 }
 
 // type: "sentence_ordering" | "word_matching" | "gap_fill" | "categorization" |

@@ -19,12 +19,14 @@ import {
   CreateCourseDto,
   CreateCourseLessonDto,
   CreatePageDto,
+  CreatePageMediaDto,
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
   ReorderLessonDto,
   UpdateCourseDto,
   UpdateCourseLessonDto,
+  UpdatePageMediaDto,
   UpdateTaskDto,
 } from './dto/content.dto';
 
@@ -90,7 +92,10 @@ export class ContentService {
       include: {
         pages: {
           orderBy: { order: 'asc' },
-          include: { tasks: { orderBy: { order: 'asc' } } },
+          include: {
+            tasks: { orderBy: { order: 'asc' } },
+            media: { orderBy: { order: 'asc' } },
+          },
         },
         wordlist: { include: { entries: { orderBy: { order: 'asc' } } } },
         grammarReference: true,
@@ -562,6 +567,68 @@ export class ContentService {
         text: dto.text,
       },
     });
+  }
+
+  // --- page media (§7): image/video/audio attachments -----------------------
+
+  private async assertPageEditable(user: AuthenticatedUser, pageId: string) {
+    const page = await this.prisma.lessonPage.findUnique({
+      where: { id: pageId },
+      include: { courseLesson: true },
+    });
+    if (!page) throw new NotFoundException('Page not found');
+    await this.assertCourseEditable(user, page.courseLesson.courseId);
+    return page;
+  }
+
+  private async assertMediaEditable(user: AuthenticatedUser, mediaId: string) {
+    const media = await this.prisma.pageMedia.findUnique({
+      where: { id: mediaId },
+      include: { page: { include: { courseLesson: true } } },
+    });
+    if (!media) throw new NotFoundException('Media not found');
+    await this.assertCourseEditable(user, media.page.courseLesson.courseId);
+    return media;
+  }
+
+  async addPageMedia(user: AuthenticatedUser, pageId: string, dto: CreatePageMediaDto) {
+    await this.assertPageEditable(user, pageId);
+    const order = await this.prisma.pageMedia.count({ where: { pageId } });
+    return this.prisma.pageMedia.create({
+      data: {
+        pageId,
+        kind: dto.kind,
+        url: dto.url,
+        caption: dto.caption ?? null,
+        transcript: dto.transcript ?? null,
+        order,
+      },
+    });
+  }
+
+  async updatePageMedia(user: AuthenticatedUser, id: string, dto: UpdatePageMediaDto) {
+    await this.assertMediaEditable(user, id);
+    return this.prisma.pageMedia.update({ where: { id }, data: { ...dto } });
+  }
+
+  async deletePageMedia(user: AuthenticatedUser, id: string) {
+    await this.assertMediaEditable(user, id);
+    await this.prisma.pageMedia.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  async reorderPageMedia(user: AuthenticatedUser, pageId: string, ids: string[]) {
+    await this.assertPageEditable(user, pageId);
+    const media = await this.prisma.pageMedia.findMany({
+      where: { id: { in: ids }, pageId },
+      select: { id: true },
+    });
+    const valid = new Set(media.map((m) => m.id));
+    const ordered = ids.filter((id) => valid.has(id));
+    await this.prisma.$transaction(
+      ordered.map((id, i) => this.prisma.pageMedia.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ordered.length };
   }
 
   private validateTaskPayload(type: string, payload: Record<string, unknown>, answerKey?: Record<string, unknown>) {

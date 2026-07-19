@@ -6,6 +6,7 @@ import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
+import { PageMediaBlock, PageMediaItem } from './PageMediaBlock';
 import { AssignmentBuilder } from './AssignmentBuilder';
 import { Skeleton } from './Skeleton';
 import { Stepper } from './Stepper';
@@ -17,6 +18,7 @@ interface PageRow {
   order: number;
   text?: string | null;
   mediaUrl?: string | null;
+  media?: PageMediaItem[];
   tasks: ContentTask[];
 }
 interface LessonDetail {
@@ -181,6 +183,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
                 <p>{page.text}</p>
               </div>
             )}
+            <PageMediaBlock media={page.media} />
             {page.tasks.map((task) => (
               <ContentTaskPlayer key={task.id} task={task} />
             ))}

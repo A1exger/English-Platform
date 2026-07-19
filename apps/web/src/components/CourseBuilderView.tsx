@@ -10,6 +10,8 @@ import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
 import { useToast } from './Toast';
 import { Icon } from './Icon';
+import { PageMediaEditor } from './PageMediaEditor';
+import type { PageMediaItem } from './PageMediaBlock';
 
 const LEVELS = [
   'Beginner',
@@ -407,6 +409,7 @@ interface PageRow {
   type: string;
   includedInHomework: boolean;
   tasks: TaskRow[];
+  media?: PageMediaItem[];
 }
 interface LessonDetail {
   id: string;
@@ -608,6 +611,7 @@ function LessonEditor({
               t={t}
               tEx={tEx}
             />
+            <PageMediaEditor pageId={p.id} media={p.media ?? []} onChanged={load} />
           </div>
         ))}
         <div className="inline-form">

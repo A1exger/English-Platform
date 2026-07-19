@@ -18,13 +18,16 @@ import {
   CreateCourseDto,
   CreateCourseLessonDto,
   CreatePageDto,
+  CreatePageMediaDto,
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
   ReorderCategoriesDto,
   ReorderCoursesDto,
   ReorderLessonDto,
+  ReorderMediaDto,
   ReviewDictionaryDto,
+  UpdatePageMediaDto,
   SetGrammarDto,
   SetWordlistDto,
   UpdateCourseDto,
@@ -213,6 +216,44 @@ export class ContentController {
   @Post('pages')
   createPage(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreatePageDto) {
     return this.content.createPage(user, dto);
+  }
+
+  // --- page media (§7) ---
+
+  @Roles('tutor', 'admin')
+  @Post('pages/:id/media')
+  addMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: CreatePageMediaDto,
+  ) {
+    return this.content.addPageMedia(user, id, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('pages/:id/media/reorder')
+  reorderMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ReorderMediaDto,
+  ) {
+    return this.content.reorderPageMedia(user, id, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Patch('media/:id')
+  updateMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePageMediaDto,
+  ) {
+    return this.content.updatePageMedia(user, id, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Delete('media/:id')
+  deleteMedia(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.deletePageMedia(user, id);
   }
 
   @Roles('tutor', 'admin')

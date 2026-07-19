@@ -34,6 +34,7 @@ export class PrismaService
       this.wordlist.deleteMany(),
       this.grammarReference.deleteMany(),
       this.lessonTask.deleteMany(),
+      this.pageMedia.deleteMany(),
       this.lessonPage.deleteMany(),
       this.courseLesson.deleteMany(),
       this.unit.deleteMany(),

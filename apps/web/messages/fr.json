@@ -458,6 +458,13 @@
     "allLevels": "Tous les niveaux",
     "allStatuses": "Tous",
     "allCategories": "Toutes les catégories",
+    "media": "Médias",
+    "addMedia": "Ajouter",
+    "mediaUrl": "URL (ou téléverser ci-dessus)",
+    "caption": "Légende",
+    "transcript": "Transcription",
+    "showTranscript": "Afficher la transcription",
+    "hideTranscript": "Masquer la transcription",
     "selectLesson": "Choisissez une leçon à modifier",
     "lessonDeleted": "Leçon supprimée",
     "taskDeleted": "Tâche supprimée"

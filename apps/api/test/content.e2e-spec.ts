@@ -224,4 +224,64 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     const after = await api().get('/api/v1/content/catalog').set(auth(tutor.accessToken)).expect(200);
     expect(after.body.map((x: { id: string }) => x.id)).toEqual(ids);
   });
+
+  // --- Stage 7: page media --------------------------------------------------
+
+  it('media: attach image+audio, reorder, edit transcript; student sees it (ФТ-К302/К303/К305)', async () => {
+    const page = await api()
+      .post('/api/v1/content/pages')
+      .set(auth(tutor.accessToken))
+      .send({ courseLessonId: lesson1, type: 'listening' })
+      .expect(201);
+    const pageId = page.body.id;
+
+    const img = await api()
+      .post(`/api/v1/content/pages/${pageId}/media`)
+      .set(auth(tutor.accessToken))
+      .send({ kind: 'image', url: '/uploads/pic.png', caption: 'A picture' })
+      .expect(201);
+    const audio = await api()
+      .post(`/api/v1/content/pages/${pageId}/media`)
+      .set(auth(tutor.accessToken))
+      .send({ kind: 'audio', url: '/uploads/track.mp3', transcript: 'Hello there.' })
+      .expect(201);
+    expect([img.body.order, audio.body.order]).toEqual([0, 1]);
+
+    // A disallowed kind is rejected (ФТ-К305).
+    await api()
+      .post(`/api/v1/content/pages/${pageId}/media`)
+      .set(auth(tutor.accessToken))
+      .send({ kind: 'pdf', url: '/uploads/x.pdf' })
+      .expect(400);
+
+    // Reorder (audio first) and edit the transcript.
+    await api()
+      .post(`/api/v1/content/pages/${pageId}/media/reorder`)
+      .set(auth(tutor.accessToken))
+      .send({ ids: [audio.body.id, img.body.id] })
+      .expect(201);
+    await api()
+      .patch(`/api/v1/content/media/${audio.body.id}`)
+      .set(auth(tutor.accessToken))
+      .send({ transcript: 'Updated transcript.' })
+      .expect(200);
+
+    // The student sees the reordered media with its transcript (course published).
+    const detail = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth(student.accessToken)).expect(200);
+    const p = detail.body.pages.find((x: { id: string }) => x.id === pageId);
+    expect(p.media.map((m: { kind: string }) => m.kind)).toEqual(['audio', 'image']);
+    expect(p.media[0].transcript).toBe('Updated transcript.');
+
+    // Students cannot author media (RBAC).
+    await api()
+      .post(`/api/v1/content/pages/${pageId}/media`)
+      .set(auth(student.accessToken))
+      .send({ kind: 'image', url: '/x' })
+      .expect(403);
+
+    await api().delete(`/api/v1/content/media/${img.body.id}`).set(auth(tutor.accessToken)).expect(200);
+    const detail2 = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth(tutor.accessToken)).expect(200);
+    const p2 = detail2.body.pages.find((x: { id: string }) => x.id === pageId);
+    expect(p2.media.length).toBe(1);
+  });
 });

@@ -458,6 +458,13 @@
     "allLevels": "All levels",
     "allStatuses": "All",
     "allCategories": "All categories",
+    "media": "Media",
+    "addMedia": "Add",
+    "mediaUrl": "URL (or upload above)",
+    "caption": "Caption",
+    "transcript": "Transcript",
+    "showTranscript": "Show transcript",
+    "hideTranscript": "Hide transcript",
     "selectLesson": "Select a lesson to edit",
     "lessonDeleted": "Lesson deleted",
     "taskDeleted": "Task removed"

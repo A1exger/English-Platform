@@ -458,6 +458,13 @@
     "allLevels": "Alle Stufen",
     "allStatuses": "Alle",
     "allCategories": "Alle Kategorien",
+    "media": "Medien",
+    "addMedia": "Hinzufügen",
+    "mediaUrl": "URL (oder oben hochladen)",
+    "caption": "Bildunterschrift",
+    "transcript": "Transkript",
+    "showTranscript": "Transkript anzeigen",
+    "hideTranscript": "Transkript ausblenden",
     "selectLesson": "Lektion zum Bearbeiten wählen",
     "lessonDeleted": "Lektion gelöscht",
     "taskDeleted": "Aufgabe entfernt"

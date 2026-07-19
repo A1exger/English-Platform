@@ -2314,6 +2314,88 @@ select.err {
   background-position: center;
   border: 1px solid var(--line);
 }
+
+/* page media — player block + editor list */
+.page-media {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-block: 12px;
+}
+.page-media-item {
+  margin: 0;
+}
+.page-media-img,
+.page-media-video {
+  max-inline-size: 100%;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+}
+.page-media-item figcaption {
+  margin-block-start: 6px;
+  font-size: 13px;
+}
+.transcript-toggle {
+  display: inline-block;
+  margin-block: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.transcript {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--card);
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+.media-editor {
+  margin-block-start: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.media-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.media-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--card);
+  flex-wrap: wrap;
+}
+.media-kind {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.media-caption {
+  flex: 1;
+  min-inline-size: 120px;
+}
+.media-transcript,
+.media-add textarea {
+  flex-basis: 100%;
+  min-block-size: 44px;
+}
+.media-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
 .course-card-title {
   display: flex;
   align-items: center;

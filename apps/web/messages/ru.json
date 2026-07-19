@@ -458,6 +458,13 @@
     "allLevels": "Все уровни",
     "allStatuses": "Все",
     "allCategories": "Все категории",
+    "media": "Медиа",
+    "addMedia": "Добавить",
+    "mediaUrl": "URL (или загрузите выше)",
+    "caption": "Подпись",
+    "transcript": "Транскрипт",
+    "showTranscript": "Показать транскрипт",
+    "hideTranscript": "Скрыть транскрипт",
     "selectLesson": "Выберите урок для редактирования",
     "lessonDeleted": "Урок удалён",
     "taskDeleted": "Задание удалено"

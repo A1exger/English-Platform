@@ -95,6 +95,57 @@ export class UpdateCourseDto {
   status?: 'draft' | 'published';
 }
 
+// Media attachments (SPEC §7). kind is restricted so only image/video/audio
+// reach the content (ФТ-К305); the file itself is uploaded separately.
+const MEDIA_KINDS = ['image', 'video', 'audio'] as const;
+
+export class CreatePageMediaDto {
+  @IsIn(MEDIA_KINDS as unknown as string[])
+  kind!: string;
+
+  @IsString()
+  @Length(1, 500)
+  url!: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 300)
+  caption?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 10000)
+  transcript?: string;
+}
+
+export class UpdatePageMediaDto {
+  @IsOptional()
+  @IsString()
+  @Length(1, 500)
+  url?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 300)
+  caption?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 10000)
+  transcript?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  order?: number;
+}
+
+export class ReorderMediaDto {
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
 // Drag-reorder: the client sends the full ordered id list (order = index).
 export class ReorderCategoriesDto {
   @IsArray()
