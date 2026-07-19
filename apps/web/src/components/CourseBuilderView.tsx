@@ -6,6 +6,7 @@ import {
   DndContext,
   DragEndEvent,
   PointerSensor,
+  TouchSensor,
   closestCenter,
   useSensor,
   useSensors
@@ -575,7 +576,10 @@ function LessonEditor({
     void load();
   }, [load]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
 
   // Reload pages/tasks/media only, keeping in-progress objectives/wordlist/
   // grammar text; also refreshes the live preview via onChanged.

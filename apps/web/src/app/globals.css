@@ -2596,6 +2596,8 @@ select.err {
   padding: 2px 4px;
   font-size: 13px;
   line-height: 1;
+  /* Let a touch-drag from the handle start immediately without scrolling (§11). */
+  touch-action: none;
 }
 .drag-handle:hover {
   background: transparent;

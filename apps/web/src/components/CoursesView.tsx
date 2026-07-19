@@ -10,6 +10,7 @@ import {
   DndContext,
   DragEndEvent,
   PointerSensor,
+  TouchSensor,
   closestCenter,
   useSensor,
   useSensors
@@ -177,7 +178,11 @@ export function CoursesView() {
   const [catTitle, setCatTitle] = useState('');
   const [course, setCourse] = useState({ categoryId: '', title: '', description: '', coverUrl: '' });
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  // Mouse + touch (touch delayed so a drag never fights page scroll, §11).
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
 
   const load = useCallback(async () => {
     const token = tokenStore.get();

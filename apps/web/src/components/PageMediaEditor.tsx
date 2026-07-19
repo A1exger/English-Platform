@@ -8,6 +8,7 @@ import {
   DndContext,
   DragEndEvent,
   PointerSensor,
+  TouchSensor,
   closestCenter,
   useSensor,
   useSensors
@@ -93,7 +94,10 @@ export function PageMediaEditor({
   const [caption, setCaption] = useState('');
   const [transcript, setTranscript] = useState('');
   const [busy, setBusy] = useState(false);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
 
   async function upload(file: File) {
     const token = tokenStore.get();
