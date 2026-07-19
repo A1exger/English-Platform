@@ -33,6 +33,8 @@ export class PrismaService
       this.wordlistEntry.deleteMany(),
       this.wordlist.deleteMany(),
       this.grammarReference.deleteMany(),
+      this.generationRevision.deleteMany(),
+      this.generationJob.deleteMany(),
       this.lessonTask.deleteMany(),
       this.pageMedia.deleteMany(),
       this.lessonPage.deleteMany(),

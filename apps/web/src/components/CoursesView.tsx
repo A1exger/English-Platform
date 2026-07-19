@@ -28,6 +28,7 @@ import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
 import { ScoreRing } from './ScoreRing';
 import { EmptyState } from './EmptyState';
+import { GenerateCourseForm } from './GenerateCourseForm';
 
 // CEFR-style levels a course's sections use (mirrors the API CONTENT_LEVELS).
 const LEVELS = ['Beginner', 'Elementary', 'PreIntermediate', 'Intermediate', 'UpperIntermediate', 'Advanced'] as const;
@@ -470,6 +471,7 @@ export function CoursesView() {
             )}
             <button type="submit" disabled={busy || coverBusy}>{coverBusy ? t('creating') : t('create')}</button>
           </form>
+          <GenerateCourseForm onDone={() => void load()} />
         </Drawer>
       )}
 

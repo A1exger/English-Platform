@@ -373,6 +373,40 @@ model ExerciseInstance {
   @@index([studentProfileId])
 }
 
+// AI course/lesson generation (SPEC §7/§10). Enum-like fields are String for
+// SQLite portability. targetType: "COURSE" | "LESSON"; status: "generating" |
+// "ready_for_review" | "approved" | "failed". The materialised content is a
+// normal draft Course; the job records provenance + review state.
+model GenerationJob {
+  id                String   @id @default(cuid())
+  targetType        String
+  courseId          String?
+  courseLessonId    String?
+  requestedByUserId String
+  brief             String // JSON (Прил. Г)
+  level             String?
+  status            String   @default("generating")
+  error             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  revisions GenerationRevision[]
+
+  @@index([requestedByUserId])
+}
+
+model GenerationRevision {
+  id          String        @id @default(cuid())
+  jobId       String
+  job         GenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  // scope: "course" | "unit:ID" | "lesson:ID" | "page:ID" | "tasks:ID"
+  scope       String
+  instruction String
+  createdAt   DateTime      @default(now())
+
+  @@index([jobId])
+}
+
 // Links a user to their Telegram chat so notifications can be delivered there.
 model TelegramLink {
   id       String   @id @default(cuid())
