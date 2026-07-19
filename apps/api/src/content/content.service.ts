@@ -53,7 +53,9 @@ export class ContentService {
       include: {
         courses: {
           ...(user.role === 'student' ? { where: { status: 'published' } } : {}),
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+          // Section levels drive the level chips/filter on the catalog cards.
+          include: { sections: { select: { level: true }, orderBy: { order: 'asc' } } },
         },
       },
     });
@@ -321,16 +323,42 @@ export class ContentService {
     return this.prisma.category.create({ data: { title: dto.title, order: dto.order ?? 0 } });
   }
 
-  createCourse(user: AuthenticatedUser, dto: CreateCourseDto) {
+  async createCourse(user: AuthenticatedUser, dto: CreateCourseDto) {
+    // Append to the end of its category's manual order (ФТ-К104).
+    const order = await this.prisma.course.count({ where: { categoryId: dto.categoryId } });
     return this.prisma.course.create({
       data: {
         categoryId: dto.categoryId,
         title: dto.title,
+        description: dto.description ?? null,
+        coverUrl: dto.coverUrl ?? null,
+        order,
         selfStudy: dto.selfStudy ?? false,
         isNew: dto.isNew ?? false,
         ownerUserId: user.id,
       },
     });
+  }
+
+  async reorderCategories(_user: AuthenticatedUser, ids: string[]) {
+    await this.prisma.$transaction(
+      ids.map((id, i) => this.prisma.category.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ids.length };
+  }
+
+  async reorderCourses(_user: AuthenticatedUser, categoryId: string, ids: string[]) {
+    // Only touch courses that really belong to this category.
+    const courses = await this.prisma.course.findMany({
+      where: { id: { in: ids }, categoryId },
+      select: { id: true },
+    });
+    const valid = new Set(courses.map((c) => c.id));
+    const ordered = ids.filter((id) => valid.has(id));
+    await this.prisma.$transaction(
+      ordered.map((id, i) => this.prisma.course.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ordered.length };
   }
 
   async updateCourse(user: AuthenticatedUser, id: string, dto: UpdateCourseDto) {

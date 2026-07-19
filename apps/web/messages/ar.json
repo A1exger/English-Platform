@@ -453,6 +453,11 @@
     "more": "المزيد",
     "unpublished": "غير منشور",
     "reorder": "إعادة ترتيب",
+    "description": "الوصف",
+    "cover": "صورة الغلاف",
+    "allLevels": "كل المستويات",
+    "allStatuses": "الكل",
+    "allCategories": "كل الفئات",
     "selectLesson": "اختر درسًا للتعديل",
     "lessonDeleted": "تم حذف الدرس",
     "taskDeleted": "تمت إزالة المهمة"

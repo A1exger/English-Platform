@@ -21,6 +21,8 @@ import {
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
+  ReorderCategoriesDto,
+  ReorderCoursesDto,
   ReorderLessonDto,
   ReviewDictionaryDto,
   SetGrammarDto,
@@ -117,6 +119,20 @@ export class ContentController {
   @Post('courses')
   createCourse(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateCourseDto) {
     return this.content.createCourse(user, dto);
+  }
+
+  // Drag-reorder persistence (ФТ-К104). POST /reorder never clashes with the
+  // PATCH :id / POST create routes above.
+  @Roles('tutor', 'admin')
+  @Post('categories/reorder')
+  reorderCategories(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderCategoriesDto) {
+    return this.content.reorderCategories(user, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('courses/reorder')
+  reorderCourses(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderCoursesDto) {
+    return this.content.reorderCourses(user, dto.categoryId, dto.ids);
   }
 
   @Roles('tutor', 'admin')

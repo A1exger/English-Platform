@@ -453,6 +453,11 @@
     "more": "Plus",
     "unpublished": "dépublié",
     "reorder": "Réordonner",
+    "description": "Description",
+    "cover": "Image de couverture",
+    "allLevels": "Tous les niveaux",
+    "allStatuses": "Tous",
+    "allCategories": "Toutes les catégories",
     "selectLesson": "Choisissez une leçon à modifier",
     "lessonDeleted": "Leçon supprimée",
     "taskDeleted": "Tâche supprimée"

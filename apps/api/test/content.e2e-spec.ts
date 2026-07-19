@@ -178,4 +178,50 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().delete(`/api/v1/content/lessons/${lesson2}`).set(auth(tutor.accessToken)).expect(200);
     expect(await orders()).toEqual(['1:L1', '2:L1.5', '3:L3']);
   });
+
+  // --- Stage 6: catalog fields + reorder ------------------------------------
+
+  it('catalog: course carries cover/description, appends order, reorder persists (ФТ-К103/К104)', async () => {
+    const cat = await api().post('/api/v1/content/categories').set(auth(tutor.accessToken)).send({ title: 'Reorder cat' }).expect(201);
+    const catId = cat.body.id;
+    const a = await api()
+      .post('/api/v1/content/courses')
+      .set(auth(tutor.accessToken))
+      .send({ categoryId: catId, title: 'A', description: 'first', coverUrl: '/uploads/a.png' })
+      .expect(201);
+    const b = await api().post('/api/v1/content/courses').set(auth(tutor.accessToken)).send({ categoryId: catId, title: 'B' }).expect(201);
+    const c = await api().post('/api/v1/content/courses').set(auth(tutor.accessToken)).send({ categoryId: catId, title: 'C' }).expect(201);
+    expect(a.body.description).toBe('first');
+    expect(a.body.coverUrl).toBe('/uploads/a.png');
+    expect([a.body.order, b.body.order, c.body.order]).toEqual([0, 1, 2]);
+
+    // Reverse the order via drag-reorder.
+    await api()
+      .post('/api/v1/content/courses/reorder')
+      .set(auth(tutor.accessToken))
+      .send({ categoryId: catId, ids: [c.body.id, b.body.id, a.body.id] })
+      .expect(201);
+    const catalog = await api().get('/api/v1/content/catalog').set(auth(tutor.accessToken)).expect(200);
+    const reCat = catalog.body.find((x: { id: string }) => x.id === catId);
+    expect(reCat.courses.map((x: { title: string }) => x.title)).toEqual(['C', 'B', 'A']);
+
+    // A student cannot reorder (tutor/admin only, ФТ-К105).
+    await api()
+      .post('/api/v1/content/courses/reorder')
+      .set(auth(student.accessToken))
+      .send({ categoryId: catId, ids: [a.body.id] })
+      .expect(403);
+  });
+
+  it('catalog: cards expose section levels; category reorder persists', async () => {
+    const catalog = await api().get('/api/v1/content/catalog').set(auth(tutor.accessToken)).expect(200);
+    const general = catalog.body.find((x: { title: string }) => x.title === 'General');
+    const draftCourse = general.courses.find((x: { id: string }) => x.id === courseId);
+    expect(draftCourse.sections.map((s: { level: string }) => s.level)).toContain('Elementary');
+
+    const ids = catalog.body.map((x: { id: string }) => x.id).reverse();
+    await api().post('/api/v1/content/categories/reorder').set(auth(tutor.accessToken)).send({ ids }).expect(201);
+    const after = await api().get('/api/v1/content/catalog').set(auth(tutor.accessToken)).expect(200);
+    expect(after.body.map((x: { id: string }) => x.id)).toEqual(ids);
+  });
 });

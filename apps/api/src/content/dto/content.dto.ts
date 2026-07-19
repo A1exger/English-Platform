@@ -43,6 +43,16 @@ export class CreateCourseDto {
   title!: string;
 
   @IsOptional()
+  @IsString()
+  @Length(0, 2000)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 500)
+  coverUrl?: string;
+
+  @IsOptional()
   @IsBoolean()
   selfStudy?: boolean;
 
@@ -58,6 +68,21 @@ export class UpdateCourseDto {
   title?: string;
 
   @IsOptional()
+  @IsString()
+  @Length(0, 2000)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 500)
+  coverUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  order?: number;
+
+  @IsOptional()
   @IsBoolean()
   selfStudy?: boolean;
 
@@ -68,6 +93,22 @@ export class UpdateCourseDto {
   @IsOptional()
   @IsIn(['draft', 'published'])
   status?: 'draft' | 'published';
+}
+
+// Drag-reorder: the client sends the full ordered id list (order = index).
+export class ReorderCategoriesDto {
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class ReorderCoursesDto {
+  @IsString()
+  categoryId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
 }
 
 export class CreateSectionDto {

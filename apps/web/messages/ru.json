@@ -453,6 +453,11 @@
     "more": "Ещё",
     "unpublished": "снят с публикации",
     "reorder": "Переместить",
+    "description": "Описание",
+    "cover": "Обложка",
+    "allLevels": "Все уровни",
+    "allStatuses": "Все",
+    "allCategories": "Все категории",
     "selectLesson": "Выберите урок для редактирования",
     "lessonDeleted": "Урок удалён",
     "taskDeleted": "Задание удалено"

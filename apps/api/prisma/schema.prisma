@@ -425,17 +425,20 @@ model Category {
 }
 
 model Course {
-  id         String   @id @default(cuid())
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  title      String
-  selfStudy  Boolean  @default(false)
-  isNew      Boolean  @default(false)
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  coverUrl    String?
+  order       Int      @default(0)
+  selfStudy   Boolean  @default(false)
+  isNew       Boolean  @default(false)
   // status: "draft" | "published"
-  status     String   @default("draft")
+  status      String   @default("draft")
   ownerUserId String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   sections Section[]
   lessons  CourseLesson[]

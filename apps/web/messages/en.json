@@ -453,6 +453,11 @@
     "more": "More",
     "unpublished": "unpublished",
     "reorder": "Reorder",
+    "description": "Description",
+    "cover": "Cover image",
+    "allLevels": "All levels",
+    "allStatuses": "All",
+    "allCategories": "All categories",
     "selectLesson": "Select a lesson to edit",
     "lessonDeleted": "Lesson deleted",
     "taskDeleted": "Task removed"

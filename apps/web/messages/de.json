@@ -453,6 +453,11 @@
     "more": "Mehr",
     "unpublished": "unveröffentlicht",
     "reorder": "Umsortieren",
+    "description": "Beschreibung",
+    "cover": "Titelbild",
+    "allLevels": "Alle Stufen",
+    "allStatuses": "Alle",
+    "allCategories": "Alle Kategorien",
     "selectLesson": "Lektion zum Bearbeiten wählen",
     "lessonDeleted": "Lektion gelöscht",
     "taskDeleted": "Aufgabe entfernt"

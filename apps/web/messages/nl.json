@@ -453,6 +453,11 @@
     "more": "Meer",
     "unpublished": "gedepubliceerd",
     "reorder": "Herordenen",
+    "description": "Beschrijving",
+    "cover": "Omslagafbeelding",
+    "allLevels": "Alle niveaus",
+    "allStatuses": "Alle",
+    "allCategories": "Alle categorieën",
     "selectLesson": "Kies een les om te bewerken",
     "lessonDeleted": "Les verwijderd",
     "taskDeleted": "Taak verwijderd"
