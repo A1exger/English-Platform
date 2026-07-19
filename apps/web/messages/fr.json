@@ -479,6 +479,9 @@
     "aiReady": "Brouillon prêt à être relu.",
     "aiFailed": "Échec de la génération",
     "aiOpenDraft": "Ouvrir le brouillon",
+    "mediaPending": "téléversement requis",
+    "refine": "Affiner",
+    "refineInstruction": "Affiner avec une instruction",
     "selectLesson": "Choisissez une leçon à modifier",
     "lessonDeleted": "Leçon supprimée",
     "taskDeleted": "Tâche supprimée"

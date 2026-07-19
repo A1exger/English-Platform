@@ -479,6 +479,9 @@
     "aiReady": "Draft ready for review.",
     "aiFailed": "Generation failed",
     "aiOpenDraft": "Open draft",
+    "mediaPending": "upload pending",
+    "refine": "Refine",
+    "refineInstruction": "Refine with an instruction",
     "selectLesson": "Select a lesson to edit",
     "lessonDeleted": "Lesson deleted",
     "taskDeleted": "Task removed"

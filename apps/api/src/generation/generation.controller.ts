@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { GenerationService } from './generation.service';
-import { GenerateDto } from './dto/generate.dto';
+import { GenerateDto, ReviseDto } from './dto/generate.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -30,6 +30,15 @@ export class GenerationController {
   @Get(':jobId')
   status(@CurrentUser() user: AuthenticatedUser, @Param('jobId') jobId: string) {
     return this.generation.status(user, jobId);
+  }
+
+  @Post(':jobId/revise')
+  revise(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('jobId') jobId: string,
+    @Body() dto: ReviseDto,
+  ) {
+    return this.generation.revise(user, jobId, dto.scope, dto.instruction);
   }
 
   @Post(':jobId/approve')

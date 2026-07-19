@@ -24,11 +24,13 @@ const KINDS = ['image', 'video', 'audio'] as const;
 function MediaRow({
   m,
   onPatch,
-  onDelete
+  onDelete,
+  onFill
 }: {
   m: PageMediaItem;
   onPatch: (id: string, body: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
+  onFill: (id: string, file: File) => void;
 }) {
   const t = useTranslations('courses');
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: m.id });
@@ -42,7 +44,14 @@ function MediaRow({
     >
       <button type="button" className="drag-handle" aria-label={t('reorder')} {...attributes} {...listeners}>⠿</button>
       <span className="media-kind">{m.kind}</span>
-      <a className="link" href={fileUrl(m.url)} target="_blank" rel="noreferrer" aria-label={m.url}>↗</a>
+      {m.url ? (
+        <a className="link" href={fileUrl(m.url)} target="_blank" rel="noreferrer" aria-label={m.url}>↗</a>
+      ) : (
+        <label className="media-slot-fill" title={t('mediaPending')}>
+          {t('mediaPending')}
+          <input type="file" accept="image/*,video/*,audio/*" onChange={(e) => e.target.files?.[0] && onFill(m.id, e.target.files[0])} />
+        </label>
+      )}
       <input
         className="media-caption"
         placeholder={t('caption')}
@@ -138,6 +147,16 @@ export function PageMediaEditor({
       .catch(() => undefined);
   }
 
+  // Fill an empty AI slot with an uploaded file (ФТ-К407).
+  async function fill(id: string, file: File) {
+    const token = tokenStore.get();
+    if (!token) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token, locale }).catch(() => null);
+    if (res?.url) patch(id, { url: res.url });
+  }
+
   function onDragEnd(e: DragEndEvent) {
     if (!e.over || e.active.id === e.over.id) return;
     const ids = media.map((m) => m.id);
@@ -157,7 +176,7 @@ export function PageMediaEditor({
           <SortableContext items={media.map((m) => m.id)} strategy={verticalListSortingStrategy}>
             <ul className="media-list">
               {media.map((m) => (
-                <MediaRow key={m.id} m={m} onPatch={patch} onDelete={del} />
+                <MediaRow key={m.id} m={m} onPatch={patch} onDelete={del} onFill={fill} />
               ))}
             </ul>
           </SortableContext>

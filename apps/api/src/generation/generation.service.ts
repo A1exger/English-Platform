@@ -172,6 +172,21 @@ export class GenerationService {
           // A task the content service still rejects is dropped, not fatal (ФТ-К403).
         }
       }
+      // Media plan (ФТ-К407): audio carries a transcript; every item is a SLOT
+      // (empty url) for the teacher to fill — no third-party files are inserted.
+      let mediaOrder = 0;
+      for (const m of p.media) {
+        await this.prisma.pageMedia.create({
+          data: {
+            pageId: page.id,
+            kind: m.kind,
+            url: '',
+            caption: m.note ?? null,
+            transcript: m.transcript ?? null,
+            order: mediaOrder++,
+          },
+        });
+      }
     }
     if (plan.wordlist.length) await this.content.setWordlist(user, lessonId, plan.wordlist);
     if (plan.grammar) await this.content.setGrammarReference(user, lessonId, plan.grammar);
@@ -179,6 +194,80 @@ export class GenerationService {
 
   async status(user: AuthenticatedUser, jobId: string) {
     return this.view(await this.owned(user, jobId));
+  }
+
+  /** Re-generate only a scoped area with an instruction (ФТ-К406). */
+  async revise(user: AuthenticatedUser, jobId: string, scope: string, instruction: string) {
+    const job = await this.owned(user, jobId);
+    if (job.status !== 'ready_for_review' || !job.courseId) {
+      throw new BadRequestException('Job is not ready for review');
+    }
+    await this.prisma.generationRevision.create({ data: { jobId, scope, instruction } });
+    const updated = await this.prisma.generationJob.update({
+      where: { id: jobId },
+      data: { status: 'generating', error: null },
+    });
+    void this.runRevision(jobId, user, job.courseId, scope, instruction);
+    return this.view(updated);
+  }
+
+  private async runRevision(
+    jobId: string,
+    user: AuthenticatedUser,
+    courseId: string,
+    scope: string,
+    instruction: string,
+  ): Promise<void> {
+    try {
+      const job = await this.prisma.generationJob.findUnique({ where: { id: jobId } });
+      if (!job) return;
+      const brief = JSON.parse(job.brief) as Brief;
+      const lessons = await this.lessonsForScope(courseId, scope);
+      if (lessons.length === 0) throw new Error('Revision scope matched no lessons');
+      await this.mapLimit(lessons, concurrency(), async (l) => {
+        const plan = normalizeLessonPlan(
+          await this.ai.json(...promptArgs(lessonPrompt(brief, { unitTitle: l.unitTitle, lessonTitle: l.lessonTitle, objectives: l.objectives, instruction }))),
+        );
+        await this.prisma.lessonPage.deleteMany({ where: { courseLessonId: l.lessonId } });
+        await this.materializeLesson(user, l.lessonId, plan);
+      });
+      await this.prisma.generationJob.update({ where: { id: jobId }, data: { status: 'ready_for_review', error: null } });
+    } catch (e) {
+      this.logger.warn(`Revision of job ${jobId} failed: ${(e as Error)?.message ?? e}`);
+      await this.prisma.generationJob.update({
+        where: { id: jobId },
+        data: { status: 'failed', error: String((e as Error)?.message ?? e).slice(0, 500) },
+      });
+    }
+  }
+
+  private async lessonsForScope(
+    courseId: string,
+    scope: string,
+  ): Promise<{ lessonId: string; unitTitle: string; lessonTitle: string; objectives: string[] }[]> {
+    const [kind, id] = scope.split(':');
+    if (kind === 'lesson' && id) return this.lessonCtx([id]);
+    if (kind === 'unit' && id) {
+      const rows = await this.prisma.courseLesson.findMany({ where: { unitId: id }, select: { id: true } });
+      return this.lessonCtx(rows.map((r) => r.id));
+    }
+    if ((kind === 'page' || kind === 'tasks') && id) {
+      const page = await this.prisma.lessonPage.findUnique({ where: { id }, select: { courseLessonId: true } });
+      return page ? this.lessonCtx([page.courseLessonId]) : [];
+    }
+    // "course" (or anything else): every lesson in the course.
+    const rows = await this.prisma.courseLesson.findMany({ where: { courseId }, select: { id: true } });
+    return this.lessonCtx(rows.map((r) => r.id));
+  }
+
+  private async lessonCtx(ids: string[]) {
+    const rows = await this.prisma.courseLesson.findMany({ where: { id: { in: ids } }, include: { unit: true } });
+    return rows.map((l) => ({
+      lessonId: l.id,
+      lessonTitle: l.title,
+      unitTitle: l.unit?.title ?? '',
+      objectives: l.objectives ? (JSON.parse(l.objectives) as string[]) : [],
+    }));
   }
 
   /** Approve a reviewed draft → publish the course (ФТ-К404). */

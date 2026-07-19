@@ -26,6 +26,7 @@ export function GenerateCourseForm({ onDone }: { onDone: () => void }) {
   const [aspects, setAspects] = useState<string[]>(['Grammar']);
   const [job, setJob] = useState<Job | null>(null);
   const [busy, setBusy] = useState(false);
+  const [refineText, setRefineText] = useState('');
 
   async function poll(id: string) {
     const token = tokenStore.get();
@@ -58,6 +59,27 @@ export function GenerateCourseForm({ onDone }: { onDone: () => void }) {
     onDone();
   }
 
+  // Re-generate the whole draft with an instruction (ФТ-К406). Finer scopes
+  // (unit/lesson/page) are available on the API.
+  async function revise() {
+    const token = tokenStore.get();
+    if (!token || !job || !refineText.trim()) return;
+    setBusy(true);
+    try {
+      const j = await apiFetch<Job>(`/content/generate/${job.id}/revise`, {
+        method: 'POST',
+        token,
+        locale,
+        body: { scope: 'course', instruction: refineText.trim() }
+      });
+      setJob(j);
+      setRefineText('');
+      setTimeout(() => void poll(j.id), 1500);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (job && job.status !== 'generating') {
     return (
       <div className="form-grid">
@@ -66,7 +88,11 @@ export function GenerateCourseForm({ onDone }: { onDone: () => void }) {
           <>
             <p className="note">{t('aiReady')}</p>
             <button type="button" onClick={() => router.push(`/courses/${job.courseId}`)}>{t('aiOpenDraft')}</button>
-            <button type="button" className="ghost" onClick={discard}>{t('del')}</button>
+            <label>{t('refineInstruction')}<input value={refineText} onChange={(e) => setRefineText(e.target.value)} /></label>
+            <div className="row-actions">
+              <button type="button" disabled={busy || !refineText.trim()} onClick={revise}>{t('refine')}</button>
+              <button type="button" className="ghost" onClick={discard}>{t('del')}</button>
+            </div>
           </>
         ) : (
           <>

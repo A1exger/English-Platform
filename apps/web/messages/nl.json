@@ -479,6 +479,9 @@
     "aiReady": "Concept klaar voor beoordeling.",
     "aiFailed": "Genereren mislukt",
     "aiOpenDraft": "Concept openen",
+    "mediaPending": "upload nodig",
+    "refine": "Verfijnen",
+    "refineInstruction": "Verfijnen met een instructie",
     "selectLesson": "Kies een les om te bewerken",
     "lessonDeleted": "Les verwijderd",
     "taskDeleted": "Taak verwijderd"

@@ -479,6 +479,9 @@
     "aiReady": "المسودة جاهزة للمراجعة.",
     "aiFailed": "فشل الإنشاء",
     "aiOpenDraft": "فتح المسودة",
+    "mediaPending": "بانتظار الرفع",
+    "refine": "تحسين",
+    "refineInstruction": "التحسين بتعليمة",
     "selectLesson": "اختر درسًا للتعديل",
     "lessonDeleted": "تم حذف الدرس",
     "taskDeleted": "تمت إزالة المهمة"

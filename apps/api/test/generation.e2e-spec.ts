@@ -7,12 +7,26 @@ import { AiClient } from '../src/generation/ai-client';
 
 // Canned AI responses so the whole pipeline runs without a real API key. The
 // mock keys off the prompt text (skeleton vs lesson) and fails FAIL_TOPIC.
-const SKELETON = { units: [{ title: 'Unit 1', lessons: [{ title: 'Lesson 1', objectives: ['Understand the present perfect'] }] }] };
+const SKELETON = {
+  units: [
+    {
+      title: 'Unit 1',
+      lessons: [
+        { title: 'Lesson 1', objectives: ['Understand the present perfect'] },
+        { title: 'Lesson 2', objectives: ['Practise it'] }
+      ]
+    }
+  ]
+};
 const LESSON = {
   pages: [
     {
-      type: 'practice',
+      type: 'listening',
       text: 'Read and practise.',
+      media: [
+        { kind: 'audio', note: 'A short dialogue', transcript: 'A: Have you finished? B: Yes, I have.' },
+        { kind: 'image', note: 'A photo of London' }
+      ],
       tasks: [
         { type: 'sentence_ordering', aspect: 'Grammar', payload: { words: ['I', 'have', 'arrived'] } },
         { type: 'multiple_choice', aspect: 'Reading', payload: { question: 'Which is correct?', options: ['have gone', 'has went'] }, answerKey: { correct: 'have gone' } },
@@ -23,12 +37,14 @@ const LESSON = {
   wordlist: [{ word: 'arrive', translation: 'прибыть' }],
   grammar: { title: 'Present Perfect', meaning: 'Past action with present relevance.', form: 'have/has + V3' }
 };
+const REVISED_LESSON = { ...LESSON, wordlist: [{ word: 'revised', translation: 'изменено' }] };
 
 const mockAi = {
   enabled: true,
   json: async (_system: string, user: string) => {
     if (/FAIL_TOPIC/.test(user)) throw new Error('mock generation failure');
-    return /skeleton/i.test(user) ? SKELETON : LESSON;
+    if (/skeleton/i.test(user)) return SKELETON;
+    return /REVISION INSTRUCTION/.test(user) ? REVISED_LESSON : LESSON;
   }
 };
 
@@ -100,6 +116,11 @@ describe('AI generation (e2e, mocked model)', () => {
     expect(detail.body.pages[0].tasks.length).toBe(2);
     expect(detail.body.wordlist.entries.length).toBe(1);
     expect(detail.body.grammarReference.title).toBe('Present Perfect');
+    // Media plan: an audio slot with a transcript + an image slot (ФТ-К407).
+    expect(detail.body.pages[0].media.length).toBe(2);
+    const audio = detail.body.pages[0].media.find((m: { kind: string }) => m.kind === 'audio');
+    expect(audio.transcript).toContain('finished');
+    expect(audio.url).toBe(''); // an empty slot for the teacher to fill
 
     // Approve → published; now the student can see it (ФТ-К404).
     await api().post(`/api/v1/content/generate/${gen.body.id}/approve`).set(auth(tutor.accessToken)).expect(201);
@@ -131,6 +152,38 @@ describe('AI generation (e2e, mocked model)', () => {
     await api().delete(`/api/v1/content/generate/${g.body.id}`).set(auth(tutor.accessToken)).expect(200);
     // The draft course is gone.
     await api().get(`/api/v1/content/courses/${done.courseId}/tree?level=Intermediate`).set(auth(tutor.accessToken)).expect(404);
+  });
+
+  it('revise re-generates only the scoped lesson and records the revision (ФТ-К406)', async () => {
+    const gen = await api()
+      .post('/api/v1/content/generate')
+      .set(auth(tutor.accessToken))
+      .send({ topic: 'Revise me', level: 'Intermediate', units: 1, lessonsPerUnit: 2 })
+      .expect(201);
+    const done = await settle(gen.body.id);
+    expect(done.status).toBe('ready_for_review');
+    const courseId = done.courseId as string;
+    const tree = await api().get(`/api/v1/content/courses/${courseId}/tree?level=Intermediate`).set(auth(tutor.accessToken)).expect(200);
+    const lessons = tree.body.sections[0].units[0].lessons;
+    expect(lessons.length).toBe(2);
+    const [l1, l2] = lessons;
+
+    await api()
+      .post(`/api/v1/content/generate/${gen.body.id}/revise`)
+      .set(auth(tutor.accessToken))
+      .send({ scope: `lesson:${l1.id}`, instruction: 'make it harder' })
+      .expect(201);
+    const revised = await settle(gen.body.id);
+    expect(revised.status).toBe('ready_for_review');
+
+    const d1 = await api().get(`/api/v1/content/lessons/${l1.id}`).set(auth(tutor.accessToken)).expect(200);
+    const d2 = await api().get(`/api/v1/content/lessons/${l2.id}`).set(auth(tutor.accessToken)).expect(200);
+    expect(d1.body.wordlist.entries[0].word).toBe('revised'); // scoped lesson changed
+    expect(d2.body.wordlist.entries[0].word).toBe('arrive'); // the other lesson is untouched
+
+    const revs = await prisma.generationRevision.findMany({ where: { jobId: gen.body.id } });
+    expect(revs.length).toBe(1);
+    expect(revs[0].scope).toBe(`lesson:${l1.id}`);
   });
 
   it('students cannot request generation (ФТ-У801/RBAC)', async () => {

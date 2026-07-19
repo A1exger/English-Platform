@@ -2396,6 +2396,35 @@ select.err {
   gap: 8px;
   align-items: center;
 }
+/* AI media slot — empty attachment awaiting an upload (ФТ-К407) */
+.media-slot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  background: var(--indigo-100);
+  font-size: 13px;
+}
+.media-slot-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--indigo-700);
+}
+.media-slot-fill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--indigo-700);
+  cursor: pointer;
+}
+.media-slot-fill input {
+  max-inline-size: 160px;
+}
 .course-card-title {
   display: flex;
   align-items: center;

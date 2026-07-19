@@ -1,5 +1,5 @@
 import { extractJson } from './ai-client';
-import { normalizeLessonPlan, normalizeSkeleton, normalizeTask, parseBrief } from './pipeline';
+import { normalizeLessonPlan, normalizeMedia, normalizeSkeleton, normalizeTask, parseBrief } from './pipeline';
 
 describe('generation pipeline (pure)', () => {
   it('parseBrief validates topic/level and clamps counts', () => {
@@ -62,6 +62,17 @@ describe('generation pipeline (pure)', () => {
     expect(plan.pages[0].tasks).toHaveLength(1);
     expect(plan.wordlist).toHaveLength(1);
     expect(plan.grammar?.title).toBe('T');
+  });
+
+  it('normalizeMedia keeps valid slots; transcript only on audio (ФТ-К407)', () => {
+    const media = normalizeMedia([
+      { kind: 'audio', note: 'dialogue', transcript: 'A: hi.' },
+      { kind: 'image', note: 'a photo', transcript: 'ignored' },
+      { kind: 'bogus', note: 'x' }
+    ]);
+    expect(media).toHaveLength(2);
+    expect(media[0]).toEqual({ kind: 'audio', note: 'dialogue', transcript: 'A: hi.' });
+    expect(media[1].transcript).toBeUndefined(); // images carry no transcript
   });
 
   it('extractJson handles fenced, prose-wrapped, and string-brace JSON', () => {

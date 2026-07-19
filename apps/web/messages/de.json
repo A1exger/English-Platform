@@ -479,6 +479,9 @@
     "aiReady": "Entwurf bereit zur Prüfung.",
     "aiFailed": "Erstellung fehlgeschlagen",
     "aiOpenDraft": "Entwurf öffnen",
+    "mediaPending": "Upload ausstehend",
+    "refine": "Verfeinern",
+    "refineInstruction": "Mit einer Anweisung verfeinern",
     "selectLesson": "Lektion zum Bearbeiten wählen",
     "lessonDeleted": "Lektion gelöscht",
     "taskDeleted": "Aufgabe entfernt"

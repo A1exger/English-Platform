@@ -13,14 +13,26 @@ export interface PageMediaItem {
   order?: number;
 }
 
+// An unfilled media slot (empty url) — from the AI media plan or awaiting an
+// upload (ФТ-К407). Listening audio still shows its transcript.
+function Slot({ m }: { m: PageMediaItem }) {
+  const t = useTranslations('courses');
+  return (
+    <div className="media-slot">
+      <span className="media-slot-badge">{m.kind} · {t('mediaPending')}</span>
+      {m.caption && <span className="muted">{m.caption}</span>}
+    </div>
+  );
+}
+
 // Listening audio: an <audio> player plus a transcript the learner can reveal
-// (ФТ-К303).
+// (ФТ-К303). Works for a real file or a transcript-only slot (ФТ-К407).
 function AudioItem({ m }: { m: PageMediaItem }) {
   const t = useTranslations('courses');
   const [show, setShow] = useState(false);
   return (
     <figure className="page-media-item">
-      <audio controls src={fileUrl(m.url)} className="audio-full" />
+      {m.url ? <audio controls src={fileUrl(m.url)} className="audio-full" /> : <Slot m={m} />}
       {m.transcript && (
         <>
           <button type="button" className="link transcript-toggle" onClick={() => setShow((v) => !v)}>
@@ -29,7 +41,7 @@ function AudioItem({ m }: { m: PageMediaItem }) {
           {show && <div className="transcript">{m.transcript}</div>}
         </>
       )}
-      {m.caption && <figcaption className="muted">{m.caption}</figcaption>}
+      {m.url && m.caption && <figcaption className="muted">{m.caption}</figcaption>}
     </figure>
   );
 }
@@ -42,6 +54,8 @@ export function PageMediaBlock({ media }: { media?: PageMediaItem[] | null }) {
       {media.map((m) =>
         m.kind === 'audio' ? (
           <AudioItem key={m.id} m={m} />
+        ) : !m.url ? (
+          <Slot key={m.id} m={m} />
         ) : m.kind === 'video' ? (
           <figure key={m.id} className="page-media-item">
             <video controls src={fileUrl(m.url)} className="page-media-video" />

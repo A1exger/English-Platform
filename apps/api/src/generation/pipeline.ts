@@ -41,9 +41,15 @@ export interface GenTask {
   payload: Record<string, unknown>;
   answerKey?: Record<string, unknown>;
 }
+export interface GenMedia {
+  kind: string; // "image" | "video" | "audio"
+  note?: string; // description of what to upload (slot caption)
+  transcript?: string; // for listening audio
+}
 export interface GenPage {
   type: string;
   text?: string;
+  media: GenMedia[];
   tasks: GenTask[];
 }
 export interface LessonPlan {
@@ -82,7 +88,7 @@ export function skeletonPrompt(brief: Brief): { system: string; user: string } {
 
 export function lessonPrompt(
   brief: Brief,
-  ctx: { unitTitle: string; lessonTitle: string; objectives: string[] }
+  ctx: { unitTitle: string; lessonTitle: string; objectives: string[]; instruction?: string }
 ): { system: string; user: string } {
   return {
     system:
@@ -93,9 +99,13 @@ export function lessonPrompt(
       `Course topic: ${brief.topic}\nUnit: ${ctx.unitTitle}\nLesson: ${ctx.lessonTitle}\n` +
       `Objectives: ${ctx.objectives.join('; ')}\nAspects: ${brief.aspects.join(', ')}\n` +
       (brief.notes ? `Notes: ${brief.notes}\n` : '') +
-      `Return JSON: {"pages":[{"type":"grammar|practice|listening|reading","text":"...","tasks":[<task>]}],` +
-      `"wordlist":[{"word":"...","translation":"..."}],"grammar":{"title":"...","meaning":"...","form":"..."}}\n` +
-      `2-4 pages, 1-4 tasks per page, 4-8 wordlist entries.`
+      (ctx.instruction ? `\nREVISION INSTRUCTION: ${ctx.instruction}\nApply it; keep everything else consistent.\n` : '') +
+      `Return JSON: {"pages":[{"type":"grammar|practice|listening|reading","text":"...",` +
+      `"media":[{"kind":"audio|image|video","note":"what to show/play","transcript":"(listening audio only) full transcript"}],` +
+      `"tasks":[<task>]}],"wordlist":[{"word":"...","translation":"..."}],"grammar":{"title":"...","meaning":"...","form":"..."}}\n` +
+      `2-4 pages, 1-4 tasks per page, 4-8 wordlist entries.\n` +
+      `Media plan: a listening page MUST include one "audio" item with a full transcript. ` +
+      `For images/videos, describe them in "note" — do NOT invent URLs; the teacher uploads the file.`
   };
 }
 
@@ -196,19 +206,38 @@ export function normalizeTask(raw: unknown): GenTask | null {
   }
 }
 
+const MEDIA_KINDS = ['image', 'video', 'audio'];
+
+/** Media plan for a page (ФТ-К407): audio carries a transcript, others are slots. */
+export function normalizeMedia(raw: unknown): GenMedia[] {
+  return arr(raw)
+    .map((m): GenMedia | null => {
+      const mo = (m ?? {}) as Record<string, unknown>;
+      const kind = str(mo.kind);
+      if (!MEDIA_KINDS.includes(kind)) return null;
+      return {
+        kind,
+        note: str(mo.note) || undefined,
+        transcript: kind === 'audio' ? str(mo.transcript) || undefined : undefined
+      };
+    })
+    .filter((m): m is GenMedia => m !== null)
+    .slice(0, 4);
+}
+
 /** Parse a lesson plan, dropping malformed tasks (ФТ-К403). */
 export function normalizeLessonPlan(raw: unknown): LessonPlan {
   const root = (raw ?? {}) as { pages?: unknown; wordlist?: unknown; grammar?: unknown };
   const pages = arr(root.pages)
     .slice(0, 8)
     .map((p) => {
-      const po = (p ?? {}) as { type?: unknown; text?: unknown; tasks?: unknown };
+      const po = (p ?? {}) as { type?: unknown; text?: unknown; tasks?: unknown; media?: unknown };
       const type = PAGE_TYPES.includes(str(po.type)) ? str(po.type) : 'practice';
       const tasks = arr(po.tasks)
         .map(normalizeTask)
         .filter((t): t is GenTask => t !== null)
         .slice(0, 8);
-      return { type, text: str(po.text) || undefined, tasks };
+      return { type, text: str(po.text) || undefined, media: normalizeMedia(po.media), tasks };
     });
   const wordlist = arr(root.wordlist)
     .map((w) => {

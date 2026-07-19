@@ -49,3 +49,15 @@ export class GenerateDto {
   @IsString()
   courseId?: string;
 }
+
+// Area re-generation (ФТ-К406). scope: "course" | "unit:ID" | "lesson:ID" |
+// "page:ID" | "tasks:ID".
+export class ReviseDto {
+  @IsString()
+  @Length(1, 100)
+  scope!: string;
+
+  @IsString()
+  @Length(1, 2000)
+  instruction!: string;
+}
