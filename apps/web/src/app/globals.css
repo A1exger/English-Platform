@@ -2836,3 +2836,121 @@ input[type='radio']:focus-visible {
     inline-size: min(240px, 70vw);
   }
 }
+
+/* ——— interactive tasks (shared dnd-kit renderer, SPEC App. Д) ——— */
+.task-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+  cursor: grab;
+  user-select: none;
+}
+.task-chip.ok { border-color: var(--high); background: var(--high-100); color: #0f7a4f; }
+.task-chip.bad { border-color: var(--low); background: var(--low-100); color: #b23a33; }
+.task-sentence,
+.task-bank,
+.task-cat-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.task-bank {
+  margin-block-start: 12px;
+  padding: 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  min-block-size: 44px;
+}
+.task-bank.over,
+.task-gap.over,
+.task-match-slot.over,
+.task-cat.over {
+  border-color: var(--indigo);
+  background: var(--indigo-50);
+}
+.task-gap-text {
+  line-height: 2.2;
+}
+.task-gap {
+  display: inline-flex;
+  align-items: center;
+  min-inline-size: 64px;
+  margin-inline: 2px;
+  padding: 2px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  vertical-align: middle;
+}
+.task-gap.ok { background: var(--high-100); }
+.task-gap.bad { background: var(--low-100); }
+.task-gap-empty {
+  color: var(--mist);
+  font-family: var(--font-mono);
+}
+.task-match {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.task-match-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.task-match-left {
+  min-inline-size: 120px;
+  font-weight: 600;
+}
+.task-match-slot {
+  flex: 1;
+  min-block-size: 40px;
+  padding: 4px 8px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: center;
+}
+.task-match-slot.ok { border-color: var(--high); border-style: solid; }
+.task-match-slot.bad { border-color: var(--low); border-style: solid; }
+.task-cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-block-start: 12px;
+}
+.task-cat {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px;
+  min-block-size: 90px;
+  background: var(--cloud);
+}
+.task-cat-label {
+  display: block;
+  margin-block-end: 8px;
+}
+.task-mcq {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.task-mcq-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.task-mcq-opt.active { border-color: var(--indigo); background: var(--indigo-50); }
+.task-mcq-opt.ok { border-color: var(--high); background: var(--high-100); }
+.task-mcq-opt.bad { border-color: var(--low); background: var(--low-100); }
