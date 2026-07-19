@@ -6,6 +6,8 @@ import { io, Socket } from 'socket.io-client';
 import { apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ExercisePlayer } from './ExercisePlayer';
+import type { ExerciseState } from './ExerciseRenderer';
+import type { ExerciseResult } from './tasks/types';
 import { Icon } from './Icon';
 
 function apiOrigin(): string {
@@ -19,14 +21,23 @@ interface ExRow {
   title: string;
 }
 
-// Canonical interactive types get their live board path in a later stage; until
-// then the panel only offers legacy templates it can actually render.
-const CANONICAL_TYPES = ['sentence_ordering', 'word_matching', 'gap_fill', 'categorization', 'multiple_choice'];
-const isCanonical = (ty: string) => CANONICAL_TYPES.includes(ty);
+type Role = 'tutor' | 'student' | 'admin' | 'parent';
+
+// The exercise envelope carried inside the existing `board:update` relay
+// (§Прил. Б). Drawing ops have no `kind`, so the two coexist on one channel.
+interface ExerciseEnvelope {
+  kind: 'exercise';
+  op: 'add' | 'remove' | 'state' | 'check';
+  instanceId: string;
+  state?: ExerciseState;
+  result?: ExerciseResult;
+  byRole?: Role;
+}
 
 // Right half of the lesson: the teacher pushes interactive exercises live and
-// the student solves them. New exercises arrive over the existing /board gateway
-// via a `board:update` envelope ({type:'exercise'}).
+// the student solves them. New exercises + live drags ride the existing /board
+// gateway via the `board:update` exercise envelope (§Прил. Б); the gateway is
+// untouched.
 export function LessonExercisePanel({
   lessonId,
   socket: sharedSocket
@@ -38,11 +49,14 @@ export function LessonExercisePanel({
 }) {
   const t = useTranslations('exercises');
   const locale = useLocale();
-  const [canPush, setCanPush] = useState(false);
+  const [role, setRole] = useState<Role | null>(null);
   const [instances, setInstances] = useState<string[]>([]);
   const [library, setLibrary] = useState<ExRow[]>([]);
   const [pick, setPick] = useState('');
+  const [liveState, setLiveState] = useState<Record<string, ExerciseState>>({});
+  const [liveResult, setLiveResult] = useState<Record<string, ExerciseResult>>({});
   const socketRef = useRef<Socket | null>(null);
+  const canPush = role === 'tutor' || role === 'admin';
 
   useEffect(() => {
     const token = tokenStore.get();
@@ -50,16 +64,15 @@ export function LessonExercisePanel({
     (async () => {
       try {
         const me = await fetchMe(token, locale);
+        setRole(me.role as Role);
         const push = me.role === 'tutor' || me.role === 'admin';
-        setCanPush(push);
         const active = await apiFetch<{ id: string }[]>(
           `/lessons/${lessonId}/board/exercises`,
           { token, locale }
         );
         setInstances(active.map((i) => i.id));
         if (push) {
-          const lib = await apiFetch<ExRow[]>('/exercises', { token, locale }).catch(() => []);
-          setLibrary(lib.filter((x) => !isCanonical(x.type)));
+          setLibrary(await apiFetch<ExRow[]>('/exercises', { token, locale }).catch(() => []));
         }
       } catch {
         /* ignore */
@@ -70,14 +83,18 @@ export function LessonExercisePanel({
       sharedSocket ??
       io(`${apiOrigin()}/board`, { auth: { token }, transports: ['websocket'], forceNew: true });
     socketRef.current = socket;
-    const onUpdate = (msg: { update?: { type?: string; instanceId?: string } }) => {
+    const onUpdate = (msg: { update?: ExerciseEnvelope }) => {
       const u = msg?.update;
-      if (u?.type === 'exercise' && u.instanceId) {
-        const id = u.instanceId;
+      if (u?.kind !== 'exercise' || !u.instanceId) return;
+      const id = u.instanceId;
+      if (u.op === 'add') {
         setInstances((prev) => (prev.includes(id) ? prev : [...prev, id]));
-      } else if (u?.type === 'exercise-remove' && u.instanceId) {
-        const id = u.instanceId;
+      } else if (u.op === 'remove') {
         setInstances((prev) => prev.filter((x) => x !== id));
+      } else if (u.op === 'state' && u.state) {
+        setLiveState((prev) => ({ ...prev, [id]: u.state as ExerciseState }));
+      } else if (u.op === 'check' && u.result) {
+        setLiveResult((prev) => ({ ...prev, [id]: u.result as ExerciseResult }));
       }
     };
     socket.on('board:update', onUpdate);
@@ -89,6 +106,10 @@ export function LessonExercisePanel({
     };
   }, [lessonId, locale, sharedSocket]);
 
+  function emit(update: ExerciseEnvelope) {
+    socketRef.current?.emit('board:update', { lessonId, update });
+  }
+
   async function push() {
     const token = tokenStore.get();
     if (!token || !pick) return;
@@ -97,10 +118,7 @@ export function LessonExercisePanel({
       { method: 'POST', token, locale, body: { exerciseId: pick } }
     );
     setInstances((prev) => [...prev, inst.id]);
-    socketRef.current?.emit('board:update', {
-      lessonId,
-      update: { type: 'exercise', instanceId: inst.id }
-    });
+    emit({ kind: 'exercise', op: 'add', instanceId: inst.id, byRole: role ?? undefined });
     setPick('');
   }
 
@@ -113,10 +131,7 @@ export function LessonExercisePanel({
       locale
     }).catch(() => undefined);
     setInstances((prev) => prev.filter((x) => x !== id));
-    socketRef.current?.emit('board:update', {
-      lessonId,
-      update: { type: 'exercise-remove', instanceId: id }
-    });
+    emit({ kind: 'exercise', op: 'remove', instanceId: id, byRole: role ?? undefined });
   }
 
   return (
@@ -149,12 +164,10 @@ export function LessonExercisePanel({
             )}
             <ExercisePlayer
               instanceId={id}
-              onState={(s) =>
-                socketRef.current?.emit('board:update', {
-                  lessonId,
-                  update: { type: 'exercise-state', instanceId: id, state: s }
-                })
-              }
+              incomingState={liveState[id] ?? null}
+              incomingResult={liveResult[id] ?? null}
+              onState={(s) => emit({ kind: 'exercise', op: 'state', instanceId: id, state: s, byRole: role ?? undefined })}
+              onResult={(r) => emit({ kind: 'exercise', op: 'check', instanceId: id, result: r, byRole: role ?? undefined })}
             />
           </div>
         ))

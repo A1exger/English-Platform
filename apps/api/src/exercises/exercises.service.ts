@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -18,7 +17,7 @@ import {
   toQuestion,
   validatePayload,
 } from './exercise.logic';
-import { TaskType } from '../common/tasks/task-contract';
+import { grade, sanitize, shuffle, TaskType } from '../common/tasks/task-contract';
 import { isCanonicalType, normalizeCanonical } from './canonical';
 
 // Columns returned by the library listing: never ship `payload`/`answerKey`
@@ -188,16 +187,41 @@ export class ExercisesService {
 
   // --- live lesson instances ------------------------------------------------
 
-  /** Sanitized question (no solution) + current state/status for an instance. */
+  /**
+   * The student-facing view of an instance: no solution ever. Canonical tasks
+   * return a `sanitize`d def (App. В) + any stored result; legacy tasks return
+   * the shuffled `question` as before. `kind` lets the player pick a renderer.
+   */
   private instanceView(
-    instance: { id: string; status: string; score: number | null; state: string | null },
-    exercise: { type: string; title: string; payload: string },
+    instance: {
+      id: string;
+      status: string;
+      score: number | null;
+      state: string | null;
+      result?: string | null;
+    },
+    exercise: { type: string; title: string; prompt?: string | null; payload: string },
   ) {
-    return {
+    const base = {
       id: instance.id,
       status: instance.status,
       score: instance.score,
       state: instance.state ? JSON.parse(instance.state) : null,
+    };
+    if (isCanonicalType(exercise.type)) {
+      return {
+        ...base,
+        kind: 'canonical' as const,
+        taskType: exercise.type,
+        title: exercise.title,
+        prompt: exercise.prompt ?? null,
+        def: sanitize(exercise.type as TaskType, JSON.parse(exercise.payload)),
+        result: instance.result ? JSON.parse(instance.result) : null,
+      };
+    }
+    return {
+      ...base,
+      kind: 'legacy' as const,
       question: toQuestion(
         exercise.type as ExerciseType,
         exercise.title,
@@ -216,15 +240,22 @@ export class ExercisesService {
       where: { id: exerciseId },
     });
     if (!exercise) throw new NotFoundException('Exercise not found');
-    // Canonical interactive tasks ride a dedicated instance path added in a
-    // later stage; the legacy board grader can't render them, so refuse early.
-    if (isCanonicalType(exercise.type)) {
-      throw new BadRequestException(
-        'Interactive tasks are not yet available on the lesson board.',
-      );
+    // Seed the initial layout on the SERVER so both sides see the same shuffle
+    // (§Прил. В): sentence_ordering starts scrambled via state.order; the other
+    // canonical types are shuffled inside `sanitize` (columns/bank) and start
+    // with empty state; legacy tasks shuffle at render time (state stays null).
+    let seededState: string | undefined;
+    if (exercise.type === 'sentence_ordering') {
+      const tokens = (JSON.parse(exercise.payload).tokens as unknown[]) ?? [];
+      seededState = JSON.stringify({ order: shuffle(tokens.map((_, i) => i)) });
     }
     const instance = await this.prisma.exerciseInstance.create({
-      data: { exerciseId, context: 'lesson', lessonId },
+      data: {
+        exerciseId,
+        context: 'lesson',
+        lessonId,
+        ...(seededState ? { state: seededState } : {}),
+      },
     });
     return this.instanceView(instance, exercise);
   }
@@ -300,11 +331,57 @@ export class ExercisesService {
     return this.instanceView(updated, updated.exercise);
   }
 
+  /** Mark a homework graded once all of its instances are submitted. */
+  private async markHomeworkGradedIfDone(homeworkId: string | null) {
+    if (!homeworkId) return;
+    const remaining = await this.prisma.exerciseInstance.count({
+      where: { homeworkId, status: { not: 'submitted' } },
+    });
+    if (remaining === 0) {
+      await this.prisma.homework.update({
+        where: { id: homeworkId },
+        data: { status: 'graded' },
+      });
+    }
+  }
+
   /** Server-side check. Idempotent for homework: returns the stored score. */
   async check(user: AuthenticatedUser, id: string) {
     const instance = await this.accessibleInstance(user, id);
     const payload = JSON.parse(instance.exercise.payload);
-    const solution = solutionFor(instance.exercise.type as ExerciseType, payload);
+    const type = instance.exercise.type;
+    const state = instance.state ? JSON.parse(instance.state) : {};
+
+    // --- canonical (App. В): per-element grading; the эталон never leaves ---
+    if (isCanonicalType(type)) {
+      const answerKey = instance.exercise.answerKey
+        ? JSON.parse(instance.exercise.answerKey)
+        : {};
+      const result = grade(type as TaskType, payload, answerKey, state);
+      await this.prisma.exerciseInstance.update({
+        where: { id },
+        data: {
+          result: JSON.stringify(result),
+          // Homework submission is terminal + scored; a live lesson check is a
+          // re-checkable reveal, so it only stores the result.
+          ...(instance.context === 'homework'
+            ? { status: 'submitted', score: result.score }
+            : {}),
+        },
+      });
+      if (instance.context === 'homework') {
+        await this.markHomeworkGradedIfDone(instance.homeworkId);
+      }
+      return {
+        correct: result.correct,
+        score: result.score,
+        perToken: result.perToken ?? null,
+        submitted: true,
+      };
+    }
+
+    // --- legacy (unchanged) ---
+    const solution = solutionFor(type as ExerciseType, payload);
     if (instance.status === 'submitted' && instance.score !== null) {
       return {
         score: instance.score,
@@ -313,30 +390,13 @@ export class ExercisesService {
         solution,
       };
     }
-    const state = instance.state ? JSON.parse(instance.state) : {};
-    const result = checkAnswer(
-      instance.exercise.type as ExerciseType,
-      payload,
-      state,
-    );
-
+    const result = checkAnswer(type as ExerciseType, payload, state);
     if (instance.context === 'homework') {
       await this.prisma.exerciseInstance.update({
         where: { id },
         data: { status: 'submitted', score: result.score },
       });
-      // When every exercise in the homework is submitted, mark it graded.
-      if (instance.homeworkId) {
-        const remaining = await this.prisma.exerciseInstance.count({
-          where: { homeworkId: instance.homeworkId, status: { not: 'submitted' } },
-        });
-        if (remaining === 0) {
-          await this.prisma.homework.update({
-            where: { id: instance.homeworkId },
-            data: { status: 'graded' },
-          });
-        }
-      }
+      await this.markHomeworkGradedIfDone(instance.homeworkId);
     }
     return { score: result.score, correct: result.correct, submitted: true, solution };
   }

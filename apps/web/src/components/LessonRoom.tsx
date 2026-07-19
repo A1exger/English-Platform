@@ -131,6 +131,15 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
             </div>
           </div>
         )}
+
+        {/* The student sees pushed interactive tasks live (ФТ-У201/У205). */}
+        {!isTeacher && (
+          <div className="room-rail-panel">
+            <div className="room-rail-body">
+              <LessonExercisePanel lessonId={lessonId} socket={board} />
+            </div>
+          </div>
+        )}
       </aside>
     </div>
   );

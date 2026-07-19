@@ -214,12 +214,7 @@ describe('Interactive exercises (e2e)', () => {
     expect(full.body.answerKey).toEqual({ g1: 'go' });
   });
 
-  it('canonical: not yet pushable to the board nor assignable as homework', async () => {
-    await api()
-      .post(`/api/v1/lessons/${lessonId}/board/exercises`)
-      .set(auth(tutor.accessToken))
-      .send({ exerciseId: canonicalId })
-      .expect(400);
+  it('canonical: still cannot be assigned as homework (arrives in Stage 5)', async () => {
     await api()
       .post('/api/v1/homework/assign')
       .set(auth(tutor.accessToken))
@@ -229,5 +224,94 @@ describe('Interactive exercises (e2e)', () => {
         title: 'HW canon',
       })
       .expect(400);
+  });
+
+  // --- Stage 3: canonical tasks on the live board ---------------------------
+
+  it('canonical board: push sentence_ordering; server seeds a shuffled order', async () => {
+    const pushed = await api()
+      .post(`/api/v1/lessons/${lessonId}/board/exercises`)
+      .set(auth(tutor.accessToken))
+      .send({ exerciseId: canonicalId })
+      .expect(201);
+    expect(pushed.body.kind).toBe('canonical');
+    expect(pushed.body.taskType).toBe('sentence_ordering');
+    expect(pushed.body.state.order).toHaveLength(6); // seeded on the server
+
+    const instId = pushed.body.id;
+    const view = await api()
+      .get(`/api/v1/exercise-instances/${instId}`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    expect(view.body.kind).toBe('canonical');
+    expect(view.body.def.tokens).toHaveLength(6); // sanitized def
+    expect(view.body.answerKey).toBeUndefined(); // эталон never reaches the student
+    expect(view.body.result).toBeNull();
+
+    // Student arranges the correct order (payload tokens are already correct).
+    await api()
+      .patch(`/api/v1/exercise-instances/${instId}/state`)
+      .set(auth(student.accessToken))
+      .send({ state: { order: [0, 1, 2, 3, 4, 5] } })
+      .expect(200);
+    const check = await api()
+      .post(`/api/v1/exercise-instances/${instId}/check`)
+      .set(auth(student.accessToken))
+      .expect(201);
+    expect(check.body.correct).toBe(true);
+    expect(check.body.score).toBe(100);
+    expect(check.body.solution).toBeUndefined(); // canonical never returns the эталон
+
+    // Reload restores the persisted result (ФТ-У203/У503).
+    const restored = await api()
+      .get(`/api/v1/exercise-instances/${instId}`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    expect(restored.body.result.correct).toBe(true);
+
+    const listed = await api()
+      .get(`/api/v1/lessons/${lessonId}/board/exercises`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    expect(listed.body.some((i: { id: string }) => i.id === instId)).toBe(true);
+  });
+
+  it('canonical board: gap_fill returns per-gap marking, no answer leak', async () => {
+    const ex = await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'gap_fill',
+        title: 'Board gaps',
+        payload: { segments: ['I ', { gap: 'g1' }, ' to ', { gap: 'g2' }, '.'], bank: ['go', 'school', 'went', 'home'] },
+        answerKey: { g1: 'go', g2: 'school' }
+      })
+      .expect(201);
+    const pushed = await api()
+      .post(`/api/v1/lessons/${lessonId}/board/exercises`)
+      .set(auth(tutor.accessToken))
+      .send({ exerciseId: ex.body.id })
+      .expect(201);
+    const instId = pushed.body.id;
+
+    const view = await api()
+      .get(`/api/v1/exercise-instances/${instId}`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    expect(view.body.def.bank).toEqual(expect.arrayContaining(['go', 'school']));
+    expect(view.body.answerKey).toBeUndefined();
+
+    // One gap right, one wrong → 50, with a per-gap map.
+    await api()
+      .patch(`/api/v1/exercise-instances/${instId}/state`)
+      .set(auth(student.accessToken))
+      .send({ state: { filled: { g1: 'go', g2: 'home' } } })
+      .expect(200);
+    const check = await api()
+      .post(`/api/v1/exercise-instances/${instId}/check`)
+      .set(auth(student.accessToken))
+      .expect(201);
+    expect(check.body.score).toBe(50);
+    expect(check.body.perToken).toEqual({ g1: true, g2: false });
   });
 });

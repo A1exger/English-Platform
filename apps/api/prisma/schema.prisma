@@ -362,6 +362,7 @@ model ExerciseInstance {
   homeworkId       String?
   studentProfileId String?
   state            String?
+  result           String? // JSON ExerciseResult for canonical tasks (§Прил. В); revealed to both sides
   status           String   @default("open")
   score            Int?
   createdAt        DateTime @default(now())

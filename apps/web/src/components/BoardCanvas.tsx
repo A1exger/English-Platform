@@ -141,7 +141,12 @@ export function BoardCanvas({
     socketRef.current = socket;
 
     const onJoined = () => setStatus('connected');
-    const onUpdate = (msg: { update: BoardOp }) => applyOp(msg.update);
+    // Drawing and exercises share the /board channel (§Прил. Б); exercise
+    // envelopes carry `kind:'exercise'`, so the canvas skips them.
+    const onUpdate = (msg: { update: BoardOp & { kind?: string } }) => {
+      if (msg.update?.kind === 'exercise') return;
+      applyOp(msg.update);
+    };
     const onNote = (msg: { notes: string }) => setNotes(msg.notes);
     socket.on('board:joined', onJoined);
     socket.on('board:update', onUpdate);
