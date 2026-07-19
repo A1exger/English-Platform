@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import {
   GapSegment,
   MatchPair,
+  shuffle,
   TASK_TYPES,
   TaskType,
 } from '../common/tasks/task-contract';
@@ -149,4 +150,19 @@ export function normalizeCanonical(
 
   if (JSON.stringify(out.payload).length > PAYLOAD_MAX_BYTES) fail('payload is too large');
   return out;
+}
+
+/**
+ * The initial student layout for a fresh instance/card, shuffled on the SERVER
+ * so both sides (and every student) see an independent order that never hints
+ * the answer (ФТ-У302 / §Прил. В). Only sentence_ordering needs a seeded state;
+ * the other types are shuffled inside `sanitize` (columns/bank) and start empty.
+ * Returns a JSON string, or undefined when no seed is needed.
+ */
+export function seedInstanceState(type: string, payloadJson: string): string | undefined {
+  if (type === 'sentence_ordering') {
+    const tokens = (JSON.parse(payloadJson).tokens as unknown[]) ?? [];
+    return JSON.stringify({ order: shuffle(tokens.map((_, i) => i)) });
+  }
+  return undefined;
 }

@@ -611,9 +611,7 @@ export function ExercisesView() {
                     <button type="button" onClick={() => view(ex.id)}>{t('view')}</button>
                     <button type="button" onClick={() => edit(ex.id)}>{t('edit')}</button>
                     <button type="button" onClick={() => act(`/exercises/${ex.id}/duplicate`, 'POST')}>{t('duplicate')}</button>
-                    {!isCanonical(ex.type) && (
-                      <button type="button" onClick={() => openAssign(ex.id)}>{t('assign')}</button>
-                    )}
+                    <button type="button" onClick={() => openAssign(ex.id)}>{t('assign')}</button>
                     <button type="button" onClick={() => removeExercise(ex.id)}>{t('delete')}</button>
                   </span>
                 </div>

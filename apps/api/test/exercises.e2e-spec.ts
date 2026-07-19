@@ -214,16 +214,56 @@ describe('Interactive exercises (e2e)', () => {
     expect(full.body.answerKey).toEqual({ g1: 'go' });
   });
 
-  it('canonical: still cannot be assigned as homework (arrives in Stage 5)', async () => {
+  it('canonical homework: assigns to multiple students; each solves + is graded (idempotent)', async () => {
+    const student2 = await register('ex.student2@test.com', 'student');
+    const student2ProfileId = (await prisma.studentProfile.findFirst({
+      where: { user: { email: 'ex.student2@test.com' } }
+    }))!.id;
+
     await api()
       .post('/api/v1/homework/assign')
       .set(auth(tutor.accessToken))
       .send({
-        studentProfileIds: [studentProfileId],
+        studentProfileIds: [studentProfileId, student2ProfileId],
         exerciseIds: [canonicalId],
-        title: 'HW canon',
+        title: 'Canon HW'
       })
-      .expect(400);
+      .expect(201);
+
+    // A card was created for each student (ФТ-У301).
+    const list1 = await api().get('/api/v1/homework').set(auth(student.accessToken)).expect(200);
+    const hw1 = list1.body.find((h: { title: string }) => h.title === 'Canon HW');
+    expect(hw1.exercises.length).toBe(1);
+    const list2 = await api().get('/api/v1/homework').set(auth(student2.accessToken)).expect(200);
+    expect(list2.body.some((h: { title: string }) => h.title === 'Canon HW')).toBe(true);
+
+    const instId = hw1.exercises[0].id;
+    const view = await api().get(`/api/v1/exercise-instances/${instId}`).set(auth(student.accessToken)).expect(200);
+    expect(view.body.kind).toBe('canonical'); // interactive render (ФТ-У401)
+    expect(view.body.state.order).toHaveLength(6); // server-seeded layout (ФТ-У302)
+    expect(view.body.answerKey).toBeUndefined(); // no эталон (ФТ-У501)
+
+    await api()
+      .patch(`/api/v1/exercise-instances/${instId}/state`)
+      .set(auth(student.accessToken))
+      .send({ state: { order: [0, 1, 2, 3, 4, 5] } })
+      .expect(200);
+    const check = await api().post(`/api/v1/exercise-instances/${instId}/check`).set(auth(student.accessToken)).expect(201);
+    expect(check.body.score).toBe(100);
+
+    // Idempotent resubmit — same score, no re-grade (ФТ-У403).
+    const again = await api().post(`/api/v1/exercise-instances/${instId}/check`).set(auth(student.accessToken)).expect(201);
+    expect(again.body.score).toBe(100);
+
+    const after = await api().get('/api/v1/homework').set(auth(student.accessToken)).expect(200);
+    const graded = after.body.find((h: { title: string }) => h.title === 'Canon HW');
+    expect(graded.status).toBe('graded');
+    expect(graded.exercises[0].score).toBe(100);
+
+    // Student 2's card is independent and still open (ФТ-У302).
+    const s2 = await api().get('/api/v1/homework').set(auth(student2.accessToken)).expect(200);
+    const s2hw = s2.body.find((h: { title: string }) => h.title === 'Canon HW');
+    expect(s2hw.status).not.toBe('graded');
   });
 
   // --- Stage 3: canonical tasks on the live board ---------------------------

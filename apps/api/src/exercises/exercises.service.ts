@@ -17,8 +17,8 @@ import {
   toQuestion,
   validatePayload,
 } from './exercise.logic';
-import { grade, sanitize, shuffle, TaskType } from '../common/tasks/task-contract';
-import { isCanonicalType, normalizeCanonical } from './canonical';
+import { grade, sanitize, TaskType } from '../common/tasks/task-contract';
+import { isCanonicalType, normalizeCanonical, seedInstanceState } from './canonical';
 
 // Columns returned by the library listing: never ship `payload`/`answerKey`
 // (they may encode the solution) — only what the UI needs to render a card.
@@ -240,15 +240,8 @@ export class ExercisesService {
       where: { id: exerciseId },
     });
     if (!exercise) throw new NotFoundException('Exercise not found');
-    // Seed the initial layout on the SERVER so both sides see the same shuffle
-    // (§Прил. В): sentence_ordering starts scrambled via state.order; the other
-    // canonical types are shuffled inside `sanitize` (columns/bank) and start
-    // with empty state; legacy tasks shuffle at render time (state stays null).
-    let seededState: string | undefined;
-    if (exercise.type === 'sentence_ordering') {
-      const tokens = (JSON.parse(exercise.payload).tokens as unknown[]) ?? [];
-      seededState = JSON.stringify({ order: shuffle(tokens.map((_, i) => i)) });
-    }
+    // Seed the initial layout on the SERVER (§Прил. В / ФТ-У302).
+    const seededState = seedInstanceState(exercise.type, exercise.payload);
     const instance = await this.prisma.exerciseInstance.create({
       data: {
         exerciseId,
@@ -354,6 +347,21 @@ export class ExercisesService {
 
     // --- canonical (App. В): per-element grading; the эталон never leaves ---
     if (isCanonicalType(type)) {
+      // Homework is terminal: a re-check returns the stored result unchanged, so
+      // a resubmission never re-grades or double-counts (ФТ-У403).
+      if (
+        instance.context === 'homework' &&
+        instance.status === 'submitted' &&
+        instance.result
+      ) {
+        const stored = JSON.parse(instance.result);
+        return {
+          correct: stored.correct,
+          score: stored.score,
+          perToken: stored.perToken ?? null,
+          submitted: true,
+        };
+      }
       const answerKey = instance.exercise.answerKey
         ? JSON.parse(instance.exercise.answerKey)
         : {};
