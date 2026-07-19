@@ -314,4 +314,62 @@ describe('Interactive exercises (e2e)', () => {
     expect(check.body.score).toBe(50);
     expect(check.body.perToken).toEqual({ g1: true, g2: false });
   });
+
+  // --- Stage 4: the remaining canonical types (create + ФТ-У105) ------------
+
+  it('canonical: word_matching creates, and needs at least 2 pairs', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'word_matching',
+        title: 'Animals',
+        payload: { rightType: 'text', pairs: [{ id: 'p1', left: 'cat', right: 'кошка' }, { id: 'p2', left: 'dog', right: 'собака' }] }
+      })
+      .expect(201);
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({ type: 'word_matching', title: 'bad', payload: { rightType: 'text', pairs: [{ id: 'p1', left: 'cat', right: 'кошка' }] } })
+      .expect(400);
+  });
+
+  it('canonical: categorization creates, and rejects an unknown category', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'categorization',
+        title: 'Parts of speech',
+        payload: {
+          categories: [{ id: 'c1', label: 'Verbs' }, { id: 'c2', label: 'Nouns' }],
+          items: [{ id: 'i1', text: 'run' }, { id: 'i2', text: 'table' }]
+        },
+        answerKey: { i1: 'c1', i2: 'c2' }
+      })
+      .expect(201);
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'categorization',
+        title: 'bad',
+        payload: { categories: [{ id: 'c1', label: 'Verbs' }, { id: 'c2', label: 'Nouns' }], items: [{ id: 'i1', text: 'run' }] },
+        answerKey: { i1: 'c9' } // not a real category
+      })
+      .expect(400);
+  });
+
+  it('canonical: multiple_choice creates, and rejects an out-of-range answer', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({ type: 'multiple_choice', title: 'Capitals', payload: { question: 'Capital of France?', options: ['Paris', 'Rome', 'Berlin'] }, answerKey: { correct: 0 } })
+      .expect(201);
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({ type: 'multiple_choice', title: 'bad', payload: { question: 'x', options: ['a', 'b'] }, answerKey: { correct: 5 } })
+      .expect(400);
+  });
 });

@@ -7,7 +7,16 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
 import { TaskRenderer } from './tasks/TaskRenderer';
-import type { SentenceDef, SentenceState } from './tasks/types';
+import type { TaskType } from './tasks/types';
+import {
+  CANONICAL_TYPES,
+  CanonicalForm,
+  canonicalError,
+  editFormFromCanonical,
+  initialStateFor,
+  sanitizeForPreview,
+  toCanonicalPayload
+} from './tasks/authoring';
 import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
@@ -24,24 +33,12 @@ interface StudentRow {
 }
 
 // Legacy authoring types (graded by exercise.logic) and the canonical
-// interactive types (SPEC §4, dnd-kit renderer). Stage 2 ships the first
-// canonical constructor — sentence_ordering; the rest arrive in Stage 4.
+// interactive types (SPEC §4, dnd-kit renderer + server grade/sanitize).
 const TYPES = ['order', 'match', 'fill', 'categorize'] as const;
-const CANONICAL_TYPES = ['sentence_ordering'] as const;
 const ALL_TYPES = [...TYPES, ...CANONICAL_TYPES] as const;
 const ASPECTS = ['Grammar', 'Reading', 'Listening', 'Vocabulary', 'Speaking', 'Writing'] as const;
 
 const isCanonical = (ty: string): boolean => (CANONICAL_TYPES as readonly string[]).includes(ty);
-
-/** Shuffled [0..n-1] so the preview shows the student's scrambled order. */
-function shuffledIndices(n: number): number[] {
-  const a = Array.from({ length: n }, (_, i) => i);
-  for (let i = n - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
 function parseFill(text: string) {
   const segments: ({ text: string } | { blank: number })[] = [];
@@ -67,7 +64,7 @@ function parsePairs(text: string) {
     .map((p) => ({ left: p[0].trim(), right: p[1].trim() }));
 }
 
-// Build a renderable question from a stored payload (for viewing/preview).
+// Build a renderable question from a stored legacy payload (for viewing/preview).
 function buildQuestion(type: string, title: string, payload: Record<string, unknown>): Question {
   if (type === 'match') {
     const pairs = (payload.pairs as { left: string; right: string }[]) ?? [];
@@ -95,7 +92,7 @@ function parseItems(text: string) {
 // What a preview modal shows: a legacy question, or a canonical task.
 type Viewing =
   | { kind: 'legacy'; q: Question; state: ExerciseState }
-  | { kind: 'canonical'; type: string; title: string; def: SentenceDef; state: SentenceState };
+  | { kind: 'canonical'; type: TaskType; title: string; def: unknown; state: Record<string, unknown> };
 
 export function ExercisesView() {
   const t = useTranslations('exercises');
@@ -115,18 +112,22 @@ export function ExercisesView() {
 
   const [type, setType] = useState<string>('order');
   const [title, setTitle] = useState('');
+  // Legacy inputs.
   const [words, setWords] = useState('I go to school');
   const [prompt, setPrompt] = useState('');
   const [pairs, setPairs] = useState('dog = chien\ncat = chat');
   const [fillText, setFillText] = useState('I [go] to [school].');
   const [categories, setCategories] = useState('noun, verb');
   const [items, setItems] = useState('run = verb\nbook = noun');
-
-  // Canonical sentence_ordering constructor state.
+  // Canonical-only inputs (shared widgets reuse pairs/fillText/categories/items).
   const [sentence, setSentence] = useState('I have never been to London');
+  const [distractors, setDistractors] = useState('going, week');
+  const [mcqQuestion, setMcqQuestion] = useState('Where is Big Ben?');
+  const [mcqOptions, setMcqOptions] = useState('London\nParis\nBerlin');
+  const [mcqCorrect, setMcqCorrect] = useState(0);
   const [aspect, setAspect] = useState<string>('Grammar');
   const [isPublic, setIsPublic] = useState(false);
-  const [sentencePreview, setSentencePreview] = useState<SentenceState>({ order: [] });
+  const [previewState, setPreviewState] = useState<Record<string, unknown>>({});
 
   // Assign panel
   const [assignFor, setAssignFor] = useState<string | null>(null);
@@ -158,14 +159,27 @@ export function ExercisesView() {
     void load();
   }, [load]);
 
-  const canonicalTokens = useMemo(() => sentence.trim().split(/\s+/).filter(Boolean), [sentence]);
-  const canonicalDef = useMemo<SentenceDef>(() => ({ tokens: canonicalTokens }), [canonicalTokens]);
-  const canonicalValid = canonicalTokens.length >= 2; // ФТ-У105
+  const canonicalForm = useMemo<CanonicalForm>(
+    () => ({ sentence, pairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect }),
+    [sentence, pairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect]
+  );
+  const canonicalErr = isCanonical(type) ? canonicalError(type, canonicalForm) : null;
 
-  // Reshuffle the preview whenever the sentence text changes.
+  // Student-facing preview (ФТ-У104): same renderer, on the draft payload.
+  const canonicalPreview = useMemo(() => {
+    if (!isCanonical(type)) return null;
+    const { payload } = toCanonicalPayload(type, canonicalForm);
+    return {
+      previewType: type as TaskType,
+      def: sanitizeForPreview(type, payload),
+      initialState: initialStateFor(type, payload)
+    };
+  }, [type, canonicalForm]);
+
+  // Reseed the interactive preview whenever the draft changes.
   useEffect(() => {
-    setSentencePreview({ order: shuffledIndices(canonicalTokens.length) });
-  }, [sentence]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (canonicalPreview) setPreviewState(canonicalPreview.initialState);
+  }, [canonicalPreview]);
 
   const payload = useMemo(() => {
     if (isCanonical(type)) return {};
@@ -197,15 +211,17 @@ export function ExercisesView() {
     if (!token) return;
 
     if (isCanonical(type)) {
-      if (!canonicalValid) return; // ФТ-У105 blocks the save
+      if (canonicalErr) return; // ФТ-У105 blocks the save
       setBusy(true);
       try {
+        const { payload: p, answerKey } = toCanonicalPayload(type, canonicalForm);
         const body = {
           title: title || t(type),
           prompt: prompt || undefined,
           aspect,
           isPublic,
-          payload: { tokens: canonicalTokens }
+          payload: p,
+          ...(answerKey ? { answerKey } : {})
         };
         if (editingId) {
           await apiFetch(`/exercises/${editingId}`, { method: 'PATCH', token, locale, body });
@@ -257,11 +273,21 @@ export function ExercisesView() {
       aspect?: string | null;
       isPublic?: boolean;
       payload: Record<string, unknown>;
+      answerKey?: Record<string, unknown> | null;
     }>(`/exercises/${id}`, { token, locale });
     setType(ex.type);
     setTitle(ex.title);
     if (isCanonical(ex.type)) {
-      setSentence(((ex.payload.tokens as string[]) ?? []).join(' '));
+      const f = editFormFromCanonical(ex.type, ex.payload, ex.answerKey ?? null);
+      setSentence(f.sentence);
+      setPairs(f.pairs);
+      setFillText(f.fillText);
+      setDistractors(f.distractors);
+      setCategories(f.categories);
+      setItems(f.items);
+      setMcqQuestion(f.mcqQuestion);
+      setMcqOptions(f.mcqOptions);
+      setMcqCorrect(f.mcqCorrect);
       setPrompt(ex.prompt ?? '');
       setAspect(ex.aspect ?? 'Grammar');
       setIsPublic(!!ex.isPublic);
@@ -338,13 +364,12 @@ export function ExercisesView() {
       { token, locale }
     );
     if (isCanonical(ex.type)) {
-      const tokens = (ex.payload.tokens as string[]) ?? [];
       setViewing({
         kind: 'canonical',
-        type: ex.type,
+        type: ex.type as TaskType,
         title: ex.title,
-        def: { tokens },
-        state: { order: shuffledIndices(tokens.length) }
+        def: sanitizeForPreview(ex.type, ex.payload),
+        state: initialStateFor(ex.type, ex.payload)
       });
     } else {
       setViewing({ kind: 'legacy', q: buildQuestion(ex.type, ex.title, ex.payload), state: {} });
@@ -418,7 +443,13 @@ export function ExercisesView() {
               <label>{t('prompt')}<input value={prompt} onChange={(e) => setPrompt(e.target.value)} /></label>
             </>
           )}
-          {type === 'match' && (
+          {type === 'sentence_ordering' && (
+            <>
+              <label>{t('sentence')}<input value={sentence} onChange={(e) => setSentence(e.target.value)} /></label>
+              <small className="muted">{t('sentenceHint')}</small>
+            </>
+          )}
+          {(type === 'match' || type === 'word_matching') && (
             <>
               <label>{t('pairs')}<textarea value={pairs} onChange={(e) => setPairs(e.target.value)} /></label>
               <small className="muted">{t('pairsHint')}</small>
@@ -430,7 +461,15 @@ export function ExercisesView() {
               <small className="muted">{t('fillHint')}</small>
             </>
           )}
-          {type === 'categorize' && (
+          {type === 'gap_fill' && (
+            <>
+              <label>{t('fillText')}<textarea value={fillText} onChange={(e) => setFillText(e.target.value)} /></label>
+              <small className="muted">{t('fillHint')}</small>
+              <label>{t('distractors')}<input value={distractors} onChange={(e) => setDistractors(e.target.value)} /></label>
+              <small className="muted">{t('distractorsHint')}</small>
+            </>
+          )}
+          {(type === 'categorize' || type === 'categorization') && (
             <>
               <label>{t('categories')}<input value={categories} onChange={(e) => setCategories(e.target.value)} /></label>
               <small className="muted">{t('categoriesHint')}</small>
@@ -438,11 +477,24 @@ export function ExercisesView() {
               <small className="muted">{t('itemsHint')}</small>
             </>
           )}
-          {type === 'sentence_ordering' && (
+          {type === 'multiple_choice' && (
             <>
-              <label>{t('sentence')}<input value={sentence} onChange={(e) => setSentence(e.target.value)} /></label>
-              <small className="muted">{t('sentenceHint')}</small>
-              {!canonicalValid && <small className="error">{t('sentenceMin')}</small>}
+              <label>{t('mcqQuestion')}<input value={mcqQuestion} onChange={(e) => setMcqQuestion(e.target.value)} /></label>
+              <label>{t('mcqOptions')}<textarea value={mcqOptions} onChange={(e) => setMcqOptions(e.target.value)} /></label>
+              <small className="muted">{t('mcqOptionsHint')}</small>
+              <label>
+                {t('mcqCorrect')}
+                <select value={mcqCorrect} onChange={(e) => setMcqCorrect(Number(e.target.value))}>
+                  {mcqOptions.split('\n').map((o) => o.trim()).filter(Boolean).map((o, i) => (
+                    <option key={i} value={i}>{o}</option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
+
+          {isCanonical(type) && (
+            <>
               <label>{t('prompt')}<input value={prompt} onChange={(e) => setPrompt(e.target.value)} /></label>
               <label>
                 {t('aspect')}
@@ -456,10 +508,12 @@ export function ExercisesView() {
                 <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
                 {t('public')}
               </label>
+              {canonicalErr && <small className="error">{t(canonicalErr)}</small>}
             </>
           )}
+
           <div className="row-actions">
-            <button type="submit" disabled={busy || (isCanonical(type) && !canonicalValid)}>
+            <button type="submit" disabled={busy || (isCanonical(type) && !!canonicalErr)}>
               {busy ? t('creating') : t('save')}
             </button>
             {editingId && (
@@ -470,12 +524,12 @@ export function ExercisesView() {
 
         <div className="card">
           <strong>{t('preview')}</strong>
-          {isCanonical(type) ? (
+          {isCanonical(type) && canonicalPreview ? (
             <TaskRenderer
-              type="sentence_ordering"
-              def={canonicalDef}
-              state={sentencePreview}
-              onChange={(s) => setSentencePreview(s as SentenceState)}
+              type={canonicalPreview.previewType}
+              def={canonicalPreview.def}
+              state={previewState}
+              onChange={(s) => setPreviewState(s as Record<string, unknown>)}
             />
           ) : (
             <ExerciseRenderer question={question} state={preview} onChange={setPreview} />
@@ -492,10 +546,10 @@ export function ExercisesView() {
             </div>
             {viewing.kind === 'canonical' ? (
               <TaskRenderer
-                type="sentence_ordering"
+                type={viewing.type}
                 def={viewing.def}
                 state={viewing.state}
-                onChange={(s) => setViewing({ ...viewing, state: s as SentenceState })}
+                onChange={(s) => setViewing({ ...viewing, state: s as Record<string, unknown> })}
               />
             ) : (
               <ExerciseRenderer
