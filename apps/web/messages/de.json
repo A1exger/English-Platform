@@ -380,7 +380,13 @@
     "view": "Ansehen",
     "edit": "Bearbeiten",
     "deleted": "Übung gelöscht",
-    "allTypes": "Alle"
+    "allTypes": "Alle",
+    "sentence_ordering": "Satzreihenfolge",
+    "sentence": "Satz (richtige Reihenfolge)",
+    "sentenceHint": "Geben Sie den Satz in der richtigen Reihenfolge ein — die Wörter werden zu ziehbaren Chips, für den Schüler gemischt.",
+    "sentenceMin": "Fügen Sie mindestens 2 Wörter hinzu.",
+    "aspect": "Aspekt",
+    "public": "Öffentlich teilen"
   },
   "courses": {
     "title": "Kurse",

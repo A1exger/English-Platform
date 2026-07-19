@@ -380,7 +380,13 @@
     "view": "View",
     "edit": "Edit",
     "deleted": "Exercise deleted",
-    "allTypes": "All"
+    "allTypes": "All",
+    "sentence_ordering": "Sentence ordering",
+    "sentence": "Sentence (correct order)",
+    "sentenceHint": "Type the sentence in the correct order — the words become draggable chips, shuffled for the student.",
+    "sentenceMin": "Add at least 2 words.",
+    "aspect": "Aspect",
+    "public": "Share publicly"
   },
   "courses": {
     "title": "Courses",

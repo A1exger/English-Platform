@@ -380,7 +380,13 @@
     "view": "Bekijken",
     "edit": "Bewerken",
     "deleted": "Oefening verwijderd",
-    "allTypes": "Alle"
+    "allTypes": "Alle",
+    "sentence_ordering": "Zinsvolgorde",
+    "sentence": "Zin (juiste volgorde)",
+    "sentenceHint": "Typ de zin in de juiste volgorde — de woorden worden versleepbare chips, geschud voor de leerling.",
+    "sentenceMin": "Voeg minstens 2 woorden toe.",
+    "aspect": "Aspect",
+    "public": "Openbaar delen"
   },
   "courses": {
     "title": "Cursussen",

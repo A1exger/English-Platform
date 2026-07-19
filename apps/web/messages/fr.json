@@ -380,7 +380,13 @@
     "view": "Voir",
     "edit": "Modifier",
     "deleted": "Exercice supprimé",
-    "allTypes": "Tous"
+    "allTypes": "Tous",
+    "sentence_ordering": "Ordre des mots",
+    "sentence": "Phrase (ordre correct)",
+    "sentenceHint": "Saisissez la phrase dans le bon ordre — les mots deviennent des jetons déplaçables, mélangés pour l'élève.",
+    "sentenceMin": "Ajoutez au moins 2 mots.",
+    "aspect": "Aspect",
+    "public": "Partager publiquement"
   },
   "courses": {
     "title": "Cours",

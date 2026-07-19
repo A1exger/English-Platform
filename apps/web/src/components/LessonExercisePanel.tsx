@@ -15,8 +15,14 @@ function apiOrigin(): string {
 
 interface ExRow {
   id: string;
+  type: string;
   title: string;
 }
+
+// Canonical interactive types get their live board path in a later stage; until
+// then the panel only offers legacy templates it can actually render.
+const CANONICAL_TYPES = ['sentence_ordering', 'word_matching', 'gap_fill', 'categorization', 'multiple_choice'];
+const isCanonical = (ty: string) => CANONICAL_TYPES.includes(ty);
 
 // Right half of the lesson: the teacher pushes interactive exercises live and
 // the student solves them. New exercises arrive over the existing /board gateway
@@ -52,7 +58,8 @@ export function LessonExercisePanel({
         );
         setInstances(active.map((i) => i.id));
         if (push) {
-          setLibrary(await apiFetch<ExRow[]>('/exercises', { token, locale }).catch(() => []));
+          const lib = await apiFetch<ExRow[]>('/exercises', { token, locale }).catch(() => []);
+          setLibrary(lib.filter((x) => !isCanonical(x.type)));
         }
       } catch {
         /* ignore */

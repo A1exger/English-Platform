@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -9,6 +10,7 @@ import { CreateHomeworkDto } from './dto/create-homework.dto';
 import { SubmitHomeworkDto } from './dto/submit-homework.dto';
 import { GradeHomeworkDto } from './dto/grade-homework.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { isCanonicalType } from '../exercises/canonical';
 
 const HOMEWORK_INCLUDE = {
   submissions: { orderBy: { submittedAt: 'desc' } },
@@ -80,6 +82,17 @@ export class HomeworkService {
     },
   ) {
     const tutor = await this.tutorProfileForOwner(user);
+    // Canonical interactive tasks are graded through the drag-drop stack added
+    // in a later stage; the legacy homework grader can't score them, so refuse.
+    const refs = await this.prisma.exercise.findMany({
+      where: { id: { in: dto.exerciseIds } },
+      select: { type: true },
+    });
+    if (refs.some((r) => isCanonicalType(r.type))) {
+      throw new BadRequestException(
+        'Interactive tasks cannot be assigned as homework yet.',
+      );
+    }
     const created: string[] = [];
     for (const studentProfileId of dto.studentProfileIds) {
       const student = await this.prisma.studentProfile.findUnique({

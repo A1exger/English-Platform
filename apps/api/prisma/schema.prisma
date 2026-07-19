@@ -325,20 +325,29 @@ model TutorNote {
 }
 
 // Reusable interactive exercise template built by a tutor/admin.
-// type: "order" | "match" | "fill" | "categorize"
-// payload: JSON string with the content AND the solution (never sent to students).
+// Legacy types: "order" | "match" | "fill" | "categorize" — payload holds the
+//   content AND the solution; graded by exercise.logic (never sent to students).
+// Canonical types (SPEC §4): "sentence_ordering" | "word_matching" | "gap_fill" |
+//   "categorization" | "multiple_choice" — payload is the student-facing content
+//   (App. A); the answer lives in `answerKey` and never reaches students (ДИ-3).
 model Exercise {
   id          String   @id @default(cuid())
   ownerUserId String
   type        String
   title       String
+  prompt      String?
   payload     String
+  answerKey   String? // JSON, server-only; null when the payload encodes the answer
+  gradingMode String   @default("AUTO") // "AUTO" | "MANUAL" | "COMPLETION"
+  aspect      String   @default("Grammar")
+  isPublic    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   instances ExerciseInstance[]
 
   @@index([ownerUserId])
+  @@index([ownerUserId, type])
 }
 
 // A handed-out copy of an exercise: live on a lesson board, or in homework

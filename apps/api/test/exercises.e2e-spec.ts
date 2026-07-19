@@ -13,6 +13,7 @@ describe('Interactive exercises (e2e)', () => {
   let orderId: string;
   let fillId: string;
   let lessonId: string;
+  let canonicalId: string;
 
   const api = () => request(app.getHttpServer());
   const register = async (email: string, role: string) => {
@@ -148,5 +149,85 @@ describe('Interactive exercises (e2e)', () => {
     const gradedHw = after.body.find((h: { title: string }) => h.title === 'HW exercises');
     expect(gradedHw.status).toBe('graded');
     expect(gradedHw.exercises[0].score).toBe(100);
+  });
+
+  // --- Stage 2: canonical standalone exercises ------------------------------
+
+  it('canonical: creates a sentence_ordering exercise; owner sees the tokens', async () => {
+    const res = await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'sentence_ordering',
+        title: 'Never been',
+        prompt: 'Put the words in order',
+        aspect: 'Grammar',
+        payload: { tokens: ['I', 'have', 'never', 'been', 'to', 'London'] },
+      })
+      .expect(201);
+    canonicalId = res.body.id;
+    const full = await api()
+      .get(`/api/v1/exercises/${canonicalId}`)
+      .set(auth(tutor.accessToken))
+      .expect(200);
+    expect(full.body.type).toBe('sentence_ordering');
+    expect(full.body.payload.tokens).toHaveLength(6);
+    expect(full.body.answerKey).toBeNull(); // order is the answer; nothing extra to hide
+  });
+
+  it('canonical: blocks a sentence with fewer than 2 tokens (ФТ-У105)', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({ type: 'sentence_ordering', title: 'bad', payload: { tokens: ['only'] } })
+      .expect(400);
+  });
+
+  it('canonical: blocks a gap_fill whose answer is not in the bank (ФТ-У105)', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'gap_fill',
+        title: 'bad gap',
+        payload: { segments: ['I ', { gap: 'g1' }, ' to school.'], bank: ['run', 'walk'] },
+        answerKey: { g1: 'go' },
+      })
+      .expect(400);
+  });
+
+  it('canonical: accepts a valid gap_fill and keeps the answerKey server-side', async () => {
+    const res = await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'gap_fill',
+        title: 'good gap',
+        payload: { segments: ['I ', { gap: 'g1' }, ' to school.'], bank: ['go', 'went'] },
+        answerKey: { g1: 'go' },
+      })
+      .expect(201);
+    const full = await api()
+      .get(`/api/v1/exercises/${res.body.id}`)
+      .set(auth(tutor.accessToken))
+      .expect(200);
+    expect(full.body.answerKey).toEqual({ g1: 'go' });
+  });
+
+  it('canonical: not yet pushable to the board nor assignable as homework', async () => {
+    await api()
+      .post(`/api/v1/lessons/${lessonId}/board/exercises`)
+      .set(auth(tutor.accessToken))
+      .send({ exerciseId: canonicalId })
+      .expect(400);
+    await api()
+      .post('/api/v1/homework/assign')
+      .set(auth(tutor.accessToken))
+      .send({
+        studentProfileIds: [studentProfileId],
+        exerciseIds: [canonicalId],
+        title: 'HW canon',
+      })
+      .expect(400);
   });
 });

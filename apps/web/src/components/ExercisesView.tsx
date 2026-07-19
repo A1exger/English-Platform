@@ -6,6 +6,8 @@ import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
+import { TaskRenderer } from './tasks/TaskRenderer';
+import type { SentenceDef, SentenceState } from './tasks/types';
 import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
@@ -21,7 +23,25 @@ interface StudentRow {
   name: string;
 }
 
+// Legacy authoring types (graded by exercise.logic) and the canonical
+// interactive types (SPEC §4, dnd-kit renderer). Stage 2 ships the first
+// canonical constructor — sentence_ordering; the rest arrive in Stage 4.
 const TYPES = ['order', 'match', 'fill', 'categorize'] as const;
+const CANONICAL_TYPES = ['sentence_ordering'] as const;
+const ALL_TYPES = [...TYPES, ...CANONICAL_TYPES] as const;
+const ASPECTS = ['Grammar', 'Reading', 'Listening', 'Vocabulary', 'Speaking', 'Writing'] as const;
+
+const isCanonical = (ty: string): boolean => (CANONICAL_TYPES as readonly string[]).includes(ty);
+
+/** Shuffled [0..n-1] so the preview shows the student's scrambled order. */
+function shuffledIndices(n: number): number[] {
+  const a = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function parseFill(text: string) {
   const segments: ({ text: string } | { blank: number })[] = [];
@@ -72,6 +92,11 @@ function parseItems(text: string) {
     .map((p) => ({ text: p[0].trim(), category: p[1].trim() }));
 }
 
+// What a preview modal shows: a legacy question, or a canonical task.
+type Viewing =
+  | { kind: 'legacy'; q: Question; state: ExerciseState }
+  | { kind: 'canonical'; type: string; title: string; def: SentenceDef; state: SentenceState };
+
 export function ExercisesView() {
   const t = useTranslations('exercises');
   const tApp = useTranslations('app');
@@ -86,9 +111,9 @@ export function ExercisesView() {
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState({});
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | (typeof TYPES)[number]>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | (typeof ALL_TYPES)[number]>('all');
 
-  const [type, setType] = useState<(typeof TYPES)[number]>('order');
+  const [type, setType] = useState<string>('order');
   const [title, setTitle] = useState('');
   const [words, setWords] = useState('I go to school');
   const [prompt, setPrompt] = useState('');
@@ -97,11 +122,17 @@ export function ExercisesView() {
   const [categories, setCategories] = useState('noun, verb');
   const [items, setItems] = useState('run = verb\nbook = noun');
 
+  // Canonical sentence_ordering constructor state.
+  const [sentence, setSentence] = useState('I have never been to London');
+  const [aspect, setAspect] = useState<string>('Grammar');
+  const [isPublic, setIsPublic] = useState(false);
+  const [sentencePreview, setSentencePreview] = useState<SentenceState>({ order: [] });
+
   // Assign panel
   const [assignFor, setAssignFor] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [due, setDue] = useState('');
-  const [viewing, setViewing] = useState<{ q: Question; state: ExerciseState } | null>(null);
+  const [viewing, setViewing] = useState<Viewing | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -127,7 +158,17 @@ export function ExercisesView() {
     void load();
   }, [load]);
 
+  const canonicalTokens = useMemo(() => sentence.trim().split(/\s+/).filter(Boolean), [sentence]);
+  const canonicalDef = useMemo<SentenceDef>(() => ({ tokens: canonicalTokens }), [canonicalTokens]);
+  const canonicalValid = canonicalTokens.length >= 2; // ФТ-У105
+
+  // Reshuffle the preview whenever the sentence text changes.
+  useEffect(() => {
+    setSentencePreview({ order: shuffledIndices(canonicalTokens.length) });
+  }, [sentence]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const payload = useMemo(() => {
+    if (isCanonical(type)) return {};
     if (type === 'order') return { words: words.trim().split(/\s+/).filter(Boolean), prompt: prompt || undefined };
     if (type === 'match') return { pairs: parsePairs(pairs) };
     if (type === 'fill') return { text: fillText };
@@ -135,6 +176,7 @@ export function ExercisesView() {
   }, [type, words, prompt, pairs, fillText, categories, items]);
 
   const question = useMemo<Question>(() => {
+    if (isCanonical(type)) return { type: 'order', title: '', tokens: [] } as Question;
     if (type === 'order')
       return { type, title: title || t('order'), prompt, tokens: (payload as { words: string[] }).words };
     if (type === 'match') {
@@ -146,13 +188,39 @@ export function ExercisesView() {
       return { type, title: title || t('fill'), segments, blanks: answers.length, bank: answers };
     }
     const cat = (payload as { categories: string[]; items: { text: string }[] });
-    return { type, title: title || t('categorize'), categories: cat.categories, items: cat.items.map((i) => i.text) };
+    return { type: 'categorize', title: title || t('categorize'), categories: cat.categories, items: cat.items.map((i) => i.text) };
   }, [type, title, payload, fillText, prompt, t]);
 
   async function create(e: FormEvent) {
     e.preventDefault();
     const token = tokenStore.get();
     if (!token) return;
+
+    if (isCanonical(type)) {
+      if (!canonicalValid) return; // ФТ-У105 blocks the save
+      setBusy(true);
+      try {
+        const body = {
+          title: title || t(type),
+          prompt: prompt || undefined,
+          aspect,
+          isPublic,
+          payload: { tokens: canonicalTokens }
+        };
+        if (editingId) {
+          await apiFetch(`/exercises/${editingId}`, { method: 'PATCH', token, locale, body });
+          setEditingId(null);
+        } else {
+          await apiFetch('/exercises', { method: 'POST', token, locale, body: { type, ...body } });
+        }
+        setTitle('');
+        await load();
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     setBusy(true);
     try {
       if (editingId) {
@@ -182,26 +250,42 @@ export function ExercisesView() {
   async function edit(id: string) {
     const token = tokenStore.get();
     if (!token) return;
-    const ex = await apiFetch<{ type: string; title: string; payload: Record<string, unknown> }>(
-      `/exercises/${id}`,
-      { token, locale }
-    );
-    setType(ex.type as (typeof TYPES)[number]);
+    const ex = await apiFetch<{
+      type: string;
+      title: string;
+      prompt?: string | null;
+      aspect?: string | null;
+      isPublic?: boolean;
+      payload: Record<string, unknown>;
+    }>(`/exercises/${id}`, { token, locale });
+    setType(ex.type);
     setTitle(ex.title);
-    const p = ex.payload;
-    if (ex.type === 'order') {
-      setWords(((p.words as string[]) ?? []).join(' '));
-      setPrompt((p.prompt as string) ?? '');
-    } else if (ex.type === 'match') {
-      setPairs(((p.pairs as { left: string; right: string }[]) ?? []).map((x) => `${x.left} = ${x.right}`).join('\n'));
-    } else if (ex.type === 'fill') {
-      setFillText((p.text as string) ?? '');
-    } else if (ex.type === 'categorize') {
-      setCategories(((p.categories as string[]) ?? []).join(', '));
-      setItems(((p.items as { text: string; category: string }[]) ?? []).map((x) => `${x.text} = ${x.category}`).join('\n'));
+    if (isCanonical(ex.type)) {
+      setSentence(((ex.payload.tokens as string[]) ?? []).join(' '));
+      setPrompt(ex.prompt ?? '');
+      setAspect(ex.aspect ?? 'Grammar');
+      setIsPublic(!!ex.isPublic);
+    } else {
+      const p = ex.payload;
+      if (ex.type === 'order') {
+        setWords(((p.words as string[]) ?? []).join(' '));
+        setPrompt((p.prompt as string) ?? '');
+      } else if (ex.type === 'match') {
+        setPairs(((p.pairs as { left: string; right: string }[]) ?? []).map((x) => `${x.left} = ${x.right}`).join('\n'));
+      } else if (ex.type === 'fill') {
+        setFillText((p.text as string) ?? '');
+      } else if (ex.type === 'categorize') {
+        setCategories(((p.categories as string[]) ?? []).join(', '));
+        setItems(((p.items as { text: string; category: string }[]) ?? []).map((x) => `${x.text} = ${x.category}`).join('\n'));
+      }
     }
     setEditingId(id);
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setTitle('');
   }
 
   async function act(path: string, method: 'POST' | 'DELETE') {
@@ -220,10 +304,7 @@ export function ExercisesView() {
   function removeExercise(id: string) {
     setList((prev) => prev.filter((x) => x.id !== id));
     if (assignFor === id) setAssignFor(null);
-    if (editingId === id) {
-      setEditingId(null);
-      setTitle('');
-    }
+    if (editingId === id) cancelEdit();
     showUndo(t('deleted'), {
       onUndo: () => void load(),
       onCommit: async () => {
@@ -256,7 +337,18 @@ export function ExercisesView() {
       `/exercises/${id}`,
       { token, locale }
     );
-    setViewing({ q: buildQuestion(ex.type, ex.title, ex.payload), state: {} });
+    if (isCanonical(ex.type)) {
+      const tokens = (ex.payload.tokens as string[]) ?? [];
+      setViewing({
+        kind: 'canonical',
+        type: ex.type,
+        title: ex.title,
+        def: { tokens },
+        state: { order: shuffledIndices(tokens.length) }
+      });
+    } else {
+      setViewing({ kind: 'legacy', q: buildQuestion(ex.type, ex.title, ex.payload), state: {} });
+    }
   }
 
   async function assign(exerciseId: string) {
@@ -299,13 +391,14 @@ export function ExercisesView() {
           <div className="field">
             <span>{t('type')}</span>
             <div className="tabs tabs-inline" role="tablist" aria-label={t('type')}>
-              {TYPES.map((ty) => (
+              {ALL_TYPES.map((ty) => (
                 <button
                   key={ty}
                   type="button"
                   role="tab"
                   aria-selected={type === ty}
                   className={type === ty ? 'active' : ''}
+                  disabled={!!editingId && type !== ty}
                   onClick={() => setType(ty)}
                 >
                   {t(ty)}
@@ -345,17 +438,48 @@ export function ExercisesView() {
               <small className="muted">{t('itemsHint')}</small>
             </>
           )}
+          {type === 'sentence_ordering' && (
+            <>
+              <label>{t('sentence')}<input value={sentence} onChange={(e) => setSentence(e.target.value)} /></label>
+              <small className="muted">{t('sentenceHint')}</small>
+              {!canonicalValid && <small className="error">{t('sentenceMin')}</small>}
+              <label>{t('prompt')}<input value={prompt} onChange={(e) => setPrompt(e.target.value)} /></label>
+              <label>
+                {t('aspect')}
+                <select value={aspect} onChange={(e) => setAspect(e.target.value)}>
+                  {ASPECTS.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="check">
+                <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
+                {t('public')}
+              </label>
+            </>
+          )}
           <div className="row-actions">
-            <button type="submit" disabled={busy}>{busy ? t('creating') : t('save')}</button>
+            <button type="submit" disabled={busy || (isCanonical(type) && !canonicalValid)}>
+              {busy ? t('creating') : t('save')}
+            </button>
             {editingId && (
-              <button type="button" className="ghost" aria-label={tc('close')} onClick={() => { setEditingId(null); setTitle(''); }}><Icon name="close" /></button>
+              <button type="button" className="ghost" aria-label={tc('close')} onClick={cancelEdit}><Icon name="close" /></button>
             )}
           </div>
         </form>
 
         <div className="card">
           <strong>{t('preview')}</strong>
-          <ExerciseRenderer question={question} state={preview} onChange={setPreview} />
+          {isCanonical(type) ? (
+            <TaskRenderer
+              type="sentence_ordering"
+              def={canonicalDef}
+              state={sentencePreview}
+              onChange={(s) => setSentencePreview(s as SentenceState)}
+            />
+          ) : (
+            <ExerciseRenderer question={question} state={preview} onChange={setPreview} />
+          )}
         </div>
       </div>
 
@@ -363,14 +487,23 @@ export function ExercisesView() {
         <div className="modal-overlay" onClick={() => setViewing(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="row-between">
-              <strong>{viewing.q.title}</strong>
+              <strong>{viewing.kind === 'canonical' ? viewing.title : viewing.q.title}</strong>
               <button type="button" className="ghost" aria-label={tc('close')} onClick={() => setViewing(null)}><Icon name="close" /></button>
             </div>
-            <ExerciseRenderer
-              question={viewing.q}
-              state={viewing.state}
-              onChange={(s) => setViewing({ q: viewing.q, state: s })}
-            />
+            {viewing.kind === 'canonical' ? (
+              <TaskRenderer
+                type="sentence_ordering"
+                def={viewing.def}
+                state={viewing.state}
+                onChange={(s) => setViewing({ ...viewing, state: s as SentenceState })}
+              />
+            ) : (
+              <ExerciseRenderer
+                question={viewing.q}
+                state={viewing.state}
+                onChange={(s) => setViewing({ kind: 'legacy', q: viewing.q, state: s })}
+              />
+            )}
           </div>
         </div>
       )}
@@ -396,7 +529,7 @@ export function ExercisesView() {
             >
               {t('allTypes')}
             </button>
-            {TYPES.map((ty) => (
+            {ALL_TYPES.map((ty) => (
               <button
                 key={ty}
                 type="button"
@@ -424,7 +557,9 @@ export function ExercisesView() {
                     <button type="button" onClick={() => view(ex.id)}>{t('view')}</button>
                     <button type="button" onClick={() => edit(ex.id)}>{t('edit')}</button>
                     <button type="button" onClick={() => act(`/exercises/${ex.id}/duplicate`, 'POST')}>{t('duplicate')}</button>
-                    <button type="button" onClick={() => openAssign(ex.id)}>{t('assign')}</button>
+                    {!isCanonical(ex.type) && (
+                      <button type="button" onClick={() => openAssign(ex.id)}>{t('assign')}</button>
+                    )}
                     <button type="button" onClick={() => removeExercise(ex.id)}>{t('delete')}</button>
                   </span>
                 </div>
