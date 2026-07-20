@@ -7,6 +7,9 @@ COPY apps/web/package.json apps/web/package-lock.json ./
 RUN npm ci
 
 COPY apps/web/ ./
+# Guard against a stale .next sneaking in via the build context (belt-and-braces
+# with the root .dockerignore) — always compile from a clean slate.
+RUN rm -rf .next
 
 # NEXT_PUBLIC_* vars are inlined at build time, so the API URL must be provided
 # here (the browser calls it directly — use the public API URL in production).
