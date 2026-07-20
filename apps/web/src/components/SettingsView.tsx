@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/routing';
 import { locales, type Locale } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
 
 // Curated IANA time zones (label = UTC offset shown for orientation).
 const TIMEZONES = [
@@ -123,7 +124,7 @@ export function SettingsView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   return (

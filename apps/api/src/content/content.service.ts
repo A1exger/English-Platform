@@ -4,20 +4,31 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { scoreContentTask, toContentQuestion } from './task-check';
+import { applyReview, isDue, nextReviewAt } from './spaced-repetition';
+import {
+  computeCourseCompletion,
+  computeGoalForecast,
+  computeGoalProgress,
+  LessonProgressInput,
+} from './scoring';
 import {
   CreateCategoryDto,
   CreateCourseDto,
   CreateCourseLessonDto,
   CreatePageDto,
+  CreatePageMediaDto,
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
   ReorderLessonDto,
   UpdateCourseDto,
   UpdateCourseLessonDto,
+  UpdatePageDto,
+  UpdatePageMediaDto,
   UpdateTaskDto,
 } from './dto/content.dto';
 
@@ -46,7 +57,9 @@ export class ContentService {
       include: {
         courses: {
           ...(user.role === 'student' ? { where: { status: 'published' } } : {}),
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+          // Section levels drive the level chips/filter on the catalog cards.
+          include: { sections: { select: { level: true }, orderBy: { order: 'asc' } } },
         },
       },
     });
@@ -81,7 +94,10 @@ export class ContentService {
       include: {
         pages: {
           orderBy: { order: 'asc' },
-          include: { tasks: { orderBy: { order: 'asc' } } },
+          include: {
+            tasks: { orderBy: { order: 'asc' } },
+            media: { orderBy: { order: 'asc' } },
+          },
         },
         wordlist: { include: { entries: { orderBy: { order: 'asc' } } } },
         grammarReference: true,
@@ -186,10 +202,126 @@ export class ContentService {
 
   async listDictionary(user: AuthenticatedUser) {
     const student = await this.studentProfileForUser(user.id);
-    return this.prisma.dictionaryEntry.findMany({
+    const entries = await this.prisma.dictionaryEntry.findMany({
       where: { studentProfileId: student.id },
       orderBy: { createdAt: 'desc' },
     });
+    const now = new Date();
+    // Enrich with spaced-repetition scheduling for the trainer (Phase 6).
+    return entries.map((e) => ({
+      ...e,
+      due: isDue(e.repetitions, e.lastReviewedAt, now),
+      nextReviewAt: nextReviewAt(e.repetitions, e.lastReviewedAt),
+    }));
+  }
+
+  /** Trainer review: promote on remember, reset the streak on a miss. */
+  async reviewDictionaryEntry(
+    user: AuthenticatedUser,
+    entryId: string,
+    remembered: boolean,
+  ) {
+    const student = await this.studentProfileForUser(user.id);
+    const entry = await this.prisma.dictionaryEntry.findUnique({ where: { id: entryId } });
+    if (!entry || entry.studentProfileId !== student.id) {
+      throw new NotFoundException('Dictionary entry not found');
+    }
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { id: entryId },
+      data: {
+        repetitions: applyReview(entry.repetitions, remembered),
+        lastReviewedAt: new Date(),
+      },
+    });
+    return {
+      ...updated,
+      due: isDue(updated.repetitions, updated.lastReviewedAt),
+      nextReviewAt: nextReviewAt(updated.repetitions, updated.lastReviewedAt),
+    };
+  }
+
+  /**
+   * Both progress counters + goal forecast for the cabinet (INV-3), grouped by
+   * the courses the student has been assigned lessons in. A lesson counts as
+   * completed when the student has a finished (status=done) assignment for it;
+   * its grade comes from that assignment's LessonResult.
+   */
+  async studentProgress(user: AuthenticatedUser) {
+    const student = await this.studentProfileForUser(user.id);
+    const assignments = await this.prisma.contentAssignment.findMany({
+      where: { studentProfileId: student.id, courseLessonId: { not: null } },
+      include: { result: true },
+    });
+
+    // Best (highest overall) finished assignment per course lesson.
+    const doneByLesson = new Map<string, number | null>();
+    for (const a of assignments) {
+      if (a.status !== 'done' || !a.courseLessonId) continue;
+      const overall = a.result?.overall ?? null;
+      const prev = doneByLesson.get(a.courseLessonId);
+      if (prev === undefined || (overall ?? -1) > (prev ?? -1)) {
+        doneByLesson.set(a.courseLessonId, overall);
+      }
+    }
+
+    // Which (course, level) pairs the student is working in.
+    const lessonIds = Array.from(
+      new Set(assignments.map((a) => a.courseLessonId).filter((x): x is string => !!x)),
+    );
+    const assignedLessons = await this.prisma.courseLesson.findMany({
+      where: { id: { in: lessonIds } },
+      include: { course: { select: { id: true, title: true } } },
+    });
+    const pairs = new Map<string, { courseId: string; title: string; level: string }>();
+    for (const l of assignedLessons) {
+      pairs.set(`${l.courseId}:${l.level}`, {
+        courseId: l.courseId,
+        title: l.course.title,
+        level: l.level,
+      });
+    }
+
+    const courses: {
+      courseId: string;
+      title: string;
+      level: string;
+      courseCompletion: number;
+      goalProgress: number | null;
+      forecast: ReturnType<typeof computeGoalForecast>;
+      lessonsRequired: number;
+      lessonsDone: number;
+    }[] = [];
+    const allScored: LessonProgressInput[] = [];
+    for (const { courseId, title, level } of pairs.values()) {
+      const lessons = await this.prisma.courseLesson.findMany({
+        where: { courseId, level },
+        select: { id: true, optional: true },
+      });
+      const inputs: LessonProgressInput[] = lessons.map((l) => ({
+        optional: l.optional,
+        completed: doneByLesson.has(l.id),
+        overall: doneByLesson.get(l.id) ?? null,
+      }));
+      allScored.push(...inputs);
+      courses.push({
+        courseId,
+        title,
+        level,
+        courseCompletion: computeCourseCompletion(inputs),
+        goalProgress: computeGoalProgress(inputs),
+        forecast: computeGoalForecast(inputs),
+        lessonsRequired: inputs.filter((i) => !i.optional).length,
+        lessonsDone: inputs.filter((i) => i.completed).length,
+      });
+    }
+
+    return {
+      courses,
+      overall: {
+        goalProgress: computeGoalProgress(allScored),
+        forecast: computeGoalForecast(allScored),
+      },
+    };
   }
 
   // --- authoring (tutor/admin) ----------------------------------------------
@@ -198,16 +330,93 @@ export class ContentService {
     return this.prisma.category.create({ data: { title: dto.title, order: dto.order ?? 0 } });
   }
 
-  createCourse(user: AuthenticatedUser, dto: CreateCourseDto) {
+  async createCourse(user: AuthenticatedUser, dto: CreateCourseDto) {
+    // Append to the end of its category's manual order (ФТ-К104).
+    const order = await this.prisma.course.count({ where: { categoryId: dto.categoryId } });
     return this.prisma.course.create({
       data: {
         categoryId: dto.categoryId,
         title: dto.title,
+        description: dto.description ?? null,
+        coverUrl: dto.coverUrl ?? null,
+        order,
         selfStudy: dto.selfStudy ?? false,
         isNew: dto.isNew ?? false,
         ownerUserId: user.id,
       },
     });
+  }
+
+  async reorderCategories(_user: AuthenticatedUser, ids: string[]) {
+    await this.prisma.$transaction(
+      ids.map((id, i) => this.prisma.category.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ids.length };
+  }
+
+  async reorderCourses(_user: AuthenticatedUser, categoryId: string, ids: string[]) {
+    // Only touch courses that really belong to this category.
+    const courses = await this.prisma.course.findMany({
+      where: { id: { in: ids }, categoryId },
+      select: { id: true },
+    });
+    const valid = new Set(courses.map((c) => c.id));
+    const ordered = ids.filter((id) => valid.has(id));
+    await this.prisma.$transaction(
+      ordered.map((id, i) => this.prisma.course.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ordered.length };
+  }
+
+  // --- editor tree reorder (sections/units/pages/tasks) ---------------------
+  // Lessons keep their level-wide endpoint (reorderLesson / INV-1); these order
+  // a set of siblings by the position of their id in the submitted list.
+
+  async reorderSections(user: AuthenticatedUser, courseId: string, ids: string[]) {
+    await this.assertCourseEditable(user, courseId);
+    const rows = await this.prisma.section.findMany({ where: { id: { in: ids }, courseId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.section.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderUnits(user: AuthenticatedUser, sectionId: string, ids: string[]) {
+    const section = await this.prisma.section.findUnique({ where: { id: sectionId } });
+    if (!section) throw new NotFoundException('Section not found');
+    await this.assertCourseEditable(user, section.courseId);
+    const rows = await this.prisma.unit.findMany({ where: { id: { in: ids }, sectionId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.unit.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderPages(user: AuthenticatedUser, courseLessonId: string, ids: string[]) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: courseLessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+    const rows = await this.prisma.lessonPage.findMany({ where: { id: { in: ids }, courseLessonId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.lessonPage.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderTasks(user: AuthenticatedUser, pageId: string, ids: string[]) {
+    await this.assertPageEditable(user, pageId);
+    const rows = await this.prisma.lessonTask.findMany({ where: { id: { in: ids }, pageId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.lessonTask.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  private async applyOrder(
+    valid: string[],
+    ids: string[],
+    update: (id: string, order: number) => Prisma.PrismaPromise<unknown>,
+  ) {
+    const allowed = new Set(valid);
+    const ordered = ids.filter((id) => allowed.has(id));
+    await this.prisma.$transaction(ordered.map((id, i) => update(id, i)));
+    return { reordered: ordered.length };
   }
 
   async updateCourse(user: AuthenticatedUser, id: string, dto: UpdateCourseDto) {
@@ -411,6 +620,73 @@ export class ContentService {
         text: dto.text,
       },
     });
+  }
+
+  async updatePage(user: AuthenticatedUser, id: string, dto: UpdatePageDto) {
+    await this.assertPageEditable(user, id);
+    return this.prisma.lessonPage.update({ where: { id }, data: { ...dto } });
+  }
+
+  // --- page media (§7): image/video/audio attachments -----------------------
+
+  private async assertPageEditable(user: AuthenticatedUser, pageId: string) {
+    const page = await this.prisma.lessonPage.findUnique({
+      where: { id: pageId },
+      include: { courseLesson: true },
+    });
+    if (!page) throw new NotFoundException('Page not found');
+    await this.assertCourseEditable(user, page.courseLesson.courseId);
+    return page;
+  }
+
+  private async assertMediaEditable(user: AuthenticatedUser, mediaId: string) {
+    const media = await this.prisma.pageMedia.findUnique({
+      where: { id: mediaId },
+      include: { page: { include: { courseLesson: true } } },
+    });
+    if (!media) throw new NotFoundException('Media not found');
+    await this.assertCourseEditable(user, media.page.courseLesson.courseId);
+    return media;
+  }
+
+  async addPageMedia(user: AuthenticatedUser, pageId: string, dto: CreatePageMediaDto) {
+    await this.assertPageEditable(user, pageId);
+    const order = await this.prisma.pageMedia.count({ where: { pageId } });
+    return this.prisma.pageMedia.create({
+      data: {
+        pageId,
+        kind: dto.kind,
+        url: dto.url,
+        caption: dto.caption ?? null,
+        transcript: dto.transcript ?? null,
+        order,
+      },
+    });
+  }
+
+  async updatePageMedia(user: AuthenticatedUser, id: string, dto: UpdatePageMediaDto) {
+    await this.assertMediaEditable(user, id);
+    return this.prisma.pageMedia.update({ where: { id }, data: { ...dto } });
+  }
+
+  async deletePageMedia(user: AuthenticatedUser, id: string) {
+    await this.assertMediaEditable(user, id);
+    await this.prisma.pageMedia.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  async reorderPageMedia(user: AuthenticatedUser, pageId: string, ids: string[]) {
+    await this.assertPageEditable(user, pageId);
+    const media = await this.prisma.pageMedia.findMany({
+      where: { id: { in: ids }, pageId },
+      select: { id: true },
+    });
+    const valid = new Set(media.map((m) => m.id));
+    const ordered = ids.filter((id) => valid.has(id));
+    await this.prisma.$transaction(
+      ordered.map((id, i) => this.prisma.pageMedia.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ordered.length };
   }
 
   private validateTaskPayload(type: string, payload: Record<string, unknown>, answerKey?: Record<string, unknown>) {

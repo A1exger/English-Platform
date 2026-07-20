@@ -18,10 +18,21 @@ import {
   CreateCourseDto,
   CreateCourseLessonDto,
   CreatePageDto,
+  CreatePageMediaDto,
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
+  ReorderCategoriesDto,
+  ReorderCoursesDto,
   ReorderLessonDto,
+  ReorderMediaDto,
+  ReorderPagesDto,
+  ReorderSectionsDto,
+  ReorderTasksDto,
+  ReorderUnitsDto,
+  ReviewDictionaryDto,
+  UpdatePageDto,
+  UpdatePageMediaDto,
   SetGrammarDto,
   SetWordlistDto,
   UpdateCourseDto,
@@ -86,6 +97,24 @@ export class ContentController {
     return this.content.listDictionary(user);
   }
 
+  // Spaced-repetition review of one dictionary word.
+  @Roles('student')
+  @Post('dictionary/:id/review')
+  reviewDictionary(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ReviewDictionaryDto,
+  ) {
+    return this.content.reviewDictionaryEntry(user, id, dto.remembered);
+  }
+
+  // Both progress counters + goal forecast for the cabinet (INV-3).
+  @Roles('student')
+  @Get('progress')
+  progress(@CurrentUser() user: AuthenticatedUser) {
+    return this.content.studentProgress(user);
+  }
+
   // --- authoring (tutor/admin) ---
 
   @Roles('tutor', 'admin')
@@ -98,6 +127,44 @@ export class ContentController {
   @Post('courses')
   createCourse(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateCourseDto) {
     return this.content.createCourse(user, dto);
+  }
+
+  // Drag-reorder persistence (ФТ-К104). POST /reorder never clashes with the
+  // PATCH :id / POST create routes above.
+  @Roles('tutor', 'admin')
+  @Post('categories/reorder')
+  reorderCategories(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderCategoriesDto) {
+    return this.content.reorderCategories(user, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('courses/reorder')
+  reorderCourses(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderCoursesDto) {
+    return this.content.reorderCourses(user, dto.categoryId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('sections/reorder')
+  reorderSections(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderSectionsDto) {
+    return this.content.reorderSections(user, dto.courseId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('units/reorder')
+  reorderUnits(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderUnitsDto) {
+    return this.content.reorderUnits(user, dto.sectionId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('pages/reorder')
+  reorderPages(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderPagesDto) {
+    return this.content.reorderPages(user, dto.courseLessonId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('tasks/reorder')
+  reorderTasks(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderTasksDto) {
+    return this.content.reorderTasks(user, dto.pageId, dto.ids);
   }
 
   @Roles('tutor', 'admin')
@@ -178,6 +245,54 @@ export class ContentController {
   @Post('pages')
   createPage(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreatePageDto) {
     return this.content.createPage(user, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Patch('pages/:id')
+  updatePage(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePageDto,
+  ) {
+    return this.content.updatePage(user, id, dto);
+  }
+
+  // --- page media (§7) ---
+
+  @Roles('tutor', 'admin')
+  @Post('pages/:id/media')
+  addMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: CreatePageMediaDto,
+  ) {
+    return this.content.addPageMedia(user, id, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('pages/:id/media/reorder')
+  reorderMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ReorderMediaDto,
+  ) {
+    return this.content.reorderPageMedia(user, id, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Patch('media/:id')
+  updateMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePageMediaDto,
+  ) {
+    return this.content.updatePageMedia(user, id, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Delete('media/:id')
+  deleteMedia(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.deletePageMedia(user, id);
   }
 
   @Roles('tutor', 'admin')

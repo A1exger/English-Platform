@@ -178,4 +178,170 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().delete(`/api/v1/content/lessons/${lesson2}`).set(auth(tutor.accessToken)).expect(200);
     expect(await orders()).toEqual(['1:L1', '2:L1.5', '3:L3']);
   });
+
+  // --- Stage 6: catalog fields + reorder ------------------------------------
+
+  it('catalog: course carries cover/description, appends order, reorder persists (ФТ-К103/К104)', async () => {
+    const cat = await api().post('/api/v1/content/categories').set(auth(tutor.accessToken)).send({ title: 'Reorder cat' }).expect(201);
+    const catId = cat.body.id;
+    const a = await api()
+      .post('/api/v1/content/courses')
+      .set(auth(tutor.accessToken))
+      .send({ categoryId: catId, title: 'A', description: 'first', coverUrl: '/uploads/a.png' })
+      .expect(201);
+    const b = await api().post('/api/v1/content/courses').set(auth(tutor.accessToken)).send({ categoryId: catId, title: 'B' }).expect(201);
+    const c = await api().post('/api/v1/content/courses').set(auth(tutor.accessToken)).send({ categoryId: catId, title: 'C' }).expect(201);
+    expect(a.body.description).toBe('first');
+    expect(a.body.coverUrl).toBe('/uploads/a.png');
+    expect([a.body.order, b.body.order, c.body.order]).toEqual([0, 1, 2]);
+
+    // Reverse the order via drag-reorder.
+    await api()
+      .post('/api/v1/content/courses/reorder')
+      .set(auth(tutor.accessToken))
+      .send({ categoryId: catId, ids: [c.body.id, b.body.id, a.body.id] })
+      .expect(201);
+    const catalog = await api().get('/api/v1/content/catalog').set(auth(tutor.accessToken)).expect(200);
+    const reCat = catalog.body.find((x: { id: string }) => x.id === catId);
+    expect(reCat.courses.map((x: { title: string }) => x.title)).toEqual(['C', 'B', 'A']);
+
+    // A student cannot reorder (tutor/admin only, ФТ-К105).
+    await api()
+      .post('/api/v1/content/courses/reorder')
+      .set(auth(student.accessToken))
+      .send({ categoryId: catId, ids: [a.body.id] })
+      .expect(403);
+  });
+
+  it('catalog: cards expose section levels; category reorder persists', async () => {
+    const catalog = await api().get('/api/v1/content/catalog').set(auth(tutor.accessToken)).expect(200);
+    const general = catalog.body.find((x: { title: string }) => x.title === 'General');
+    const draftCourse = general.courses.find((x: { id: string }) => x.id === courseId);
+    expect(draftCourse.sections.map((s: { level: string }) => s.level)).toContain('Elementary');
+
+    const ids = catalog.body.map((x: { id: string }) => x.id).reverse();
+    await api().post('/api/v1/content/categories/reorder').set(auth(tutor.accessToken)).send({ ids }).expect(201);
+    const after = await api().get('/api/v1/content/catalog').set(auth(tutor.accessToken)).expect(200);
+    expect(after.body.map((x: { id: string }) => x.id)).toEqual(ids);
+  });
+
+  // --- Stage 7: page media --------------------------------------------------
+
+  it('media: attach image+audio, reorder, edit transcript; student sees it (ФТ-К302/К303/К305)', async () => {
+    const page = await api()
+      .post('/api/v1/content/pages')
+      .set(auth(tutor.accessToken))
+      .send({ courseLessonId: lesson1, type: 'listening' })
+      .expect(201);
+    const pageId = page.body.id;
+
+    const img = await api()
+      .post(`/api/v1/content/pages/${pageId}/media`)
+      .set(auth(tutor.accessToken))
+      .send({ kind: 'image', url: '/uploads/pic.png', caption: 'A picture' })
+      .expect(201);
+    const audio = await api()
+      .post(`/api/v1/content/pages/${pageId}/media`)
+      .set(auth(tutor.accessToken))
+      .send({ kind: 'audio', url: '/uploads/track.mp3', transcript: 'Hello there.' })
+      .expect(201);
+    expect([img.body.order, audio.body.order]).toEqual([0, 1]);
+
+    // A disallowed kind is rejected (ФТ-К305).
+    await api()
+      .post(`/api/v1/content/pages/${pageId}/media`)
+      .set(auth(tutor.accessToken))
+      .send({ kind: 'pdf', url: '/uploads/x.pdf' })
+      .expect(400);
+
+    // Reorder (audio first) and edit the transcript.
+    await api()
+      .post(`/api/v1/content/pages/${pageId}/media/reorder`)
+      .set(auth(tutor.accessToken))
+      .send({ ids: [audio.body.id, img.body.id] })
+      .expect(201);
+    await api()
+      .patch(`/api/v1/content/media/${audio.body.id}`)
+      .set(auth(tutor.accessToken))
+      .send({ transcript: 'Updated transcript.' })
+      .expect(200);
+
+    // The student sees the reordered media with its transcript (course published).
+    const detail = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth(student.accessToken)).expect(200);
+    const p = detail.body.pages.find((x: { id: string }) => x.id === pageId);
+    expect(p.media.map((m: { kind: string }) => m.kind)).toEqual(['audio', 'image']);
+    expect(p.media[0].transcript).toBe('Updated transcript.');
+
+    // Students cannot author media (RBAC).
+    await api()
+      .post(`/api/v1/content/pages/${pageId}/media`)
+      .set(auth(student.accessToken))
+      .send({ kind: 'image', url: '/x' })
+      .expect(403);
+
+    await api().delete(`/api/v1/content/media/${img.body.id}`).set(auth(tutor.accessToken)).expect(200);
+    const detail2 = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth(tutor.accessToken)).expect(200);
+    const p2 = detail2.body.pages.find((x: { id: string }) => x.id === pageId);
+    expect(p2.media.length).toBe(1);
+  });
+
+  // --- Stage 8: editor reorder at every tree level --------------------------
+
+  it('editor: reorder sections/units/pages/tasks persists (ФТ-К202)', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const post = (path: string, body: object) => api().post(`/api/v1/content/${path}`).set(auth2).send(body).expect(201);
+    const reorder = (path: string, body: object) => api().post(`/api/v1/content/${path}/reorder`).set(auth2).send(body).expect(201);
+    const tree = () => api().get(`/api/v1/content/courses/${courseId}/tree?level=Intermediate`).set(auth2).expect(200);
+
+    const s1 = (await post('sections', { courseId, level: 'Intermediate', title: 'B1-S1' })).body;
+    const uA = (await post('units', { sectionId: s1.id, title: 'UA' })).body;
+    const uB = (await post('units', { sectionId: s1.id, title: 'UB' })).body;
+    const lesson = (await post('lessons', { unitId: uA.id, title: 'BL' })).body;
+    const p1 = (await post('pages', { courseLessonId: lesson.id, type: 'practice' })).body;
+    const p2 = (await post('pages', { courseLessonId: lesson.id, type: 'grammar' })).body;
+    const mkTask = (pageId: string, q: string) =>
+      post('tasks', {
+        pageId,
+        type: 'multiple_choice',
+        gradingMode: 'AUTO',
+        aspect: 'Reading',
+        payload: { question: q, options: ['a', 'b'] },
+        answerKey: { correct: 'a' }
+      });
+    const t1 = (await mkTask(p1.id, 'Q1')).body;
+    const t2 = (await mkTask(p1.id, 'Q2')).body;
+
+    // Units: reverse.
+    await reorder('units', { sectionId: s1.id, ids: [uB.id, uA.id] });
+    const afterUnits = await tree();
+    expect(afterUnits.body.sections[0].units.map((u: { title: string }) => u.title)).toEqual(['UB', 'UA']);
+
+    // Page text is editable (ФТ-К204).
+    await api().patch(`/api/v1/content/pages/${p1.id}`).set(auth2).send({ text: 'Reading passage.' }).expect(200);
+
+    // Pages: reverse (verified via lessonDetail).
+    await reorder('pages', { courseLessonId: lesson.id, ids: [p2.id, p1.id] });
+    const d1 = await api().get(`/api/v1/content/lessons/${lesson.id}`).set(auth2).expect(200);
+    expect(d1.body.pages.map((p: { id: string }) => p.id)).toEqual([p2.id, p1.id]);
+    expect(d1.body.pages.find((p: { id: string }) => p.id === p1.id).text).toBe('Reading passage.');
+
+    // Tasks: reverse within p1.
+    await reorder('tasks', { pageId: p1.id, ids: [t2.id, t1.id] });
+    const d2 = await api().get(`/api/v1/content/lessons/${lesson.id}`).set(auth2).expect(200);
+    const page1 = d2.body.pages.find((p: { id: string }) => p.id === p1.id);
+    expect(page1.tasks.map((t: { id: string }) => t.id)).toEqual([t2.id, t1.id]);
+
+    // Sections: add a second and reverse.
+    const s2 = (await post('sections', { courseId, level: 'Intermediate', title: 'B1-S2' })).body;
+    await reorder('sections', { courseId, ids: [s2.id, s1.id] });
+    const afterSec = await tree();
+    expect(afterSec.body.sections.map((s: { id: string }) => s.id)).toEqual([s2.id, s1.id]);
+
+    // A student cannot reorder (RBAC).
+    await api()
+      .post('/api/v1/content/sections/reorder')
+      .set(auth(student.accessToken))
+      .send({ courseId, ids: [s1.id] })
+      .expect(403);
+  });
 });

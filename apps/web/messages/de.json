@@ -25,7 +25,13 @@
     "statusAssigned": "Zugewiesen",
     "statusSubmitted": "Abgegeben",
     "statusGraded": "Bewertet",
-    "viewAnswers": "Antworten ansehen"
+    "viewAnswers": "Antworten ansehen",
+    "tab_all": "Alle",
+    "tab_todo": "Zu erledigen",
+    "tab_submitted": "Eingereicht",
+    "tab_graded": "Bewertet",
+    "overdue": "Überfällig",
+    "back": "Zurück zu Hausaufgaben"
   },
   "materials": {
     "title": "Materialien",
@@ -38,7 +44,8 @@
     "creating": "Wird hinzugefügt…",
     "empty": "Keine Materialien.",
     "delete": "Löschen",
-    "uploadFile": "Datei hochladen"
+    "uploadFile": "Datei hochladen",
+    "deleted": "Material gelöscht"
   },
   "students": {
     "title": "Schüler",
@@ -58,7 +65,11 @@
     "firstName": "Vorname",
     "lastName": "Nachname",
     "delete": "Löschen",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "deleted": "Schüler entfernt",
+    "name": "Name",
+    "level": "Niveau",
+    "balance": "Guthaben"
   },
   "analytics": {
     "title": "Analytik",
@@ -67,7 +78,14 @@
     "lessonsUpcoming": "Kommende Stunden",
     "activeStudents": "Aktive Schüler",
     "attendance": "Anwesenheitsquote",
-    "conversion": "Probe-Konversion"
+    "conversion": "Probe-Konversion",
+    "period": "Zeitraum",
+    "periodMonths": "{count} Monate",
+    "metric": "Kennzahl",
+    "lessons": "Stunden",
+    "thisPeriod": "Dieser Zeitraum",
+    "vsPrevious": "vs. vorher",
+    "trend": "Trend"
   },
   "settings": {
     "title": "Einstellungen",
@@ -90,7 +108,14 @@
     "submit": "Registrieren",
     "creating": "Wird erstellt…",
     "haveAccount": "Schon ein Konto?",
-    "error": "Registrierung fehlgeschlagen. Andere E-Mail versuchen."
+    "error": "Registrierung fehlgeschlagen. Andere E-Mail versuchen.",
+    "passwordStrength": "Passwortstärke",
+    "strengthWeak": "Schwach",
+    "strengthFair": "Mittel",
+    "strengthGood": "Gut",
+    "strengthStrong": "Stark",
+    "terms": "Ich akzeptiere die Nutzungsbedingungen",
+    "tutorNote": "Tutor-Konten werden von einem Administrator erstellt."
   },
   "adminUsers": {
     "title": "Benutzer",
@@ -104,7 +129,10 @@
     "creating": "Wird erstellt…",
     "empty": "Keine Benutzer.",
     "delete": "Löschen",
-    "forbidden": "Nur für Admins."
+    "forbidden": "Nur für Admins.",
+    "deleted": "Benutzer gelöscht",
+    "name": "Name",
+    "created": "Erstellt"
   },
   "schedule": {
     "title": "Zeitplan",
@@ -125,7 +153,14 @@
     "viewList": "Liste",
     "viewWeek": "Woche",
     "student": "Schüler",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "deleted": "Lektion gelöscht",
+    "week": "Woche",
+    "day": "Tag",
+    "view": "Ansicht",
+    "book": "Stunde buchen",
+    "cancel": "Abbrechen",
+    "timezone": "Zeiten in {tz}"
   },
   "billing": {
     "title": "Abrechnung",
@@ -152,14 +187,29 @@
     "pendingTransfers": "Überweisungen zur Bestätigung",
     "confirm": "Bestätigen",
     "currency": "Währung",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "deleted": "Paket gelöscht"
   },
   "room": {
     "title": "Unterrichtsraum",
     "connecting": "Verbindung zum Video…",
     "connectError": "Keine Videoverbindung. Ist LIVEKIT_URL konfiguriert?",
     "board": "Board",
-    "video": "Video"
+    "video": "Video",
+    "material": "Material",
+    "live": "Live",
+    "loadLessons": "Lektionen laden",
+    "pickMaterial": "Wählen Sie eine Kurslektion.",
+    "waiting": "Warten auf den Lehrer…",
+    "studentAnswer": "Antwort",
+    "exit": "Unterricht verlassen",
+    "answersTab": "Antworten",
+    "exerciseTab": "Übung",
+    "focusVideo": "Video-Fokus",
+    "exitFocus": "Fokus verlassen",
+    "pageLabel": "S.",
+    "teacherLeads": "Lehrer führt",
+    "answersHint": "Antworten erscheinen hier, während der Schüler arbeitet."
   },
   "board": {
     "title": "Whiteboard",
@@ -173,7 +223,8 @@
     "connected": "Verbunden",
     "back": "Zurück",
     "notes": "Notizen",
-    "notesPlaceholder": "Gemeinsame Notizen (für Lehrer und Schüler sichtbar)…"
+    "notesPlaceholder": "Gemeinsame Notizen (für Lehrer und Schüler sichtbar)…",
+    "cleared": "Tafel gelöscht"
   },
   "common": {
     "appName": "English Spark Studio",
@@ -183,7 +234,22 @@
     "email": "E-Mail",
     "password": "Passwort",
     "dashboard": "Dashboard",
-    "createAccount": "Konto erstellen"
+    "createAccount": "Konto erstellen",
+    "search": "Suche",
+    "searchPlaceholder": "Seiten suchen…",
+    "noResults": "Nichts gefunden",
+    "undo": "Rückgängig",
+    "menu": "Menü",
+    "close": "Schließen",
+    "all": "Alle",
+    "sortBy": "Sortieren",
+    "content": "Inhalt",
+    "lesson": "Lektion",
+    "material": "Material",
+    "student": "Schüler",
+    "word": "Wort",
+    "pages": "Seiten",
+    "course": "Kurs"
   },
   "nav": {
     "overview": "Übersicht",
@@ -198,7 +264,15 @@
     "progress": "Fortschritt",
     "payment": "Zahlung",
     "exercises": "Übungen",
-    "courses": "Kurse"
+    "courses": "Kurse",
+    "assignments": "Aufgaben",
+    "dictionary": "Wörterbuch",
+    "section_learn": "Lernen",
+    "section_progress": "Fortschritt",
+    "section_teach": "Unterrichten",
+    "section_build": "Erstellen",
+    "section_insights": "Analysen",
+    "section_admin": "Admin"
   },
   "dashboard": {
     "greeting": "Willkommen zurück, {name}!",
@@ -210,7 +284,15 @@
     "joinLesson": "Stunde beitreten",
     "everyoneOwnLanguage": "Jeder Teilnehmer sieht die Oberfläche in seiner eigenen Sprache — die Stunde ist gemeinsam, unabhängig von der Sprache.",
     "homeworkPending": "Du hast {count} Hausaufgaben.",
-    "notifications": "Benachrichtigungen"
+    "notifications": "Benachrichtigungen",
+    "goal": "Ziel",
+    "level": "Niveau",
+    "lessonsDone": "Lektionen absolviert",
+    "homework": "Hausaufgaben",
+    "upcoming": "Demnächst",
+    "seeAll": "Alle",
+    "noLessons": "Keine anstehenden Stunden",
+    "bookLesson": "Stunde buchen"
   },
   "studentProfile": {
     "title": "Schülerprofil",
@@ -227,7 +309,16 @@
     "age": "Alter",
     "notes": "Notizen",
     "noteBody": "Notiz",
-    "lessons": "Stunden"
+    "lessons": "Stunden",
+    "overview": "Übersicht",
+    "homework": "Hausaufgaben",
+    "profile": "Profil",
+    "attendance": "Anwesenheit",
+    "balance": "Guthaben",
+    "addNote": "Notiz hinzufügen",
+    "noLessons": "Noch keine Stunden",
+    "noHomework": "Noch keine Hausaufgaben",
+    "noNotes": "Noch keine Notizen"
   },
   "progress": {
     "title": "Mein Fortschritt",
@@ -241,7 +332,13 @@
     "badge_five_lessons": "5 Stunden",
     "badge_ten_lessons": "10 Stunden",
     "badge_homework_hero": "Hausaufgaben-Held",
-    "badge_perfect_attendance": "Perfekte Anwesenheit"
+    "badge_perfect_attendance": "Perfekte Anwesenheit",
+    "courseProgress": "Kursfortschritt",
+    "structural": "Fortschritt",
+    "goal": "Ziel",
+    "forecast": "Prognose",
+    "projected": "Prognose",
+    "remaining": "Pflicht übrig"
   },
   "exercises": {
     "title": "Übungen",
@@ -281,7 +378,36 @@
     "chooseStudents": "Schüler",
     "none": "Noch keine Übungen.",
     "view": "Ansehen",
-    "edit": "Bearbeiten"
+    "edit": "Bearbeiten",
+    "deleted": "Übung gelöscht",
+    "allTypes": "Alle",
+    "sentence_ordering": "Satzreihenfolge",
+    "word_matching": "Wörter zuordnen",
+    "gap_fill": "Lückentext",
+    "categorization": "Kategorisierung",
+    "multiple_choice": "Multiple Choice",
+    "distractors": "Ablenker (optional)",
+    "distractorsHint": "Zusätzliche Wörter für den Pool, durch Kommas getrennt.",
+    "mcqQuestion": "Frage",
+    "mcqOptions": "Optionen",
+    "mcqOptionsHint": "Eine Option pro Zeile.",
+    "mcqCorrect": "Richtige Antwort",
+    "matchMin": "Fügen Sie mindestens 2 Paare hinzu.",
+    "gapMin": "Fügen Sie mindestens eine [Lücke] hinzu.",
+    "catMin": "2+ Kategorien; jedes Element in einer gelisteten Kategorie.",
+    "mcqMin": "2+ Optionen hinzufügen und die richtige wählen.",
+    "sentence": "Satz (richtige Reihenfolge)",
+    "sentenceHint": "Geben Sie den Satz in der richtigen Reihenfolge ein — die Wörter werden zu ziehbaren Chips, für den Schüler gemischt.",
+    "sentenceMin": "Fügen Sie mindestens 2 Wörter hinzu.",
+    "aspect": "Aspekt",
+    "public": "Öffentlich teilen",
+    "matchRightType": "Rechte Spalte",
+    "matchText": "Wörter",
+    "matchImage": "Bilder",
+    "matchWord": "Wort",
+    "matchUpload": "Bild hochladen",
+    "matchAddPair": "Paar hinzufügen",
+    "matchImageHint": "Ordnen Sie jedem Wort ein hochgeladenes Bild zu (mindestens 2)."
   },
   "courses": {
     "title": "Kurse",
@@ -328,7 +454,49 @@
     "question": "Frage",
     "options": "Optionen (kommagetrennt)",
     "correct": "Richtige Antwort",
-    "saved": "Gespeichert"
+    "saved": "Gespeichert",
+    "new": "Neu",
+    "continue": "Fortsetzen",
+    "more": "Mehr",
+    "unpublished": "unveröffentlicht",
+    "reorder": "Umsortieren",
+    "description": "Beschreibung",
+    "cover": "Titelbild",
+    "allLevels": "Alle Stufen",
+    "allStatuses": "Alle",
+    "allCategories": "Alle Kategorien",
+    "media": "Medien",
+    "addMedia": "Hinzufügen",
+    "mediaUrl": "URL (oder oben hochladen)",
+    "caption": "Bildunterschrift",
+    "transcript": "Transkript",
+    "showTranscript": "Transkript anzeigen",
+    "hideTranscript": "Transkript ausblenden",
+    "preview": "Vorschau",
+    "saving": "Speichern…",
+    "pageText": "Text",
+    "generate": "Mit KI erstellen",
+    "aiTopic": "Thema",
+    "aiUnits": "Einheiten",
+    "aiLessons": "Lektionen pro Einheit",
+    "aiAspects": "Aspekte",
+    "aiNotes": "Notizen (optional)",
+    "aiGenerate": "Erstellen",
+    "aiGenerating": "Wird erstellt… das kann eine Minute dauern.",
+    "aiReady": "Entwurf bereit zur Prüfung.",
+    "aiFailed": "Erstellung fehlgeschlagen",
+    "aiOpenDraft": "Entwurf öffnen",
+    "mediaPending": "Upload ausstehend",
+    "refine": "Verfeinern",
+    "refineInstruction": "Mit einer Anweisung verfeinern",
+    "selectLesson": "Lektion zum Bearbeiten wählen",
+    "lessonDeleted": "Lektion gelöscht",
+    "taskDeleted": "Aufgabe entfernt",
+    "aiGenerated": "Von KI erstellt",
+    "aiApprove": "Genehmigen & veröffentlichen",
+    "aiApproved": "Veröffentlicht",
+    "aiGenLesson": "Lektion mit KI generieren",
+    "insertInline": "In Text einfügen"
   },
   "learn": {
     "title": "Lektion",
@@ -349,6 +517,79 @@
     "done": "Erledigt ✓",
     "essayPlaceholder": "Schreibe deine Antwort…",
     "back": "Zum Kurs",
-    "min": "Min"
+    "min": "Min",
+    "saved": "Gespeichert"
+  },
+  "assignments": {
+    "title": "Aufgaben",
+    "empty": "Noch keine Aufgaben.",
+    "homework": "Hausaufgabe",
+    "lesson": "Lektion",
+    "tasks": "Aufgaben",
+    "due": "Fällig",
+    "status_assigned": "Zugewiesen",
+    "status_in_progress": "In Bearbeitung",
+    "status_done": "Erledigt",
+    "back": "Zurück zu den Aufgaben",
+    "perAspect": "Nach Aspekt",
+    "completion": "Fortschritt",
+    "tier_excellent": "Ausgezeichnet!",
+    "tier_good": "Gut gemacht",
+    "tier_keepGoing": "Weiter so",
+    "assignHomework": "Als Hausaufgabe zuweisen",
+    "student": "Schüler",
+    "topicTag": "Thema",
+    "topicPlaceholder": "z. B. Present Simple",
+    "pickTasks": "Aufgaben auswählen",
+    "assign": "Zuweisen",
+    "saveFeedback": "Feedback speichern",
+    "feedbackPlaceholder": "Feedback für den Schüler…",
+    "resultStep": "Ergebnis",
+    "resultPending": "Erledige die Aufgaben, um dein Ergebnis zu sehen."
+  },
+  "dictionary": {
+    "title": "Wörterbuch",
+    "empty": "Noch keine Wörter. Füge sie aus den Wortlisten hinzu.",
+    "train": "Üben",
+    "due": "Fällig",
+    "reveal": "Aufdecken",
+    "remembered": "Gewusst",
+    "forgot": "Nicht gewusst",
+    "back": "Zur Liste",
+    "learned": "Gelernt",
+    "nothingDue": "Heute nichts fällig",
+    "nextReview": "nächste Wiederholung {date}",
+    "shortcuts": "Leertaste zum Aufdecken · 1 nicht gewusst · 2 gewusst",
+    "repsHint": "Wiederholungen"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Tutor",
+      "student": "Schüler",
+      "parent": "Elternteil",
+      "admin": "Admin"
+    },
+    "lessonStatus": {
+      "scheduled": "Geplant",
+      "completed": "Abgeschlossen",
+      "cancelled": "Abgesagt",
+      "no_show": "Nicht erschienen"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Video",
+      "audio": "Audio",
+      "image": "Bild",
+      "exercise": "Übung",
+      "link": "Link"
+    },
+    "pageType": {
+      "grammar": "Grammatik",
+      "practice": "Übung",
+      "listening": "Hörverstehen",
+      "reading": "Lesen",
+      "discussion": "Diskussion",
+      "essay": "Aufsatz"
+    }
   }
 }

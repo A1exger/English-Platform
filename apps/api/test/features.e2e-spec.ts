@@ -137,11 +137,12 @@ describe('Homework + CRM + Video (e2e)', () => {
     expect(card.body.homework[0].status).toBe('graded');
   });
 
-  it('an unrelated tutor cannot read the student card -> 404', async () => {
-    await api()
+  it('single-tutor platform: any tutor can read the student card', async () => {
+    const card = await api()
       .get(`/api/v1/crm/students/${studentProfileId}`)
       .set('Authorization', `Bearer ${tutor2.accessToken}`)
-      .expect(404);
+      .expect(200);
+    expect(card.body.profile).toBeDefined();
   });
 
   // --- Video join token -----------------------------------------------------

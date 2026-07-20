@@ -25,7 +25,13 @@
     "statusAssigned": "Назначено",
     "statusSubmitted": "Сдано",
     "statusGraded": "Проверено",
-    "viewAnswers": "Посмотреть ответы"
+    "viewAnswers": "Посмотреть ответы",
+    "tab_all": "Все",
+    "tab_todo": "К выполнению",
+    "tab_submitted": "Сдано",
+    "tab_graded": "Оценено",
+    "overdue": "Просрочено",
+    "back": "К списку ДЗ"
   },
   "materials": {
     "title": "Материалы",
@@ -38,7 +44,8 @@
     "creating": "Добавление…",
     "empty": "Материалов нет.",
     "delete": "Удалить",
-    "uploadFile": "Загрузить файл"
+    "uploadFile": "Загрузить файл",
+    "deleted": "Материал удалён"
   },
   "students": {
     "title": "Ученики",
@@ -58,7 +65,11 @@
     "firstName": "Имя",
     "lastName": "Фамилия",
     "delete": "Удалить",
-    "remove": "Открепить"
+    "remove": "Открепить",
+    "deleted": "Ученик удалён",
+    "name": "Имя",
+    "level": "Уровень",
+    "balance": "Баланс"
   },
   "analytics": {
     "title": "Аналитика",
@@ -67,7 +78,14 @@
     "lessonsUpcoming": "Предстоящие уроки",
     "activeStudents": "Активных учеников",
     "attendance": "Посещаемость",
-    "conversion": "Конверсия пробных"
+    "conversion": "Конверсия пробных",
+    "period": "Период",
+    "periodMonths": "{count} мес.",
+    "metric": "Показатель",
+    "lessons": "Уроки",
+    "thisPeriod": "За период",
+    "vsPrevious": "к предыдущему",
+    "trend": "Динамика"
   },
   "settings": {
     "title": "Настройки",
@@ -90,7 +108,14 @@
     "submit": "Зарегистрироваться",
     "creating": "Создание…",
     "haveAccount": "Уже есть аккаунт?",
-    "error": "Не удалось зарегистрироваться. Попробуйте другой email."
+    "error": "Не удалось зарегистрироваться. Попробуйте другой email.",
+    "passwordStrength": "Надёжность пароля",
+    "strengthWeak": "Слабый",
+    "strengthFair": "Средний",
+    "strengthGood": "Хороший",
+    "strengthStrong": "Надёжный",
+    "terms": "Я принимаю условия обслуживания",
+    "tutorNote": "Аккаунты преподавателей создаёт администратор."
   },
   "adminUsers": {
     "title": "Пользователи",
@@ -104,7 +129,10 @@
     "creating": "Создание…",
     "empty": "Пользователей нет.",
     "delete": "Удалить",
-    "forbidden": "Только для администраторов."
+    "forbidden": "Только для администраторов.",
+    "deleted": "Пользователь удалён",
+    "name": "Имя",
+    "created": "Создан"
   },
   "schedule": {
     "title": "Расписание",
@@ -125,7 +153,14 @@
     "viewList": "Список",
     "viewWeek": "Неделя",
     "student": "Ученик",
-    "delete": "Удалить"
+    "delete": "Удалить",
+    "deleted": "Урок удалён",
+    "week": "Неделя",
+    "day": "День",
+    "view": "Вид",
+    "book": "Записаться на урок",
+    "cancel": "Отмена",
+    "timezone": "Время показано в {tz}"
   },
   "billing": {
     "title": "Оплата",
@@ -152,14 +187,29 @@
     "pendingTransfers": "Переводы, ожидающие подтверждения",
     "confirm": "Подтвердить",
     "currency": "Валюта",
-    "delete": "Удалить"
+    "delete": "Удалить",
+    "deleted": "Пакет удалён"
   },
   "room": {
     "title": "Комната урока",
     "connecting": "Подключение к видео…",
     "connectError": "Не удалось подключиться к видео. Указан ли LIVEKIT_URL?",
     "board": "Доска",
-    "video": "Видео"
+    "video": "Видео",
+    "material": "Материал",
+    "live": "В эфире",
+    "loadLessons": "Загрузить уроки",
+    "pickMaterial": "Выберите урок курса.",
+    "waiting": "Ждём учителя…",
+    "studentAnswer": "Ответ",
+    "exit": "Выйти из урока",
+    "answersTab": "Ответы",
+    "exerciseTab": "Упражнение",
+    "focusVideo": "Фокус на видео",
+    "exitFocus": "Выйти из фокуса",
+    "pageLabel": "стр.",
+    "teacherLeads": "ведёт учитель",
+    "answersHint": "Ответы появятся здесь по ходу работы ученика."
   },
   "board": {
     "title": "Доска",
@@ -173,7 +223,8 @@
     "connected": "Подключено",
     "back": "Назад",
     "notes": "Заметки",
-    "notesPlaceholder": "Общие заметки (видят преподаватель и ученик)…"
+    "notesPlaceholder": "Общие заметки (видят преподаватель и ученик)…",
+    "cleared": "Доска очищена"
   },
   "common": {
     "appName": "English Spark Studio",
@@ -183,7 +234,22 @@
     "email": "Эл. почта",
     "password": "Пароль",
     "dashboard": "Кабинет",
-    "createAccount": "Создать аккаунт"
+    "createAccount": "Создать аккаунт",
+    "search": "Поиск",
+    "searchPlaceholder": "Искать страницы…",
+    "noResults": "Ничего не найдено",
+    "undo": "Отменить",
+    "menu": "Меню",
+    "close": "Закрыть",
+    "all": "Все",
+    "sortBy": "Сортировка",
+    "content": "Содержимое",
+    "lesson": "Урок",
+    "material": "Материал",
+    "student": "Студент",
+    "word": "Слово",
+    "pages": "Страницы",
+    "course": "Курс"
   },
   "nav": {
     "overview": "Обзор",
@@ -198,7 +264,15 @@
     "progress": "Прогресс",
     "payment": "Оплата",
     "exercises": "Упражнения",
-    "courses": "Курсы"
+    "courses": "Курсы",
+    "assignments": "Задания",
+    "dictionary": "Словарь",
+    "section_learn": "Обучение",
+    "section_progress": "Прогресс",
+    "section_teach": "Преподавание",
+    "section_build": "Создание",
+    "section_insights": "Аналитика",
+    "section_admin": "Админ"
   },
   "dashboard": {
     "greeting": "С возвращением, {name}!",
@@ -210,7 +284,15 @@
     "joinLesson": "Войти в урок",
     "everyoneOwnLanguage": "Каждый участник видит интерфейс на своём языке — урок общий независимо от языка.",
     "homeworkPending": "У вас {count} домашних заданий.",
-    "notifications": "Уведомления"
+    "notifications": "Уведомления",
+    "goal": "Цель",
+    "level": "Уровень",
+    "lessonsDone": "Пройдено уроков",
+    "homework": "Домашка",
+    "upcoming": "Ближайшее",
+    "seeAll": "Все",
+    "noLessons": "Нет предстоящих уроков",
+    "bookLesson": "Записаться на урок"
   },
   "studentProfile": {
     "title": "Профиль ученика",
@@ -227,7 +309,16 @@
     "age": "Возраст",
     "notes": "Заметки",
     "noteBody": "Заметка",
-    "lessons": "Уроки"
+    "lessons": "Уроки",
+    "overview": "Обзор",
+    "homework": "Домашнее задание",
+    "profile": "Профиль",
+    "attendance": "Посещаемость",
+    "balance": "Баланс",
+    "addNote": "Добавить заметку",
+    "noLessons": "Пока нет уроков",
+    "noHomework": "Пока нет заданий",
+    "noNotes": "Пока нет заметок"
   },
   "progress": {
     "title": "Мой прогресс",
@@ -241,7 +332,13 @@
     "badge_five_lessons": "5 уроков",
     "badge_ten_lessons": "10 уроков",
     "badge_homework_hero": "Герой домашек",
-    "badge_perfect_attendance": "Идеальная посещаемость"
+    "badge_perfect_attendance": "Идеальная посещаемость",
+    "courseProgress": "Прогресс по курсам",
+    "structural": "Выполнение",
+    "goal": "Цель",
+    "forecast": "Прогноз",
+    "projected": "прогноз",
+    "remaining": "обязательных осталось"
   },
   "exercises": {
     "title": "Упражнения",
@@ -281,7 +378,36 @@
     "chooseStudents": "Ученики",
     "none": "Заданий пока нет.",
     "view": "Просмотр",
-    "edit": "Редактировать"
+    "edit": "Редактировать",
+    "deleted": "Упражнение удалено",
+    "allTypes": "Все",
+    "sentence_ordering": "Порядок предложения",
+    "word_matching": "Сопоставление слов",
+    "gap_fill": "Пропуски",
+    "categorization": "Категоризация",
+    "multiple_choice": "Выбор ответа",
+    "distractors": "Дистракторы (необязательно)",
+    "distractorsHint": "Лишние слова для банка, через запятую.",
+    "mcqQuestion": "Вопрос",
+    "mcqOptions": "Варианты",
+    "mcqOptionsHint": "По одному варианту в строке.",
+    "mcqCorrect": "Правильный ответ",
+    "matchMin": "Добавьте хотя бы 2 пары.",
+    "gapMin": "Добавьте хотя бы один [пропуск].",
+    "catMin": "Нужно 2+ категории; каждый элемент — в указанной категории.",
+    "mcqMin": "Добавьте 2+ варианта и выберите правильный.",
+    "sentence": "Предложение (в правильном порядке)",
+    "sentenceHint": "Введите предложение в правильном порядке — слова станут перетаскиваемыми фишками, перемешанными для ученика.",
+    "sentenceMin": "Добавьте хотя бы 2 слова.",
+    "aspect": "Аспект",
+    "public": "Сделать публичным",
+    "matchRightType": "Правая колонка",
+    "matchText": "Слова",
+    "matchImage": "Картинки",
+    "matchWord": "Слово",
+    "matchUpload": "Загрузить картинку",
+    "matchAddPair": "Добавить пару",
+    "matchImageHint": "Сопоставьте каждое слово с загруженной картинкой (минимум 2)."
   },
   "courses": {
     "title": "Курсы",
@@ -328,7 +454,49 @@
     "question": "Вопрос",
     "options": "Варианты (через запятую)",
     "correct": "Правильный ответ",
-    "saved": "Сохранено"
+    "saved": "Сохранено",
+    "new": "Новый",
+    "continue": "Продолжить",
+    "more": "Ещё",
+    "unpublished": "снят с публикации",
+    "reorder": "Переместить",
+    "description": "Описание",
+    "cover": "Обложка",
+    "allLevels": "Все уровни",
+    "allStatuses": "Все",
+    "allCategories": "Все категории",
+    "media": "Медиа",
+    "addMedia": "Добавить",
+    "mediaUrl": "URL (или загрузите выше)",
+    "caption": "Подпись",
+    "transcript": "Транскрипт",
+    "showTranscript": "Показать транскрипт",
+    "hideTranscript": "Скрыть транскрипт",
+    "preview": "Предпросмотр",
+    "saving": "Сохранение…",
+    "pageText": "Текст",
+    "generate": "Сгенерировать с AI",
+    "aiTopic": "Тема",
+    "aiUnits": "Юниты",
+    "aiLessons": "Уроков в юните",
+    "aiAspects": "Аспекты",
+    "aiNotes": "Заметки (необязательно)",
+    "aiGenerate": "Сгенерировать",
+    "aiGenerating": "Генерация… это может занять минуту.",
+    "aiReady": "Черновик готов к проверке.",
+    "aiFailed": "Ошибка генерации",
+    "aiOpenDraft": "Открыть черновик",
+    "mediaPending": "нужна загрузка",
+    "refine": "Доработать",
+    "refineInstruction": "Доработать по инструкции",
+    "selectLesson": "Выберите урок для редактирования",
+    "lessonDeleted": "Урок удалён",
+    "taskDeleted": "Задание удалено",
+    "aiGenerated": "Сгенерировано AI",
+    "aiApprove": "Одобрить и опубликовать",
+    "aiApproved": "Опубликовано",
+    "aiGenLesson": "Сгенерировать урок с помощью AI",
+    "insertInline": "Вставить в текст"
   },
   "learn": {
     "title": "Урок",
@@ -349,6 +517,79 @@
     "done": "Выполнено ✓",
     "essayPlaceholder": "Напишите ваш ответ…",
     "back": "К курсу",
-    "min": "мин"
+    "min": "мин",
+    "saved": "Сохранено"
+  },
+  "assignments": {
+    "title": "Задания",
+    "empty": "Пока нет заданий.",
+    "homework": "Домашка",
+    "lesson": "Урок",
+    "tasks": "заданий",
+    "due": "Срок",
+    "status_assigned": "Назначено",
+    "status_in_progress": "В процессе",
+    "status_done": "Готово",
+    "back": "К заданиям",
+    "perAspect": "По аспектам",
+    "completion": "Выполнение",
+    "tier_excellent": "Отлично!",
+    "tier_good": "Хорошо",
+    "tier_keepGoing": "Продолжай",
+    "assignHomework": "Назначить ДЗ",
+    "student": "Ученик",
+    "topicTag": "Тема",
+    "topicPlaceholder": "напр. Present Simple",
+    "pickTasks": "Какие задания включить",
+    "assign": "Назначить",
+    "saveFeedback": "Сохранить фидбек",
+    "feedbackPlaceholder": "Фидбек ученику…",
+    "resultStep": "Результат",
+    "resultPending": "Выполните задания, чтобы увидеть результат."
+  },
+  "dictionary": {
+    "title": "Словарь",
+    "empty": "Пока нет слов. Добавляйте их из словарей урока.",
+    "train": "Тренировка",
+    "due": "К повторению",
+    "reveal": "Показать",
+    "remembered": "Знал",
+    "forgot": "Не знал",
+    "back": "К списку",
+    "learned": "Изучено",
+    "nothingDue": "На сегодня ничего нет",
+    "nextReview": "следующее повторение {date}",
+    "shortcuts": "Пробел — показать · 1 — не знал · 2 — знал",
+    "repsHint": "Число повторений"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Преподаватель",
+      "student": "Студент",
+      "parent": "Родитель",
+      "admin": "Администратор"
+    },
+    "lessonStatus": {
+      "scheduled": "Запланирован",
+      "completed": "Завершён",
+      "cancelled": "Отменён",
+      "no_show": "Неявка"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Видео",
+      "audio": "Аудио",
+      "image": "Изображение",
+      "exercise": "Упражнение",
+      "link": "Ссылка"
+    },
+    "pageType": {
+      "grammar": "Грамматика",
+      "practice": "Практика",
+      "listening": "Аудирование",
+      "reading": "Чтение",
+      "discussion": "Обсуждение",
+      "essay": "Эссе"
+    }
   }
 }

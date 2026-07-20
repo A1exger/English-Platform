@@ -1,11 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
+import { MediaItem, PageMediaBlock, PageMediaItem } from './PageMediaBlock';
+import { AssignmentBuilder } from './AssignmentBuilder';
+import { Skeleton } from './Skeleton';
+import { Stepper } from './Stepper';
+import { Icon } from './Icon';
 
 interface PageRow {
   id: string;
@@ -13,6 +18,7 @@ interface PageRow {
   order: number;
   text?: string | null;
   mediaUrl?: string | null;
+  media?: PageMediaItem[];
   tasks: ContentTask[];
 }
 interface LessonDetail {
@@ -25,12 +31,50 @@ interface LessonDetail {
   grammarReference?: { title: string; meaning: string; form: string } | null;
 }
 
+const MEDIA_MARKER = /!\[\[media:([^\]]+)\]\]/g;
+
+// Render page text, expanding inline `![[media:ID]]` markers into the referenced
+// attachment (ФТ-К304). Markerless text renders exactly as one paragraph; any
+// attachment pulled inline is dropped from the trailing media block (no dupes).
+function PageBody({ text, media }: { text?: string | null; media?: PageMediaItem[] }) {
+  const items = media ?? [];
+  const byId = new Map(items.map((m) => [m.id, m]));
+  const used = new Set<string>();
+  const nodes: ReactNode[] = [];
+  if (text) {
+    let last = 0;
+    let k = 0;
+    let match: RegExpExecArray | null;
+    MEDIA_MARKER.lastIndex = 0;
+    while ((match = MEDIA_MARKER.exec(text)) !== null) {
+      const before = text.slice(last, match.index);
+      if (before.trim()) nodes.push(<p key={`t${k++}`}>{before}</p>);
+      const m = byId.get(match[1]);
+      if (m) {
+        used.add(m.id);
+        nodes.push(<MediaItem key={`m${k++}`} m={m} />);
+      }
+      last = match.index + match[0].length;
+    }
+    const rest = text.slice(last);
+    if (rest.trim() || nodes.length === 0) nodes.push(<p key={`t${k++}`}>{rest}</p>);
+  }
+  return (
+    <>
+      {nodes.length > 0 && <div className="card">{nodes}</div>}
+      <PageMediaBlock media={items} exclude={used} />
+    </>
+  );
+}
+
 // The single lesson player used by every runtime context. Page 0 is the
 // Preparation view (objectives + wordlist -> dictionary + grammar reference),
 // followed by the lesson pages with their tasks.
 export function LessonPlayerView({ lessonId }: { lessonId: string }) {
   const t = useTranslations('learn');
+  const tAssign = useTranslations('assignments');
   const tApp = useTranslations('app');
+  const te = useTranslations('enum');
   const locale = useLocale();
   const router = useRouter();
 
@@ -39,6 +83,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [pageIdx, setPageIdx] = useState(0); // 0 = Preparation
   const [added, setAdded] = useState<Record<string, boolean>>({});
+  const [showAssign, setShowAssign] = useState(false);
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -76,49 +121,40 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
     setAdded({ ...added, [word]: true });
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !lesson) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
-  const totalSteps = lesson.pages.length + 1; // + Preparation
   const page = pageIdx > 0 ? lesson.pages[pageIdx - 1] : null;
+  const allTasks = lesson.pages.flatMap((p) => p.tasks);
 
   return (
     <div className="content learn">
       <Link className="link" href={`/courses/${lesson.courseId}`}>← {t('back')}</Link>
-      <h2>{lesson.title}</h2>
-
-      <div className="learn-nav">
-        <button type="button" className="ghost" disabled={pageIdx === 0} onClick={() => setPageIdx(pageIdx - 1)}>
-          ‹ {t('prev')}
-        </button>
-        <div className="learn-steps">
-          <button
-            type="button"
-            className={`step${pageIdx === 0 ? ' active' : ''}`}
-            onClick={() => setPageIdx(0)}
-          >
-            {t('preparation')}
+      <div className="row-between">
+        <h2>{lesson.title}</h2>
+        {!isStudent && allTasks.length > 0 && (
+          <button type="button" onClick={() => setShowAssign((v) => !v)}>
+            {tAssign('assignHomework')}
           </button>
-          {lesson.pages.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`step${pageIdx === i + 1 ? ' active' : ''}`}
-              onClick={() => setPageIdx(i + 1)}
-            >
-              {i + 1} · {p.type}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="ghost"
-          disabled={pageIdx >= totalSteps - 1}
-          onClick={() => setPageIdx(pageIdx + 1)}
-        >
-          {t('next')} ›
-        </button>
+        )}
       </div>
+
+      {showAssign && !isStudent && (
+        <AssignmentBuilder
+          lessonId={lessonId}
+          tasks={allTasks.map((tk) => ({ id: tk.id, type: tk.type, aspect: tk.aspect }))}
+          onClose={() => setShowAssign(false)}
+        />
+      )}
+
+      <Stepper
+        current={pageIdx}
+        onChange={setPageIdx}
+        steps={[
+          { key: 'prep', label: t('preparation') },
+          ...lesson.pages.map((p, i) => ({ key: p.id, label: `${i + 1} · ${te(`pageType.${p.type}`)}` }))
+        ]}
+      />
 
       {pageIdx === 0 ? (
         <div className="learn-prep">
@@ -150,7 +186,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
                         disabled={!!added[e.word]}
                         onClick={() => addToDictionary(e.word, e.translation)}
                       >
-                        {added[e.word] ? t('added') : `✦ ${t('addToDict')}`}
+                        {added[e.word] ? t('added') : <><Icon name="spark" /> {t('addToDict')}</>}
                       </button>
                     )}
                   </li>
@@ -178,11 +214,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
       ) : (
         page && (
           <div className="learn-page">
-            {page.text && (
-              <div className="card">
-                <p>{page.text}</p>
-              </div>
-            )}
+            <PageBody text={page.text} media={page.media} />
             {page.tasks.map((task) => (
               <ContentTaskPlayer key={task.id} task={task} />
             ))}

@@ -130,3 +130,11 @@ export type Aspect = (typeof ASPECTS)[number];
 
 export const ASSIGNMENT_KINDS = ['lesson', 'homework'] as const;
 export type AssignmentKind = (typeof ASSIGNMENT_KINDS)[number];
+
+// --- AI generation (SPEC §7/§10) ---
+
+export const GEN_TARGET_TYPES = ['COURSE', 'LESSON'] as const;
+export type GenTargetType = (typeof GEN_TARGET_TYPES)[number];
+
+export const GEN_STATUSES = ['generating', 'ready_for_review', 'approved', 'failed'] as const;
+export type GenStatus = (typeof GEN_STATUSES)[number];

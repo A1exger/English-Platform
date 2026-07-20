@@ -1,39 +1,45 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/routing';
+import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
-import { ExercisePlayer } from './ExercisePlayer';
+import { Skeleton } from './Skeleton';
+import { Drawer } from './Drawer';
+import { ScoreRing } from './ScoreRing';
+import { PageHeader } from './PageHeader';
+import { DataList } from './DataList';
 
 interface Submission {
   id: string;
-  content?: string | null;
   grade?: string | null;
-  feedback?: string | null;
-}
-interface ExerciseRef {
-  id: string;
-  status: string;
-  score: number | null;
 }
 interface Homework {
   id: string;
   title: string;
   status: string;
+  dueAt?: string | null;
   submissions: Submission[];
-  exercises?: ExerciseRef[];
 }
 interface StudentRow {
   studentProfileId: string;
   name: string;
 }
 
+const TABS = ['all', 'todo', 'submitted', 'graded'] as const;
+type Tab = (typeof TABS)[number];
+
+// Sprint 2.1: the list is only a list. One scannable row per homework — title,
+// due date (mono, marked overdue), status chip, a score ring when graded — that
+// links to the work screen (/homework/[id]). No inline exercise players (they
+// were an N+1 inside a list). Assigning happens in a drawer. Staff = tutor OR
+// admin (the old form was gated on tutor only, so admins saw nothing).
 export function HomeworkView() {
   const t = useTranslations('homework');
   const tApp = useTranslations('app');
   const locale = useLocale();
+  const format = useFormatter();
   const router = useRouter();
 
   const [me, setMe] = useState<Me | null>(null);
@@ -41,10 +47,9 @@ export function HomeworkView() {
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<Tab>('all');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({ studentProfileId: '', title: '', due: '' });
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [grades, setGrades] = useState<Record<string, { grade: string; feedback: string }>>({});
-  const [openAnswers, setOpenAnswers] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -55,10 +60,9 @@ export function HomeworkView() {
     try {
       const profile = await fetchMe(token, locale);
       setMe(profile);
-      const hw = await apiFetch<Homework[]>('/homework', { token, locale });
-      setItems(hw);
-      if (profile.role === 'tutor') {
-        setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }));
+      setItems(await apiFetch<Homework[]>('/homework', { token, locale }));
+      if (profile.role === 'tutor' || profile.role === 'admin') {
+        setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }).catch(() => []));
       }
       setState('ready');
     } catch (e) {
@@ -91,61 +95,91 @@ export function HomeworkView() {
         }
       });
       setForm({ studentProfileId: '', title: '', due: '' });
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
     }
   }
 
-  async function submit(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/homework/${id}/submit`, {
-        method: 'POST',
-        token,
-        locale,
-        body: { content: answers[id] || '' }
-      });
-      await load();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function grade(id: string) {
-    const token = tokenStore.get();
-    const g = grades[id];
-    if (!token || !g?.grade) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/homework/${id}/grade`, {
-        method: 'POST',
-        token,
-        locale,
-        body: { grade: g.grade, feedback: g.feedback || undefined }
-      });
-      await load();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
-  const isTutor = me?.role === 'tutor';
+  const isStaff = me?.role === 'tutor' || me?.role === 'admin';
   const statusLabel = (s: string) =>
     s === 'assigned' ? t('statusAssigned') : s === 'submitted' ? t('statusSubmitted') : t('statusGraded');
+  const filtered = items.filter((h) =>
+    tab === 'all'
+      ? true
+      : tab === 'todo'
+        ? h.status === 'assigned'
+        : tab === 'submitted'
+          ? h.status === 'submitted'
+          : h.status === 'graded'
+  );
+  const now = Date.now();
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader
+        title={t('title')}
+        primary={isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined}
+      />
 
-      {isTutor && (
-        <form className="card form-grid" onSubmit={assign}>
-          <strong>{t('assign')}</strong>
+      <div className="tabs tabs-inline" role="tablist">
+        {TABS.map((tb) => (
+          <button
+            key={tb}
+            type="button"
+            role="tab"
+            aria-selected={tab === tb}
+            className={tab === tb ? 'active' : ''}
+            onClick={() => setTab(tb)}
+          >
+            {t(`tab_${tb}`)}
+          </button>
+        ))}
+      </div>
+
+      <DataList
+        items={filtered}
+        getKey={(h) => h.id}
+        listClassName="assign-list"
+        searchText={(h) => h.title}
+        sorts={[
+          { key: 'due', label: t('due'), value: (h) => h.dueAt ?? '9999-12-31' },
+          { key: 'title', label: t('titleField'), value: (h) => h.title.toLowerCase() }
+        ]}
+        empty={{
+          title: t('empty'),
+          action: isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined
+        }}
+        renderRow={(h) => {
+          const grade = h.submissions[0]?.grade;
+          const graded = h.status === 'graded' && grade != null && grade !== '';
+          const overdue = !!h.dueAt && h.status === 'assigned' && new Date(h.dueAt).getTime() < now;
+          return (
+            <Link className="assign-row" href={`/homework/${h.id}`}>
+              <div className="assign-row-main">
+                <strong>{h.title}</strong>
+                {h.dueAt && (
+                  <span className={`mono-num${overdue ? ' overdue' : ' muted'}`}>
+                    {t('due')} {format.dateTime(new Date(h.dueAt), { dateStyle: 'medium' })}
+                    {overdue ? ` · ${t('overdue')}` : ''}
+                  </span>
+                )}
+              </div>
+              <div className="assign-row-side">
+                {graded && <ScoreRing value={Number(grade) * 10} display={String(grade)} size={44} stroke={4} />}
+                <span className={`chip status-${h.status}`}>{statusLabel(h.status)}</span>
+              </div>
+            </Link>
+          );
+        }}
+      />
+
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('assign')}>
+        <form className="form-grid" onSubmit={assign}>
           <label>
             {t('student')}
             <select
@@ -173,94 +207,7 @@ export function HomeworkView() {
             {busy ? t('creating') : t('create')}
           </button>
         </form>
-      )}
-
-      <div className="card">
-        {items.length === 0 ? (
-          <p className="note">{t('empty')}</p>
-        ) : (
-          <ul className="lesson-list">
-            {items.map((h) => {
-              const sub = h.submissions[0];
-              return (
-                <li key={h.id} className="stacked">
-                  <div className="row-between">
-                    <span>{h.title}</span>
-                    <span className="muted">{statusLabel(h.status)}</span>
-                  </div>
-                  {sub?.grade && (
-                    <p className="muted">
-                      {t('grade')}: {sub.grade}
-                      {sub.feedback ? ` — ${sub.feedback}` : ''}
-                    </p>
-                  )}
-                  {h.exercises && h.exercises.length > 0 &&
-                    (isTutor ? (
-                      <>
-                        <div className="row-between">
-                          <span className="muted">
-                            {h.exercises.length} ·{' '}
-                            {h.exercises.map((e) => (e.score == null ? '–' : `${e.score}%`)).join(', ')}
-                          </span>
-                          <button type="button" onClick={() => setOpenAnswers({ ...openAnswers, [h.id]: !openAnswers[h.id] })}>
-                            {t('viewAnswers')}
-                          </button>
-                        </div>
-                        {openAnswers[h.id] && (
-                          <div className="ex-list">
-                            {h.exercises.map((e) => (
-                              <ExercisePlayer key={e.id} instanceId={e.id} reviewOnly />
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="ex-list">
-                        {h.exercises.map((e) => (
-                          <ExercisePlayer key={e.id} instanceId={e.id} />
-                        ))}
-                      </div>
-                    ))}
-                  {!isTutor && h.status === 'assigned' && (!h.exercises || h.exercises.length === 0) && (
-                    <div className="inline-form">
-                      <textarea
-                        placeholder={t('content')}
-                        value={answers[h.id] || ''}
-                        onChange={(e) => setAnswers({ ...answers, [h.id]: e.target.value })}
-                      />
-                      <button type="button" disabled={busy} onClick={() => submit(h.id)}>
-                        {t('submit')}
-                      </button>
-                    </div>
-                  )}
-                  {isTutor && h.status === 'submitted' && (
-                    <div className="inline-form">
-                      {sub?.content && <p className="muted">{sub.content}</p>}
-                      <input
-                        placeholder={t('grade')}
-                        value={grades[h.id]?.grade || ''}
-                        onChange={(e) =>
-                          setGrades({ ...grades, [h.id]: { grade: e.target.value, feedback: grades[h.id]?.feedback || '' } })
-                        }
-                      />
-                      <input
-                        placeholder={t('feedback')}
-                        value={grades[h.id]?.feedback || ''}
-                        onChange={(e) =>
-                          setGrades({ ...grades, [h.id]: { grade: grades[h.id]?.grade || '', feedback: e.target.value } })
-                        }
-                      />
-                      <button type="button" disabled={busy} onClick={() => grade(h.id)}>
-                        {t('gradeAction')}
-                      </button>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      </Drawer>
     </div>
   );
 }

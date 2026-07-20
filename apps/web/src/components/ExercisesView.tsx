@@ -3,9 +3,25 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
-import { ApiError, apiFetch } from '@/lib/api';
+import { ApiError, apiFetch, apiUpload, fileUrl } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
+import { TaskRenderer } from './tasks/TaskRenderer';
+import type { TaskType } from './tasks/types';
+import {
+  CANONICAL_TYPES,
+  CanonicalForm,
+  ImagePair,
+  canonicalError,
+  editFormFromCanonical,
+  initialStateFor,
+  sanitizeForPreview,
+  toCanonicalPayload
+} from './tasks/authoring';
+import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
+import { PageHeader } from './PageHeader';
+import { Icon } from './Icon';
 
 interface ExerciseRow {
   id: string;
@@ -17,7 +33,13 @@ interface StudentRow {
   name: string;
 }
 
+// Legacy authoring types (graded by exercise.logic) and the canonical
+// interactive types (SPEC §4, dnd-kit renderer + server grade/sanitize).
 const TYPES = ['order', 'match', 'fill', 'categorize'] as const;
+const ALL_TYPES = [...TYPES, ...CANONICAL_TYPES] as const;
+const ASPECTS = ['Grammar', 'Reading', 'Listening', 'Vocabulary', 'Speaking', 'Writing'] as const;
+
+const isCanonical = (ty: string): boolean => (CANONICAL_TYPES as readonly string[]).includes(ty);
 
 function parseFill(text: string) {
   const segments: ({ text: string } | { blank: number })[] = [];
@@ -43,7 +65,7 @@ function parsePairs(text: string) {
     .map((p) => ({ left: p[0].trim(), right: p[1].trim() }));
 }
 
-// Build a renderable question from a stored payload (for viewing/preview).
+// Build a renderable question from a stored legacy payload (for viewing/preview).
 function buildQuestion(type: string, title: string, payload: Record<string, unknown>): Question {
   if (type === 'match') {
     const pairs = (payload.pairs as { left: string; right: string }[]) ?? [];
@@ -68,32 +90,53 @@ function parseItems(text: string) {
     .map((p) => ({ text: p[0].trim(), category: p[1].trim() }));
 }
 
+// What a preview modal shows: a legacy question, or a canonical task.
+type Viewing =
+  | { kind: 'legacy'; q: Question; state: ExerciseState }
+  | { kind: 'canonical'; type: TaskType; title: string; def: unknown; state: Record<string, unknown> };
+
 export function ExercisesView() {
   const t = useTranslations('exercises');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [list, setList] = useState<ExerciseRow[]>([]);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [state, setStateName] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState({});
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | (typeof ALL_TYPES)[number]>('all');
 
-  const [type, setType] = useState<(typeof TYPES)[number]>('order');
+  const [type, setType] = useState<string>('order');
   const [title, setTitle] = useState('');
+  // Legacy inputs.
   const [words, setWords] = useState('I go to school');
   const [prompt, setPrompt] = useState('');
   const [pairs, setPairs] = useState('dog = chien\ncat = chat');
+  const [matchRightType, setMatchRightType] = useState<'text' | 'image'>('text');
+  const [imagePairs, setImagePairs] = useState<ImagePair[]>([]);
   const [fillText, setFillText] = useState('I [go] to [school].');
   const [categories, setCategories] = useState('noun, verb');
   const [items, setItems] = useState('run = verb\nbook = noun');
+  // Canonical-only inputs (shared widgets reuse pairs/fillText/categories/items).
+  const [sentence, setSentence] = useState('I have never been to London');
+  const [distractors, setDistractors] = useState('going, week');
+  const [mcqQuestion, setMcqQuestion] = useState('Where is Big Ben?');
+  const [mcqOptions, setMcqOptions] = useState('London\nParis\nBerlin');
+  const [mcqCorrect, setMcqCorrect] = useState(0);
+  const [aspect, setAspect] = useState<string>('Grammar');
+  const [isPublic, setIsPublic] = useState(false);
+  const [previewState, setPreviewState] = useState<Record<string, unknown>>({});
 
   // Assign panel
   const [assignFor, setAssignFor] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [due, setDue] = useState('');
-  const [viewing, setViewing] = useState<{ q: Question; state: ExerciseState } | null>(null);
+  const [viewing, setViewing] = useState<Viewing | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -119,7 +162,30 @@ export function ExercisesView() {
     void load();
   }, [load]);
 
+  const canonicalForm = useMemo<CanonicalForm>(
+    () => ({ sentence, pairs, matchRightType, imagePairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect }),
+    [sentence, pairs, matchRightType, imagePairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect]
+  );
+  const canonicalErr = isCanonical(type) ? canonicalError(type, canonicalForm) : null;
+
+  // Student-facing preview (ФТ-У104): same renderer, on the draft payload.
+  const canonicalPreview = useMemo(() => {
+    if (!isCanonical(type)) return null;
+    const { payload } = toCanonicalPayload(type, canonicalForm);
+    return {
+      previewType: type as TaskType,
+      def: sanitizeForPreview(type, payload),
+      initialState: initialStateFor(type, payload)
+    };
+  }, [type, canonicalForm]);
+
+  // Reseed the interactive preview whenever the draft changes.
+  useEffect(() => {
+    if (canonicalPreview) setPreviewState(canonicalPreview.initialState);
+  }, [canonicalPreview]);
+
   const payload = useMemo(() => {
+    if (isCanonical(type)) return {};
     if (type === 'order') return { words: words.trim().split(/\s+/).filter(Boolean), prompt: prompt || undefined };
     if (type === 'match') return { pairs: parsePairs(pairs) };
     if (type === 'fill') return { text: fillText };
@@ -127,6 +193,7 @@ export function ExercisesView() {
   }, [type, words, prompt, pairs, fillText, categories, items]);
 
   const question = useMemo<Question>(() => {
+    if (isCanonical(type)) return { type: 'order', title: '', tokens: [] } as Question;
     if (type === 'order')
       return { type, title: title || t('order'), prompt, tokens: (payload as { words: string[] }).words };
     if (type === 'match') {
@@ -138,13 +205,51 @@ export function ExercisesView() {
       return { type, title: title || t('fill'), segments, blanks: answers.length, bank: answers };
     }
     const cat = (payload as { categories: string[]; items: { text: string }[] });
-    return { type, title: title || t('categorize'), categories: cat.categories, items: cat.items.map((i) => i.text) };
+    return { type: 'categorize', title: title || t('categorize'), categories: cat.categories, items: cat.items.map((i) => i.text) };
   }, [type, title, payload, fillText, prompt, t]);
+
+  // Upload a picture for a word↔image match row; store only the returned URL.
+  async function uploadPairImage(index: number, file: File) {
+    const token = tokenStore.get();
+    if (!token) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token, locale }).catch(() => null);
+    if (res?.url) setImagePairs((prev) => prev.map((x, j) => (j === index ? { ...x, right: res.url } : x)));
+  }
 
   async function create(e: FormEvent) {
     e.preventDefault();
     const token = tokenStore.get();
     if (!token) return;
+
+    if (isCanonical(type)) {
+      if (canonicalErr) return; // ФТ-У105 blocks the save
+      setBusy(true);
+      try {
+        const { payload: p, answerKey } = toCanonicalPayload(type, canonicalForm);
+        const body = {
+          title: title || t(type),
+          prompt: prompt || undefined,
+          aspect,
+          isPublic,
+          payload: p,
+          ...(answerKey ? { answerKey } : {})
+        };
+        if (editingId) {
+          await apiFetch(`/exercises/${editingId}`, { method: 'PATCH', token, locale, body });
+          setEditingId(null);
+        } else {
+          await apiFetch('/exercises', { method: 'POST', token, locale, body: { type, ...body } });
+        }
+        setTitle('');
+        await load();
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     setBusy(true);
     try {
       if (editingId) {
@@ -174,26 +279,54 @@ export function ExercisesView() {
   async function edit(id: string) {
     const token = tokenStore.get();
     if (!token) return;
-    const ex = await apiFetch<{ type: string; title: string; payload: Record<string, unknown> }>(
-      `/exercises/${id}`,
-      { token, locale }
-    );
-    setType(ex.type as (typeof TYPES)[number]);
+    const ex = await apiFetch<{
+      type: string;
+      title: string;
+      prompt?: string | null;
+      aspect?: string | null;
+      isPublic?: boolean;
+      payload: Record<string, unknown>;
+      answerKey?: Record<string, unknown> | null;
+    }>(`/exercises/${id}`, { token, locale });
+    setType(ex.type);
     setTitle(ex.title);
-    const p = ex.payload;
-    if (ex.type === 'order') {
-      setWords(((p.words as string[]) ?? []).join(' '));
-      setPrompt((p.prompt as string) ?? '');
-    } else if (ex.type === 'match') {
-      setPairs(((p.pairs as { left: string; right: string }[]) ?? []).map((x) => `${x.left} = ${x.right}`).join('\n'));
-    } else if (ex.type === 'fill') {
-      setFillText((p.text as string) ?? '');
-    } else if (ex.type === 'categorize') {
-      setCategories(((p.categories as string[]) ?? []).join(', '));
-      setItems(((p.items as { text: string; category: string }[]) ?? []).map((x) => `${x.text} = ${x.category}`).join('\n'));
+    if (isCanonical(ex.type)) {
+      const f = editFormFromCanonical(ex.type, ex.payload, ex.answerKey ?? null);
+      setSentence(f.sentence);
+      setPairs(f.pairs);
+      setMatchRightType(f.matchRightType);
+      setImagePairs(f.imagePairs);
+      setFillText(f.fillText);
+      setDistractors(f.distractors);
+      setCategories(f.categories);
+      setItems(f.items);
+      setMcqQuestion(f.mcqQuestion);
+      setMcqOptions(f.mcqOptions);
+      setMcqCorrect(f.mcqCorrect);
+      setPrompt(ex.prompt ?? '');
+      setAspect(ex.aspect ?? 'Grammar');
+      setIsPublic(!!ex.isPublic);
+    } else {
+      const p = ex.payload;
+      if (ex.type === 'order') {
+        setWords(((p.words as string[]) ?? []).join(' '));
+        setPrompt((p.prompt as string) ?? '');
+      } else if (ex.type === 'match') {
+        setPairs(((p.pairs as { left: string; right: string }[]) ?? []).map((x) => `${x.left} = ${x.right}`).join('\n'));
+      } else if (ex.type === 'fill') {
+        setFillText((p.text as string) ?? '');
+      } else if (ex.type === 'categorize') {
+        setCategories(((p.categories as string[]) ?? []).join(', '));
+        setItems(((p.items as { text: string; category: string }[]) ?? []).map((x) => `${x.text} = ${x.category}`).join('\n'));
+      }
     }
     setEditingId(id);
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setTitle('');
   }
 
   async function act(path: string, method: 'POST' | 'DELETE') {
@@ -206,6 +339,22 @@ export function ExercisesView() {
     } finally {
       setBusy(false);
     }
+  }
+
+  // Optimistic + undoable delete (global rule: no deletion without showUndo).
+  function removeExercise(id: string) {
+    setList((prev) => prev.filter((x) => x.id !== id));
+    if (assignFor === id) setAssignFor(null);
+    if (editingId === id) cancelEdit();
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/exercises/${id}`, { method: 'DELETE', token, locale }).catch(() => undefined);
+        await load();
+      }
+    });
   }
 
   async function openAssign(id: string) {
@@ -229,7 +378,17 @@ export function ExercisesView() {
       `/exercises/${id}`,
       { token, locale }
     );
-    setViewing({ q: buildQuestion(ex.type, ex.title, ex.payload), state: {} });
+    if (isCanonical(ex.type)) {
+      setViewing({
+        kind: 'canonical',
+        type: ex.type as TaskType,
+        title: ex.title,
+        def: sanitizeForPreview(ex.type, ex.payload),
+        state: initialStateFor(ex.type, ex.payload)
+      });
+    } else {
+      setViewing({ kind: 'legacy', q: buildQuestion(ex.type, ex.title, ex.payload), state: {} });
+    }
   }
 
   async function assign(exerciseId: string) {
@@ -253,24 +412,40 @@ export function ExercisesView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
+
+  const filtered = list.filter(
+    (ex) =>
+      (typeFilter === 'all' || ex.type === typeFilter) &&
+      ex.title.toLowerCase().includes(search.trim().toLowerCase())
+  );
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader title={t('title')} />
 
       <div className="two-col">
         <form className="card ex-form" onSubmit={create}>
-          <strong>{t('create')}</strong>
-          <label>
-            {t('type')}
-            <select value={type} onChange={(e) => setType(e.target.value as typeof type)}>
-              {TYPES.map((ty) => (
-                <option key={ty} value={ty}>{t(ty)}</option>
+          <strong>{editingId ? t('edit') : t('create')}</strong>
+          <div className="field">
+            <span>{t('type')}</span>
+            <div className="tabs tabs-inline" role="tablist" aria-label={t('type')}>
+              {ALL_TYPES.map((ty) => (
+                <button
+                  key={ty}
+                  type="button"
+                  role="tab"
+                  aria-selected={type === ty}
+                  className={type === ty ? 'active' : ''}
+                  disabled={!!editingId && type !== ty}
+                  onClick={() => setType(ty)}
+                >
+                  {t(ty)}
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
           <label>
             {t('title')}
             <input value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -283,10 +458,69 @@ export function ExercisesView() {
               <label>{t('prompt')}<input value={prompt} onChange={(e) => setPrompt(e.target.value)} /></label>
             </>
           )}
+          {type === 'sentence_ordering' && (
+            <>
+              <label>{t('sentence')}<input value={sentence} onChange={(e) => setSentence(e.target.value)} /></label>
+              <small className="muted">{t('sentenceHint')}</small>
+            </>
+          )}
           {type === 'match' && (
             <>
               <label>{t('pairs')}<textarea value={pairs} onChange={(e) => setPairs(e.target.value)} /></label>
               <small className="muted">{t('pairsHint')}</small>
+            </>
+          )}
+          {type === 'word_matching' && (
+            <>
+              <div className="field">
+                <span>{t('matchRightType')}</span>
+                <div className="tabs tabs-inline">
+                  <button type="button" className={matchRightType === 'text' ? 'active' : ''} onClick={() => setMatchRightType('text')}>
+                    {t('matchText')}
+                  </button>
+                  <button type="button" className={matchRightType === 'image' ? 'active' : ''} onClick={() => setMatchRightType('image')}>
+                    {t('matchImage')}
+                  </button>
+                </div>
+              </div>
+              {matchRightType === 'text' ? (
+                <>
+                  <label>{t('pairs')}<textarea value={pairs} onChange={(e) => setPairs(e.target.value)} /></label>
+                  <small className="muted">{t('pairsHint')}</small>
+                </>
+              ) : (
+                <div className="match-image-pairs">
+                  {imagePairs.map((p, i) => (
+                    <div key={i} className="match-image-row">
+                      <input
+                        placeholder={t('matchWord')}
+                        value={p.left}
+                        onChange={(e) => setImagePairs((prev) => prev.map((x, j) => (j === i ? { ...x, left: e.target.value } : x)))}
+                      />
+                      {p.right ? (
+                        <img className="match-image-thumb" src={fileUrl(p.right)} alt="" />
+                      ) : (
+                        <label className="media-slot-fill">
+                          {t('matchUpload')}
+                          <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadPairImage(i, e.target.files[0])} />
+                        </label>
+                      )}
+                      <button
+                        type="button"
+                        className="ghost"
+                        aria-label={t('delete')}
+                        onClick={() => setImagePairs((prev) => prev.filter((_, j) => j !== i))}
+                      >
+                        <Icon name="close" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="ghost" onClick={() => setImagePairs((prev) => [...prev, { left: '', right: '' }])}>
+                    {t('matchAddPair')}
+                  </button>
+                  <small className="muted">{t('matchImageHint')}</small>
+                </div>
+              )}
             </>
           )}
           {type === 'fill' && (
@@ -295,7 +529,15 @@ export function ExercisesView() {
               <small className="muted">{t('fillHint')}</small>
             </>
           )}
-          {type === 'categorize' && (
+          {type === 'gap_fill' && (
+            <>
+              <label>{t('fillText')}<textarea value={fillText} onChange={(e) => setFillText(e.target.value)} /></label>
+              <small className="muted">{t('fillHint')}</small>
+              <label>{t('distractors')}<input value={distractors} onChange={(e) => setDistractors(e.target.value)} /></label>
+              <small className="muted">{t('distractorsHint')}</small>
+            </>
+          )}
+          {(type === 'categorize' || type === 'categorization') && (
             <>
               <label>{t('categories')}<input value={categories} onChange={(e) => setCategories(e.target.value)} /></label>
               <small className="muted">{t('categoriesHint')}</small>
@@ -303,17 +545,63 @@ export function ExercisesView() {
               <small className="muted">{t('itemsHint')}</small>
             </>
           )}
+          {type === 'multiple_choice' && (
+            <>
+              <label>{t('mcqQuestion')}<input value={mcqQuestion} onChange={(e) => setMcqQuestion(e.target.value)} /></label>
+              <label>{t('mcqOptions')}<textarea value={mcqOptions} onChange={(e) => setMcqOptions(e.target.value)} /></label>
+              <small className="muted">{t('mcqOptionsHint')}</small>
+              <label>
+                {t('mcqCorrect')}
+                <select value={mcqCorrect} onChange={(e) => setMcqCorrect(Number(e.target.value))}>
+                  {mcqOptions.split('\n').map((o) => o.trim()).filter(Boolean).map((o, i) => (
+                    <option key={i} value={i}>{o}</option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
+
+          {isCanonical(type) && (
+            <>
+              <label>{t('prompt')}<input value={prompt} onChange={(e) => setPrompt(e.target.value)} /></label>
+              <label>
+                {t('aspect')}
+                <select value={aspect} onChange={(e) => setAspect(e.target.value)}>
+                  {ASPECTS.map((a) => (
+                    <option key={a} value={a}>{a}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="check">
+                <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
+                {t('public')}
+              </label>
+              {canonicalErr && <small className="error">{t(canonicalErr)}</small>}
+            </>
+          )}
+
           <div className="row-actions">
-            <button type="submit" disabled={busy}>{busy ? t('creating') : t('save')}</button>
+            <button type="submit" disabled={busy || (isCanonical(type) && !!canonicalErr)}>
+              {busy ? t('creating') : t('save')}
+            </button>
             {editingId && (
-              <button type="button" className="ghost" onClick={() => { setEditingId(null); setTitle(''); }}>✕</button>
+              <button type="button" className="ghost" aria-label={tc('close')} onClick={cancelEdit}><Icon name="close" /></button>
             )}
           </div>
         </form>
 
         <div className="card">
           <strong>{t('preview')}</strong>
-          <ExerciseRenderer question={question} state={preview} onChange={setPreview} />
+          {isCanonical(type) && canonicalPreview ? (
+            <TaskRenderer
+              type={canonicalPreview.previewType}
+              def={canonicalPreview.def}
+              state={previewState}
+              onChange={(s) => setPreviewState(s as Record<string, unknown>)}
+            />
+          ) : (
+            <ExerciseRenderer question={question} state={preview} onChange={setPreview} />
+          )}
         </div>
       </div>
 
@@ -321,25 +609,69 @@ export function ExercisesView() {
         <div className="modal-overlay" onClick={() => setViewing(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="row-between">
-              <strong>{viewing.q.title}</strong>
-              <button type="button" className="ghost" onClick={() => setViewing(null)}>✕</button>
+              <strong>{viewing.kind === 'canonical' ? viewing.title : viewing.q.title}</strong>
+              <button type="button" className="ghost" aria-label={tc('close')} onClick={() => setViewing(null)}><Icon name="close" /></button>
             </div>
-            <ExerciseRenderer
-              question={viewing.q}
-              state={viewing.state}
-              onChange={(s) => setViewing({ q: viewing.q, state: s })}
-            />
+            {viewing.kind === 'canonical' ? (
+              <TaskRenderer
+                type={viewing.type}
+                def={viewing.def}
+                state={viewing.state}
+                onChange={(s) => setViewing({ ...viewing, state: s as Record<string, unknown> })}
+              />
+            ) : (
+              <ExerciseRenderer
+                question={viewing.q}
+                state={viewing.state}
+                onChange={(s) => setViewing({ kind: 'legacy', q: viewing.q, state: s })}
+              />
+            )}
           </div>
         </div>
       )}
 
       <div className="card">
         <strong>{t('library')}</strong>
+        <div className="page-header-tools">
+          <input
+            type="search"
+            className="search-input"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={tc('search')}
+            aria-label={tc('search')}
+          />
+          <div className="tabs tabs-inline filter-chips" role="tablist" aria-label={t('type')}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={typeFilter === 'all'}
+              className={typeFilter === 'all' ? 'active' : ''}
+              onClick={() => setTypeFilter('all')}
+            >
+              {t('allTypes')}
+            </button>
+            {ALL_TYPES.map((ty) => (
+              <button
+                key={ty}
+                type="button"
+                role="tab"
+                aria-selected={typeFilter === ty}
+                className={typeFilter === ty ? 'active' : ''}
+                onClick={() => setTypeFilter(ty)}
+              >
+                {t(ty)}
+              </button>
+            ))}
+          </div>
+        </div>
         {list.length === 0 ? (
           <p className="note">{t('empty')}</p>
+        ) : filtered.length === 0 ? (
+          <p className="note">{tc('noResults')}</p>
         ) : (
           <ul className="lesson-list">
-            {list.map((ex) => (
+            {filtered.map((ex) => (
               <li key={ex.id} className="stacked">
                 <div className="row-between">
                   <span>{ex.title} <span className="muted">· {t(ex.type)}</span></span>
@@ -348,11 +680,11 @@ export function ExercisesView() {
                     <button type="button" onClick={() => edit(ex.id)}>{t('edit')}</button>
                     <button type="button" onClick={() => act(`/exercises/${ex.id}/duplicate`, 'POST')}>{t('duplicate')}</button>
                     <button type="button" onClick={() => openAssign(ex.id)}>{t('assign')}</button>
-                    <button type="button" onClick={() => act(`/exercises/${ex.id}`, 'DELETE')}>{t('delete')}</button>
+                    <button type="button" onClick={() => removeExercise(ex.id)}>{t('delete')}</button>
                   </span>
                 </div>
                 {assignFor === ex.id && (
-                  <div className="inline-form" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                  <div className="inline-form inline-form-col">
                     <span className="muted">{t('chooseStudents')}</span>
                     {students.map((s) => (
                       <label key={s.studentProfileId} className="check">

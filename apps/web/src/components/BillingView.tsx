@@ -5,6 +5,10 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
+import { PageHeader } from './PageHeader';
+import { Drawer } from './Drawer';
 
 interface Pkg {
   id: string;
@@ -62,6 +66,7 @@ export function BillingView() {
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [me, setMe] = useState<Me | null>(null);
   const [packages, setPackages] = useState<Pkg[]>([]);
@@ -75,6 +80,7 @@ export function BillingView() {
   const [pending, setPending] = useState<PendingTransfer[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({ name: '', lessons: '10', price: '200', currency: 'EUR' });
 
   const load = useCallback(async () => {
@@ -182,16 +188,20 @@ export function BillingView() {
     }
   }
 
-  async function deletePackage(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/billing/packages/${id}`, { method: 'DELETE', token, locale });
-      await load();
-    } finally {
-      setBusy(false);
-    }
+  // Optimistic + undoable (project rule: no destructive action without undo).
+  function deletePackage(id: string) {
+    setPackages((prev) => prev.filter((p) => p.id !== id));
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/billing/packages/${id}`, { method: 'DELETE', token, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
   }
 
   async function createPackage(e: FormEvent) {
@@ -213,13 +223,14 @@ export function BillingView() {
         }
       });
       setForm({ name: '', lessons: '10', price: '200', currency: 'EUR' });
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error')
     return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
@@ -229,7 +240,10 @@ export function BillingView() {
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader
+        title={t('title')}
+        primary={isTutor || isAdmin ? { label: t('newPackage'), onClick: () => setDrawerOpen(true) } : undefined}
+      />
 
       {balance && (
         <div className="metrics">
@@ -247,49 +261,50 @@ export function BillingView() {
       )}
 
       {(isTutor || isAdmin) && (
-        <form className="card form-grid" onSubmit={createPackage}>
-          <strong>{t('newPackage')}</strong>
-          <label>
-            {t('name')}
-            <input
-              required
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </label>
-          <label>
-            {t('lessons')}
-            <input
-              type="number"
-              min={1}
-              value={form.lessons}
-              onChange={(e) => setForm({ ...form, lessons: e.target.value })}
-            />
-          </label>
-          <label>
-            {t('price')}
-            <input
-              type="number"
-              min={0}
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-            />
-          </label>
-          <label>
-            {t('currency')}
-            <select
-              value={form.currency}
-              onChange={(e) => setForm({ ...form, currency: e.target.value })}
-            >
-              <option value="EUR">EUR €</option>
-              <option value="USD">USD $</option>
-              <option value="TND">TND (DT)</option>
-            </select>
-          </label>
-          <button type="submit" disabled={busy}>
-            {busy ? t('processing') : t('create')}
-          </button>
-        </form>
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('newPackage')}>
+          <form className="form-grid" onSubmit={createPackage}>
+            <label>
+              {t('name')}
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('lessons')}
+              <input
+                type="number"
+                min={1}
+                value={form.lessons}
+                onChange={(e) => setForm({ ...form, lessons: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('price')}
+              <input
+                type="number"
+                min={0}
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('currency')}
+              <select
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value })}
+              >
+                <option value="EUR">EUR €</option>
+                <option value="USD">USD $</option>
+                <option value="TND">TND (DT)</option>
+              </select>
+            </label>
+            <button type="submit" disabled={busy}>
+              {busy ? t('processing') : t('create')}
+            </button>
+          </form>
+        </Drawer>
       )}
 
       <div className="card">

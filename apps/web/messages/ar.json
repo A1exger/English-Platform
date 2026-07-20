@@ -25,7 +25,13 @@
     "statusAssigned": "مُسند",
     "statusSubmitted": "تم الإرسال",
     "statusGraded": "تم التقييم",
-    "viewAnswers": "عرض الإجابات"
+    "viewAnswers": "عرض الإجابات",
+    "tab_all": "الكل",
+    "tab_todo": "للتنفيذ",
+    "tab_submitted": "مُسلَّم",
+    "tab_graded": "مُقيَّم",
+    "overdue": "متأخر",
+    "back": "العودة إلى الواجبات"
   },
   "materials": {
     "title": "المواد",
@@ -38,7 +44,8 @@
     "creating": "جارٍ الإضافة…",
     "empty": "لا توجد مواد.",
     "delete": "حذف",
-    "uploadFile": "رفع ملف"
+    "uploadFile": "رفع ملف",
+    "deleted": "تم حذف المادة"
   },
   "students": {
     "title": "الطلاب",
@@ -58,7 +65,11 @@
     "firstName": "الاسم الأول",
     "lastName": "اسم العائلة",
     "delete": "حذف",
-    "remove": "إزالة"
+    "remove": "إزالة",
+    "deleted": "تمت إزالة الطالب",
+    "name": "الاسم",
+    "level": "المستوى",
+    "balance": "الرصيد"
   },
   "analytics": {
     "title": "التحليلات",
@@ -67,7 +78,14 @@
     "lessonsUpcoming": "الدروس القادمة",
     "activeStudents": "الطلاب النشطون",
     "attendance": "نسبة الحضور",
-    "conversion": "تحويل الدروس التجريبية"
+    "conversion": "تحويل الدروس التجريبية",
+    "period": "الفترة",
+    "periodMonths": "{count} أشهر",
+    "metric": "المقياس",
+    "lessons": "الدروس",
+    "thisPeriod": "هذه الفترة",
+    "vsPrevious": "مقابل السابق",
+    "trend": "الاتجاه"
   },
   "settings": {
     "title": "الإعدادات",
@@ -90,7 +108,14 @@
     "submit": "تسجيل",
     "creating": "جارٍ الإنشاء…",
     "haveAccount": "لديك حساب بالفعل؟",
-    "error": "فشل التسجيل. جرّب بريدًا آخر."
+    "error": "فشل التسجيل. جرّب بريدًا آخر.",
+    "passwordStrength": "قوة كلمة المرور",
+    "strengthWeak": "ضعيفة",
+    "strengthFair": "مقبولة",
+    "strengthGood": "جيدة",
+    "strengthStrong": "قوية",
+    "terms": "أوافق على شروط الخدمة",
+    "tutorNote": "يتم إنشاء حسابات المعلمين بواسطة المسؤول."
   },
   "adminUsers": {
     "title": "المستخدمون",
@@ -104,7 +129,10 @@
     "creating": "جارٍ الإنشاء…",
     "empty": "لا يوجد مستخدمون.",
     "delete": "حذف",
-    "forbidden": "للمشرفين فقط."
+    "forbidden": "للمشرفين فقط.",
+    "deleted": "تم حذف المستخدم",
+    "name": "الاسم",
+    "created": "تاريخ الإنشاء"
   },
   "schedule": {
     "title": "الجدول",
@@ -125,7 +153,14 @@
     "viewList": "قائمة",
     "viewWeek": "أسبوع",
     "student": "الطالب",
-    "delete": "حذف"
+    "delete": "حذف",
+    "deleted": "تم حذف الدرس",
+    "week": "أسبوع",
+    "day": "يوم",
+    "view": "العرض",
+    "book": "احجز درسًا",
+    "cancel": "إلغاء",
+    "timezone": "الأوقات بتوقيت {tz}"
   },
   "billing": {
     "title": "الفواتير",
@@ -152,14 +187,29 @@
     "pendingTransfers": "تحويلات بانتظار التأكيد",
     "confirm": "تأكيد",
     "currency": "العملة",
-    "delete": "حذف"
+    "delete": "حذف",
+    "deleted": "تم حذف الباقة"
   },
   "room": {
     "title": "غرفة الدرس",
     "connecting": "جارٍ الاتصال بالفيديو…",
     "connectError": "تعذّر الاتصال بالفيديو. هل تم ضبط LIVEKIT_URL؟",
     "board": "اللوحة",
-    "video": "فيديو"
+    "video": "فيديو",
+    "material": "المادة",
+    "live": "مباشر",
+    "loadLessons": "تحميل الدروس",
+    "pickMaterial": "اختر درسًا من الدورة.",
+    "waiting": "في انتظار المعلم…",
+    "studentAnswer": "الإجابة",
+    "exit": "مغادرة الدرس",
+    "answersTab": "الإجابات",
+    "exerciseTab": "تمرين",
+    "focusVideo": "التركيز على الفيديو",
+    "exitFocus": "إنهاء التركيز",
+    "pageLabel": "ص.",
+    "teacherLeads": "المعلّم يقود",
+    "answersHint": "تظهر الإجابات هنا أثناء عمل الطالب."
   },
   "board": {
     "title": "اللوحة",
@@ -173,7 +223,8 @@
     "connected": "متصل",
     "back": "رجوع",
     "notes": "ملاحظات",
-    "notesPlaceholder": "ملاحظات مشتركة (يراها المعلّم والطالب)…"
+    "notesPlaceholder": "ملاحظات مشتركة (يراها المعلّم والطالب)…",
+    "cleared": "تم مسح اللوحة"
   },
   "common": {
     "appName": "English Spark Studio",
@@ -183,7 +234,22 @@
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
     "dashboard": "لوحة التحكم",
-    "createAccount": "إنشاء حساب"
+    "createAccount": "إنشاء حساب",
+    "search": "بحث",
+    "searchPlaceholder": "ابحث في الصفحات…",
+    "noResults": "لا نتائج",
+    "undo": "تراجع",
+    "menu": "القائمة",
+    "close": "إغلاق",
+    "all": "الكل",
+    "sortBy": "ترتيب",
+    "content": "المحتوى",
+    "lesson": "درس",
+    "material": "مادة",
+    "student": "طالب",
+    "word": "كلمة",
+    "pages": "الصفحات",
+    "course": "دورة"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -198,7 +264,15 @@
     "progress": "التقدم",
     "payment": "الدفع",
     "exercises": "التمارين",
-    "courses": "الدورات"
+    "courses": "الدورات",
+    "assignments": "الواجبات",
+    "dictionary": "القاموس",
+    "section_learn": "التعلّم",
+    "section_progress": "التقدّم",
+    "section_teach": "التدريس",
+    "section_build": "الإنشاء",
+    "section_insights": "التحليلات",
+    "section_admin": "الإدارة"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",
@@ -210,7 +284,15 @@
     "joinLesson": "الانضمام إلى الدرس",
     "everyoneOwnLanguage": "يرى كل مشارك الواجهة بلغته الخاصة — الدرس مشترك بغضّ النظر عن اللغة.",
     "homeworkPending": "لديك {count} واجبات.",
-    "notifications": "الإشعارات"
+    "notifications": "الإشعارات",
+    "goal": "الهدف",
+    "level": "المستوى",
+    "lessonsDone": "الدروس المنجزة",
+    "homework": "الواجبات",
+    "upcoming": "القادم",
+    "seeAll": "عرض الكل",
+    "noLessons": "لا دروس قادمة",
+    "bookLesson": "احجز درسًا"
   },
   "studentProfile": {
     "title": "ملف الطالب",
@@ -227,7 +309,16 @@
     "age": "العمر",
     "notes": "الملاحظات",
     "noteBody": "ملاحظة",
-    "lessons": "الدروس"
+    "lessons": "الدروس",
+    "overview": "نظرة عامة",
+    "homework": "الواجب",
+    "profile": "الملف",
+    "attendance": "الحضور",
+    "balance": "الرصيد",
+    "addNote": "إضافة ملاحظة",
+    "noLessons": "لا دروس بعد",
+    "noHomework": "لا واجبات بعد",
+    "noNotes": "لا ملاحظات بعد"
   },
   "progress": {
     "title": "تقدمي",
@@ -241,7 +332,13 @@
     "badge_five_lessons": "5 دروس",
     "badge_ten_lessons": "10 دروس",
     "badge_homework_hero": "بطل الواجبات",
-    "badge_perfect_attendance": "حضور مثالي"
+    "badge_perfect_attendance": "حضور مثالي",
+    "courseProgress": "تقدم الدورة",
+    "structural": "الإنجاز",
+    "goal": "الهدف",
+    "forecast": "التوقع",
+    "projected": "متوقع",
+    "remaining": "إلزامي متبقٍ"
   },
   "exercises": {
     "title": "التمارين",
@@ -281,7 +378,36 @@
     "chooseStudents": "الطلاب",
     "none": "لا توجد تمارين بعد.",
     "view": "عرض",
-    "edit": "تعديل"
+    "edit": "تعديل",
+    "deleted": "تم حذف التمرين",
+    "allTypes": "الكل",
+    "sentence_ordering": "ترتيب الجملة",
+    "word_matching": "مطابقة الكلمات",
+    "gap_fill": "ملء الفراغات",
+    "categorization": "التصنيف",
+    "multiple_choice": "اختيار من متعدد",
+    "distractors": "مشتتات (اختياري)",
+    "distractorsHint": "كلمات إضافية للبنك، مفصولة بفواصل.",
+    "mcqQuestion": "السؤال",
+    "mcqOptions": "الخيارات",
+    "mcqOptionsHint": "خيار واحد لكل سطر.",
+    "mcqCorrect": "الإجابة الصحيحة",
+    "matchMin": "أضف زوجين على الأقل.",
+    "gapMin": "أضف فراغًا واحدًا على الأقل.",
+    "catMin": "فئتان على الأقل، وكل عنصر ضمن فئة مذكورة.",
+    "mcqMin": "أضف خيارين على الأقل واختر الصحيح.",
+    "sentence": "الجملة (بالترتيب الصحيح)",
+    "sentenceHint": "اكتب الجملة بالترتيب الصحيح — تتحول الكلمات إلى بطاقات قابلة للسحب، مخلوطة للطالب.",
+    "sentenceMin": "أضف كلمتين على الأقل.",
+    "aspect": "الجانب",
+    "public": "مشاركة عامة",
+    "matchRightType": "عمود المطابقة",
+    "matchText": "كلمات",
+    "matchImage": "صور",
+    "matchWord": "كلمة",
+    "matchUpload": "رفع صورة",
+    "matchAddPair": "إضافة زوج",
+    "matchImageHint": "اربط كل كلمة بصورة مرفوعة (زوجان على الأقل)."
   },
   "courses": {
     "title": "الدورات",
@@ -328,7 +454,49 @@
     "question": "السؤال",
     "options": "الخيارات (مفصولة بفواصل)",
     "correct": "الإجابة الصحيحة",
-    "saved": "تم الحفظ"
+    "saved": "تم الحفظ",
+    "new": "جديد",
+    "continue": "متابعة",
+    "more": "المزيد",
+    "unpublished": "غير منشور",
+    "reorder": "إعادة ترتيب",
+    "description": "الوصف",
+    "cover": "صورة الغلاف",
+    "allLevels": "كل المستويات",
+    "allStatuses": "الكل",
+    "allCategories": "كل الفئات",
+    "media": "الوسائط",
+    "addMedia": "إضافة",
+    "mediaUrl": "رابط (أو ارفع أعلاه)",
+    "caption": "تعليق",
+    "transcript": "النص",
+    "showTranscript": "إظهار النص",
+    "hideTranscript": "إخفاء النص",
+    "preview": "معاينة",
+    "saving": "جارٍ الحفظ…",
+    "pageText": "النص",
+    "generate": "إنشاء بالذكاء الاصطناعي",
+    "aiTopic": "الموضوع",
+    "aiUnits": "الوحدات",
+    "aiLessons": "دروس لكل وحدة",
+    "aiAspects": "الجوانب",
+    "aiNotes": "ملاحظات (اختياري)",
+    "aiGenerate": "إنشاء",
+    "aiGenerating": "جارٍ الإنشاء… قد يستغرق دقيقة.",
+    "aiReady": "المسودة جاهزة للمراجعة.",
+    "aiFailed": "فشل الإنشاء",
+    "aiOpenDraft": "فتح المسودة",
+    "mediaPending": "بانتظار الرفع",
+    "refine": "تحسين",
+    "refineInstruction": "التحسين بتعليمة",
+    "selectLesson": "اختر درسًا للتعديل",
+    "lessonDeleted": "تم حذف الدرس",
+    "taskDeleted": "تمت إزالة المهمة",
+    "aiGenerated": "أُنشئ بواسطة الذكاء الاصطناعي",
+    "aiApprove": "الموافقة والنشر",
+    "aiApproved": "منشور",
+    "aiGenLesson": "إنشاء درس بالذكاء الاصطناعي",
+    "insertInline": "إدراج في النص"
   },
   "learn": {
     "title": "الدرس",
@@ -349,6 +517,79 @@
     "done": "تم ✓",
     "essayPlaceholder": "اكتب إجابتك…",
     "back": "العودة إلى الدورة",
-    "min": "دقيقة"
+    "min": "دقيقة",
+    "saved": "تم الحفظ"
+  },
+  "assignments": {
+    "title": "الواجبات",
+    "empty": "لا توجد واجبات بعد.",
+    "homework": "واجب",
+    "lesson": "درس",
+    "tasks": "مهام",
+    "due": "الموعد",
+    "status_assigned": "معيَّن",
+    "status_in_progress": "قيد التنفيذ",
+    "status_done": "مكتمل",
+    "back": "العودة إلى الواجبات",
+    "perAspect": "حسب المهارة",
+    "completion": "الإنجاز",
+    "tier_excellent": "ممتاز!",
+    "tier_good": "أحسنت",
+    "tier_keepGoing": "واصل",
+    "assignHomework": "تعيين كواجب",
+    "student": "الطالب",
+    "topicTag": "الموضوع",
+    "topicPlaceholder": "مثال: Present Simple",
+    "pickTasks": "المهام المراد تضمينها",
+    "assign": "تعيين",
+    "saveFeedback": "حفظ الملاحظات",
+    "feedbackPlaceholder": "ملاحظات للطالب…",
+    "resultStep": "النتيجة",
+    "resultPending": "أكمل المهام لرؤية نتيجتك."
+  },
+  "dictionary": {
+    "title": "القاموس",
+    "empty": "لا توجد كلمات بعد. أضِفها من قوائم مفردات الدروس.",
+    "train": "تدريب",
+    "due": "للمراجعة",
+    "reveal": "إظهار",
+    "remembered": "عرفتها",
+    "forgot": "لم أعرفها",
+    "back": "العودة إلى القائمة",
+    "learned": "متعلَّم",
+    "nothingDue": "لا شيء مستحق اليوم",
+    "nextReview": "المراجعة القادمة {date}",
+    "shortcuts": "مسافة للكشف · 1 لم أعرف · 2 عرفت",
+    "repsHint": "عدد المراجعات"
+  },
+  "enum": {
+    "role": {
+      "tutor": "معلم",
+      "student": "طالب",
+      "parent": "ولي أمر",
+      "admin": "مسؤول"
+    },
+    "lessonStatus": {
+      "scheduled": "مجدول",
+      "completed": "مكتمل",
+      "cancelled": "ملغى",
+      "no_show": "لم يحضر"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "فيديو",
+      "audio": "صوت",
+      "image": "صورة",
+      "exercise": "تمرين",
+      "link": "رابط"
+    },
+    "pageType": {
+      "grammar": "قواعد",
+      "practice": "تدريب",
+      "listening": "استماع",
+      "reading": "قراءة",
+      "discussion": "نقاش",
+      "essay": "مقال"
+    }
   }
 }

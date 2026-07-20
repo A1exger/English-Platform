@@ -25,7 +25,13 @@
     "statusAssigned": "Attribué",
     "statusSubmitted": "Envoyé",
     "statusGraded": "Noté",
-    "viewAnswers": "Voir les réponses"
+    "viewAnswers": "Voir les réponses",
+    "tab_all": "Tout",
+    "tab_todo": "À faire",
+    "tab_submitted": "Rendu",
+    "tab_graded": "Noté",
+    "overdue": "En retard",
+    "back": "Retour aux devoirs"
   },
   "materials": {
     "title": "Supports",
@@ -38,7 +44,8 @@
     "creating": "Ajout…",
     "empty": "Aucun support.",
     "delete": "Supprimer",
-    "uploadFile": "Téléverser un fichier"
+    "uploadFile": "Téléverser un fichier",
+    "deleted": "Document supprimé"
   },
   "students": {
     "title": "Élèves",
@@ -58,7 +65,11 @@
     "firstName": "Prénom",
     "lastName": "Nom",
     "delete": "Supprimer",
-    "remove": "Retirer"
+    "remove": "Retirer",
+    "deleted": "Élève retiré",
+    "name": "Nom",
+    "level": "Niveau",
+    "balance": "Solde"
   },
   "analytics": {
     "title": "Analytique",
@@ -67,7 +78,14 @@
     "lessonsUpcoming": "Prochains cours",
     "activeStudents": "Élèves actifs",
     "attendance": "Taux de présence",
-    "conversion": "Conversion d'essai"
+    "conversion": "Conversion d'essai",
+    "period": "Période",
+    "periodMonths": "{count} mois",
+    "metric": "Métrique",
+    "lessons": "Leçons",
+    "thisPeriod": "Cette période",
+    "vsPrevious": "vs précédent",
+    "trend": "Tendance"
   },
   "settings": {
     "title": "Paramètres",
@@ -90,7 +108,14 @@
     "submit": "S'inscrire",
     "creating": "Création…",
     "haveAccount": "Déjà un compte ?",
-    "error": "Échec de l'inscription. Essayez un autre e-mail."
+    "error": "Échec de l'inscription. Essayez un autre e-mail.",
+    "passwordStrength": "Force du mot de passe",
+    "strengthWeak": "Faible",
+    "strengthFair": "Moyen",
+    "strengthGood": "Bon",
+    "strengthStrong": "Fort",
+    "terms": "J’accepte les conditions d’utilisation",
+    "tutorNote": "Les comptes tuteurs sont créés par un administrateur."
   },
   "adminUsers": {
     "title": "Utilisateurs",
@@ -104,7 +129,10 @@
     "creating": "Création…",
     "empty": "Aucun utilisateur.",
     "delete": "Supprimer",
-    "forbidden": "Réservé aux administrateurs."
+    "forbidden": "Réservé aux administrateurs.",
+    "deleted": "Utilisateur supprimé",
+    "name": "Nom",
+    "created": "Créé"
   },
   "schedule": {
     "title": "Planning",
@@ -125,7 +153,14 @@
     "viewList": "Liste",
     "viewWeek": "Semaine",
     "student": "Élève",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "deleted": "Leçon supprimée",
+    "week": "Semaine",
+    "day": "Jour",
+    "view": "Vue",
+    "book": "Réserver une leçon",
+    "cancel": "Annuler",
+    "timezone": "Heures affichées en {tz}"
   },
   "billing": {
     "title": "Facturation",
@@ -152,14 +187,29 @@
     "pendingTransfers": "Transferts en attente de confirmation",
     "confirm": "Confirmer",
     "currency": "Devise",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "deleted": "Forfait supprimé"
   },
   "room": {
     "title": "Salle de cours",
     "connecting": "Connexion à la vidéo…",
     "connectError": "Connexion vidéo impossible. LIVEKIT_URL est-il configuré ?",
     "board": "Tableau",
-    "video": "Vidéo"
+    "video": "Vidéo",
+    "material": "Support",
+    "live": "En direct",
+    "loadLessons": "Charger les leçons",
+    "pickMaterial": "Choisissez une leçon du cours.",
+    "waiting": "En attente du professeur…",
+    "studentAnswer": "Réponse",
+    "exit": "Quitter le cours",
+    "answersTab": "Réponses",
+    "exerciseTab": "Exercice",
+    "focusVideo": "Focus vidéo",
+    "exitFocus": "Quitter le focus",
+    "pageLabel": "p.",
+    "teacherLeads": "le professeur dirige",
+    "answersHint": "Les réponses apparaissent ici au fil du travail de l'élève."
   },
   "board": {
     "title": "Tableau",
@@ -173,7 +223,8 @@
     "connected": "Connecté",
     "back": "Retour",
     "notes": "Notes",
-    "notesPlaceholder": "Notes partagées (visibles par le professeur et l’élève)…"
+    "notesPlaceholder": "Notes partagées (visibles par le professeur et l’élève)…",
+    "cleared": "Tableau effacé"
   },
   "common": {
     "appName": "English Spark Studio",
@@ -183,7 +234,22 @@
     "email": "E-mail",
     "password": "Mot de passe",
     "dashboard": "Tableau de bord",
-    "createAccount": "Créer un compte"
+    "createAccount": "Créer un compte",
+    "search": "Rechercher",
+    "searchPlaceholder": "Rechercher des pages…",
+    "noResults": "Aucun résultat",
+    "undo": "Annuler",
+    "menu": "Menu",
+    "close": "Fermer",
+    "all": "Tous",
+    "sortBy": "Trier",
+    "content": "Contenu",
+    "lesson": "Leçon",
+    "material": "Matériel",
+    "student": "Élève",
+    "word": "Mot",
+    "pages": "Pages",
+    "course": "Cours"
   },
   "nav": {
     "overview": "Aperçu",
@@ -198,7 +264,15 @@
     "progress": "Progression",
     "payment": "Paiement",
     "exercises": "Exercices",
-    "courses": "Cours"
+    "courses": "Cours",
+    "assignments": "Devoirs",
+    "dictionary": "Dictionnaire",
+    "section_learn": "Apprendre",
+    "section_progress": "Progression",
+    "section_teach": "Enseigner",
+    "section_build": "Créer",
+    "section_insights": "Analyses",
+    "section_admin": "Admin"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
@@ -210,7 +284,15 @@
     "joinLesson": "Rejoindre le cours",
     "everyoneOwnLanguage": "Chaque participant voit l'interface dans sa propre langue — le cours est partagé quelle que soit la langue.",
     "homeworkPending": "Vous avez {count} devoirs.",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "goal": "Objectif",
+    "level": "Niveau",
+    "lessonsDone": "Leçons faites",
+    "homework": "Devoirs",
+    "upcoming": "À venir",
+    "seeAll": "Tout voir",
+    "noLessons": "Aucune leçon à venir",
+    "bookLesson": "Réserver une leçon"
   },
   "studentProfile": {
     "title": "Profil de l'élève",
@@ -227,7 +309,16 @@
     "age": "Âge",
     "notes": "Notes",
     "noteBody": "Note",
-    "lessons": "Cours"
+    "lessons": "Cours",
+    "overview": "Aperçu",
+    "homework": "Devoirs",
+    "profile": "Profil",
+    "attendance": "Présence",
+    "balance": "Solde",
+    "addNote": "Ajouter une note",
+    "noLessons": "Aucune leçon",
+    "noHomework": "Aucun devoir",
+    "noNotes": "Aucune note"
   },
   "progress": {
     "title": "Ma progression",
@@ -241,7 +332,13 @@
     "badge_five_lessons": "5 cours",
     "badge_ten_lessons": "10 cours",
     "badge_homework_hero": "Héros des devoirs",
-    "badge_perfect_attendance": "Présence parfaite"
+    "badge_perfect_attendance": "Présence parfaite",
+    "courseProgress": "Progression du cours",
+    "structural": "Progression",
+    "goal": "Objectif",
+    "forecast": "Prévision",
+    "projected": "prévu",
+    "remaining": "requis restants"
   },
   "exercises": {
     "title": "Exercices",
@@ -281,7 +378,36 @@
     "chooseStudents": "Élèves",
     "none": "Aucun exercice.",
     "view": "Voir",
-    "edit": "Modifier"
+    "edit": "Modifier",
+    "deleted": "Exercice supprimé",
+    "allTypes": "Tous",
+    "sentence_ordering": "Ordre des mots",
+    "word_matching": "Association de mots",
+    "gap_fill": "Textes à trous",
+    "categorization": "Catégorisation",
+    "multiple_choice": "Choix multiple",
+    "distractors": "Distracteurs (facultatif)",
+    "distractorsHint": "Mots supplémentaires pour la banque, séparés par des virgules.",
+    "mcqQuestion": "Question",
+    "mcqOptions": "Options",
+    "mcqOptionsHint": "Une option par ligne.",
+    "mcqCorrect": "Bonne réponse",
+    "matchMin": "Ajoutez au moins 2 paires.",
+    "gapMin": "Ajoutez au moins un [trou].",
+    "catMin": "2+ catégories, chaque élément dans une catégorie listée.",
+    "mcqMin": "Ajoutez 2+ options et choisissez la bonne.",
+    "sentence": "Phrase (ordre correct)",
+    "sentenceHint": "Saisissez la phrase dans le bon ordre — les mots deviennent des jetons déplaçables, mélangés pour l'élève.",
+    "sentenceMin": "Ajoutez au moins 2 mots.",
+    "aspect": "Aspect",
+    "public": "Partager publiquement",
+    "matchRightType": "Colonne de droite",
+    "matchText": "Mots",
+    "matchImage": "Images",
+    "matchWord": "Mot",
+    "matchUpload": "Téléverser une image",
+    "matchAddPair": "Ajouter une paire",
+    "matchImageHint": "Associez chaque mot à une image téléversée (au moins 2)."
   },
   "courses": {
     "title": "Cours",
@@ -328,7 +454,49 @@
     "question": "Question",
     "options": "Options (séparées par des virgules)",
     "correct": "Bonne réponse",
-    "saved": "Enregistré"
+    "saved": "Enregistré",
+    "new": "Nouveau",
+    "continue": "Continuer",
+    "more": "Plus",
+    "unpublished": "dépublié",
+    "reorder": "Réordonner",
+    "description": "Description",
+    "cover": "Image de couverture",
+    "allLevels": "Tous les niveaux",
+    "allStatuses": "Tous",
+    "allCategories": "Toutes les catégories",
+    "media": "Médias",
+    "addMedia": "Ajouter",
+    "mediaUrl": "URL (ou téléverser ci-dessus)",
+    "caption": "Légende",
+    "transcript": "Transcription",
+    "showTranscript": "Afficher la transcription",
+    "hideTranscript": "Masquer la transcription",
+    "preview": "Aperçu",
+    "saving": "Enregistrement…",
+    "pageText": "Texte",
+    "generate": "Générer avec l'IA",
+    "aiTopic": "Sujet",
+    "aiUnits": "Unités",
+    "aiLessons": "Leçons par unité",
+    "aiAspects": "Aspects",
+    "aiNotes": "Notes (facultatif)",
+    "aiGenerate": "Générer",
+    "aiGenerating": "Génération… cela peut prendre une minute.",
+    "aiReady": "Brouillon prêt à être relu.",
+    "aiFailed": "Échec de la génération",
+    "aiOpenDraft": "Ouvrir le brouillon",
+    "mediaPending": "téléversement requis",
+    "refine": "Affiner",
+    "refineInstruction": "Affiner avec une instruction",
+    "selectLesson": "Choisissez une leçon à modifier",
+    "lessonDeleted": "Leçon supprimée",
+    "taskDeleted": "Tâche supprimée",
+    "aiGenerated": "Généré par l'IA",
+    "aiApprove": "Approuver et publier",
+    "aiApproved": "Publié",
+    "aiGenLesson": "Générer une leçon avec l'IA",
+    "insertInline": "Insérer dans le texte"
   },
   "learn": {
     "title": "Leçon",
@@ -349,6 +517,79 @@
     "done": "Fait ✓",
     "essayPlaceholder": "Écrivez votre réponse…",
     "back": "Retour au cours",
-    "min": "min"
+    "min": "min",
+    "saved": "Enregistré"
+  },
+  "assignments": {
+    "title": "Devoirs",
+    "empty": "Aucun devoir pour l'instant.",
+    "homework": "Devoir",
+    "lesson": "Leçon",
+    "tasks": "exercices",
+    "due": "Échéance",
+    "status_assigned": "Assigné",
+    "status_in_progress": "En cours",
+    "status_done": "Terminé",
+    "back": "Retour aux devoirs",
+    "perAspect": "Par aspect",
+    "completion": "Progression",
+    "tier_excellent": "Excellent !",
+    "tier_good": "Bien joué",
+    "tier_keepGoing": "Continue",
+    "assignHomework": "Assigner comme devoir",
+    "student": "Élève",
+    "topicTag": "Thème",
+    "topicPlaceholder": "ex. Present Simple",
+    "pickTasks": "Exercices à inclure",
+    "assign": "Assigner",
+    "saveFeedback": "Enregistrer le retour",
+    "feedbackPlaceholder": "Retour pour l'élève…",
+    "resultStep": "Résultat",
+    "resultPending": "Terminez les tâches pour voir votre résultat."
+  },
+  "dictionary": {
+    "title": "Dictionnaire",
+    "empty": "Aucun mot. Ajoutez-en depuis les listes de vocabulaire.",
+    "train": "S'entraîner",
+    "due": "À réviser",
+    "reveal": "Révéler",
+    "remembered": "Je savais",
+    "forgot": "Je ne savais pas",
+    "back": "Retour à la liste",
+    "learned": "Appris",
+    "nothingDue": "Rien à réviser aujourd’hui",
+    "nextReview": "prochaine révision {date}",
+    "shortcuts": "Espace pour révéler · 1 pas su · 2 su",
+    "repsHint": "Nombre de révisions"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Tuteur",
+      "student": "Élève",
+      "parent": "Parent",
+      "admin": "Admin"
+    },
+    "lessonStatus": {
+      "scheduled": "Planifié",
+      "completed": "Terminé",
+      "cancelled": "Annulé",
+      "no_show": "Absent"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Vidéo",
+      "audio": "Audio",
+      "image": "Image",
+      "exercise": "Exercice",
+      "link": "Lien"
+    },
+    "pageType": {
+      "grammar": "Grammaire",
+      "practice": "Pratique",
+      "listening": "Écoute",
+      "reading": "Lecture",
+      "discussion": "Discussion",
+      "essay": "Rédaction"
+    }
   }
 }

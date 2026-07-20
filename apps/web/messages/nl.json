@@ -25,7 +25,13 @@
     "statusAssigned": "Toegewezen",
     "statusSubmitted": "Ingeleverd",
     "statusGraded": "Beoordeeld",
-    "viewAnswers": "Antwoorden bekijken"
+    "viewAnswers": "Antwoorden bekijken",
+    "tab_all": "Alle",
+    "tab_todo": "Te doen",
+    "tab_submitted": "Ingeleverd",
+    "tab_graded": "Beoordeeld",
+    "overdue": "Te laat",
+    "back": "Terug naar huiswerk"
   },
   "materials": {
     "title": "Materialen",
@@ -38,7 +44,8 @@
     "creating": "Bezig…",
     "empty": "Geen materialen.",
     "delete": "Verwijderen",
-    "uploadFile": "Bestand uploaden"
+    "uploadFile": "Bestand uploaden",
+    "deleted": "Materiaal verwijderd"
   },
   "students": {
     "title": "Leerlingen",
@@ -58,7 +65,11 @@
     "firstName": "Voornaam",
     "lastName": "Achternaam",
     "delete": "Verwijderen",
-    "remove": "Verwijderen"
+    "remove": "Verwijderen",
+    "deleted": "Leerling verwijderd",
+    "name": "Naam",
+    "level": "Niveau",
+    "balance": "Saldo"
   },
   "analytics": {
     "title": "Analyse",
@@ -67,7 +78,14 @@
     "lessonsUpcoming": "Komende lessen",
     "activeStudents": "Actieve leerlingen",
     "attendance": "Aanwezigheidspercentage",
-    "conversion": "Proefconversie"
+    "conversion": "Proefconversie",
+    "period": "Periode",
+    "periodMonths": "{count} maanden",
+    "metric": "Statistiek",
+    "lessons": "Lessen",
+    "thisPeriod": "Deze periode",
+    "vsPrevious": "t.o.v. vorige",
+    "trend": "Trend"
   },
   "settings": {
     "title": "Instellingen",
@@ -90,7 +108,14 @@
     "submit": "Registreren",
     "creating": "Bezig…",
     "haveAccount": "Al een account?",
-    "error": "Registratie mislukt. Probeer een ander e-mailadres."
+    "error": "Registratie mislukt. Probeer een ander e-mailadres.",
+    "passwordStrength": "Wachtwoordsterkte",
+    "strengthWeak": "Zwak",
+    "strengthFair": "Redelijk",
+    "strengthGood": "Goed",
+    "strengthStrong": "Sterk",
+    "terms": "Ik ga akkoord met de voorwaarden",
+    "tutorNote": "Docentaccounts worden aangemaakt door een beheerder."
   },
   "adminUsers": {
     "title": "Gebruikers",
@@ -104,7 +129,10 @@
     "creating": "Bezig…",
     "empty": "Geen gebruikers.",
     "delete": "Verwijderen",
-    "forbidden": "Alleen voor beheerders."
+    "forbidden": "Alleen voor beheerders.",
+    "deleted": "Gebruiker verwijderd",
+    "name": "Naam",
+    "created": "Aangemaakt"
   },
   "schedule": {
     "title": "Rooster",
@@ -125,7 +153,14 @@
     "viewList": "Lijst",
     "viewWeek": "Week",
     "student": "Leerling",
-    "delete": "Verwijderen"
+    "delete": "Verwijderen",
+    "deleted": "Les verwijderd",
+    "week": "Week",
+    "day": "Dag",
+    "view": "Weergave",
+    "book": "Een les boeken",
+    "cancel": "Annuleren",
+    "timezone": "Tijden in {tz}"
   },
   "billing": {
     "title": "Facturatie",
@@ -152,14 +187,29 @@
     "pendingTransfers": "Overboekingen die op bevestiging wachten",
     "confirm": "Bevestigen",
     "currency": "Valuta",
-    "delete": "Verwijderen"
+    "delete": "Verwijderen",
+    "deleted": "Pakket verwijderd"
   },
   "room": {
     "title": "Lesruimte",
     "connecting": "Verbinden met video…",
     "connectError": "Kan geen verbinding maken met video. Is LIVEKIT_URL ingesteld?",
     "board": "Bord",
-    "video": "Video"
+    "video": "Video",
+    "material": "Materiaal",
+    "live": "Live",
+    "loadLessons": "Lessen laden",
+    "pickMaterial": "Kies een cursusles.",
+    "waiting": "Wachten op de docent…",
+    "studentAnswer": "Antwoord",
+    "exit": "Les verlaten",
+    "answersTab": "Antwoorden",
+    "exerciseTab": "Oefening",
+    "focusVideo": "Focus op video",
+    "exitFocus": "Focus verlaten",
+    "pageLabel": "p.",
+    "teacherLeads": "docent leidt",
+    "answersHint": "Antwoorden verschijnen hier terwijl de leerling werkt."
   },
   "board": {
     "title": "Whiteboard",
@@ -173,7 +223,8 @@
     "connected": "Verbonden",
     "back": "Terug",
     "notes": "Notities",
-    "notesPlaceholder": "Gedeelde notities (zichtbaar voor docent en leerling)…"
+    "notesPlaceholder": "Gedeelde notities (zichtbaar voor docent en leerling)…",
+    "cleared": "Bord gewist"
   },
   "common": {
     "appName": "English Spark Studio",
@@ -183,7 +234,22 @@
     "email": "E-mail",
     "password": "Wachtwoord",
     "dashboard": "Dashboard",
-    "createAccount": "Account aanmaken"
+    "createAccount": "Account aanmaken",
+    "search": "Zoeken",
+    "searchPlaceholder": "Zoek pagina's…",
+    "noResults": "Niets gevonden",
+    "undo": "Ongedaan maken",
+    "menu": "Menu",
+    "close": "Sluiten",
+    "all": "Alle",
+    "sortBy": "Sorteren",
+    "content": "Inhoud",
+    "lesson": "Les",
+    "material": "Materiaal",
+    "student": "Leerling",
+    "word": "Woord",
+    "pages": "Pagina's",
+    "course": "Cursus"
   },
   "nav": {
     "overview": "Overzicht",
@@ -198,7 +264,15 @@
     "progress": "Voortgang",
     "payment": "Betaling",
     "exercises": "Oefeningen",
-    "courses": "Cursussen"
+    "courses": "Cursussen",
+    "assignments": "Opdrachten",
+    "dictionary": "Woordenboek",
+    "section_learn": "Leren",
+    "section_progress": "Voortgang",
+    "section_teach": "Lesgeven",
+    "section_build": "Maken",
+    "section_insights": "Inzichten",
+    "section_admin": "Beheer"
   },
   "dashboard": {
     "greeting": "Welkom terug, {name}!",
@@ -210,7 +284,15 @@
     "joinLesson": "Deelnemen aan les",
     "everyoneOwnLanguage": "Elke deelnemer ziet de interface in zijn eigen taal — de les is gedeeld, ongeacht de taal.",
     "homeworkPending": "Je hebt {count} huiswerk.",
-    "notifications": "Meldingen"
+    "notifications": "Meldingen",
+    "goal": "Doel",
+    "level": "Niveau",
+    "lessonsDone": "Lessen gedaan",
+    "homework": "Huiswerk",
+    "upcoming": "Binnenkort",
+    "seeAll": "Alles",
+    "noLessons": "Geen aankomende lessen",
+    "bookLesson": "Een les boeken"
   },
   "studentProfile": {
     "title": "Leerlingprofiel",
@@ -227,7 +309,16 @@
     "age": "Leeftijd",
     "notes": "Notities",
     "noteBody": "Notitie",
-    "lessons": "Lessen"
+    "lessons": "Lessen",
+    "overview": "Overzicht",
+    "homework": "Huiswerk",
+    "profile": "Profiel",
+    "attendance": "Aanwezigheid",
+    "balance": "Saldo",
+    "addNote": "Notitie toevoegen",
+    "noLessons": "Nog geen lessen",
+    "noHomework": "Nog geen huiswerk",
+    "noNotes": "Nog geen notities"
   },
   "progress": {
     "title": "Mijn voortgang",
@@ -241,7 +332,13 @@
     "badge_five_lessons": "5 lessen",
     "badge_ten_lessons": "10 lessen",
     "badge_homework_hero": "Huiswerkheld",
-    "badge_perfect_attendance": "Perfecte aanwezigheid"
+    "badge_perfect_attendance": "Perfecte aanwezigheid",
+    "courseProgress": "Cursusvoortgang",
+    "structural": "Voltooiing",
+    "goal": "Doel",
+    "forecast": "Prognose",
+    "projected": "verwacht",
+    "remaining": "verplicht over"
   },
   "exercises": {
     "title": "Oefeningen",
@@ -281,7 +378,36 @@
     "chooseStudents": "Leerlingen",
     "none": "Nog geen oefeningen.",
     "view": "Bekijken",
-    "edit": "Bewerken"
+    "edit": "Bewerken",
+    "deleted": "Oefening verwijderd",
+    "allTypes": "Alle",
+    "sentence_ordering": "Zinsvolgorde",
+    "word_matching": "Woorden koppelen",
+    "gap_fill": "Invuloefening",
+    "categorization": "Categoriseren",
+    "multiple_choice": "Meerkeuze",
+    "distractors": "Afleiders (optioneel)",
+    "distractorsHint": "Extra woorden voor de bak, gescheiden door komma's.",
+    "mcqQuestion": "Vraag",
+    "mcqOptions": "Opties",
+    "mcqOptionsHint": "Eén optie per regel.",
+    "mcqCorrect": "Juiste antwoord",
+    "matchMin": "Voeg minstens 2 paren toe.",
+    "gapMin": "Voeg minstens één [gat] toe.",
+    "catMin": "2+ categorieën; elk item in een vermelde categorie.",
+    "mcqMin": "Voeg 2+ opties toe en kies de juiste.",
+    "sentence": "Zin (juiste volgorde)",
+    "sentenceHint": "Typ de zin in de juiste volgorde — de woorden worden versleepbare chips, geschud voor de leerling.",
+    "sentenceMin": "Voeg minstens 2 woorden toe.",
+    "aspect": "Aspect",
+    "public": "Openbaar delen",
+    "matchRightType": "Rechterkolom",
+    "matchText": "Woorden",
+    "matchImage": "Afbeeldingen",
+    "matchWord": "Woord",
+    "matchUpload": "Afbeelding uploaden",
+    "matchAddPair": "Paar toevoegen",
+    "matchImageHint": "Koppel elk woord aan een geüploade afbeelding (minimaal 2)."
   },
   "courses": {
     "title": "Cursussen",
@@ -328,7 +454,49 @@
     "question": "Vraag",
     "options": "Opties (kommagescheiden)",
     "correct": "Juist antwoord",
-    "saved": "Opgeslagen"
+    "saved": "Opgeslagen",
+    "new": "Nieuw",
+    "continue": "Doorgaan",
+    "more": "Meer",
+    "unpublished": "gedepubliceerd",
+    "reorder": "Herordenen",
+    "description": "Beschrijving",
+    "cover": "Omslagafbeelding",
+    "allLevels": "Alle niveaus",
+    "allStatuses": "Alle",
+    "allCategories": "Alle categorieën",
+    "media": "Media",
+    "addMedia": "Toevoegen",
+    "mediaUrl": "URL (of upload hierboven)",
+    "caption": "Bijschrift",
+    "transcript": "Transcript",
+    "showTranscript": "Transcript tonen",
+    "hideTranscript": "Transcript verbergen",
+    "preview": "Voorbeeld",
+    "saving": "Opslaan…",
+    "pageText": "Tekst",
+    "generate": "Genereren met AI",
+    "aiTopic": "Onderwerp",
+    "aiUnits": "Units",
+    "aiLessons": "Lessen per unit",
+    "aiAspects": "Aspecten",
+    "aiNotes": "Notities (optioneel)",
+    "aiGenerate": "Genereren",
+    "aiGenerating": "Bezig met genereren… dit kan even duren.",
+    "aiReady": "Concept klaar voor beoordeling.",
+    "aiFailed": "Genereren mislukt",
+    "aiOpenDraft": "Concept openen",
+    "mediaPending": "upload nodig",
+    "refine": "Verfijnen",
+    "refineInstruction": "Verfijnen met een instructie",
+    "selectLesson": "Kies een les om te bewerken",
+    "lessonDeleted": "Les verwijderd",
+    "taskDeleted": "Taak verwijderd",
+    "aiGenerated": "Gegenereerd door AI",
+    "aiApprove": "Goedkeuren en publiceren",
+    "aiApproved": "Gepubliceerd",
+    "aiGenLesson": "Een les genereren met AI",
+    "insertInline": "In tekst invoegen"
   },
   "learn": {
     "title": "Les",
@@ -349,6 +517,79 @@
     "done": "Klaar ✓",
     "essayPlaceholder": "Schrijf je antwoord…",
     "back": "Terug naar cursus",
-    "min": "min"
+    "min": "min",
+    "saved": "Opgeslagen"
+  },
+  "assignments": {
+    "title": "Opdrachten",
+    "empty": "Nog geen opdrachten.",
+    "homework": "Huiswerk",
+    "lesson": "Les",
+    "tasks": "taken",
+    "due": "Inleveren",
+    "status_assigned": "Toegewezen",
+    "status_in_progress": "Bezig",
+    "status_done": "Klaar",
+    "back": "Terug naar opdrachten",
+    "perAspect": "Per aspect",
+    "completion": "Voltooiing",
+    "tier_excellent": "Uitstekend!",
+    "tier_good": "Goed gedaan",
+    "tier_keepGoing": "Ga zo door",
+    "assignHomework": "Als huiswerk toewijzen",
+    "student": "Leerling",
+    "topicTag": "Onderwerp",
+    "topicPlaceholder": "bijv. Present Simple",
+    "pickTasks": "Taken om op te nemen",
+    "assign": "Toewijzen",
+    "saveFeedback": "Feedback opslaan",
+    "feedbackPlaceholder": "Feedback voor de leerling…",
+    "resultStep": "Resultaat",
+    "resultPending": "Voltooi de taken om je resultaat te zien."
+  },
+  "dictionary": {
+    "title": "Woordenboek",
+    "empty": "Nog geen woorden. Voeg ze toe vanuit woordenlijsten.",
+    "train": "Oefenen",
+    "due": "Te herhalen",
+    "reveal": "Tonen",
+    "remembered": "Ik wist het",
+    "forgot": "Wist ik niet",
+    "back": "Terug naar lijst",
+    "learned": "Geleerd",
+    "nothingDue": "Niets te doen vandaag",
+    "nextReview": "volgende herhaling {date}",
+    "shortcuts": "Spatie om te tonen · 1 niet geweten · 2 geweten",
+    "repsHint": "Aantal herhalingen"
+  },
+  "enum": {
+    "role": {
+      "tutor": "Docent",
+      "student": "Leerling",
+      "parent": "Ouder",
+      "admin": "Beheerder"
+    },
+    "lessonStatus": {
+      "scheduled": "Gepland",
+      "completed": "Voltooid",
+      "cancelled": "Geannuleerd",
+      "no_show": "Niet verschenen"
+    },
+    "materialType": {
+      "pdf": "PDF",
+      "video": "Video",
+      "audio": "Audio",
+      "image": "Afbeelding",
+      "exercise": "Oefening",
+      "link": "Link"
+    },
+    "pageType": {
+      "grammar": "Grammatica",
+      "practice": "Oefening",
+      "listening": "Luisteren",
+      "reading": "Lezen",
+      "discussion": "Discussie",
+      "essay": "Essay"
+    }
   }
 }

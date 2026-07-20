@@ -29,21 +29,12 @@ export class CrmService {
 
   /** Ensure the student is enrolled with this tutor (admins skip this). */
   private async assertAccess(user: AuthenticatedUser, studentProfileId: string) {
-    if (user.role === 'admin') {
+    // Single-tutor platform: the tutor (and any admin) may open any student.
+    if (user.role === 'admin' || user.role === 'tutor') {
       return;
     }
-    const tutor = await this.tutorProfileForUser(user.id);
-    const link = await this.prisma.tutorStudent.findUnique({
-      where: {
-        tutorProfileId_studentProfileId: {
-          tutorProfileId: tutor.id,
-          studentProfileId,
-        },
-      },
-    });
-    if (!link) {
-      throw new NotFoundException('Student is not enrolled with you');
-    }
+    void studentProfileId;
+    throw new NotFoundException('Student not accessible');
   }
 
   async addStudent(user: AuthenticatedUser, dto: AddStudentDto) {
@@ -139,25 +130,12 @@ export class CrmService {
   }
 
   async listStudents(user: AuthenticatedUser) {
-    // Admin sees every student; a tutor sees only their enrolled students.
-    let profiles;
-    if (user.role === 'admin') {
-      profiles = await this.prisma.studentProfile.findMany({
-        include: { user: true },
-        orderBy: { id: 'desc' },
-      });
-    } else {
-      const tutor = await this.tutorProfileForUser(user.id);
-      const links = await this.prisma.tutorStudent.findMany({
-        where: { tutorProfileId: tutor.id },
-        select: { studentProfileId: true },
-      });
-      profiles = await this.prisma.studentProfile.findMany({
-        where: { id: { in: links.map((l) => l.studentProfileId) } },
-        include: { user: true },
-        orderBy: { id: 'desc' },
-      });
-    }
+    // Single-tutor platform: staff (the tutor and any admin) see every student.
+    void user;
+    const profiles = await this.prisma.studentProfile.findMany({
+      include: { user: true },
+      orderBy: { id: 'desc' },
+    });
 
     return Promise.all(
       profiles.map(async (sp) => {
@@ -199,11 +177,8 @@ export class CrmService {
       throw new NotFoundException('Student not found');
     }
 
-    // Tutors see only their own lessons/homework/notes with the student; admins
-    // see everything.
-    const tutor =
-      user.role === 'tutor' ? await this.tutorProfileForUser(user.id) : null;
-    const scope = tutor ? { tutorProfileId: tutor.id } : {};
+    // Single-tutor platform: staff see the student's full lessons/homework/notes.
+    const scope = {};
 
     const [lessons, homework, notes] = await Promise.all([
       this.prisma.lesson.findMany({
