@@ -495,7 +495,8 @@
     "aiGenerated": "Сгенерировано AI",
     "aiApprove": "Одобрить и опубликовать",
     "aiApproved": "Опубликовано",
-    "aiGenLesson": "Сгенерировать урок с помощью AI"
+    "aiGenLesson": "Сгенерировать урок с помощью AI",
+    "insertInline": "Вставить в текст"
   },
   "learn": {
     "title": "Урок",

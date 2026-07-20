@@ -2280,7 +2280,8 @@ select.err {
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   background: var(--card);
-  overflow: hidden;
+  /* No overflow:hidden — it clipped the ⋯ menu popover. The cover rounds its own
+     top corners instead so the card silhouette is unchanged. */
 }
 .course-cover {
   position: relative;
@@ -2288,6 +2289,8 @@ select.err {
   background-image: linear-gradient(135deg, var(--indigo-100), var(--spark-100));
   background-size: cover;
   background-position: center;
+  border-start-start-radius: var(--r-md);
+  border-start-end-radius: var(--r-md);
 }
 .course-cover-ring {
   position: absolute;
@@ -2407,6 +2410,11 @@ select.err {
   font-size: 11px;
   text-transform: uppercase;
   color: var(--muted);
+}
+.media-insert {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: -1px;
 }
 .media-caption {
   flex: 1;
@@ -2673,7 +2681,8 @@ select.err {
 
 /* ——— Stage 8: three-panel editor ——— */
 .builder-3 {
-  grid-template-columns: minmax(220px, 300px) minmax(0, 1.2fr) minmax(0, 1fr);
+  /* Give the editor the lion's share; the tree and preview stay compact. */
+  grid-template-columns: minmax(190px, 240px) minmax(0, 1.7fr) minmax(0, 0.9fr);
 }
 .builder-preview {
   min-inline-size: 0;
@@ -2747,6 +2756,21 @@ select.err {
 .ed-task-label {
   flex: 1;
   min-inline-size: 0;
+}
+
+/* Below a large monitor there isn't room for three comfortable columns next to
+   the 248px rail, so drop to tree + editor and move the live preview to a full-
+   width row underneath — page text and task forms get the editor's whole width. */
+@media (max-width: 1400px) {
+  .builder-3 {
+    grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+  }
+  .builder-3 .builder-preview {
+    grid-column: 1 / -1;
+    position: static;
+    max-block-size: none;
+    margin-block-start: 4px;
+  }
 }
 
 @media (max-width: 860px) {

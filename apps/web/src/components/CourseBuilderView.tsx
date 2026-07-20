@@ -1,6 +1,6 @@
 'use client';
 
-import { DragEvent, FormEvent, KeyboardEvent, ReactNode, useCallback, useEffect, useState } from 'react';
+import { DragEvent, FormEvent, KeyboardEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   DndContext,
@@ -555,6 +555,9 @@ function LessonEditor({
   const [detail, setDetail] = useState<LessonDetail | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Live handles to each page's text box, so the media block can insert an
+  // inline ![[media:ID]] marker at the caret (ФТ-К304 authoring).
+  const pageTextRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [objectives, setObjectives] = useState('');
   const [wordlist, setWordlist] = useState('');
   const [grammar, setGrammar] = useState({ title: '', meaning: '', form: '' });
@@ -631,6 +634,23 @@ function LessonEditor({
     if (!tok) return;
     await apiFetch(`/content/pages/${id}`, { method: 'PATCH', token: tok, locale, body }).catch(() => undefined);
     await reloadPages();
+  }
+
+  // Insert an inline ![[media:ID]] marker into a page's text at the caret and
+  // persist it. The textarea is uncontrolled (defaultValue), so we write through
+  // its live value and save (ФТ-К304).
+  function insertMarker(pageId: string, mediaId: string) {
+    const el = pageTextRefs.current[pageId];
+    if (!el) return;
+    const marker = `![[media:${mediaId}]]`;
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+    const next = el.value.slice(0, start) + marker + el.value.slice(end);
+    el.value = next;
+    el.focus();
+    const caret = start + marker.length;
+    el.setSelectionRange(caret, caret);
+    void patchPage(pageId, { text: next });
   }
 
   async function postReorder(path: string, body: unknown) {
@@ -768,6 +788,9 @@ function LessonEditor({
                     <label className="ed-field">
                       {t('pageText')}
                       <textarea
+                        ref={(el) => {
+                          pageTextRefs.current[p.id] = el;
+                        }}
                         defaultValue={p.text ?? ''}
                         onBlur={(e) => e.target.value !== (p.text ?? '') && patchPage(p.id, { text: e.target.value })}
                       />
@@ -802,7 +825,12 @@ function LessonEditor({
                       t={t}
                       tEx={tEx}
                     />
-                    <PageMediaEditor pageId={p.id} media={p.media ?? []} onChanged={reloadPages} />
+                    <PageMediaEditor
+                      pageId={p.id}
+                      media={p.media ?? []}
+                      onChanged={reloadPages}
+                      onInsertMarker={(mediaId) => insertMarker(p.id, mediaId)}
+                    />
                   </>
                 )}
               </Sortable>

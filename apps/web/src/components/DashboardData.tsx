@@ -139,9 +139,11 @@ export function DashboardData() {
 
       {!next && (
         <div className="card">
+          {/* Students don't self-book — the tutor schedules lessons. They only
+              need to see upcoming ones, so no booking CTA here. */}
           <EmptyState
             title={tDash('noLessons')}
-            action={{ label: tDash('bookLesson'), href: '/schedule' }}
+            action={isStudent ? undefined : { label: tDash('bookLesson'), href: '/schedule' }}
           />
         </div>
       )}

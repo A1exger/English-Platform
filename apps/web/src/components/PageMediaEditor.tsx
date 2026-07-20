@@ -26,12 +26,14 @@ function MediaRow({
   m,
   onPatch,
   onDelete,
-  onFill
+  onFill,
+  onInsert
 }: {
   m: PageMediaItem;
   onPatch: (id: string, body: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
   onFill: (id: string, file: File) => void;
+  onInsert?: (id: string) => void;
 }) {
   const t = useTranslations('courses');
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: m.id });
@@ -69,6 +71,11 @@ function MediaRow({
           onBlur={() => transcript !== (m.transcript ?? '') && onPatch(m.id, { transcript })}
         />
       )}
+      {onInsert && (
+        <button type="button" className="ghost media-insert" title={t('insertInline')} aria-label={t('insertInline')} onClick={() => onInsert(m.id)}>
+          {'{ }'}
+        </button>
+      )}
       <button type="button" className="ghost" aria-label={t('del')} onClick={() => onDelete(m.id)}>
         <Icon name="close" />
       </button>
@@ -81,11 +88,13 @@ function MediaRow({
 export function PageMediaEditor({
   pageId,
   media,
-  onChanged
+  onChanged,
+  onInsertMarker
 }: {
   pageId: string;
   media: PageMediaItem[];
   onChanged: () => void;
+  onInsertMarker?: (mediaId: string) => void;
 }) {
   const t = useTranslations('courses');
   const locale = useLocale();
@@ -180,7 +189,7 @@ export function PageMediaEditor({
           <SortableContext items={media.map((m) => m.id)} strategy={verticalListSortingStrategy}>
             <ul className="media-list">
               {media.map((m) => (
-                <MediaRow key={m.id} m={m} onPatch={patch} onDelete={del} onFill={fill} />
+                <MediaRow key={m.id} m={m} onPatch={patch} onDelete={del} onFill={fill} onInsert={onInsertMarker} />
               ))}
             </ul>
           </SortableContext>

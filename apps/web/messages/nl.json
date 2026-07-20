@@ -495,7 +495,8 @@
     "aiGenerated": "Gegenereerd door AI",
     "aiApprove": "Goedkeuren en publiceren",
     "aiApproved": "Gepubliceerd",
-    "aiGenLesson": "Een les genereren met AI"
+    "aiGenLesson": "Een les genereren met AI",
+    "insertInline": "In tekst invoegen"
   },
   "learn": {
     "title": "Les",

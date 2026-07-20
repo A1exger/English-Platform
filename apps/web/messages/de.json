@@ -495,7 +495,8 @@
     "aiGenerated": "Von KI erstellt",
     "aiApprove": "Genehmigen & veröffentlichen",
     "aiApproved": "Veröffentlicht",
-    "aiGenLesson": "Lektion mit KI generieren"
+    "aiGenLesson": "Lektion mit KI generieren",
+    "insertInline": "In Text einfügen"
   },
   "learn": {
     "title": "Lektion",

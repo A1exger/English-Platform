@@ -495,7 +495,8 @@
     "aiGenerated": "Généré par l'IA",
     "aiApprove": "Approuver et publier",
     "aiApproved": "Publié",
-    "aiGenLesson": "Générer une leçon avec l'IA"
+    "aiGenLesson": "Générer une leçon avec l'IA",
+    "insertInline": "Insérer dans le texte"
   },
   "learn": {
     "title": "Leçon",

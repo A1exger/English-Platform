@@ -40,7 +40,6 @@ export function ScheduleView() {
   const { showUndo } = useToast();
 
   const [canManage, setCanManage] = useState(false);
-  const [isStudent, setIsStudent] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [view, setView] = useState<'week' | 'day'>('week');
@@ -87,7 +86,6 @@ export function ScheduleView() {
       const me = await fetchMe(token, locale);
       const manage = me.role === 'tutor' || me.role === 'admin';
       setCanManage(manage);
-      setIsStudent(me.role === 'student');
       setLessons(await apiFetch<Lesson[]>('/lessons', { token, locale }));
       if (manage) {
         setStudents(
@@ -256,9 +254,7 @@ export function ScheduleView() {
       <div className="row-between sched-head">
         <h2>{t('title')}</h2>
         <div className="sched-controls">
-          {isStudent && (
-            <Link href="/dashboard" className="cta-primary">{t('book')}</Link>
-          )}
+          {/* No "book a lesson" for students — the tutor schedules lessons. */}
           <div className="tabs tabs-inline" role="tablist" aria-label={t('view')}>
             <button type="button" role="tab" aria-selected={view === 'week'} className={view === 'week' ? 'active' : ''} onClick={() => switchView('week')}>
               {t('week')}
