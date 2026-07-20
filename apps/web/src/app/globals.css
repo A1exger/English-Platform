@@ -1751,6 +1751,12 @@ select.err {
   max-inline-size: 860px;
   margin-inline: auto;
 }
+/* The 860px reading measure is right for text pages but strangles the course
+   builder's three panels. When the page holds a builder, widen the measure so
+   the editor gets real room (the builder grid itself reflows below 1400px). */
+.measure:has(.builder) {
+  max-inline-size: 1600px;
+}
 
 /* ——— account block (rail footer) ——— */
 .account {
