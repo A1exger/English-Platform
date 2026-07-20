@@ -275,12 +275,15 @@ export function ScheduleView() {
 
       <div className={`cal${view === 'day' ? ' cal-day' : ''}`} style={{ '--cal-days': days.length } as CSSProperties} onClick={() => slot && setSlot(null)}>
         <div className="cal-head cal-corner" />
-        {days.map((d, i) => (
-          <div key={i} className="cal-head">
-            {format.dateTime(d, { weekday: 'short' })}{' '}
-            <span className="muted">{format.dateTime(d, { day: 'numeric' })}</span>
-          </div>
-        ))}
+        {days.map((d, i) => {
+          const isToday = startOfDay(d).getTime() === startOfDay(new Date()).getTime();
+          return (
+            <div key={i} className={`cal-head${isToday ? ' today' : ''}`}>
+              {format.dateTime(d, { weekday: 'short' })}{' '}
+              <span className="muted">{format.dateTime(d, { day: 'numeric' })}</span>
+            </div>
+          );
+        })}
 
         {hours.map((hour) => (
           <FragmentRow
