@@ -400,7 +400,14 @@
     "sentenceHint": "Geben Sie den Satz in der richtigen Reihenfolge ein — die Wörter werden zu ziehbaren Chips, für den Schüler gemischt.",
     "sentenceMin": "Fügen Sie mindestens 2 Wörter hinzu.",
     "aspect": "Aspekt",
-    "public": "Öffentlich teilen"
+    "public": "Öffentlich teilen",
+    "matchRightType": "Rechte Spalte",
+    "matchText": "Wörter",
+    "matchImage": "Bilder",
+    "matchWord": "Wort",
+    "matchUpload": "Bild hochladen",
+    "matchAddPair": "Paar hinzufügen",
+    "matchImageHint": "Ordnen Sie jedem Wort ein hochgeladenes Bild zu (mindestens 2)."
   },
   "courses": {
     "title": "Kurse",
@@ -484,7 +491,11 @@
     "refineInstruction": "Mit einer Anweisung verfeinern",
     "selectLesson": "Lektion zum Bearbeiten wählen",
     "lessonDeleted": "Lektion gelöscht",
-    "taskDeleted": "Aufgabe entfernt"
+    "taskDeleted": "Aufgabe entfernt",
+    "aiGenerated": "Von KI erstellt",
+    "aiApprove": "Genehmigen & veröffentlichen",
+    "aiApproved": "Veröffentlicht",
+    "aiGenLesson": "Lektion mit KI generieren"
   },
   "learn": {
     "title": "Lektion",

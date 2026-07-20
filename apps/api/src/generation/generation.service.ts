@@ -90,9 +90,8 @@ export class GenerationService {
       if (!job) return;
       const brief = JSON.parse(job.brief) as Brief;
       if (brief.targetType === 'LESSON') {
-        // Single-lesson generation into an existing course lands with the AI
-        // iteration stage; refuse cleanly for now so no partial draft leaks.
-        throw new Error('Single-lesson generation is not available yet');
+        await this.generateLesson(jobId, user, brief);
+        return;
       }
 
       // Stage 1 — brief → skeleton.
@@ -146,6 +145,53 @@ export class GenerationService {
     }
   }
 
+  /**
+   * LESSON target (ФТ-К402): generate ONE lesson into an existing course.
+   * ДИ-1 — only a draft course may receive an AI lesson, so nothing reaches
+   * students until the tutor approves. The lesson gets its own section+unit so a
+   * rejected job unwinds cleanly without touching hand-made content. Records its
+   * own success/failure and never throws to the caller.
+   */
+  private async generateLesson(jobId: string, user: AuthenticatedUser, brief: Brief): Promise<void> {
+    try {
+      if (!brief.courseId) throw new Error('Lesson generation requires a target course');
+      const course = await this.prisma.course.findUnique({ where: { id: brief.courseId } });
+      if (!course) throw new Error('Target course not found');
+      if (user.role !== 'admin' && course.ownerUserId !== user.id) throw new Error('Not your course');
+      if (course.status !== 'draft') throw new Error('Lessons can only be generated into a draft course');
+
+      const section = await this.content.createSection(user, {
+        courseId: course.id,
+        level: brief.level as ContentLevel,
+        title: brief.topic,
+      });
+      const unit = await this.content.createUnit(user, { sectionId: section.id, title: brief.topic });
+      const lesson = await this.content.createLesson(user, { unitId: unit.id, title: brief.topic, objectives: [] });
+      await this.prisma.generationJob.update({
+        where: { id: jobId },
+        data: { courseId: course.id, courseLessonId: lesson.id },
+      });
+
+      const plan = normalizeLessonPlan(
+        await this.ai.json(
+          ...promptArgs(lessonPrompt(brief, { unitTitle: brief.topic, lessonTitle: brief.topic, objectives: [] })),
+        ),
+      );
+      await this.materializeLesson(user, lesson.id, plan);
+
+      await this.prisma.generationJob.update({
+        where: { id: jobId },
+        data: { status: 'ready_for_review', error: null },
+      });
+    } catch (e) {
+      this.logger.warn(`Lesson generation job ${jobId} failed: ${(e as Error)?.message ?? e}`);
+      await this.prisma.generationJob.update({
+        where: { id: jobId },
+        data: { status: 'failed', error: String((e as Error)?.message ?? e).slice(0, 500) },
+      });
+    }
+  }
+
   private async materializeLesson(user: AuthenticatedUser, lessonId: string, plan: LessonPlan) {
     let pageOrder = 0;
     for (const p of plan.pages) {
@@ -194,6 +240,16 @@ export class GenerationService {
 
   async status(user: AuthenticatedUser, jobId: string) {
     return this.view(await this.owned(user, jobId));
+  }
+
+  /** Jobs the caller owns that target a course — powers the editor's AI banner. */
+  async listForCourse(user: AuthenticatedUser, courseId: string) {
+    if (!courseId) return [];
+    const jobs = await this.prisma.generationJob.findMany({
+      where: { courseId, requestedByUserId: user.role === 'admin' ? undefined : user.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    return jobs.map((j) => this.view(j));
   }
 
   /** Re-generate only a scoped area with an instruction (ФТ-К406). */
@@ -289,6 +345,23 @@ export class GenerationService {
       const course = await this.prisma.course.findUnique({ where: { id: job.courseId } });
       if (course && course.status === 'draft') {
         await this.prisma.course.delete({ where: { id: course.id } });
+      }
+    } else if (job.targetType === 'LESSON' && job.courseLessonId) {
+      // Unwind the generated lesson (and its now-empty unit/section) — but only
+      // while the course is still a draft, so a published course is never edited.
+      const lesson = await this.prisma.courseLesson.findUnique({
+        where: { id: job.courseLessonId },
+        include: { course: true, unit: true },
+      });
+      if (lesson && lesson.course.status === 'draft') {
+        await this.content.deleteLesson(user, lesson.id); // handles the INV-1 order gap
+        const siblings = await this.prisma.courseLesson.count({ where: { unitId: lesson.unitId } });
+        if (siblings === 0) {
+          const sectionId = lesson.unit.sectionId;
+          await this.prisma.unit.delete({ where: { id: lesson.unitId } });
+          const unitsLeft = await this.prisma.unit.count({ where: { sectionId } });
+          if (unitsLeft === 0) await this.prisma.section.delete({ where: { id: sectionId } });
+        }
       }
     }
     await this.prisma.generationJob.delete({ where: { id: jobId } });

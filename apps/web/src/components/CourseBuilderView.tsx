@@ -24,6 +24,7 @@ import { Icon } from './Icon';
 import { PageMediaEditor } from './PageMediaEditor';
 import { PageMediaBlock, type PageMediaItem } from './PageMediaBlock';
 import { LessonPlayerView } from './LessonPlayerView';
+import { CourseAiPanel } from './CourseAiPanel';
 
 const LEVELS = [
   'Beginner',
@@ -455,6 +456,10 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
         primary={canAuthor ? { label: t('newSection'), onClick: () => openCreate({ mode: 'section' }) } : undefined}
         filters={levelFilter}
       />
+
+      {canAuthor && (
+        <CourseAiPanel courseId={courseId} courseStatus={tree.course.status} level={level} onChanged={refresh} />
+      )}
 
       {canAuthor ? (
         <div className={`builder${selected ? ' builder-3' : ''}`}>

@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { GenerationService } from './generation.service';
@@ -25,6 +26,12 @@ export class GenerationController {
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: GenerateDto) {
     return this.generation.create(user, dto);
+  }
+
+  // Jobs targeting a course — the editor shows an AI-draft banner from this.
+  @Get()
+  listForCourse(@CurrentUser() user: AuthenticatedUser, @Query('courseId') courseId: string) {
+    return this.generation.listForCourse(user, courseId);
   }
 
   @Get(':jobId')

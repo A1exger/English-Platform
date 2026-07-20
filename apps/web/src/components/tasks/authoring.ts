@@ -8,9 +8,16 @@
 import type { TaskType } from './types';
 import { parseGaps } from './parseGaps';
 
+export interface ImagePair {
+  left: string; // word
+  right: string; // uploaded image URL
+}
+
 export interface CanonicalForm {
   sentence: string; // sentence_ordering
-  pairs: string; // word_matching — "left = right" per line
+  pairs: string; // word_matching (text) — "left = right" per line
+  matchRightType: 'text' | 'image'; // word_matching — right column is words or pictures
+  imagePairs: ImagePair[]; // word_matching (image) — word ↔ uploaded picture
   fillText: string; // gap_fill — "I [go] to [school]."
   distractors: string; // gap_fill — comma-separated extra bank words
   categories: string; // categorization — comma-separated labels
@@ -23,6 +30,8 @@ export interface CanonicalForm {
 export const EMPTY_FORM: CanonicalForm = {
   sentence: '',
   pairs: '',
+  matchRightType: 'text',
+  imagePairs: [],
   fillText: '',
   distractors: '',
   categories: '',
@@ -67,6 +76,12 @@ export function toCanonicalPayload(
     case 'sentence_ordering':
       return { payload: { tokens: form.sentence.trim().split(/\s+/).filter(Boolean) } };
     case 'word_matching': {
+      if (form.matchRightType === 'image') {
+        const pairs = form.imagePairs
+          .filter((p) => p.left.trim() && p.right.trim())
+          .map((p, i) => ({ id: `p${i + 1}`, left: p.left.trim(), right: p.right.trim() }));
+        return { payload: { rightType: 'image', pairs } };
+      }
       const pairs = parsePairLines(form.pairs).map((p, i) => ({ id: `p${i + 1}`, left: p.left, right: p.right }));
       return { payload: { rightType: 'text', pairs } };
     }
@@ -101,6 +116,9 @@ export function canonicalError(type: string, form: CanonicalForm): string | null
     case 'sentence_ordering':
       return form.sentence.trim().split(/\s+/).filter(Boolean).length >= 2 ? null : 'sentenceMin';
     case 'word_matching':
+      if (form.matchRightType === 'image') {
+        return form.imagePairs.filter((p) => p.left.trim() && p.right.trim()).length >= 2 ? null : 'matchMin';
+      }
       return parsePairLines(form.pairs).length >= 2 ? null : 'matchMin';
     case 'gap_fill':
       return Object.keys(parseGaps(form.fillText).answer).length >= 1 ? null : 'gapMin';
@@ -165,6 +183,13 @@ export function editFormFromCanonical(
       return { ...EMPTY_FORM, sentence: ((payload.tokens as string[]) ?? []).join(' ') };
     case 'word_matching': {
       const pairs = (payload.pairs as { left: string; right: string }[]) ?? [];
+      if (payload.rightType === 'image') {
+        return {
+          ...EMPTY_FORM,
+          matchRightType: 'image',
+          imagePairs: pairs.map((p) => ({ left: p.left, right: p.right }))
+        };
+      }
       return { ...EMPTY_FORM, pairs: pairs.map((p) => `${p.left} = ${p.right}`).join('\n') };
     }
     case 'gap_fill': {

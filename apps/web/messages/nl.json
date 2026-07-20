@@ -400,7 +400,14 @@
     "sentenceHint": "Typ de zin in de juiste volgorde — de woorden worden versleepbare chips, geschud voor de leerling.",
     "sentenceMin": "Voeg minstens 2 woorden toe.",
     "aspect": "Aspect",
-    "public": "Openbaar delen"
+    "public": "Openbaar delen",
+    "matchRightType": "Rechterkolom",
+    "matchText": "Woorden",
+    "matchImage": "Afbeeldingen",
+    "matchWord": "Woord",
+    "matchUpload": "Afbeelding uploaden",
+    "matchAddPair": "Paar toevoegen",
+    "matchImageHint": "Koppel elk woord aan een geüploade afbeelding (minimaal 2)."
   },
   "courses": {
     "title": "Cursussen",
@@ -484,7 +491,11 @@
     "refineInstruction": "Verfijnen met een instructie",
     "selectLesson": "Kies een les om te bewerken",
     "lessonDeleted": "Les verwijderd",
-    "taskDeleted": "Taak verwijderd"
+    "taskDeleted": "Taak verwijderd",
+    "aiGenerated": "Gegenereerd door AI",
+    "aiApprove": "Goedkeuren en publiceren",
+    "aiApproved": "Gepubliceerd",
+    "aiGenLesson": "Een les genereren met AI"
   },
   "learn": {
     "title": "Les",

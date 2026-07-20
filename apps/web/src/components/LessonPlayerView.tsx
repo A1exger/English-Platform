@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
-import { PageMediaBlock, PageMediaItem } from './PageMediaBlock';
+import { MediaItem, PageMediaBlock, PageMediaItem } from './PageMediaBlock';
 import { AssignmentBuilder } from './AssignmentBuilder';
 import { Skeleton } from './Skeleton';
 import { Stepper } from './Stepper';
@@ -29,6 +29,42 @@ interface LessonDetail {
   pages: PageRow[];
   wordlist?: { entries: { word: string; translation?: string | null }[] } | null;
   grammarReference?: { title: string; meaning: string; form: string } | null;
+}
+
+const MEDIA_MARKER = /!\[\[media:([^\]]+)\]\]/g;
+
+// Render page text, expanding inline `![[media:ID]]` markers into the referenced
+// attachment (ФТ-К304). Markerless text renders exactly as one paragraph; any
+// attachment pulled inline is dropped from the trailing media block (no dupes).
+function PageBody({ text, media }: { text?: string | null; media?: PageMediaItem[] }) {
+  const items = media ?? [];
+  const byId = new Map(items.map((m) => [m.id, m]));
+  const used = new Set<string>();
+  const nodes: ReactNode[] = [];
+  if (text) {
+    let last = 0;
+    let k = 0;
+    let match: RegExpExecArray | null;
+    MEDIA_MARKER.lastIndex = 0;
+    while ((match = MEDIA_MARKER.exec(text)) !== null) {
+      const before = text.slice(last, match.index);
+      if (before.trim()) nodes.push(<p key={`t${k++}`}>{before}</p>);
+      const m = byId.get(match[1]);
+      if (m) {
+        used.add(m.id);
+        nodes.push(<MediaItem key={`m${k++}`} m={m} />);
+      }
+      last = match.index + match[0].length;
+    }
+    const rest = text.slice(last);
+    if (rest.trim() || nodes.length === 0) nodes.push(<p key={`t${k++}`}>{rest}</p>);
+  }
+  return (
+    <>
+      {nodes.length > 0 && <div className="card">{nodes}</div>}
+      <PageMediaBlock media={items} exclude={used} />
+    </>
+  );
 }
 
 // The single lesson player used by every runtime context. Page 0 is the
@@ -178,12 +214,7 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
       ) : (
         page && (
           <div className="learn-page">
-            {page.text && (
-              <div className="card">
-                <p>{page.text}</p>
-              </div>
-            )}
-            <PageMediaBlock media={page.media} />
+            <PageBody text={page.text} media={page.media} />
             {page.tasks.map((task) => (
               <ContentTaskPlayer key={task.id} task={task} />
             ))}

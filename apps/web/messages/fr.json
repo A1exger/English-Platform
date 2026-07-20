@@ -400,7 +400,14 @@
     "sentenceHint": "Saisissez la phrase dans le bon ordre — les mots deviennent des jetons déplaçables, mélangés pour l'élève.",
     "sentenceMin": "Ajoutez au moins 2 mots.",
     "aspect": "Aspect",
-    "public": "Partager publiquement"
+    "public": "Partager publiquement",
+    "matchRightType": "Colonne de droite",
+    "matchText": "Mots",
+    "matchImage": "Images",
+    "matchWord": "Mot",
+    "matchUpload": "Téléverser une image",
+    "matchAddPair": "Ajouter une paire",
+    "matchImageHint": "Associez chaque mot à une image téléversée (au moins 2)."
   },
   "courses": {
     "title": "Cours",
@@ -484,7 +491,11 @@
     "refineInstruction": "Affiner avec une instruction",
     "selectLesson": "Choisissez une leçon à modifier",
     "lessonDeleted": "Leçon supprimée",
-    "taskDeleted": "Tâche supprimée"
+    "taskDeleted": "Tâche supprimée",
+    "aiGenerated": "Généré par l'IA",
+    "aiApprove": "Approuver et publier",
+    "aiApproved": "Publié",
+    "aiGenLesson": "Générer une leçon avec l'IA"
   },
   "learn": {
     "title": "Leçon",

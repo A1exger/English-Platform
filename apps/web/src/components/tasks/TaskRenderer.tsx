@@ -19,6 +19,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { fileUrl } from '@/lib/api';
 import type {
   CategorizeDef,
   CategorizeState,
@@ -202,6 +203,9 @@ function WordMatching({ def, state, onChange, readOnly, result }: TaskRendererPr
   const linkedRightIds = new Set(Object.values(links));
   const trayRights = def.right.filter((r) => !linkedRightIds.has(r.id));
   const rightById = (id: string) => def.right.find((r) => r.id === id);
+  // A right chip is either a word or an uploaded picture (ФТ-У102 image match).
+  const chip = (text: string): ReactNode =>
+    def.rightType === 'image' ? <img className="task-match-img" src={fileUrl(text)} alt="" /> : text;
 
   function rightOf(activeId: string): string | null {
     if (activeId.startsWith('right:')) return activeId.slice(6);
@@ -230,7 +234,7 @@ function WordMatching({ def, state, onChange, readOnly, result }: TaskRendererPr
               <span className="task-match-left">{l.text}</span>
               <Droppable id={`left:${l.id}`} className={`task-match-slot${tone(result, l.id)}`}>
                 {r ? (
-                  <Draggable id={`linked:${l.id}`} disabled={readOnly}>{r.text}</Draggable>
+                  <Draggable id={`linked:${l.id}`} disabled={readOnly}>{chip(r.text)}</Draggable>
                 ) : (
                   <span className="task-gap-empty">—</span>
                 )}
@@ -241,7 +245,7 @@ function WordMatching({ def, state, onChange, readOnly, result }: TaskRendererPr
       </div>
       <Droppable id="tray" className="task-bank">
         {trayRights.map((r) => (
-          <Draggable key={r.id} id={`right:${r.id}`} disabled={readOnly}>{r.text}</Draggable>
+          <Draggable key={r.id} id={`right:${r.id}`} disabled={readOnly}>{chip(r.text)}</Draggable>
         ))}
       </Droppable>
     </DndContext>

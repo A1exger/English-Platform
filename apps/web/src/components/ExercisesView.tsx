@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
-import { ApiError, apiFetch } from '@/lib/api';
+import { ApiError, apiFetch, apiUpload, fileUrl } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { ExerciseRenderer, ExerciseState, Question } from './ExerciseRenderer';
 import { TaskRenderer } from './tasks/TaskRenderer';
@@ -11,6 +11,7 @@ import type { TaskType } from './tasks/types';
 import {
   CANONICAL_TYPES,
   CanonicalForm,
+  ImagePair,
   canonicalError,
   editFormFromCanonical,
   initialStateFor,
@@ -116,6 +117,8 @@ export function ExercisesView() {
   const [words, setWords] = useState('I go to school');
   const [prompt, setPrompt] = useState('');
   const [pairs, setPairs] = useState('dog = chien\ncat = chat');
+  const [matchRightType, setMatchRightType] = useState<'text' | 'image'>('text');
+  const [imagePairs, setImagePairs] = useState<ImagePair[]>([]);
   const [fillText, setFillText] = useState('I [go] to [school].');
   const [categories, setCategories] = useState('noun, verb');
   const [items, setItems] = useState('run = verb\nbook = noun');
@@ -160,8 +163,8 @@ export function ExercisesView() {
   }, [load]);
 
   const canonicalForm = useMemo<CanonicalForm>(
-    () => ({ sentence, pairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect }),
-    [sentence, pairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect]
+    () => ({ sentence, pairs, matchRightType, imagePairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect }),
+    [sentence, pairs, matchRightType, imagePairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect]
   );
   const canonicalErr = isCanonical(type) ? canonicalError(type, canonicalForm) : null;
 
@@ -204,6 +207,16 @@ export function ExercisesView() {
     const cat = (payload as { categories: string[]; items: { text: string }[] });
     return { type: 'categorize', title: title || t('categorize'), categories: cat.categories, items: cat.items.map((i) => i.text) };
   }, [type, title, payload, fillText, prompt, t]);
+
+  // Upload a picture for a word↔image match row; store only the returned URL.
+  async function uploadPairImage(index: number, file: File) {
+    const token = tokenStore.get();
+    if (!token) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token, locale }).catch(() => null);
+    if (res?.url) setImagePairs((prev) => prev.map((x, j) => (j === index ? { ...x, right: res.url } : x)));
+  }
 
   async function create(e: FormEvent) {
     e.preventDefault();
@@ -281,6 +294,8 @@ export function ExercisesView() {
       const f = editFormFromCanonical(ex.type, ex.payload, ex.answerKey ?? null);
       setSentence(f.sentence);
       setPairs(f.pairs);
+      setMatchRightType(f.matchRightType);
+      setImagePairs(f.imagePairs);
       setFillText(f.fillText);
       setDistractors(f.distractors);
       setCategories(f.categories);
@@ -449,10 +464,63 @@ export function ExercisesView() {
               <small className="muted">{t('sentenceHint')}</small>
             </>
           )}
-          {(type === 'match' || type === 'word_matching') && (
+          {type === 'match' && (
             <>
               <label>{t('pairs')}<textarea value={pairs} onChange={(e) => setPairs(e.target.value)} /></label>
               <small className="muted">{t('pairsHint')}</small>
+            </>
+          )}
+          {type === 'word_matching' && (
+            <>
+              <div className="field">
+                <span>{t('matchRightType')}</span>
+                <div className="tabs tabs-inline">
+                  <button type="button" className={matchRightType === 'text' ? 'active' : ''} onClick={() => setMatchRightType('text')}>
+                    {t('matchText')}
+                  </button>
+                  <button type="button" className={matchRightType === 'image' ? 'active' : ''} onClick={() => setMatchRightType('image')}>
+                    {t('matchImage')}
+                  </button>
+                </div>
+              </div>
+              {matchRightType === 'text' ? (
+                <>
+                  <label>{t('pairs')}<textarea value={pairs} onChange={(e) => setPairs(e.target.value)} /></label>
+                  <small className="muted">{t('pairsHint')}</small>
+                </>
+              ) : (
+                <div className="match-image-pairs">
+                  {imagePairs.map((p, i) => (
+                    <div key={i} className="match-image-row">
+                      <input
+                        placeholder={t('matchWord')}
+                        value={p.left}
+                        onChange={(e) => setImagePairs((prev) => prev.map((x, j) => (j === i ? { ...x, left: e.target.value } : x)))}
+                      />
+                      {p.right ? (
+                        <img className="match-image-thumb" src={fileUrl(p.right)} alt="" />
+                      ) : (
+                        <label className="media-slot-fill">
+                          {t('matchUpload')}
+                          <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadPairImage(i, e.target.files[0])} />
+                        </label>
+                      )}
+                      <button
+                        type="button"
+                        className="ghost"
+                        aria-label={t('delete')}
+                        onClick={() => setImagePairs((prev) => prev.filter((_, j) => j !== i))}
+                      >
+                        <Icon name="close" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="ghost" onClick={() => setImagePairs((prev) => [...prev, { left: '', right: '' }])}>
+                    {t('matchAddPair')}
+                  </button>
+                  <small className="muted">{t('matchImageHint')}</small>
+                </div>
+              )}
             </>
           )}
           {type === 'fill' && (

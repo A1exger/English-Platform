@@ -46,29 +46,38 @@ function AudioItem({ m }: { m: PageMediaItem }) {
   );
 }
 
-// The read-only media block shown on a lesson page (player + preview).
-export function PageMediaBlock({ media }: { media?: PageMediaItem[] | null }) {
-  if (!media || media.length === 0) return null;
+// One attachment, rendered read-only. Shared by the media block and the inline
+// `![[media:ID]]` marker (ФТ-К304) so both look identical.
+export function MediaItem({ m }: { m: PageMediaItem }) {
+  if (m.kind === 'audio') return <AudioItem m={m} />;
+  if (!m.url) return <Slot m={m} />;
+  if (m.kind === 'video') {
+    return (
+      <figure className="page-media-item">
+        <video controls src={fileUrl(m.url)} className="page-media-video" />
+        {m.caption && <figcaption className="muted">{m.caption}</figcaption>}
+      </figure>
+    );
+  }
+  return (
+    <figure className="page-media-item">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={fileUrl(m.url)} alt={m.caption ?? ''} className="page-media-img" loading="lazy" />
+      {m.caption && <figcaption className="muted">{m.caption}</figcaption>}
+    </figure>
+  );
+}
+
+// The read-only media block shown on a lesson page (player + preview). Items
+// pulled inline by an `![[media:ID]]` marker are skipped here (no duplication).
+export function PageMediaBlock({ media, exclude }: { media?: PageMediaItem[] | null; exclude?: Set<string> }) {
+  const shown = (media ?? []).filter((m) => !exclude?.has(m.id));
+  if (shown.length === 0) return null;
   return (
     <div className="page-media">
-      {media.map((m) =>
-        m.kind === 'audio' ? (
-          <AudioItem key={m.id} m={m} />
-        ) : !m.url ? (
-          <Slot key={m.id} m={m} />
-        ) : m.kind === 'video' ? (
-          <figure key={m.id} className="page-media-item">
-            <video controls src={fileUrl(m.url)} className="page-media-video" />
-            {m.caption && <figcaption className="muted">{m.caption}</figcaption>}
-          </figure>
-        ) : (
-          <figure key={m.id} className="page-media-item">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={fileUrl(m.url)} alt={m.caption ?? ''} className="page-media-img" loading="lazy" />
-            {m.caption && <figcaption className="muted">{m.caption}</figcaption>}
-          </figure>
-        )
-      )}
+      {shown.map((m) => (
+        <MediaItem key={m.id} m={m} />
+      ))}
     </div>
   );
 }

@@ -400,7 +400,14 @@
     "sentenceHint": "اكتب الجملة بالترتيب الصحيح — تتحول الكلمات إلى بطاقات قابلة للسحب، مخلوطة للطالب.",
     "sentenceMin": "أضف كلمتين على الأقل.",
     "aspect": "الجانب",
-    "public": "مشاركة عامة"
+    "public": "مشاركة عامة",
+    "matchRightType": "عمود المطابقة",
+    "matchText": "كلمات",
+    "matchImage": "صور",
+    "matchWord": "كلمة",
+    "matchUpload": "رفع صورة",
+    "matchAddPair": "إضافة زوج",
+    "matchImageHint": "اربط كل كلمة بصورة مرفوعة (زوجان على الأقل)."
   },
   "courses": {
     "title": "الدورات",
@@ -484,7 +491,11 @@
     "refineInstruction": "التحسين بتعليمة",
     "selectLesson": "اختر درسًا للتعديل",
     "lessonDeleted": "تم حذف الدرس",
-    "taskDeleted": "تمت إزالة المهمة"
+    "taskDeleted": "تمت إزالة المهمة",
+    "aiGenerated": "أُنشئ بواسطة الذكاء الاصطناعي",
+    "aiApprove": "الموافقة والنشر",
+    "aiApproved": "منشور",
+    "aiGenLesson": "إنشاء درس بالذكاء الاصطناعي"
   },
   "learn": {
     "title": "الدرس",

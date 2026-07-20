@@ -64,7 +64,9 @@ describe('AI generation (e2e, mocked model)', () => {
     return res.body as { accessToken: string };
   };
 
-  const settle = async (jobId: string): Promise<{ status: string; courseId: string | null; error: string | null }> => {
+  const settle = async (
+    jobId: string,
+  ): Promise<{ status: string; courseId: string | null; courseLessonId: string | null; error: string | null }> => {
     for (let i = 0; i < 60; i++) {
       const r = await api().get(`/api/v1/content/generate/${jobId}`).set(auth(tutor.accessToken)).expect(200);
       if (r.body.status !== 'generating') return r.body;
@@ -184,6 +186,69 @@ describe('AI generation (e2e, mocked model)', () => {
     const revs = await prisma.generationRevision.findMany({ where: { jobId: gen.body.id } });
     expect(revs.length).toBe(1);
     expect(revs[0].scope).toBe(`lesson:${l1.id}`);
+  });
+
+  it('generates a single lesson INTO a draft course, lists it, then unwinds on delete (ФТ-К402/К409, D2)', async () => {
+    const cat = await api().post('/api/v1/content/categories').set(auth(tutor.accessToken)).send({ title: 'Lesson gen' }).expect(201);
+    const course = await api()
+      .post('/api/v1/content/courses')
+      .set(auth(tutor.accessToken))
+      .send({ categoryId: cat.body.id, title: 'Host course' })
+      .expect(201);
+    const courseId = course.body.id as string;
+
+    const gen = await api()
+      .post('/api/v1/content/generate')
+      .set(auth(tutor.accessToken))
+      .send({ targetType: 'LESSON', courseId, topic: 'Present Perfect', level: 'Intermediate', aspects: ['Grammar'] })
+      .expect(201);
+    const done = await settle(gen.body.id);
+    expect(done.status).toBe('ready_for_review'); // ФТ-К402
+    expect(done.courseId).toBe(courseId);
+    expect(done.courseLessonId).toBeTruthy();
+
+    // The lesson materialised inside the host course.
+    const tree = await api().get(`/api/v1/content/courses/${courseId}/tree?level=Intermediate`).set(auth(tutor.accessToken)).expect(200);
+    const lessonId = tree.body.sections[0].units[0].lessons[0].id;
+    expect(lessonId).toBe(done.courseLessonId);
+    const detail = await api().get(`/api/v1/content/lessons/${lessonId}`).set(auth(tutor.accessToken)).expect(200);
+    expect(detail.body.pages[0].tasks.length).toBe(2); // К403 dropped the malformed gap_fill
+
+    // §13 — the generated lesson lives in a draft course, invisible to students (ДИ-1).
+    await api().get(`/api/v1/content/courses/${courseId}/tree?level=Intermediate`).set(auth(student.accessToken)).expect(403);
+
+    // D2 — the editor lists the job for this course.
+    const list = await api().get(`/api/v1/content/generate?courseId=${courseId}`).set(auth(tutor.accessToken)).expect(200);
+    expect(list.body.length).toBe(1);
+    expect(list.body[0].id).toBe(gen.body.id);
+    expect(list.body[0].status).toBe('ready_for_review');
+
+    // К409 — deleting the job unwinds the generated lesson (and its section/unit).
+    await api().delete(`/api/v1/content/generate/${gen.body.id}`).set(auth(tutor.accessToken)).expect(200);
+    const after = await api().get(`/api/v1/content/courses/${courseId}/tree?level=Intermediate`).set(auth(tutor.accessToken)).expect(200);
+    const sections = after.body.sections as { units: { lessons: unknown[] }[] }[];
+    const lessonsLeft = sections.reduce((n, s) => n + s.units.reduce((m, u) => m + u.lessons.length, 0), 0);
+    expect(lessonsLeft).toBe(0);
+  });
+
+  it('refuses to generate a lesson into a PUBLISHED course (ДИ-1)', async () => {
+    const cat = await api().post('/api/v1/content/categories').set(auth(tutor.accessToken)).send({ title: 'Pub gen' }).expect(201);
+    const course = await api()
+      .post('/api/v1/content/courses')
+      .set(auth(tutor.accessToken))
+      .send({ categoryId: cat.body.id, title: 'Published host' })
+      .expect(201);
+    const courseId = course.body.id as string;
+    await api().patch(`/api/v1/content/courses/${courseId}`).set(auth(tutor.accessToken)).send({ status: 'published' }).expect(200);
+
+    const gen = await api()
+      .post('/api/v1/content/generate')
+      .set(auth(tutor.accessToken))
+      .send({ targetType: 'LESSON', courseId, topic: 'Blocked', level: 'Intermediate' })
+      .expect(201);
+    const done = await settle(gen.body.id);
+    expect(done.status).toBe('failed'); // never edits a published course
+    expect(done.error).toMatch(/draft/i);
   });
 
   it('students cannot request generation (ФТ-У801/RBAC)', async () => {
