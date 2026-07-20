@@ -13,6 +13,7 @@ export type IconName =
   | 'award'
   | 'lock'
   | 'star'
+  | 'eye'
   | 'search';
 
 const STROKE: Partial<Record<IconName, ReactNode>> = {
@@ -46,6 +47,12 @@ const STROKE: Partial<Record<IconName, ReactNode>> = {
     <>
       <circle cx="11" cy="11" r="8" />
       <path d="M21 21l-4.35-4.35" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
     </>
   )
 };

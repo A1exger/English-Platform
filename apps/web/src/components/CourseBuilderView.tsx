@@ -119,6 +119,7 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   const t = useTranslations('courses');
   const tEx = useTranslations('exercises');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const { showUndo } = useToast();
@@ -137,6 +138,7 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   const [renameValue, setRenameValue] = useState('');
   const [drag, setDrag] = useState<{ kind: 'section' | 'unit' | 'lesson'; id: string; parentId: string } | null>(null);
   const [previewKey, setPreviewKey] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const token = () => tokenStore.get();
 
@@ -163,6 +165,14 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Close the preview popup on Escape.
+  useEffect(() => {
+    if (!previewOpen) return;
+    const onKey = (e: globalThis.KeyboardEvent) => e.key === 'Escape' && setPreviewOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [previewOpen]);
 
   const call = async (path: string, method: 'POST' | 'PATCH' | 'DELETE' | 'PUT', body?: unknown) => {
     const tok = token();
@@ -462,29 +472,44 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
       )}
 
       {canAuthor ? (
-        <div className={`builder${selected ? ' builder-3' : ''}`}>
+        <div className="builder">
           {treePanel}
           <div className="builder-editor">
             {selected ? (
               <>
-                <nav className="builder-crumbs" aria-label="breadcrumb">{breadcrumb(selected)}</nav>
+                <div className="builder-editor-head">
+                  <nav className="builder-crumbs" aria-label="breadcrumb">{breadcrumb(selected)}</nav>
+                  <button type="button" className="ghost preview-btn" onClick={() => setPreviewOpen(true)}>
+                    <Icon name="eye" /> {t('preview')}
+                  </button>
+                </div>
                 <LessonEditor lessonId={selected} onChanged={refresh} t={t} tEx={tEx} locale={locale} />
               </>
             ) : (
               <div className="card empty-pane"><p className="note">{t('selectLesson')}</p></div>
             )}
           </div>
-          {selected && (
-            <div className="builder-preview">
-              <div className="builder-preview-head muted">{t('preview')}</div>
-              <div className="builder-preview-body">
-                <LessonPlayerView key={previewKey} lessonId={selected} />
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         treePanel
+      )}
+
+      {/* Lesson preview as an on-demand popup (student's-eye view) rather than a
+          permanent panel, so the editor keeps the full width. */}
+      {canAuthor && selected && previewOpen && (
+        <div className="preview-modal" role="dialog" aria-modal="true" aria-label={t('preview')} onMouseDown={() => setPreviewOpen(false)}>
+          <div className="preview-modal-card" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="preview-modal-head">
+              <strong>{t('preview')}</strong>
+              <button type="button" className="ghost" aria-label={tc('close')} onClick={() => setPreviewOpen(false)}>
+                <Icon name="close" />
+              </button>
+            </div>
+            <div className="preview-modal-scroll">
+              <LessonPlayerView key={previewKey} lessonId={selected} />
+            </div>
+          </div>
+        </div>
       )}
 
       {canAuthor && (
