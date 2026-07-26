@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { BoardCanvas } from './BoardCanvas';
 import { VideoRoom } from './VideoRoom';
@@ -30,6 +30,19 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
   const pageLabel = pageIdx === 0 ? t('preparation') : String(pageIdx);
   const grammar = lesson?.grammarReference;
 
+  // Follow the teacher onto the board: when a stroke arrives and the student is
+  // watching the video, switch their stage to the board so they see the drawing.
+  useEffect(() => {
+    if (!board || isTeacher) return;
+    const onUpdate = (msg: { update?: { type?: string; kind?: string } }) => {
+      if (msg?.update?.type === 'seg' && msg.update.kind !== 'exercise') setShowBoard(true);
+    };
+    board.on('board:update', onUpdate);
+    return () => {
+      board.off('board:update', onUpdate);
+    };
+  }, [board, isTeacher]);
+
   return (
     <div className="lesson-room room-5050">
       {/* LEFT: video ⇄ board (video shrinks to a PiP when the board is on) */}
@@ -46,20 +59,15 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
           <span className="muted mono-num room-live">{live.joined ? `● ${tr('live')}` : '○ …'}</span>
         </div>
         <div className="room-stage-body">
-          {showBoard ? (
-            <>
-              <div className="room-board-full">
-                <BoardCanvas lessonId={lessonId} socket={board} />
-              </div>
-              <div className="room-video-pip">
-                <VideoRoom lessonId={lessonId} />
-              </div>
-            </>
-          ) : (
-            <div className="room-video-full">
-              <VideoRoom lessonId={lessonId} />
-            </div>
-          )}
+          {/* Both are always mounted: the board keeps its /board sync (strokes
+              are never lost when the teacher is on video), and the video keeps
+              its LiveKit connection. z-index / PiP decide what's on top. */}
+          <div className={`room-board-layer${showBoard ? ' show' : ''}`}>
+            <BoardCanvas lessonId={lessonId} socket={board} />
+          </div>
+          <div className={showBoard ? 'room-video-pip' : 'room-video-full'}>
+            <VideoRoom lessonId={lessonId} />
+          </div>
         </div>
       </section>
 

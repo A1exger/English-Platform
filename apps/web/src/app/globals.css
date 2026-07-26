@@ -632,7 +632,8 @@ textarea {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 .board-toolbar button {
   padding: 7px 13px;
@@ -659,6 +660,19 @@ textarea {
   flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
+  /* Fully reset the ⌘K command-palette styles that leak in via the shared class
+     name — otherwise the swatches sit inside a 560px white bordered box with a
+     12vh top margin (the stray "long white bar" that scattered the toolbar). */
+  align-self: center;
+  inline-size: auto;
+  max-block-size: none;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 /* Beat the generic `.board-toolbar button` padding so swatches stay a tight row
    (that padding was inflating them and wrapping the palette into a column). */
@@ -2106,17 +2120,30 @@ select.err {
   overflow: hidden;
   background: #0e1020; /* dark stage for video / board */
 }
+/* Board and video are BOTH always mounted so the board stays live-synced even
+   while the video is shown (strokes are never lost). z-index decides which is on
+   top; the hidden board keeps its size underneath so it renders in real time. */
 .room-video-full,
-.room-board-full {
+.room-board-layer {
   position: absolute;
   inset: 0;
+}
+.room-board-layer {
+  z-index: 1;
+}
+.room-video-full {
+  z-index: 2;
+}
+.room-board-layer.show {
+  z-index: 2;
 }
 .room-video-full > *,
 .room-video-pip > * {
   block-size: 100%;
 }
-.room-board-full .board-wrap {
+.room-board-layer .board-wrap {
   block-size: 100%;
+  height: 100%;
 }
 /* video shrinks to a corner window when the board is on */
 .room-video-pip {
