@@ -614,6 +614,7 @@ export class ContentService {
       data: {
         courseLessonId: dto.courseLessonId,
         type: dto.type,
+        title: dto.title ?? null,
         order: dto.order ?? 0,
         includedInHomework: dto.includedInHomework ?? false,
         mediaUrl: dto.mediaUrl,

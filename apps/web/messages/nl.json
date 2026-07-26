@@ -504,7 +504,8 @@
     "aiApprove": "Goedkeuren en publiceren",
     "aiApproved": "Gepubliceerd",
     "aiGenLesson": "Een les genereren met AI",
-    "insertInline": "In tekst invoegen"
+    "insertInline": "In tekst invoegen",
+    "stageName": "Fasenaam (optioneel)"
   },
   "learn": {
     "title": "Les",

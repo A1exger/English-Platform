@@ -537,6 +537,8 @@ model LessonPage {
   courseLessonId     String
   courseLesson       CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
   type               String
+  // Optional stage name shown in the «План урока» (falls back to the type).
+  title              String?
   order              Int          @default(0)
   includedInHomework Boolean      @default(false)
   // Legacy single media (kept for compatibility); new content uses PageMedia.

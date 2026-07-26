@@ -342,6 +342,11 @@ export class CreatePageDto {
   type!: PageType;
 
   @IsOptional()
+  @IsString()
+  @Length(0, 200)
+  title?: string;
+
+  @IsOptional()
   @IsInt()
   order?: number;
 
@@ -362,6 +367,11 @@ export class UpdatePageDto {
   @IsOptional()
   @IsIn(PAGE_TYPES as unknown as string[])
   type?: PageType;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 200)
+  title?: string;
 
   @IsOptional()
   @IsBoolean()

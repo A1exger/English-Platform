@@ -549,6 +549,7 @@ interface TaskRow {
 interface PageRow {
   id: string;
   type: string;
+  title?: string | null;
   includedInHomework: boolean;
   text?: string | null;
   tasks: TaskRow[];
@@ -805,6 +806,12 @@ function LessonEditor({
                           <option key={pt} value={pt}>{pt}</option>
                         ))}
                       </select>
+                      <input
+                        className="ed-page-title"
+                        placeholder={t('stageName')}
+                        defaultValue={p.title ?? ''}
+                        onBlur={(e) => e.target.value !== (p.title ?? '') && patchPage(p.id, { title: e.target.value })}
+                      />
                       <label className="check">
                         <input type="checkbox" checked={p.includedInHomework} onChange={(e) => patchPage(p.id, { includedInHomework: e.target.checked })} />
                         {t('inHomework')}

@@ -504,7 +504,8 @@
     "aiApprove": "الموافقة والنشر",
     "aiApproved": "منشور",
     "aiGenLesson": "إنشاء درس بالذكاء الاصطناعي",
-    "insertInline": "إدراج في النص"
+    "insertInline": "إدراج في النص",
+    "stageName": "اسم المرحلة (اختياري)"
   },
   "learn": {
     "title": "الدرس",

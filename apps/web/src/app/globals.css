@@ -2945,6 +2945,10 @@ select.err {
 .tree-unit.dragging {
   opacity: 0.5;
 }
+.ed-page-title {
+  flex: 1;
+  min-inline-size: 120px;
+}
 .ed-page-head {
   display: flex;
   align-items: center;

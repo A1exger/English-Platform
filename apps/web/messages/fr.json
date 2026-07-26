@@ -504,7 +504,8 @@
     "aiApprove": "Approuver et publier",
     "aiApproved": "Publié",
     "aiGenLesson": "Générer une leçon avec l'IA",
-    "insertInline": "Insérer dans le texte"
+    "insertInline": "Insérer dans le texte",
+    "stageName": "Nom de l'étape (facultatif)"
   },
   "learn": {
     "title": "Leçon",

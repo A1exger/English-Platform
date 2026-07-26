@@ -504,7 +504,8 @@
     "aiApprove": "Genehmigen & veröffentlichen",
     "aiApproved": "Veröffentlicht",
     "aiGenLesson": "Lektion mit KI generieren",
-    "insertInline": "In Text einfügen"
+    "insertInline": "In Text einfügen",
+    "stageName": "Etappenname (optional)"
   },
   "learn": {
     "title": "Lektion",
