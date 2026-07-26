@@ -209,7 +209,10 @@
     "exitFocus": "Focus verlaten",
     "pageLabel": "p.",
     "teacherLeads": "docent leidt",
-    "answersHint": "Antwoorden verschijnen hier terwijl de leerling werkt."
+    "answersHint": "Antwoorden verschijnen hier terwijl de leerling werkt.",
+    "lessonTab": "Les",
+    "mediaTab": "Bijlagen",
+    "grammarTab": "Grammatica"
   },
   "board": {
     "title": "Whiteboard",

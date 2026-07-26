@@ -209,7 +209,10 @@
     "exitFocus": "Quitter le focus",
     "pageLabel": "p.",
     "teacherLeads": "le professeur dirige",
-    "answersHint": "Les réponses apparaissent ici au fil du travail de l'élève."
+    "answersHint": "Les réponses apparaissent ici au fil du travail de l'élève.",
+    "lessonTab": "Leçon",
+    "mediaTab": "Pièces jointes",
+    "grammarTab": "Grammaire"
   },
   "board": {
     "title": "Tableau",

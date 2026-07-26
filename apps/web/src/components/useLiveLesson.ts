@@ -7,6 +7,7 @@ import { fetchMe, tokenStore } from '@/lib/auth';
 import { SessionEnvelope, SessionState, useSession } from '@/lib/session';
 import { ContentTask } from './ContentTaskPlayer';
 import { ExerciseState } from './ExerciseRenderer';
+import type { PageMediaItem } from './PageMediaBlock';
 
 // Shared live-lesson state for the room. Called ONCE (in LessonRoom) so the
 // material hero and the answer rail read the same /session — never two sockets.
@@ -27,6 +28,7 @@ export interface LivePageRow {
   order: number;
   text?: string | null;
   mediaUrl?: string | null;
+  media?: PageMediaItem[];
   tasks: ContentTask[];
 }
 export interface LiveLesson {

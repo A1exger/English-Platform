@@ -209,7 +209,10 @@
     "exitFocus": "Fokus verlassen",
     "pageLabel": "S.",
     "teacherLeads": "Lehrer führt",
-    "answersHint": "Antworten erscheinen hier, während der Schüler arbeitet."
+    "answersHint": "Antworten erscheinen hier, während der Schüler arbeitet.",
+    "lessonTab": "Lektion",
+    "mediaTab": "Anhänge",
+    "grammarTab": "Grammatik"
   },
   "board": {
     "title": "Whiteboard",

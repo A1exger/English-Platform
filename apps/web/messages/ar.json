@@ -209,7 +209,10 @@
     "exitFocus": "إنهاء التركيز",
     "pageLabel": "ص.",
     "teacherLeads": "المعلّم يقود",
-    "answersHint": "تظهر الإجابات هنا أثناء عمل الطالب."
+    "answersHint": "تظهر الإجابات هنا أثناء عمل الطالب.",
+    "lessonTab": "الدرس",
+    "mediaTab": "المرفقات",
+    "grammarTab": "القواعد"
   },
   "board": {
     "title": "اللوحة",

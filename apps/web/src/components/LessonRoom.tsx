@@ -8,136 +8,125 @@ import { LessonExercisePanel } from './LessonExercisePanel';
 import { useLiveLesson } from './useLiveLesson';
 import { LiveMaterial } from './LiveMaterial';
 import { LiveAnswers } from './LiveAnswers';
+import { PageMediaBlock } from './PageMediaBlock';
 import { useBoardSocket } from '@/lib/board';
 
-// Content-first live room (Sprint 3). The synced material is the hero (white); a
-// segmented [Material | Board] control swaps the drawing canvas onto the same
-// stage. The right rail holds the video tiles (dark — the one place dark is
-// functional) and a tabbed [Answers | Exercise] panel. Drawing rides one lifted
-// /board socket; page sync rides /session — both protocols/payloads unchanged.
+type Tab = 'lesson' | 'media' | 'grammar' | 'answers' | 'exercise';
+
+// Skyeng-style room (Э1): a 50/50 split — the left stage shows the video full,
+// and toggling the board swaps the board in with the video shrunk to a corner
+// PiP. The right panel holds the lesson content in tabs (Урок / Вложения /
+// Грамматика, plus teacher tools) with the page stepper at the bottom. Drawing
+// still rides the /board socket and page sync the /session envelope — unchanged.
 export function LessonRoom({ lessonId }: { lessonId: string }) {
   const tr = useTranslations('room');
   const t = useTranslations('learn');
   const live = useLiveLesson(lessonId);
-  const board = useBoardSocket(lessonId); // one socket for the whole room (#5)
-  const [stage, setStage] = useState<'material' | 'board'>('material'); // the boardOn machine
-  const [tab, setTab] = useState<'answers' | 'exercise'>('answers');
-  const [theatre, setTheatre] = useState(false);
+  const board = useBoardSocket(lessonId);
+  const [showBoard, setShowBoard] = useState(false);
+  const [tab, setTab] = useState<Tab>('lesson');
 
   const { lesson, pageIdx, totalSteps, isTeacher } = live;
   const pageLabel = pageIdx === 0 ? t('preparation') : String(pageIdx);
+  const grammar = lesson?.grammarReference;
 
   return (
-    <div className={`lesson-room room-editorial${theatre ? ' theatre' : ''}`}>
+    <div className="lesson-room room-5050">
+      {/* LEFT: video ⇄ board (video shrinks to a PiP when the board is on) */}
       <section className="room-stage">
         <div className="room-stage-bar">
-          {isTeacher ? (
-            <div className="segmented">
-              <button
-                type="button"
-                className={stage === 'material' ? 'active' : ''}
-                onClick={() => setStage('material')}
-              >
-                {tr('material')}
-              </button>
-              <button
-                type="button"
-                className={stage === 'board' ? 'active' : ''}
-                onClick={() => setStage('board')}
-              >
-                {tr('board')}
-              </button>
-            </div>
-          ) : (
-            <span className="muted">{stage === 'board' ? tr('board') : tr('material')}</span>
-          )}
-
-          {lesson && (
-            <div className="page-stepper">
-              {isTeacher && (
-                <button
-                  type="button"
-                  className="ghost"
-                  disabled={pageIdx === 0}
-                  onClick={() => live.goTo(pageIdx - 1)}
-                >
-                  ‹
-                </button>
-              )}
-              <span className="mono-num">
-                {tr('pageLabel')} {pageLabel}
-                {pageIdx > 0 ? ` / ${lesson.pages.length}` : ''}
-              </span>
-              {isTeacher && (
-                <button
-                  type="button"
-                  className="ghost"
-                  disabled={pageIdx >= totalSteps - 1}
-                  onClick={() => live.goTo(pageIdx + 1)}
-                >
-                  ›
-                </button>
-              )}
-              {!isTeacher && <span className="muted room-driver">{tr('teacherLeads')}</span>}
-            </div>
-          )}
-
-          <span className="muted mono-num room-live">
-            {live.joined ? `● ${tr('live')}` : '○ …'}
-          </span>
+          <div className="segmented">
+            <button type="button" className={!showBoard ? 'active' : ''} onClick={() => setShowBoard(false)}>
+              {tr('video')}
+            </button>
+            <button type="button" className={showBoard ? 'active' : ''} onClick={() => setShowBoard(true)}>
+              {tr('board')}
+            </button>
+          </div>
+          <span className="muted mono-num room-live">{live.joined ? `● ${tr('live')}` : '○ …'}</span>
         </div>
-
         <div className="room-stage-body">
-          {stage === 'board' ? (
-            <BoardCanvas lessonId={lessonId} socket={board} />
+          {showBoard ? (
+            <>
+              <div className="room-board-full">
+                <BoardCanvas lessonId={lessonId} socket={board} />
+              </div>
+              <div className="room-video-pip">
+                <VideoRoom lessonId={lessonId} />
+              </div>
+            </>
           ) : (
-            <LiveMaterial live={live} />
+            <div className="room-video-full">
+              <VideoRoom lessonId={lessonId} />
+            </div>
           )}
         </div>
       </section>
 
-      <aside className="room-rail">
-        <div className="room-video">
-          <VideoRoom lessonId={lessonId} />
-          <button type="button" className="room-theatre-btn" onClick={() => setTheatre((v) => !v)}>
-            {theatre ? tr('exitFocus') : tr('focusVideo')}
+      {/* RIGHT: lesson content in tabs + stepper */}
+      <aside className="room-content">
+        <div className="tabs room-content-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected={tab === 'lesson'} className={tab === 'lesson' ? 'active' : ''} onClick={() => setTab('lesson')}>
+            {tr('lessonTab')}
           </button>
+          <button type="button" role="tab" aria-selected={tab === 'media'} className={tab === 'media' ? 'active' : ''} onClick={() => setTab('media')}>
+            {tr('mediaTab')}
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'grammar'} className={tab === 'grammar' ? 'active' : ''} onClick={() => setTab('grammar')}>
+            {tr('grammarTab')}
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'exercise'} className={tab === 'exercise' ? 'active' : ''} onClick={() => setTab('exercise')}>
+            {tr('exerciseTab')}
+          </button>
+          {isTeacher && (
+            <button type="button" role="tab" aria-selected={tab === 'answers'} className={tab === 'answers' ? 'active' : ''} onClick={() => setTab('answers')}>
+              {tr('answersTab')}
+            </button>
+          )}
         </div>
 
-        {isTeacher && (
-          <div className="room-rail-panel">
-            <div className="tabs">
-              <button
-                type="button"
-                className={tab === 'answers' ? 'active' : ''}
-                onClick={() => setTab('answers')}
-              >
-                {tr('answersTab')}
-              </button>
-              <button
-                type="button"
-                className={tab === 'exercise' ? 'active' : ''}
-                onClick={() => setTab('exercise')}
-              >
-                {tr('exerciseTab')}
-              </button>
-            </div>
-            <div className="room-rail-body">
-              {tab === 'answers' ? (
-                <LiveAnswers live={live} />
-              ) : (
-                <LessonExercisePanel lessonId={lessonId} socket={board} />
-              )}
-            </div>
-          </div>
-        )}
+        <div className="room-content-body">
+          {tab === 'lesson' && <LiveMaterial live={live} />}
+          {tab === 'media' && <PageMediaBlock media={live.page?.media} />}
+          {tab === 'grammar' &&
+            (grammar ? (
+              <div className="card">
+                <strong>{t('grammar')}: {grammar.title}</strong>
+                <div className="grammar-table">
+                  <div className="grammar-row">
+                    <span className="grammar-key">{t('meaning')}</span>
+                    <span>{grammar.meaning}</span>
+                  </div>
+                  <div className="grammar-row">
+                    <span className="grammar-key">{t('form')}</span>
+                    <span>{grammar.form}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="note">{tr('waiting')}</p>
+            ))}
+          {tab === 'exercise' && <LessonExercisePanel lessonId={lessonId} socket={board} />}
+          {tab === 'answers' && isTeacher && <LiveAnswers live={live} />}
+        </div>
 
-        {/* The student sees pushed interactive tasks live (ФТ-У201/У205). */}
-        {!isTeacher && (
-          <div className="room-rail-panel">
-            <div className="room-rail-body">
-              <LessonExercisePanel lessonId={lessonId} socket={board} />
-            </div>
+        {lesson && (
+          <div className="room-stepper">
+            {isTeacher && (
+              <button type="button" className="ghost" disabled={pageIdx === 0} onClick={() => live.goTo(pageIdx - 1)}>
+                ‹
+              </button>
+            )}
+            <span className="mono-num">
+              {tr('pageLabel')} {pageLabel}
+              {pageIdx > 0 ? ` / ${lesson.pages.length}` : ''}
+            </span>
+            {isTeacher && (
+              <button type="button" className="ghost" disabled={pageIdx >= totalSteps - 1} onClick={() => live.goTo(pageIdx + 1)}>
+                ›
+              </button>
+            )}
+            {!isTeacher && <span className="muted room-driver">{tr('teacherLeads')}</span>}
           </div>
         )}
       </aside>

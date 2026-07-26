@@ -209,7 +209,10 @@
     "exitFocus": "Exit focus",
     "pageLabel": "p.",
     "teacherLeads": "teacher is leading",
-    "answersHint": "Answers appear here as the student works."
+    "answersHint": "Answers appear here as the student works.",
+    "lessonTab": "Lesson",
+    "mediaTab": "Attachments",
+    "grammarTab": "Grammar"
   },
   "board": {
     "title": "Whiteboard",
