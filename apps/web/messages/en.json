@@ -212,7 +212,12 @@
     "answersHint": "Answers appear here as the student works.",
     "lessonTab": "Lesson",
     "mediaTab": "Attachments",
-    "grammarTab": "Grammar"
+    "grammarTab": "Grammar",
+    "planTab": "Plan",
+    "planLesson": "Lesson plan",
+    "planHomework": "Homework plan",
+    "inHomework": "in homework",
+    "planEmpty": "No stages in homework yet."
   },
   "board": {
     "title": "Whiteboard",

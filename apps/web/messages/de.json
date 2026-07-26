@@ -212,7 +212,12 @@
     "answersHint": "Antworten erscheinen hier, während der Schüler arbeitet.",
     "lessonTab": "Lektion",
     "mediaTab": "Anhänge",
-    "grammarTab": "Grammatik"
+    "grammarTab": "Grammatik",
+    "planTab": "Plan",
+    "planLesson": "Unterrichtsplan",
+    "planHomework": "Hausaufgabenplan",
+    "inHomework": "in HA",
+    "planEmpty": "Noch keine Etappen in den Hausaufgaben."
   },
   "board": {
     "title": "Whiteboard",

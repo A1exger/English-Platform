@@ -212,7 +212,12 @@
     "answersHint": "Ответы появятся здесь по ходу работы ученика.",
     "lessonTab": "Урок",
     "mediaTab": "Вложения",
-    "grammarTab": "Грамматика"
+    "grammarTab": "Грамматика",
+    "planTab": "План",
+    "planLesson": "План урока",
+    "planHomework": "План домашки",
+    "inHomework": "в ДЗ",
+    "planEmpty": "В домашке пока нет этапов."
   },
   "board": {
     "title": "Доска",

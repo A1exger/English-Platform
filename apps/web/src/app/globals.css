@@ -2191,6 +2191,69 @@ select.err {
 .room-stepper .ghost {
   padding: 2px 10px;
 }
+/* «План урока / План домашки» — the lesson as a list of stages (Э2.2) */
+.lesson-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.plan-stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.plan-stage > button {
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  text-align: start;
+  cursor: pointer;
+}
+.plan-stage > button:hover {
+  background: var(--cloud);
+}
+.plan-stage.active > button {
+  border-color: var(--indigo);
+  background: var(--indigo-100);
+}
+.plan-stage-num {
+  inline-size: 22px;
+  text-align: center;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+.plan-stage-main {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.plan-stage-name {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.plan-stage-meta {
+  font-size: 12px;
+  text-transform: capitalize;
+}
+.plan-stage-hw {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
 .live-material {
   display: flex;
   flex-direction: column;

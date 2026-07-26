@@ -8,10 +8,11 @@ import { LessonExercisePanel } from './LessonExercisePanel';
 import { useLiveLesson } from './useLiveLesson';
 import { LiveMaterial } from './LiveMaterial';
 import { LiveAnswers } from './LiveAnswers';
+import { LessonPlanPanel } from './LessonPlanPanel';
 import { PageMediaBlock } from './PageMediaBlock';
 import { useBoardSocket } from '@/lib/board';
 
-type Tab = 'lesson' | 'media' | 'grammar' | 'answers' | 'exercise';
+type Tab = 'plan' | 'lesson' | 'media' | 'grammar' | 'answers' | 'exercise';
 
 // Skyeng-style room (Э1): a 50/50 split — the left stage shows the video full,
 // and toggling the board swaps the board in with the video shrunk to a corner
@@ -74,6 +75,9 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
       {/* RIGHT: lesson content in tabs + stepper */}
       <aside className="room-content">
         <div className="tabs room-content-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected={tab === 'plan'} className={tab === 'plan' ? 'active' : ''} onClick={() => setTab('plan')}>
+            {tr('planTab')}
+          </button>
           <button type="button" role="tab" aria-selected={tab === 'lesson'} className={tab === 'lesson' ? 'active' : ''} onClick={() => setTab('lesson')}>
             {tr('lessonTab')}
           </button>
@@ -94,6 +98,7 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
         </div>
 
         <div className="room-content-body">
+          {tab === 'plan' && <LessonPlanPanel live={live} />}
           {tab === 'lesson' && <LiveMaterial live={live} />}
           {tab === 'media' && <PageMediaBlock media={live.page?.media} />}
           {tab === 'grammar' &&

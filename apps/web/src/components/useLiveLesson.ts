@@ -25,7 +25,9 @@ export const CONTENT_LEVELS = [
 export interface LivePageRow {
   id: string;
   type: string;
+  title?: string | null;
   order: number;
+  includedInHomework?: boolean;
   text?: string | null;
   mediaUrl?: string | null;
   media?: PageMediaItem[];

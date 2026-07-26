@@ -212,7 +212,12 @@
     "answersHint": "Les réponses apparaissent ici au fil du travail de l'élève.",
     "lessonTab": "Leçon",
     "mediaTab": "Pièces jointes",
-    "grammarTab": "Grammaire"
+    "grammarTab": "Grammaire",
+    "planTab": "Plan",
+    "planLesson": "Plan du cours",
+    "planHomework": "Plan des devoirs",
+    "inHomework": "en devoirs",
+    "planEmpty": "Aucune étape dans les devoirs."
   },
   "board": {
     "title": "Tableau",

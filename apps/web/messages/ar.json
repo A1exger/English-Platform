@@ -212,7 +212,12 @@
     "answersHint": "تظهر الإجابات هنا أثناء عمل الطالب.",
     "lessonTab": "الدرس",
     "mediaTab": "المرفقات",
-    "grammarTab": "القواعد"
+    "grammarTab": "القواعد",
+    "planTab": "الخطة",
+    "planLesson": "خطة الدرس",
+    "planHomework": "خطة الواجب",
+    "inHomework": "في الواجب",
+    "planEmpty": "لا مراحل في الواجب بعد."
   },
   "board": {
     "title": "اللوحة",

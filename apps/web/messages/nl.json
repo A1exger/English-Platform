@@ -212,7 +212,12 @@
     "answersHint": "Antwoorden verschijnen hier terwijl de leerling werkt.",
     "lessonTab": "Les",
     "mediaTab": "Bijlagen",
-    "grammarTab": "Grammatica"
+    "grammarTab": "Grammatica",
+    "planTab": "Plan",
+    "planLesson": "Lesplan",
+    "planHomework": "Huiswerkplan",
+    "inHomework": "in huiswerk",
+    "planEmpty": "Nog geen fasen in het huiswerk."
   },
   "board": {
     "title": "Whiteboard",
