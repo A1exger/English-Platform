@@ -554,7 +554,11 @@
     "saveFeedback": "Enregistrer le retour",
     "feedbackPlaceholder": "Retour pour l'élève…",
     "resultStep": "Résultat",
-    "resultPending": "Terminez les tâches pour voir votre résultat."
+    "resultPending": "Terminez les tâches pour voir votre résultat.",
+    "allDone": "Terminé !",
+    "overallScore": "Note globale",
+    "nextLesson": "Prochain cours",
+    "joinLesson": "Rejoindre le cours"
   },
   "dictionary": {
     "title": "Dictionnaire",

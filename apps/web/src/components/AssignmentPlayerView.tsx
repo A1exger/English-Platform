@@ -7,7 +7,7 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { CheckResponse, ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
 import { ExerciseState } from './ExerciseRenderer';
-import { AssignmentResult, AssignmentResultView } from './AssignmentResultView';
+import { AssignmentResult, AssignmentResultView, NextLessonCard } from './AssignmentResultView';
 import { Skeleton } from './Skeleton';
 import { Stepper } from './Stepper';
 
@@ -38,6 +38,7 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
   const router = useRouter();
 
   const [data, setData] = useState<AssignmentDetail | null>(null);
+  const [nextLesson, setNextLesson] = useState<NextLessonCard | null>(null);
   const [isStudent, setIsStudent] = useState(false);
   const [phase, setPhase] = useState<'loading' | 'error' | 'ready'>('loading');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -51,8 +52,22 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
     }
     try {
       const me = await fetchMe(token, locale);
-      setIsStudent(me.role === 'student');
+      const student = me.role === 'student';
+      setIsStudent(student);
       setData(await apiFetch<AssignmentDetail>(`/assignments/${assignmentId}`, { token, locale }));
+      // Students see a «next lesson» card on the results screen — the soonest
+      // scheduled one still in the future. Best-effort: never block the result.
+      if (student) {
+        const lessons = await apiFetch<{ id: string; title?: string | null; startsAt: string; status: string }[]>(
+          '/lessons',
+          { token, locale }
+        ).catch(() => []);
+        const now = Date.now();
+        const soonest = lessons
+          .filter((l) => l.status === 'scheduled' && new Date(l.startsAt).getTime() >= now)
+          .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
+        setNextLesson(soonest ? { id: soonest.id, title: soonest.title, startsAt: soonest.startsAt } : null);
+      }
       setPhase('ready');
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
@@ -121,7 +136,7 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
 
       {onResultStep ? (
         data.result ? (
-          <AssignmentResultView result={data.result} />
+          <AssignmentResultView result={data.result} nextLesson={isStudent ? nextLesson : null} />
         ) : (
           <p className="note">{t('resultPending')}</p>
         )

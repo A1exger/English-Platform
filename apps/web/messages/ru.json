@@ -554,7 +554,11 @@
     "saveFeedback": "Сохранить фидбек",
     "feedbackPlaceholder": "Фидбек ученику…",
     "resultStep": "Результат",
-    "resultPending": "Выполните задания, чтобы увидеть результат."
+    "resultPending": "Выполните задания, чтобы увидеть результат.",
+    "allDone": "Готово!",
+    "overallScore": "Общий балл",
+    "nextLesson": "Следующий урок",
+    "joinLesson": "Войти в урок"
   },
   "dictionary": {
     "title": "Словарь",

@@ -554,7 +554,11 @@
     "saveFeedback": "Feedback speichern",
     "feedbackPlaceholder": "Feedback für den Schüler…",
     "resultStep": "Ergebnis",
-    "resultPending": "Erledige die Aufgaben, um dein Ergebnis zu sehen."
+    "resultPending": "Erledige die Aufgaben, um dein Ergebnis zu sehen.",
+    "allDone": "Alles erledigt!",
+    "overallScore": "Gesamtnote",
+    "nextLesson": "Nächste Stunde",
+    "joinLesson": "Stunde beitreten"
   },
   "dictionary": {
     "title": "Wörterbuch",

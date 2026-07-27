@@ -554,7 +554,11 @@
     "saveFeedback": "حفظ الملاحظات",
     "feedbackPlaceholder": "ملاحظات للطالب…",
     "resultStep": "النتيجة",
-    "resultPending": "أكمل المهام لرؤية نتيجتك."
+    "resultPending": "أكمل المهام لرؤية نتيجتك.",
+    "allDone": "تم كل شيء!",
+    "overallScore": "الدرجة الإجمالية",
+    "nextLesson": "الدرس التالي",
+    "joinLesson": "الانضمام إلى الدرس"
   },
   "dictionary": {
     "title": "القاموس",

@@ -554,7 +554,11 @@
     "saveFeedback": "Feedback opslaan",
     "feedbackPlaceholder": "Feedback voor de leerling…",
     "resultStep": "Resultaat",
-    "resultPending": "Voltooi de taken om je resultaat te zien."
+    "resultPending": "Voltooi de taken om je resultaat te zien.",
+    "allDone": "Helemaal klaar!",
+    "overallScore": "Totaalscore",
+    "nextLesson": "Volgende les",
+    "joinLesson": "Deelnemen aan les"
   },
   "dictionary": {
     "title": "Woordenboek",

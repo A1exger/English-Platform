@@ -554,7 +554,11 @@
     "saveFeedback": "Save feedback",
     "feedbackPlaceholder": "Feedback for the student…",
     "resultStep": "Result",
-    "resultPending": "Complete the tasks to see your result."
+    "resultPending": "Complete the tasks to see your result.",
+    "allDone": "All done!",
+    "overallScore": "Overall score",
+    "nextLesson": "Next lesson",
+    "joinLesson": "Join lesson"
   },
   "dictionary": {
     "title": "Dictionary",
