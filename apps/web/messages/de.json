@@ -300,7 +300,8 @@
     "upcoming": "Demnächst",
     "seeAll": "Alle",
     "noLessons": "Keine anstehenden Stunden",
-    "bookLesson": "Stunde buchen"
+    "bookLesson": "Stunde buchen",
+    "continueLearning": "Weiterlernen"
   },
   "studentProfile": {
     "title": "Schülerprofil",

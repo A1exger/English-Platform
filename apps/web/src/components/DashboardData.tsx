@@ -26,8 +26,17 @@ interface Progress {
   lessonsCompleted: number;
   attendanceRate: number | null;
 }
+interface CourseProgress {
+  courseId: string;
+  title: string;
+  level: string;
+  courseCompletion: number; // 0–100 %
+  lessonsDone: number;
+  lessonsRequired: number;
+}
 interface ContentProgress {
   overall: { goalProgress: number | null };
+  courses: CourseProgress[];
 }
 
 type State = 'loading' | 'unauth' | 'error' | 'ready';
@@ -45,6 +54,7 @@ export function DashboardData() {
   const [homework, setHomework] = useState<Homework[]>([]);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [goal, setGoal] = useState<number | null>(null);
+  const [courses, setCourses] = useState<CourseProgress[]>([]);
   const [state, setState] = useState<State>('loading');
 
   const load = useCallback(
@@ -68,6 +78,7 @@ export function DashboardData() {
           setHomework(hw);
           setProgress(pr);
           setGoal(cp?.overall.goalProgress ?? null);
+          setCourses(cp?.courses ?? []);
         }
         setState('ready');
       } catch (e) {
@@ -117,6 +128,11 @@ export function DashboardData() {
   const pendingHw = homework.filter((h) => h.status !== 'graded');
   const dt = (s: string) => format.dateTime(new Date(s), { dateStyle: 'medium', timeStyle: 'short' });
   const isStudent = me?.role === 'student';
+  // Courses the student has started but not finished — the Skyeng «continue»
+  // entry point back into a course, most-progressed first.
+  const continuing = courses
+    .filter((c) => c.courseCompletion > 0 && c.courseCompletion < 100)
+    .sort((a, b) => b.courseCompletion - a.courseCompletion);
 
   return (
     <div className="content">
@@ -170,6 +186,39 @@ export function DashboardData() {
               </span>
               <span className="metric-label">{tDash('attendance')}</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isStudent && continuing.length > 0 && (
+        <div className="card">
+          <div className="row-between">
+            <strong>{tDash('continueLearning')}</strong>
+            <Link href="/courses" className="link">
+              {tDash('seeAll')}
+            </Link>
+          </div>
+          <div className="continue-row">
+            {continuing.map((c) => (
+              <Link key={c.courseId} href={`/courses/${c.courseId}`} className="continue-card">
+                <div className="continue-cover">
+                  <span className="continue-level">{c.level}</span>
+                  <span className="continue-pct mono-num">{c.courseCompletion}%</span>
+                </div>
+                <div className="continue-body">
+                  <strong className="continue-title">{c.title}</strong>
+                  <div className="result-bar">
+                    <div
+                      className="result-bar-fill"
+                      style={{ inlineSize: `${c.courseCompletion}%` }}
+                    />
+                  </div>
+                  <span className="muted continue-meta">
+                    {c.lessonsDone}/{c.lessonsRequired}
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       )}

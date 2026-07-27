@@ -300,7 +300,8 @@
     "upcoming": "القادم",
     "seeAll": "عرض الكل",
     "noLessons": "لا دروس قادمة",
-    "bookLesson": "احجز درسًا"
+    "bookLesson": "احجز درسًا",
+    "continueLearning": "متابعة التعلم"
   },
   "studentProfile": {
     "title": "ملف الطالب",

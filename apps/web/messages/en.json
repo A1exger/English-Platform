@@ -300,7 +300,8 @@
     "upcoming": "Upcoming",
     "seeAll": "See all",
     "noLessons": "No upcoming lessons",
-    "bookLesson": "Book a lesson"
+    "bookLesson": "Book a lesson",
+    "continueLearning": "Continue learning"
   },
   "studentProfile": {
     "title": "Student profile",

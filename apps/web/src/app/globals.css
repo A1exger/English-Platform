@@ -1762,6 +1762,73 @@ select.err {
   margin-block-end: 8px;
 }
 
+/* «Continue learning» — Skyeng-style row of started-course tiles that deep-link
+   back into a course. Scrolls horizontally when it overflows the card. */
+.continue-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(200px, 1fr);
+  gap: 12px;
+  margin-block-start: 12px;
+  overflow-x: auto;
+  padding-block-end: 4px;
+}
+.continue-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--card);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.continue-card:hover {
+  border-color: var(--indigo);
+  transform: translateY(-2px);
+}
+.continue-cover {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  background-image: linear-gradient(135deg, var(--indigo-100), var(--spark-100));
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 8px 10px;
+}
+.continue-level {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--indigo-700);
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+}
+.continue-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--indigo-700);
+}
+.continue-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 12px;
+}
+.continue-title {
+  font-size: 14px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.continue-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    APP SHELL — a persistent left rail, a centred content measure.
    Rendered once by (app)/layout.tsx: no remount, no reflash, one profile

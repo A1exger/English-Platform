@@ -300,7 +300,8 @@
     "upcoming": "Ближайшее",
     "seeAll": "Все",
     "noLessons": "Нет предстоящих уроков",
-    "bookLesson": "Записаться на урок"
+    "bookLesson": "Записаться на урок",
+    "continueLearning": "Продолжить обучение"
   },
   "studentProfile": {
     "title": "Профиль ученика",

@@ -300,7 +300,8 @@
     "upcoming": "À venir",
     "seeAll": "Tout voir",
     "noLessons": "Aucune leçon à venir",
-    "bookLesson": "Réserver une leçon"
+    "bookLesson": "Réserver une leçon",
+    "continueLearning": "Continuer l'apprentissage"
   },
   "studentProfile": {
     "title": "Profil de l'élève",
