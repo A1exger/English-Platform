@@ -2589,10 +2589,36 @@ select.err {
   border-start-start-radius: var(--r-md);
   border-start-end-radius: var(--r-md);
 }
-.course-cover-ring {
+/* Skyeng-style course-tile progress: a strip pinned to the cover's bottom edge
+   so completion is scannable across the whole grid. A scrim keeps the % legible
+   over any cover image. */
+.course-progress {
   position: absolute;
-  inset-block-start: 8px;
-  inset-inline-end: 8px;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: linear-gradient(to top, rgba(15, 18, 32, 0.55), transparent);
+}
+.course-progress-bar {
+  flex: 1;
+  block-size: 6px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.course-progress-fill {
+  block-size: 100%;
+  background: #fff;
+  border-radius: var(--r-pill);
+}
+.course-progress-pct {
+  flex: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
 }
 .course-card-main {
   flex: 1;

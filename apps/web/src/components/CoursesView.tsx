@@ -27,7 +27,6 @@ import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
-import { ScoreRing } from './ScoreRing';
 import { EmptyState } from './EmptyState';
 import { GenerateCourseForm } from './GenerateCourseForm';
 
@@ -85,7 +84,12 @@ function CourseCardBody({
       >
         {handle}
         {isStudent && pct !== undefined && (
-          <span className="course-cover-ring"><ScoreRing value={pct} size={44} stroke={4} /></span>
+          <div className="course-progress">
+            <div className="course-progress-bar">
+              <div className="course-progress-fill" style={{ inlineSize: `${pct}%` }} />
+            </div>
+            <span className="course-progress-pct mono-num">{pct}%</span>
+          </div>
         )}
       </div>
       <div className="course-card-main">
