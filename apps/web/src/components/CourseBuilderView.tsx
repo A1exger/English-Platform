@@ -53,6 +53,10 @@ interface LessonRow {
   title: string;
   optional: boolean;
   order: number;
+  // Student-only progress the roadmap reads (courseTree enriches these for
+  // students; undefined for authors).
+  done?: boolean;
+  score?: number | null;
 }
 interface UnitRow {
   id: string;
@@ -458,6 +462,70 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
     </div>
   );
 
+  // Student-facing course roadmap (Skyeng-style): a progress bar, then lessons
+  // grouped by unit with a done ✓ + score, and the current (first not-done
+  // required) lesson highlighted with a «continue» call to action.
+  const roadmapPanel = (() => {
+    const flat = tree.sections.flatMap((s) => s.units.flatMap((u) => u.lessons));
+    const required = flat.filter((l) => !l.optional);
+    const doneRequired = required.filter((l) => l.done).length;
+    const pct = required.length ? Math.round((doneRequired / required.length) * 100) : 0;
+    const currentId = flat.find((l) => !l.optional && !l.done)?.id;
+    return (
+      <div className="roadmap">
+        <div className="card roadmap-progress">
+          <div className="result-bar">
+            <div className="result-bar-fill" style={{ inlineSize: `${pct}%` }} />
+          </div>
+          <span className="mono-num">{pct}%</span>
+        </div>
+        {tree.sections.length === 0 ? (
+          <p className="note">{t('empty')}</p>
+        ) : (
+          tree.sections.map((s) => (
+            <div key={s.id} className="roadmap-section">
+              {tree.sections.length > 1 && <h3 className="roadmap-section-title">{s.title}</h3>}
+              {s.units.map((u) => (
+                <div key={u.id} className="card roadmap-unit">
+                  <strong className="roadmap-unit-title">{u.title}</strong>
+                  {u.lessons.length === 0 ? (
+                    <p className="note">{t('empty')}</p>
+                  ) : (
+                    <ul className="roadmap-lessons">
+                      {u.lessons.map((l) => {
+                        const isCurrent = l.id === currentId;
+                        return (
+                          <li
+                            key={l.id}
+                            className={`roadmap-lesson${l.done ? ' done' : ''}${isCurrent ? ' current' : ''}`}
+                          >
+                            <Link className="roadmap-lesson-link" href={`/learn/${l.id}`}>
+                              <span className="roadmap-lesson-mark" aria-hidden>
+                                {l.done ? <Icon name="check" /> : l.order}
+                              </span>
+                              <span className="roadmap-lesson-title">
+                                {l.title}
+                                {l.optional && <span className="badge-opt">{t('optionalLesson')}</span>}
+                              </span>
+                              {l.done && l.score != null && (
+                                <span className="chip score-chip mono-num">{l.score}</span>
+                              )}
+                              {isCurrent && <span className="roadmap-lesson-cta">{t('continue')}</span>}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  })();
+
   return (
     <div className="content">
       <Link className="link" href="/courses">← {t('back')}</Link>
@@ -491,7 +559,7 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
           </div>
         </div>
       ) : (
-        treePanel
+        roadmapPanel
       )}
 
       {/* Lesson preview as an on-demand popup (student's-eye view) rather than a

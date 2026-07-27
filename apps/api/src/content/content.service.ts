@@ -84,6 +84,43 @@ export class ContentService {
         },
       },
     });
+
+    // Students get their per-lesson progress on the roadmap: a lesson is "done"
+    // when they have a finished (status=done) assignment for it, and its score
+    // is that assignment's overall — the same rule as the progress cabinet
+    // (INV-3). Additive: the author path keeps the plain shape.
+    const student =
+      user.role === 'student'
+        ? await this.prisma.studentProfile.findUnique({ where: { userId: user.id } })
+        : null;
+    if (student) {
+      const finished = await this.prisma.contentAssignment.findMany({
+        where: { studentProfileId: student.id, status: 'done', courseLessonId: { not: null } },
+        include: { result: { select: { overall: true } } },
+      });
+      const byLesson = new Map<string, number | null>();
+      for (const a of finished) {
+        if (!a.courseLessonId) continue;
+        const overall = a.result?.overall ?? null;
+        const prev = byLesson.get(a.courseLessonId);
+        if (prev === undefined || (overall ?? -1) > (prev ?? -1)) {
+          byLesson.set(a.courseLessonId, overall);
+        }
+      }
+      const withProgress = sections.map((s) => ({
+        ...s,
+        units: s.units.map((u) => ({
+          ...u,
+          lessons: u.lessons.map((l) => ({
+            ...l,
+            done: byLesson.has(l.id),
+            score: byLesson.get(l.id) ?? null,
+          })),
+        })),
+      }));
+      return { course, level, sections: withProgress };
+    }
+
     return { course, level, sections };
   }
 

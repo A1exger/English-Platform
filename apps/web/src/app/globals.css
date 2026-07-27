@@ -2976,6 +2976,109 @@ select.err {
   align-self: flex-start;
 }
 
+/* ——— Student course roadmap (Skyeng-style «карта курса») ——— */
+.roadmap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.roadmap-progress {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+.roadmap-progress .result-bar {
+  flex: 1;
+  block-size: 10px;
+}
+.roadmap-section-title {
+  margin: 4px 0;
+  font-family: var(--font-serif);
+  font-size: 16px;
+}
+.roadmap-unit {
+  gap: 10px;
+}
+.roadmap-unit-title {
+  font-size: 15px;
+}
+.roadmap-lessons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.roadmap-lesson-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.roadmap-lesson-link:hover {
+  border-color: var(--indigo);
+  background: var(--cloud);
+}
+.roadmap-lesson-mark {
+  flex: none;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cloud);
+  color: var(--mist);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.roadmap-lesson-mark svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+.roadmap-lesson.done .roadmap-lesson-mark {
+  background: var(--high-100);
+  color: #0f7a4f;
+}
+.roadmap-lesson.current .roadmap-lesson-link {
+  border-color: var(--indigo);
+  background: var(--indigo-50);
+}
+.roadmap-lesson.current .roadmap-lesson-mark {
+  background: var(--indigo);
+  color: #fff;
+}
+.roadmap-lesson-title {
+  flex: 1;
+  min-inline-size: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.score-chip {
+  background: var(--high-100);
+  color: #0f7a4f;
+  font-weight: 700;
+}
+.roadmap-lesson-cta {
+  flex: none;
+  background: var(--indigo);
+  color: #fff;
+  border-radius: var(--r-pill);
+  padding: 4px 12px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+}
+
 /* ——— Stage 8: three-panel editor ——— */
 .builder-3 {
   /* Give the editor the lion's share; the tree and preview stay compact. */
