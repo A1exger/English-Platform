@@ -238,7 +238,8 @@
     "offline": "Не в сети",
     "lessonProgress": "Прогресс урока",
     "stepOf": "Шаг {n} из {total}",
-    "minLeft": "осталось {min} мин"
+    "minLeft": "осталось {min} мин",
+    "stageDone": "Готово"
   },
   "board": {
     "title": "Доска",

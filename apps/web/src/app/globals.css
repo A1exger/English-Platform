@@ -2403,6 +2403,129 @@ select.err {
 .room-broadsheet .board-wrap-embedded .board-toolbar .swatch.active {
   outline-color: var(--rm-accent);
 }
+
+/* ═══ Р2 — «Lesson» tab as a connected stage timeline (variant 1a) ═══ */
+.lesson-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tl-stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tl-stage {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+.tl-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  inline-size: 28px;
+  flex: none;
+}
+.tl-node {
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--rm-card);
+  border: 1.5px solid var(--rm-neutral-100);
+  color: var(--rm-neutral-500);
+}
+.tl-node .icon {
+  inline-size: 15px;
+  block-size: 15px;
+}
+.tl-line {
+  flex: 1;
+  inline-size: 2px;
+  background: var(--rm-line);
+  margin-block-start: 4px;
+}
+.tl-card {
+  flex: 1;
+  min-inline-size: 0;
+  margin-block-end: 12px;
+}
+.tl-card.tl-nav {
+  cursor: pointer;
+}
+.tl-card.tl-nav:hover {
+  border-color: var(--rm-accent);
+}
+.tl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.tl-kicker {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--rm-accent-700);
+}
+.tl-body {
+  margin-block-start: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tl-preview {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--rm-neutral-700);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.tl-done {
+  margin-block-start: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--rm-accent-700);
+}
+.tl-done .icon {
+  inline-size: 15px;
+  block-size: 15px;
+}
+/* done: filled cyan node with a check */
+.tl-stage.tl-done .tl-node {
+  background: var(--rm-accent-700);
+  border-color: var(--rm-accent-700);
+  color: #fff;
+}
+/* current: cyan node with a ring, elevated card */
+.tl-stage.tl-current .tl-node {
+  background: var(--rm-accent-500);
+  border-color: var(--rm-accent-500);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--rm-accent-100);
+}
+.tl-stage.tl-current .tl-card {
+  border-color: var(--rm-accent-200);
+  box-shadow: var(--sh-md);
+}
+/* pending: dimmed */
+.tl-stage.tl-pending {
+  opacity: 0.55;
+}
 /* full-width room toolbar (Skyeng-style): lesson title + tools */
 .room-toolbar {
   grid-column: 1 / -1;

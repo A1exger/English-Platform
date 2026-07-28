@@ -10,7 +10,7 @@ import { BoardCanvas } from './BoardCanvas';
 import { VideoRoom } from './VideoRoom';
 import { LessonExercisePanel } from './LessonExercisePanel';
 import { useLiveLesson } from './useLiveLesson';
-import { LiveMaterial } from './LiveMaterial';
+import { LessonTimeline } from './LessonTimeline';
 import { LiveAnswers } from './LiveAnswers';
 import { LessonPlanPanel } from './LessonPlanPanel';
 import { PageMediaBlock } from './PageMediaBlock';
@@ -255,7 +255,7 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
 
         <div className="room-content-body">
           {tab === 'plan' && <LessonPlanPanel live={live} />}
-          {tab === 'lesson' && <LiveMaterial live={live} />}
+          {tab === 'lesson' && <LessonTimeline live={live} />}
           {tab === 'media' && <PageMediaBlock media={live.page?.media} />}
           {tab === 'grammar' &&
             (grammar ? (

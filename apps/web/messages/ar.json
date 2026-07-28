@@ -238,7 +238,8 @@
     "offline": "غير متصل",
     "lessonProgress": "تقدم الدرس",
     "stepOf": "الخطوة {n} من {total}",
-    "minLeft": "بقيت {min} دقيقة"
+    "minLeft": "بقيت {min} دقيقة",
+    "stageDone": "تم"
   },
   "board": {
     "title": "اللوحة",

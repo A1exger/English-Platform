@@ -238,7 +238,8 @@
     "offline": "Offline",
     "lessonProgress": "Lesson progress",
     "stepOf": "Step {n} of {total}",
-    "minLeft": "{min} min left"
+    "minLeft": "{min} min left",
+    "stageDone": "Done"
   },
   "board": {
     "title": "Whiteboard",

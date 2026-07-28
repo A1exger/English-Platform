@@ -238,7 +238,8 @@
     "offline": "Offline",
     "lessonProgress": "Stundenfortschritt",
     "stepOf": "Schritt {n} von {total}",
-    "minLeft": "noch {min} Min"
+    "minLeft": "noch {min} Min",
+    "stageDone": "Erledigt"
   },
   "board": {
     "title": "Whiteboard",

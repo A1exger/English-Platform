@@ -238,7 +238,8 @@
     "offline": "Hors ligne",
     "lessonProgress": "Progression du cours",
     "stepOf": "Étape {n} sur {total}",
-    "minLeft": "{min} min restantes"
+    "minLeft": "{min} min restantes",
+    "stageDone": "Terminé"
   },
   "board": {
     "title": "Tableau",

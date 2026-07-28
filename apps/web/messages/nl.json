@@ -238,7 +238,8 @@
     "offline": "Offline",
     "lessonProgress": "Lesvoortgang",
     "stepOf": "Stap {n} van {total}",
-    "minLeft": "{min} min resterend"
+    "minLeft": "{min} min resterend",
+    "stageDone": "Klaar"
   },
   "board": {
     "title": "Whiteboard",
