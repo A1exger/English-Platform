@@ -217,7 +217,19 @@
     "planLesson": "Lesplan",
     "planHomework": "Huiswerkplan",
     "inHomework": "in huiswerk",
-    "planEmpty": "Nog geen fasen in het huiswerk."
+    "planEmpty": "Nog geen fasen in het huiswerk.",
+    "notes": "Notities",
+    "notesHint": "Privénotities voor deze les, opgeslagen op dit apparaat.",
+    "dictionary": "Woordenboek",
+    "word": "Woord",
+    "translation": "Vertaling",
+    "addWord": "Woord toevoegen",
+    "added": "Toegevoegd ✓",
+    "help": "Help",
+    "helpBoard": "Zet het bord aan om samen te tekenen.",
+    "helpChat": "Chat, microfoon en camera zitten in de videobediening.",
+    "helpNav": "De docent leidt iedereen door de fasen.",
+    "leave": "Verlaten"
   },
   "board": {
     "title": "Whiteboard",

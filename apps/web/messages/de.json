@@ -217,7 +217,19 @@
     "planLesson": "Unterrichtsplan",
     "planHomework": "Hausaufgabenplan",
     "inHomework": "in HA",
-    "planEmpty": "Noch keine Etappen in den Hausaufgaben."
+    "planEmpty": "Noch keine Etappen in den Hausaufgaben.",
+    "notes": "Notizen",
+    "notesHint": "Private Notizen zu dieser Stunde, auf diesem Gerät gespeichert.",
+    "dictionary": "Wörterbuch",
+    "word": "Wort",
+    "translation": "Übersetzung",
+    "addWord": "Wort hinzufügen",
+    "added": "Hinzugefügt ✓",
+    "help": "Hilfe",
+    "helpBoard": "Schalte das Board ein, um gemeinsam zu zeichnen.",
+    "helpChat": "Chat, Mikrofon und Kamera sind in den Video-Steuerungen.",
+    "helpNav": "Die Lehrkraft führt alle durch die Etappen.",
+    "leave": "Verlassen"
   },
   "board": {
     "title": "Whiteboard",

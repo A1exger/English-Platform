@@ -217,7 +217,19 @@
     "planLesson": "Lesson plan",
     "planHomework": "Homework plan",
     "inHomework": "in homework",
-    "planEmpty": "No stages in homework yet."
+    "planEmpty": "No stages in homework yet.",
+    "notes": "Notes",
+    "notesHint": "Private notes for this lesson, saved on this device.",
+    "dictionary": "Dictionary",
+    "word": "Word",
+    "translation": "Translation",
+    "addWord": "Add word",
+    "added": "Added ✓",
+    "help": "Help",
+    "helpBoard": "Toggle the board to draw together.",
+    "helpChat": "Chat, mic and camera are in the video controls.",
+    "helpNav": "The teacher moves everyone through the stages.",
+    "leave": "Leave"
   },
   "board": {
     "title": "Whiteboard",

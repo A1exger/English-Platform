@@ -217,7 +217,19 @@
     "planLesson": "Plan du cours",
     "planHomework": "Plan des devoirs",
     "inHomework": "en devoirs",
-    "planEmpty": "Aucune étape dans les devoirs."
+    "planEmpty": "Aucune étape dans les devoirs.",
+    "notes": "Notes",
+    "notesHint": "Notes privées pour ce cours, enregistrées sur cet appareil.",
+    "dictionary": "Dictionnaire",
+    "word": "Mot",
+    "translation": "Traduction",
+    "addWord": "Ajouter un mot",
+    "added": "Ajouté ✓",
+    "help": "Aide",
+    "helpBoard": "Activez le tableau pour dessiner ensemble.",
+    "helpChat": "Le chat, le micro et la caméra sont dans les commandes vidéo.",
+    "helpNav": "Le professeur guide tout le monde à travers les étapes.",
+    "leave": "Quitter"
   },
   "board": {
     "title": "Tableau",

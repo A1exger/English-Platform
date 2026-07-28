@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '@/i18n/routing';
+import { apiFetch } from '@/lib/api';
+import { tokenStore } from '@/lib/auth';
+import { Icon } from './Icon';
 import { BoardCanvas } from './BoardCanvas';
 import { VideoRoom } from './VideoRoom';
 import { LessonExercisePanel } from './LessonExercisePanel';
@@ -14,22 +18,139 @@ import { useBoardSocket } from '@/lib/board';
 
 type Tab = 'plan' | 'lesson' | 'media' | 'grammar' | 'answers' | 'exercise';
 
-// Skyeng-style room (Э1): a 50/50 split — the left stage shows the video full,
-// and toggling the board swaps the board in with the video shrunk to a corner
-// PiP. The right panel holds the lesson content in tabs (Урок / Вложения /
-// Грамматика, plus teacher tools) with the page stepper at the bottom. Drawing
-// still rides the /board socket and page sync the /session envelope — unchanged.
+// Personal notes — private to the viewer, saved on this device only (the board's
+// own notes are shared over the socket; this is a private scratchpad).
+function RoomNotes({ lessonId, label, hint }: { lessonId: string; label: string; hint: string }) {
+  const key = `room-notes:${lessonId}`;
+  const [value, setValue] = useState('');
+  useEffect(() => {
+    try {
+      setValue(localStorage.getItem(key) ?? '');
+    } catch {
+      /* ignore */
+    }
+  }, [key]);
+  function onChange(v: string) {
+    setValue(v);
+    try {
+      localStorage.setItem(key, v);
+    } catch {
+      /* ignore */
+    }
+  }
+  return (
+    <details className="room-tool">
+      <summary aria-label={label}>
+        <Icon name="edit" /> <span className="room-tool-label">{label}</span>
+      </summary>
+      <div className="room-tool-pop">
+        <p className="muted room-tool-hint">{hint}</p>
+        <textarea rows={8} value={value} onChange={(e) => onChange(e.target.value)} />
+      </div>
+    </details>
+  );
+}
+
+// Quick add-to-dictionary (students) — posts a word to the personal dictionary
+// without leaving the room.
+function RoomDictionary({
+  locale,
+  tr
+}: {
+  locale: string;
+  tr: ReturnType<typeof useTranslations>;
+}) {
+  const [word, setWord] = useState('');
+  const [translation, setTranslation] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function add() {
+    const token = tokenStore.get();
+    if (!token || !word.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch('/content/dictionary', {
+        method: 'POST',
+        token,
+        locale,
+        body: { word: word.trim(), translation: translation.trim() || undefined }
+      });
+      setWord('');
+      setTranslation('');
+      setDone(true);
+      setTimeout(() => setDone(false), 1500);
+    } catch {
+      /* ignore — best-effort */
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <details className="room-tool">
+      <summary aria-label={tr('dictionary')}>
+        <Icon name="book" /> <span className="room-tool-label">{tr('dictionary')}</span>
+      </summary>
+      <div className="room-tool-pop">
+        <label className="room-tool-field">
+          {tr('word')}
+          <input value={word} onChange={(e) => setWord(e.target.value)} />
+        </label>
+        <label className="room-tool-field">
+          {tr('translation')}
+          <input value={translation} onChange={(e) => setTranslation(e.target.value)} />
+        </label>
+        <button type="button" disabled={busy || !word.trim()} onClick={add}>
+          {done ? tr('added') : tr('addWord')}
+        </button>
+      </div>
+    </details>
+  );
+}
+
+// Help — a short reminder of where the room's tools live (chat/mic/camera are in
+// the video controls; drawing is the board; the teacher drives the stages).
+function RoomHelp({ tr }: { tr: ReturnType<typeof useTranslations> }) {
+  return (
+    <details className="room-tool">
+      <summary aria-label={tr('help')}>
+        <Icon name="help" /> <span className="room-tool-label">{tr('help')}</span>
+      </summary>
+      <div className="room-tool-pop">
+        <ul className="room-help">
+          <li>{tr('helpBoard')}</li>
+          <li>{tr('helpChat')}</li>
+          <li>{tr('helpNav')}</li>
+        </ul>
+      </div>
+    </details>
+  );
+}
+
+// Skyeng-style room (Э1): a full-width toolbar on top, then a 50/50 split — the
+// left stage shows the video full, and toggling the board swaps it in with the
+// video shrunk to a corner PiP. The right panel carries a stage header, the
+// lesson content in tabs, and the page stepper. Drawing still rides the /board
+// socket and page sync the /session envelope — unchanged.
 export function LessonRoom({ lessonId }: { lessonId: string }) {
   const tr = useTranslations('room');
   const t = useTranslations('learn');
+  const locale = useLocale();
   const live = useLiveLesson(lessonId);
   const board = useBoardSocket(lessonId);
   const [showBoard, setShowBoard] = useState(false);
   const [tab, setTab] = useState<Tab>('lesson');
 
-  const { lesson, pageIdx, totalSteps, isTeacher } = live;
+  const { lesson, pageIdx, totalSteps, isTeacher, isStudent } = live;
   const pageLabel = pageIdx === 0 ? t('preparation') : String(pageIdx);
   const grammar = lesson?.grammarReference;
+
+  // The current stage's name + how far through the lesson we are (0–100),
+  // shown in the content header (#45).
+  const stageName =
+    pageIdx === 0 ? t('preparation') : live.page?.title || live.page?.type || pageLabel;
+  const stagePct = totalSteps > 1 ? Math.round((pageIdx / (totalSteps - 1)) * 100) : 0;
 
   // Follow the teacher onto the board: when a stroke arrives and the student is
   // watching the video, switch their stage to the board so they see the drawing.
@@ -46,9 +167,15 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
 
   return (
     <div className="lesson-room room-5050">
-      {/* LEFT: video ⇄ board (video shrinks to a PiP when the board is on) */}
-      <section className="room-stage">
-        <div className="room-stage-bar">
+      {/* TOP: full-width room toolbar (title + tools) */}
+      <div className="room-toolbar">
+        <div className="room-toolbar-title">
+          <span className={`room-live-dot${live.joined ? ' on' : ''}`}>
+            {live.joined ? `● ${tr('live')}` : '○ …'}
+          </span>
+          {lesson && <strong className="room-toolbar-lesson">{lesson.title}</strong>}
+        </div>
+        <div className="room-toolbar-tools">
           <div className="segmented">
             <button type="button" className={!showBoard ? 'active' : ''} onClick={() => setShowBoard(false)}>
               {tr('video')}
@@ -57,8 +184,17 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
               {tr('board')}
             </button>
           </div>
-          <span className="muted mono-num room-live">{live.joined ? `● ${tr('live')}` : '○ …'}</span>
+          <RoomNotes lessonId={lessonId} label={tr('notes')} hint={tr('notesHint')} />
+          {isStudent && <RoomDictionary locale={locale} tr={tr} />}
+          <RoomHelp tr={tr} />
+          <Link href="/dashboard" className="room-tool room-leave">
+            <Icon name="logout" /> <span className="room-tool-label">{tr('leave')}</span>
+          </Link>
         </div>
+      </div>
+
+      {/* LEFT: video ⇄ board (video shrinks to a PiP when the board is on) */}
+      <section className="room-stage">
         <div className="room-stage-body">
           {/* Both are always mounted: the board keeps its /board sync (strokes
               are never lost when the teacher is on video), and the video keeps
@@ -72,8 +208,23 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
         </div>
       </section>
 
-      {/* RIGHT: lesson content in tabs + stepper */}
+      {/* RIGHT: stage header + lesson content in tabs + stepper */}
       <aside className="room-content">
+        {lesson && (
+          <div className="room-content-head">
+            <div className="room-content-head-main">
+              <span className="room-content-kicker mono-num">
+                {tr('pageLabel')} {pageLabel}
+                {pageIdx > 0 ? ` / ${lesson.pages.length}` : ''}
+              </span>
+              <strong className="room-content-stage">{stageName}</strong>
+            </div>
+            <span className="room-content-badge mono-num" aria-label={`${stagePct}%`}>
+              {stagePct}%
+            </span>
+          </div>
+        )}
+
         <div className="tabs room-content-tabs" role="tablist">
           <button type="button" role="tab" aria-selected={tab === 'plan'} className={tab === 'plan' ? 'active' : ''} onClick={() => setTab('plan')}>
             {tr('planTab')}
