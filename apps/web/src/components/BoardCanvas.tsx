@@ -33,12 +33,16 @@ function apiOrigin(): string {
 
 export function BoardCanvas({
   lessonId,
-  socket: sharedSocket
+  socket: sharedSocket,
+  embedded = false
 }: {
   lessonId: string;
   // When the room lifts a single /board connection (Sprint 3 #5) it passes it
   // here; standalone (the /board route) opens its own.
   socket?: Socket | null;
+  // Inside the lesson room the shell already provides the exit + status, so the
+  // board toolbar drops its Back link and connection tag (light, clean row).
+  embedded?: boolean;
 }) {
   const t = useTranslations('board');
   const router = useRouter();
@@ -251,11 +255,13 @@ export function BoardCanvas({
   }
 
   return (
-    <div className="board-wrap">
+    <div className={`board-wrap${embedded ? ' board-wrap-embedded' : ''}`}>
       <div className="board-toolbar">
-        <Link className="link" href="/schedule">
-          ← {t('back')}
-        </Link>
+        {!embedded && (
+          <Link className="link" href="/schedule">
+            ← {t('back')}
+          </Link>
+        )}
         <button
           type="button"
           className={!erasing ? 'active' : ''}
@@ -298,9 +304,11 @@ export function BoardCanvas({
         >
           <Icon name="edit" /> {t('notes')}
         </button>
-        <span className="muted">
-          {status === 'connected' ? `● ${t('connected')}` : `○ ${t('connecting')}`}
-        </span>
+        {!embedded && (
+          <span className="muted">
+            {status === 'connected' ? `● ${t('connected')}` : `○ ${t('connecting')}`}
+          </span>
+        )}
       </div>
       <div className="board-stage">
         <canvas

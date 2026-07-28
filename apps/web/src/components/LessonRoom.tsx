@@ -28,39 +28,6 @@ const CEFR: Record<string, string> = {
   Advanced: 'C1'
 };
 
-// Personal notes — private to the viewer, saved on this device only (the board's
-// own notes are shared over the socket; this is a private scratchpad).
-function RoomNotes({ lessonId, label, hint }: { lessonId: string; label: string; hint: string }) {
-  const key = `room-notes:${lessonId}`;
-  const [value, setValue] = useState('');
-  useEffect(() => {
-    try {
-      setValue(localStorage.getItem(key) ?? '');
-    } catch {
-      /* ignore */
-    }
-  }, [key]);
-  function onChange(v: string) {
-    setValue(v);
-    try {
-      localStorage.setItem(key, v);
-    } catch {
-      /* ignore */
-    }
-  }
-  return (
-    <details className="room-tool">
-      <summary aria-label={label}>
-        <Icon name="edit" /> <span className="room-tool-label">{label}</span>
-      </summary>
-      <div className="room-tool-pop">
-        <p className="muted room-tool-hint">{hint}</p>
-        <textarea rows={8} value={value} onChange={(e) => onChange(e.target.value)} />
-      </div>
-    </details>
-  );
-}
-
 // Quick add-to-dictionary (students) — posts a word to the personal dictionary
 // without leaving the room.
 function RoomDictionary({
@@ -230,7 +197,6 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
             </button>
           </div>
           <div className="room-stage-tools">
-            <RoomNotes lessonId={lessonId} label={tr('notes')} hint={tr('notesHint')} />
             {isStudent && <RoomDictionary locale={locale} tr={tr} />}
             <RoomHelp tr={tr} />
           </div>
@@ -240,7 +206,7 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
               are never lost when the teacher is on video), and the video keeps
               its LiveKit connection. z-index / PiP decide what's on top. */}
           <div className={`room-board-layer${showBoard ? ' show' : ''}`}>
-            <BoardCanvas lessonId={lessonId} socket={board} />
+            <BoardCanvas lessonId={lessonId} socket={board} embedded />
           </div>
           <div className={showBoard ? 'room-video-pip' : 'room-video-full'}>
             <VideoRoom lessonId={lessonId} />
@@ -254,8 +220,7 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
           <div className="room-content-head">
             <div className="room-content-head-main">
               <span className="room-content-kicker mono-num">
-                {tr('pageLabel')} {pageLabel}
-                {pageIdx > 0 ? ` / ${lesson.pages.length}` : ''}
+                {tr('pageLabel')} {pageIdx + 1} / {totalSteps}
               </span>
               <strong className="room-content-stage">{stageName}</strong>
             </div>

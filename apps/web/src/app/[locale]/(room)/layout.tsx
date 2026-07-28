@@ -1,11 +1,10 @@
 import { setRequestLocale } from 'next-intl/server';
-import { getTranslations } from 'next-intl/server';
-import { Link } from '@/i18n/routing';
 import { ToastProvider } from '@/components/Toast';
 import { IdleGuard } from '@/components/IdleGuard';
 
-// Immersive lesson shell: no rail (the lesson is the whole screen), just a slim
-// bar so there is always a way back out.
+// Immersive lesson shell: no rail and no top bar — the lesson room draws its own
+// header (leave · title · level · status), and the standalone board keeps its own
+// toolbar «← Back». So the shell is just the providers + a full-bleed wrapper.
 export default async function RoomLayout({
   children,
   params: { locale }
@@ -14,18 +13,10 @@ export default async function RoomLayout({
   params: { locale: string };
 }) {
   setRequestLocale(locale);
-  const t = await getTranslations('room');
   return (
     <ToastProvider>
       <IdleGuard />
-      <div className="room-shell">
-        <header className="room-bar">
-          <Link href="/dashboard" className="room-exit">
-            ← {t('exit')}
-          </Link>
-        </header>
-        {children}
-      </div>
+      <div className="room-shell">{children}</div>
     </ToastProvider>
   );
 }

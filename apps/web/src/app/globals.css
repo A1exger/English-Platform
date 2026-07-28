@@ -2231,13 +2231,17 @@ select.err {
 /* ——— Sprint 3: editorial live room (material hero + dark video rail) ——— */
 .lesson-room.room-5050 {
   position: fixed;
-  inset: 56px 0 0 0;
+  inset: 0; /* the room draws its own header now — no layout bar above it */
   display: grid;
   grid-template-columns: 1fr 1fr; /* 50 / 50: stage | content */
   grid-template-rows: auto auto 1fr; /* header · progress · the split */
   gap: 10px 12px;
   padding: 10px 12px 12px;
   background: var(--paper);
+}
+/* standalone /board page fills the shell now that the top bar is gone */
+.room-shell > .board-wrap {
+  block-size: 100vh;
 }
 
 /* ═══ Room redesign — Broadsheet look, scoped to the room only (Р1) ═══
@@ -2375,6 +2379,29 @@ select.err {
 .room-broadsheet .room-content-badge {
   background: var(--rm-accent-100);
   color: var(--rm-accent-800);
+}
+/* Embedded board: a light Broadsheet area (only visible in Board mode), so the
+   draw toolbar reads as a clean light row rather than sitting on the dark stage. */
+.room-broadsheet .board-wrap-embedded {
+  background: var(--rm-paper);
+  gap: 8px;
+  padding: 8px;
+}
+.room-broadsheet .board-wrap-embedded .board-toolbar {
+  background: var(--rm-card);
+  border: 1px solid var(--rm-line);
+  border-radius: var(--r-md);
+  padding: 6px 8px;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+.room-broadsheet .board-wrap-embedded .board-toolbar button.active {
+  background: var(--rm-accent-100);
+  color: var(--rm-accent-800);
+  border-color: var(--rm-accent);
+}
+.room-broadsheet .board-wrap-embedded .board-toolbar .swatch.active {
+  outline-color: var(--rm-accent);
 }
 /* full-width room toolbar (Skyeng-style): lesson title + tools */
 .room-toolbar {
@@ -2687,6 +2714,15 @@ select.err {
 .plan-stage-name {
   font-weight: 600;
   text-transform: capitalize;
+  color: var(--ink);
+}
+/* room: cyan active stage with readable ink text */
+.room-broadsheet .plan-stage.active > button {
+  background: var(--rm-accent-100);
+  border-color: var(--rm-accent);
+}
+.room-broadsheet .plan-stage-name {
+  color: var(--rm-ink);
 }
 .plan-stage-meta {
   font-size: 12px;
