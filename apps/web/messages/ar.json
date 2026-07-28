@@ -160,7 +160,11 @@
     "view": "العرض",
     "book": "احجز درسًا",
     "cancel": "إلغاء",
-    "timezone": "الأوقات بتوقيت {tz}"
+    "timezone": "الأوقات بتوقيت {tz}",
+    "material": "المادة",
+    "noMaterial": "بدون مادة",
+    "level": "المستوى",
+    "lesson": "الدرس"
   },
   "billing": {
     "title": "الفواتير",

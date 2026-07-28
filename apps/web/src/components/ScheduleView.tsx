@@ -17,6 +17,10 @@ interface Lesson {
   status: string;
 }
 
+// CEFR levels a course's sections use (mirrors the API CONTENT_LEVELS) — the
+// tree endpoint is per-level, so the material picker needs one.
+const LEVELS = ['Beginner', 'Elementary', 'PreIntermediate', 'Intermediate', 'UpperIntermediate', 'Advanced'];
+
 function startOfWeek(d: Date): Date {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -49,8 +53,19 @@ export function ScheduleView() {
   const [anchor, setAnchor] = useState<Date | null>(null);
   const [busy, setBusy] = useState(false);
   const [slot, setSlot] = useState<{ date: Date; key: string } | null>(null);
-  const [form, setForm] = useState({ title: '', duration: '60', price: '25', studentProfileId: '' });
+  const [form, setForm] = useState({
+    title: '',
+    duration: '60',
+    price: '25',
+    studentProfileId: '',
+    courseId: '',
+    materialLessonId: ''
+  });
   const [students, setStudents] = useState<{ studentProfileId: string; name: string }[]>([]);
+  // Material picker: courses to teach + the lessons of the chosen course/level.
+  const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
+  const [matLevel, setMatLevel] = useState('Elementary');
+  const [matLessons, setMatLessons] = useState<{ id: string; title: string }[]>([]);
 
   // Times are shown in the viewer's own zone; make that explicit.
   const tz = useMemo(() => {
@@ -94,6 +109,11 @@ export function ScheduleView() {
             locale
           }).catch(() => [])
         );
+        const catalog = await apiFetch<{ courses: { id: string; title: string }[] }[]>(
+          '/content/catalog',
+          { token, locale }
+        ).catch(() => []);
+        setCourses(catalog.flatMap((c) => c.courses ?? []));
       }
       setState('ready');
     } catch (e) {
@@ -108,6 +128,30 @@ export function ScheduleView() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Load the chosen course's lessons for the selected level (the tree endpoint
+  // is per-level). Runs only while a course is picked in the slot form.
+  useEffect(() => {
+    const token = tokenStore.get();
+    if (!token || !form.courseId) {
+      setMatLessons([]);
+      return;
+    }
+    let cancelled = false;
+    void apiFetch<{ sections: { units: { lessons: { id: string; title: string }[] }[] }[] }>(
+      `/content/courses/${form.courseId}/tree?level=${matLevel}`,
+      { token, locale }
+    )
+      .then((tree) => {
+        if (!cancelled) setMatLessons(tree.sections.flatMap((s) => s.units.flatMap((u) => u.lessons)));
+      })
+      .catch(() => {
+        if (!cancelled) setMatLessons([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [form.courseId, matLevel, locale]);
 
   const rangeStart = days[0];
   const rangeEnd = useMemo(() => {
@@ -163,7 +207,7 @@ export function ScheduleView() {
     const date = new Date(days[dayIndex]);
     date.setHours(hour, 0, 0, 0);
     setSlot({ date, key: `${dayIndex}-${hour}` });
-    setForm({ title: '', duration: '60', price: '25', studentProfileId: '' });
+    setForm({ title: '', duration: '60', price: '25', studentProfileId: '', courseId: '', materialLessonId: '' });
   }
 
   async function createLesson(e: FormEvent) {
@@ -183,7 +227,8 @@ export function ScheduleView() {
           startsAt: start.toISOString(),
           endsAt: end.toISOString(),
           priceCents: Math.round((Number(form.price) || 0) * 100),
-          studentProfileIds: form.studentProfileId ? [form.studentProfileId] : undefined
+          studentProfileIds: form.studentProfileId ? [form.studentProfileId] : undefined,
+          materialLessonId: form.materialLessonId || undefined
         }
       });
       setSlot(null);
@@ -236,6 +281,42 @@ export function ScheduleView() {
             ))}
           </select>
         </label>
+        <label>
+          {t('material')}
+          <select
+            value={form.courseId}
+            onChange={(e) => setForm({ ...form, courseId: e.target.value, materialLessonId: '' })}
+          >
+            <option value="">{t('noMaterial')}</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+          </select>
+        </label>
+        {form.courseId && (
+          <div className="slot-material">
+            <label>
+              {t('level')}
+              <select value={matLevel} onChange={(e) => setMatLevel(e.target.value)}>
+                {LEVELS.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('lesson')}
+              <select
+                value={form.materialLessonId}
+                onChange={(e) => setForm({ ...form, materialLessonId: e.target.value })}
+              >
+                <option value="">—</option>
+                {matLessons.map((l) => (
+                  <option key={l.id} value={l.id}>{l.title}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
         <label>
           {t('duration')}
           <input type="number" min={15} step={15} value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />

@@ -84,6 +84,7 @@ export class LessonsService {
         priceCents: dto.priceCents ?? 0,
         currency: dto.currency ?? 'EUR',
         meetingUrl: dto.meetingUrl,
+        materialLessonId: dto.materialLessonId || null,
         ...(dto.studentProfileIds && dto.studentProfileIds.length > 0
           ? {
               participants: {

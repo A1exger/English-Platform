@@ -160,7 +160,11 @@
     "view": "Vue",
     "book": "Réserver une leçon",
     "cancel": "Annuler",
-    "timezone": "Heures affichées en {tz}"
+    "timezone": "Heures affichées en {tz}",
+    "material": "Matériel",
+    "noMaterial": "Aucun matériel",
+    "level": "Niveau",
+    "lesson": "Leçon"
   },
   "billing": {
     "title": "Facturation",

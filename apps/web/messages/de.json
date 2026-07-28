@@ -160,7 +160,11 @@
     "view": "Ansicht",
     "book": "Stunde buchen",
     "cancel": "Abbrechen",
-    "timezone": "Zeiten in {tz}"
+    "timezone": "Zeiten in {tz}",
+    "material": "Material",
+    "noMaterial": "Kein Material",
+    "level": "Niveau",
+    "lesson": "Lektion"
   },
   "billing": {
     "title": "Abrechnung",

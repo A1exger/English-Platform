@@ -160,7 +160,11 @@
     "view": "Weergave",
     "book": "Een les boeken",
     "cancel": "Annuleren",
-    "timezone": "Tijden in {tz}"
+    "timezone": "Tijden in {tz}",
+    "material": "Materiaal",
+    "noMaterial": "Geen materiaal",
+    "level": "Niveau",
+    "lesson": "Les"
   },
   "billing": {
     "title": "Facturatie",

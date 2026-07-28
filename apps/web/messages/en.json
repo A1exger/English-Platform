@@ -160,7 +160,11 @@
     "view": "View",
     "book": "Book a lesson",
     "cancel": "Cancel",
-    "timezone": "Times shown in {tz}"
+    "timezone": "Times shown in {tz}",
+    "material": "Material",
+    "noMaterial": "No material",
+    "level": "Level",
+    "lesson": "Lesson"
   },
   "billing": {
     "title": "Billing",

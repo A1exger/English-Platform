@@ -3759,6 +3759,15 @@ input[type='radio']:focus-visible {
 .slot-popover-head strong {
   font-size: 13px;
 }
+/* level + lesson sit side by side under the material course select */
+.slot-material {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.slot-material label {
+  min-inline-size: 0;
+}
 
 /* 6.9 mobile — verify the dense grids at ~380px */
 @media (max-width: 560px) {
