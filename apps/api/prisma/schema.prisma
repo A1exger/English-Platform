@@ -123,6 +123,10 @@ model Lesson {
   currency         String   @default("EUR")
   meetingUrl       String?
   boardId          String?
+  // The course lesson (content) a tutor teaches in this slot. A loose id like
+  // boardId — the room loads it and tolerates a dangling ref — so the material
+  // survives a device change and the student reliably opens onto it.
+  materialLessonId String?
   recurrenceRuleId String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

@@ -175,6 +175,9 @@ export class LessonsService {
         ...(dto.endsAt !== undefined ? { endsAt } : {}),
         ...(dto.status !== undefined ? { status: dto.status } : {}),
         ...(dto.meetingUrl !== undefined ? { meetingUrl: dto.meetingUrl } : {}),
+        ...(dto.materialLessonId !== undefined
+          ? { materialLessonId: dto.materialLessonId || null }
+          : {}),
       },
       include: LESSON_INCLUDE,
     });

@@ -158,8 +158,19 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
       } catch {
         /* ignore */
       }
+      // Persist the attachment on the calendar lesson (tutor-only endpoint) so
+      // it survives a device change and the student reliably opens onto it.
+      const token = tokenStore.get();
+      if (token) {
+        void apiFetch(`/lessons/${lessonId}`, {
+          method: 'PATCH',
+          token,
+          locale,
+          body: { materialLessonId: id }
+        }).catch(() => undefined);
+      }
     },
-    [loadLesson, emit, lessonId]
+    [loadLesson, emit, lessonId, locale]
   );
 
   useEffect(() => {
@@ -183,13 +194,27 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
         const flat = catalog.flatMap((c) => c.courses ?? []);
         setCourses(flat);
         if (flat[0]) setCourseId(flat[0].id);
-        // Reopen ready: push the remembered material for this lesson (#7).
+      }
+      if (r === 'other') return;
+      // Open onto the material attached to this calendar lesson (server-side, so
+      // it survives a device change). Teachers fall back to the last material
+      // they taught here (localStorage). Guarded by lessonRef so this only fills
+      // in material — it never overrides one an active /session already pushed.
+      const cal = await apiFetch<{ materialLessonId?: string | null }>(`/lessons/${lessonId}`, {
+        token,
+        locale
+      }).catch(() => null);
+      let attached = cal?.materialLessonId ?? null;
+      if (!attached && r === 'teacher') {
         try {
-          const remembered = localStorage.getItem(materialKey(lessonId));
-          if (remembered) loadMaterialLive(remembered);
+          attached = localStorage.getItem(materialKey(lessonId));
         } catch {
           /* ignore */
         }
+      }
+      if (attached && !lessonRef.current) {
+        if (r === 'teacher') loadMaterialLive(attached);
+        else void loadLesson(attached);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
