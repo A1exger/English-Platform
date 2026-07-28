@@ -36,6 +36,7 @@ export interface LivePageRow {
 export interface LiveLesson {
   id: string;
   title: string;
+  level?: string | null;
   objectives: string[];
   pages: LivePageRow[];
   wordlist?: { entries: { word: string; translation?: string | null }[] } | null;

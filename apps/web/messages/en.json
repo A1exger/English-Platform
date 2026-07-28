@@ -233,7 +233,12 @@
     "helpBoard": "Toggle the board to draw together.",
     "helpChat": "Chat, mic and camera are in the video controls.",
     "helpNav": "The teacher moves everyone through the stages.",
-    "leave": "Leave"
+    "leave": "Leave",
+    "connected": "Connected",
+    "offline": "Offline",
+    "lessonProgress": "Lesson progress",
+    "stepOf": "Step {n} of {total}",
+    "minLeft": "{min} min left"
   },
   "board": {
     "title": "Whiteboard",

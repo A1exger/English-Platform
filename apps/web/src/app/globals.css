@@ -2234,10 +2234,147 @@ select.err {
   inset: 56px 0 0 0;
   display: grid;
   grid-template-columns: 1fr 1fr; /* 50 / 50: stage | content */
-  grid-template-rows: auto 1fr; /* toolbar spans the top, then the split */
-  gap: 12px;
-  padding: 12px;
+  grid-template-rows: auto auto 1fr; /* header · progress · the split */
+  gap: 10px 12px;
+  padding: 10px 12px 12px;
   background: var(--paper);
+}
+
+/* ═══ Room redesign — Broadsheet look, scoped to the room only (Р1) ═══
+   Cyan/magenta process accents on paper, Source Serif 4 headings. The tokens
+   live on the room root so nothing outside the room is affected. */
+.room-broadsheet {
+  --rm-accent: #0088b0;
+  --rm-accent-100: #d7eef4;
+  --rm-accent-200: #b6e0eb;
+  --rm-accent-500: #0088b0;
+  --rm-accent-700: #026a8c;
+  --rm-accent-800: #054e66;
+  --rm-accent-2: #d6006c;
+  --rm-accent-2-100: #fbd7e7;
+  --rm-accent-2-700: #a80057;
+  --rm-ink: #201e1d;
+  --rm-paper: #f3f2f2;
+  --rm-card: #ffffff;
+  --rm-line: #e3e1e0;
+  --rm-neutral-100: #ececeb;
+  --rm-neutral-500: #8a8785;
+  --rm-neutral-600: #6f6c6a;
+  --rm-neutral-700: #565351;
+  background: var(--rm-paper);
+}
+.room-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 2px 8px;
+  min-inline-size: 0;
+}
+.room-back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rm-accent-700);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+.room-back:hover {
+  color: var(--rm-accent-800);
+}
+.room-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--rm-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+.room-tag {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.room-tag-neutral {
+  background: var(--rm-neutral-100);
+  color: var(--rm-neutral-700);
+}
+.room-tag-accent {
+  background: var(--rm-accent-100);
+  color: var(--rm-accent-800);
+}
+.room-tag-accent.off {
+  background: var(--rm-neutral-100);
+  color: var(--rm-neutral-600);
+}
+.room-header-status {
+  margin-inline-start: auto;
+  display: flex;
+  gap: 8px;
+}
+.room-progress {
+  grid-column: 1 / -1;
+  padding: 0 8px 2px;
+}
+.room-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--rm-neutral-600);
+  margin-block-end: 6px;
+}
+.room-progressbar {
+  block-size: 4px;
+  border-radius: 2px;
+  background: #dedcdb;
+  overflow: hidden;
+}
+.room-progressbar-fill {
+  block-size: 100%;
+  background: var(--rm-accent-500);
+  border-radius: 2px;
+  transition: inline-size 0.3s ease;
+}
+.room-stage-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Broadsheet accents on the room's shared components, scoped to the room */
+.room-broadsheet .room-content,
+.room-broadsheet .room-stage {
+  border-color: var(--rm-line);
+}
+.room-broadsheet .room-content-tabs,
+.room-broadsheet .room-content-head,
+.room-broadsheet .room-stepper {
+  border-color: var(--rm-line);
+}
+.room-broadsheet .room-content-tabs button.active {
+  color: var(--rm-ink);
+  border-block-end-color: var(--rm-accent);
+}
+.room-broadsheet .segmented button.active {
+  background: var(--rm-accent);
+  color: #fff;
+}
+.room-broadsheet .room-content-stage {
+  color: var(--rm-ink);
+}
+.room-broadsheet .room-content-badge {
+  background: var(--rm-accent-100);
+  color: var(--rm-accent-800);
 }
 /* full-width room toolbar (Skyeng-style): lesson title + tools */
 .room-toolbar {
@@ -2417,9 +2554,10 @@ select.err {
 .room-stage-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 10px 14px;
-  border-block-end: 1px solid var(--line);
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-block-end: 1px solid var(--rm-line, var(--line));
   flex: 0 0 auto;
 }
 .room-stage-body {

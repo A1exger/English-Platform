@@ -233,7 +233,12 @@
     "helpBoard": "Schalte das Board ein, um gemeinsam zu zeichnen.",
     "helpChat": "Chat, Mikrofon und Kamera sind in den Video-Steuerungen.",
     "helpNav": "Die Lehrkraft führt alle durch die Etappen.",
-    "leave": "Verlassen"
+    "leave": "Verlassen",
+    "connected": "Verbunden",
+    "offline": "Offline",
+    "lessonProgress": "Stundenfortschritt",
+    "stepOf": "Schritt {n} von {total}",
+    "minLeft": "noch {min} Min"
   },
   "board": {
     "title": "Whiteboard",

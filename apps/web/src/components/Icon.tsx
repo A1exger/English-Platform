@@ -17,7 +17,8 @@ export type IconName =
   | 'search'
   | 'book'
   | 'help'
-  | 'logout';
+  | 'logout'
+  | 'arrow-left';
 
 const STROKE: Partial<Record<IconName, ReactNode>> = {
   close: <path d="M6 6l12 12M18 6L6 18" />,
@@ -76,6 +77,12 @@ const STROKE: Partial<Record<IconName, ReactNode>> = {
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <path d="M16 17l5-5-5-5" />
       <path d="M21 12H9" />
+    </>
+  ),
+  'arrow-left': (
+    <>
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
     </>
   )
 };

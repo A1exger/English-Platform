@@ -233,7 +233,12 @@
     "helpBoard": "Zet het bord aan om samen te tekenen.",
     "helpChat": "Chat, microfoon en camera zitten in de videobediening.",
     "helpNav": "De docent leidt iedereen door de fasen.",
-    "leave": "Verlaten"
+    "leave": "Verlaten",
+    "connected": "Verbonden",
+    "offline": "Offline",
+    "lessonProgress": "Lesvoortgang",
+    "stepOf": "Stap {n} van {total}",
+    "minLeft": "{min} min resterend"
   },
   "board": {
     "title": "Whiteboard",

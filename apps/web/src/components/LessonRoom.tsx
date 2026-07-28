@@ -18,6 +18,16 @@ import { useBoardSocket } from '@/lib/board';
 
 type Tab = 'plan' | 'lesson' | 'media' | 'grammar' | 'answers' | 'exercise';
 
+// Named CEFR levels → the short code shown in the header tag (e.g. «A1 · Beginner»).
+const CEFR: Record<string, string> = {
+  Beginner: 'A1',
+  Elementary: 'A2',
+  PreIntermediate: 'B1',
+  Intermediate: 'B1+',
+  UpperIntermediate: 'B2',
+  Advanced: 'C1'
+};
+
 // Personal notes — private to the viewer, saved on this device only (the board's
 // own notes are shared over the socket; this is a private scratchpad).
 function RoomNotes({ lessonId, label, hint }: { lessonId: string; label: string; hint: string }) {
@@ -152,6 +162,18 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
     pageIdx === 0 ? t('preparation') : live.page?.title || live.page?.type || pageLabel;
   const stagePct = totalSteps > 1 ? Math.round((pageIdx / (totalSteps - 1)) * 100) : 0;
 
+  // Global lesson progress for the header bar (Broadsheet «Step X of N · M min
+  // left»): the step is 1-based (prep = 1), and «min left» sums the estimated
+  // minutes of the current stage onward.
+  const pageMinutes = (p: { tasks: { estimatedMinutes?: number }[] }) =>
+    p.tasks.reduce((s, tk) => s + (tk.estimatedMinutes || 0), 0);
+  const minLeft = (lesson?.pages ?? [])
+    .slice(pageIdx === 0 ? 0 : pageIdx - 1)
+    .reduce((s, p) => s + pageMinutes(p), 0);
+  const levelLabel = lesson?.level
+    ? `${CEFR[lesson.level] ? `${CEFR[lesson.level]} · ` : ''}${lesson.level}`
+    : '';
+
   // Follow the teacher onto the board: when a stroke arrives and the student is
   // watching the video, switch their stage to the board so they see the drawing.
   useEffect(() => {
@@ -166,17 +188,40 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
   }, [board, isTeacher]);
 
   return (
-    <div className="lesson-room room-5050">
-      {/* TOP: full-width room toolbar (title + tools) */}
-      <div className="room-toolbar">
-        <div className="room-toolbar-title">
-          <span className={`room-live-dot${live.joined ? ' on' : ''}`}>
-            {live.joined ? `● ${tr('live')}` : '○ …'}
+    <div className="lesson-room room-5050 room-broadsheet">
+      {/* TOP: header — leave · title · level · live/connected (Broadsheet) */}
+      <header className="room-header">
+        <Link href="/dashboard" className="room-back">
+          <Icon name="arrow-left" /> {tr('exit')}
+        </Link>
+        {lesson && <h1 className="room-title">{lesson.title}</h1>}
+        {levelLabel && <span className="room-tag room-tag-neutral">{levelLabel}</span>}
+        <div className="room-header-status">
+          <span className={`room-tag room-tag-accent${live.joined ? '' : ' off'}`}>● {tr('live')}</span>
+          <span className="room-tag room-tag-neutral">
+            {live.joined ? tr('connected') : tr('offline')}
           </span>
-          {lesson && <strong className="room-toolbar-lesson">{lesson.title}</strong>}
         </div>
-        <div className="room-toolbar-tools">
-          <div className="segmented">
+      </header>
+
+      {/* global lesson progress */}
+      <div className="room-progress">
+        <div className="room-progress-meta">
+          <span>{tr('lessonProgress')}</span>
+          <span>
+            {tr('stepOf', { n: pageIdx + 1, total: totalSteps })}
+            {minLeft > 0 ? ` · ${tr('minLeft', { min: minLeft })}` : ''}
+          </span>
+        </div>
+        <div className="room-progressbar">
+          <div className="room-progressbar-fill" style={{ inlineSize: `${stagePct}%` }} />
+        </div>
+      </div>
+
+      {/* LEFT: video ⇄ board (video shrinks to a PiP when the board is on) */}
+      <section className="room-stage">
+        <div className="room-stage-bar">
+          <div className="segmented room-seg">
             <button type="button" className={!showBoard ? 'active' : ''} onClick={() => setShowBoard(false)}>
               {tr('video')}
             </button>
@@ -184,17 +229,12 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
               {tr('board')}
             </button>
           </div>
-          <RoomNotes lessonId={lessonId} label={tr('notes')} hint={tr('notesHint')} />
-          {isStudent && <RoomDictionary locale={locale} tr={tr} />}
-          <RoomHelp tr={tr} />
-          <Link href="/dashboard" className="room-tool room-leave">
-            <Icon name="logout" /> <span className="room-tool-label">{tr('leave')}</span>
-          </Link>
+          <div className="room-stage-tools">
+            <RoomNotes lessonId={lessonId} label={tr('notes')} hint={tr('notesHint')} />
+            {isStudent && <RoomDictionary locale={locale} tr={tr} />}
+            <RoomHelp tr={tr} />
+          </div>
         </div>
-      </div>
-
-      {/* LEFT: video ⇄ board (video shrinks to a PiP when the board is on) */}
-      <section className="room-stage">
         <div className="room-stage-body">
           {/* Both are always mounted: the board keeps its /board sync (strokes
               are never lost when the teacher is on video), and the video keeps

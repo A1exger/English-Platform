@@ -233,7 +233,12 @@
     "helpBoard": "Activez le tableau pour dessiner ensemble.",
     "helpChat": "Le chat, le micro et la caméra sont dans les commandes vidéo.",
     "helpNav": "Le professeur guide tout le monde à travers les étapes.",
-    "leave": "Quitter"
+    "leave": "Quitter",
+    "connected": "Connecté",
+    "offline": "Hors ligne",
+    "lessonProgress": "Progression du cours",
+    "stepOf": "Étape {n} sur {total}",
+    "minLeft": "{min} min restantes"
   },
   "board": {
     "title": "Tableau",
