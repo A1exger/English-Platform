@@ -239,7 +239,10 @@
     "lessonProgress": "Lesvoortgang",
     "stepOf": "Stap {n} van {total}",
     "minLeft": "{min} min resterend",
-    "stageDone": "Klaar"
+    "stageDone": "Klaar",
+    "viewTimeline": "Tijdlijn",
+    "viewFocus": "Focus",
+    "currentTask": "huidige taak"
   },
   "board": {
     "title": "Whiteboard",

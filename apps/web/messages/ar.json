@@ -239,7 +239,10 @@
     "lessonProgress": "تقدم الدرس",
     "stepOf": "الخطوة {n} من {total}",
     "minLeft": "بقيت {min} دقيقة",
-    "stageDone": "تم"
+    "stageDone": "تم",
+    "viewTimeline": "الخط الزمني",
+    "viewFocus": "تركيز",
+    "currentTask": "المهمة الحالية"
   },
   "board": {
     "title": "اللوحة",

@@ -239,7 +239,10 @@
     "lessonProgress": "Прогресс урока",
     "stepOf": "Шаг {n} из {total}",
     "minLeft": "осталось {min} мин",
-    "stageDone": "Готово"
+    "stageDone": "Готово",
+    "viewTimeline": "Таймлайн",
+    "viewFocus": "Фокус",
+    "currentTask": "текущее задание"
   },
   "board": {
     "title": "Доска",

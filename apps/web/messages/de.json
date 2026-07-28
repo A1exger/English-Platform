@@ -239,7 +239,10 @@
     "lessonProgress": "Stundenfortschritt",
     "stepOf": "Schritt {n} von {total}",
     "minLeft": "noch {min} Min",
-    "stageDone": "Erledigt"
+    "stageDone": "Erledigt",
+    "viewTimeline": "Zeitleiste",
+    "viewFocus": "Fokus",
+    "currentTask": "aktuelle Aufgabe"
   },
   "board": {
     "title": "Whiteboard",

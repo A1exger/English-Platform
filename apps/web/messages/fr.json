@@ -239,7 +239,10 @@
     "lessonProgress": "Progression du cours",
     "stepOf": "Étape {n} sur {total}",
     "minLeft": "{min} min restantes",
-    "stageDone": "Terminé"
+    "stageDone": "Terminé",
+    "viewTimeline": "Chronologie",
+    "viewFocus": "Focus",
+    "currentTask": "tâche actuelle"
   },
   "board": {
     "title": "Tableau",
