@@ -54,16 +54,19 @@ export class AiClient {
     maxTokens: number,
   ): Promise<T> {
     const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
+    const res = await this.fetchRetry(
+      'https://api.anthropic.com/v1/messages',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: user }] }),
       },
-      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: user }] }),
-    });
-    if (!res.ok) await this.fail(res, 'Anthropic');
+      'Anthropic',
+    );
     const data = (await res.json()) as { content?: { type: string; text?: string }[] };
     const text = (data.content ?? [])
       .filter((b) => b.type === 'text')
@@ -81,22 +84,47 @@ export class AiClient {
   ): Promise<T> {
     const model = process.env.AI_MODEL || process.env.ANTHROPIC_MODEL || 'gpt-4o-mini';
     const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model,
-        max_tokens: maxTokens,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
-      }),
-    });
-    if (!res.ok) await this.fail(res, 'AI provider');
+    const res = await this.fetchRetry(
+      url,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+        body: JSON.stringify({
+          model,
+          max_tokens: maxTokens,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user },
+          ],
+        }),
+      },
+      'AI provider',
+    );
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const text = data.choices?.[0]?.message?.content ?? '';
     return extractJson<T>(text);
+  }
+
+  // POST with automatic retry on rate-limit / overload (429, 503) — free tiers
+  // (e.g. Gemini) cap requests per minute and generation sends a burst, so we
+  // back off and retry rather than failing the whole job. Honours Retry-After.
+  private async fetchRetry(url: string, init: RequestInit, label: string): Promise<Response> {
+    const maxRetries = 5;
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(url, init);
+      if (res.ok) return res;
+      const retriable = res.status === 429 || res.status === 503;
+      if (!retriable || attempt >= maxRetries) {
+        await this.fail(res, label); // throws
+      }
+      const retryAfter = Number(res.headers.get('retry-after'));
+      const waitMs =
+        retryAfter > 0 ? retryAfter * 1000 : Math.min(2000 * 2 ** attempt, 30000);
+      this.logger.warn(
+        `${label} ${res.status}; retrying in ${Math.round(waitMs / 1000)}s (attempt ${attempt + 1}/${maxRetries})`,
+      );
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
   }
 
   // Turn a non-OK response into a plain, actionable error (never dump raw JSON).
