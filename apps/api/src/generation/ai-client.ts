@@ -84,25 +84,38 @@ export class AiClient {
   ): Promise<T> {
     const model = process.env.AI_MODEL || process.env.ANTHROPIC_MODEL || 'gpt-4o-mini';
     const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
-    const res = await this.fetchRetry(
-      url,
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          model,
-          max_tokens: maxTokens,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user },
-          ],
-        }),
-      },
-      'AI provider',
-    );
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const text = data.choices?.[0]?.message?.content ?? '';
-    return extractJson<T>(text);
+    const messages = [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ];
+    const run = async (jsonMode: boolean): Promise<T> => {
+      const res = await this.fetchRetry(
+        url,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            model,
+            max_tokens: maxTokens,
+            messages,
+            // JSON mode makes open models (Llama etc.) reliably emit valid JSON.
+            ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
+          }),
+        },
+        'AI provider',
+      );
+      const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+      return extractJson<T>(data.choices?.[0]?.message?.content ?? '');
+    };
+    try {
+      return await run(true);
+    } catch (e) {
+      // Only worth a second attempt if the provider rejected json mode (400) or
+      // still returned non-JSON — auth/rate errors won't be fixed by dropping it.
+      const msg = e instanceof Error ? e.message : '';
+      if (msg.includes('No valid JSON') || msg.includes('400')) return run(false);
+      throw e;
+    }
   }
 
   // POST with automatic retry on rate-limit / overload (429, 503) — free tiers
@@ -165,20 +178,26 @@ function sliceBalanced(text: string): string | undefined {
   return undefined;
 }
 
+// Repair the JSON glitches open models commonly emit: trailing commas before a
+// closing brace/bracket, and a stray ```-fence remnant.
+function repairJson(s: string): string {
+  return s.replace(/,(\s*[}\]])/g, '$1').replace(/```/g, '').trim();
+}
+
 /** Extract a JSON document from a model reply (handles ```json fences / prose). */
 export function extractJson<T>(text: string): T {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const candidates = fenced ? [fenced[1], text] : [text];
   for (const c of candidates) {
-    try {
-      return JSON.parse(c.trim()) as T;
-    } catch {
-      const sub = sliceBalanced(c);
-      if (sub) {
+    // Try, in order: the raw candidate, the first balanced {…}/[…] slice — each
+    // both as-is and lightly repaired (trailing commas etc.).
+    for (const variant of [c.trim(), sliceBalanced(c)]) {
+      if (!variant) continue;
+      for (const attempt of [variant, repairJson(variant)]) {
         try {
-          return JSON.parse(sub) as T;
+          return JSON.parse(attempt) as T;
         } catch {
-          /* try next candidate */
+          /* try the next attempt / candidate */
         }
       }
     }
