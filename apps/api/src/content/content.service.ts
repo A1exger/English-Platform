@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { scoreContentTask, toContentQuestion } from './task-check';
@@ -31,6 +32,23 @@ import {
   UpdatePageMediaDto,
   UpdateTaskDto,
 } from './dto/content.dto';
+
+// Pick a wordlist entry's translation for the request locale, falling back to
+// the authored default. `translations` is a JSON map { locale: text } (V1).
+function resolveWordTranslation(
+  entry: { translation: string | null; translations: string | null },
+  lang: string,
+): string | null {
+  if (entry.translations) {
+    try {
+      const map = JSON.parse(entry.translations) as Record<string, string>;
+      if (map[lang]) return map[lang];
+    } catch {
+      /* ignore malformed */
+    }
+  }
+  return entry.translation;
+}
 
 @Injectable()
 export class ContentService {
@@ -146,8 +164,21 @@ export class ContentService {
       throw new ForbiddenException('Course is not published');
     }
     const hideKeys = user.role === 'student';
+    // Serve each wordlist entry's translation in the request locale, falling
+    // back to the authored default (V1: per-locale wordlist translations).
+    const lang = I18nContext.current()?.lang ?? 'en';
+    const wordlist = lesson.wordlist
+      ? {
+          ...lesson.wordlist,
+          entries: lesson.wordlist.entries.map(({ translations, ...e }) => ({
+            ...e,
+            translation: resolveWordTranslation({ translation: e.translation, translations }, lang),
+          })),
+        }
+      : lesson.wordlist;
     return {
       ...lesson,
+      wordlist,
       objectives: lesson.objectives ? JSON.parse(lesson.objectives) : [],
       pages: lesson.pages.map((p) => ({
         ...p,

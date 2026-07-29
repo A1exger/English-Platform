@@ -603,7 +603,12 @@ model WordlistEntry {
   wordlistId  String
   wordlist    Wordlist @relation(fields: [wordlistId], references: [id], onDelete: Cascade)
   word        String
+  // The authored default translation (the tutor's own language).
   translation String?
+  // Per-locale translations as a JSON map { "fr": "…", "de": "…" }, filled by
+  // the AI translate step (V2). The lesson serves translations[reqLocale] and
+  // falls back to `translation`. Additive + nullable.
+  translations String?
   example     String?
   order       Int      @default(0)
 
