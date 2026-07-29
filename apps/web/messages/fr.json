@@ -242,7 +242,9 @@
     "stageDone": "Terminé",
     "viewTimeline": "Chronologie",
     "viewFocus": "Focus",
-    "currentTask": "tâche actuelle"
+    "currentTask": "tâche actuelle",
+    "assignHomework": "Attribuer les devoirs",
+    "homeworkAssigned": "Devoirs attribués ✓"
   },
   "board": {
     "title": "Tableau",

@@ -242,7 +242,9 @@
     "stageDone": "Done",
     "viewTimeline": "Timeline",
     "viewFocus": "Focus",
-    "currentTask": "current task"
+    "currentTask": "current task",
+    "assignHomework": "Assign homework",
+    "homeworkAssigned": "Homework assigned ✓"
   },
   "board": {
     "title": "Whiteboard",

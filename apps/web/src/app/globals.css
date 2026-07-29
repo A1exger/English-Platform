@@ -2872,6 +2872,10 @@ select.err {
   flex-direction: column;
   gap: 12px;
 }
+.plan-assign {
+  align-self: flex-start;
+  margin-block-start: 4px;
+}
 .plan-stages {
   list-style: none;
   margin: 0;

@@ -242,7 +242,9 @@
     "stageDone": "تم",
     "viewTimeline": "الخط الزمني",
     "viewFocus": "تركيز",
-    "currentTask": "المهمة الحالية"
+    "currentTask": "المهمة الحالية",
+    "assignHomework": "إسناد الواجب",
+    "homeworkAssigned": "تم إسناد الواجب ✓"
   },
   "board": {
     "title": "اللوحة",

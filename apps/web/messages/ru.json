@@ -242,7 +242,9 @@
     "stageDone": "Готово",
     "viewTimeline": "Таймлайн",
     "viewFocus": "Фокус",
-    "currentTask": "текущее задание"
+    "currentTask": "текущее задание",
+    "assignHomework": "Задать домашку",
+    "homeworkAssigned": "Домашка назначена ✓"
   },
   "board": {
     "title": "Доска",

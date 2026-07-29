@@ -1,20 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { apiFetch } from '@/lib/api';
+import { tokenStore } from '@/lib/auth';
 import { LiveLessonApi } from './useLiveLesson';
 
 // «План урока / План домашки» (Э2.2): the lesson as an ordered list of stages
 // (= pages). Each stage shows its type, duration (Σ task minutes) and a homework
 // badge; clicking one drives the room stepper. The homework view filters to the
-// stages marked includedInHomework. Stage names use the page title once set,
-// falling back to the type. Scores land here in Э2.3 from the existing
-// LessonResult.perAspect.
+// stages marked includedInHomework and lets the teacher assign what wasn't
+// covered as homework to the lesson's student(s) in one click.
 export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
   const t = useTranslations('room');
   const tl = useTranslations('learn');
+  const locale = useLocale();
   const [mode, setMode] = useState<'lesson' | 'homework'>('lesson');
-  const { lesson, pageIdx, goTo } = live;
+  const [busy, setBusy] = useState(false);
+  const [assigned, setAssigned] = useState(false);
+  const { lesson, pageIdx, goTo, isTeacher, studentIds } = live;
 
   if (!lesson) return <p className="note">{t('pickMaterial')}</p>;
 
@@ -31,6 +35,36 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
   ];
   const hwCount = stages.filter((s) => s.hw).length;
   const shown = mode === 'homework' ? stages.filter((s) => s.hw) : stages;
+
+  // Homework = the stages not covered during the lesson (from the current stage
+  // onward); if the class reached the end, fall back to the pages flagged
+  // includedInHomework (taskIds omitted → the API selects them).
+  async function assignHomework() {
+    const token = tokenStore.get();
+    if (!token || !lesson || studentIds.length === 0) return;
+    const uncovered = lesson.pages.slice(pageIdx).flatMap((p) => p.tasks.map((tk) => tk.id));
+    setBusy(true);
+    try {
+      for (const studentProfileId of studentIds) {
+        await apiFetch('/assignments', {
+          method: 'POST',
+          token,
+          locale,
+          body: {
+            studentProfileId,
+            kind: 'homework',
+            courseLessonId: lesson.id,
+            taskIds: uncovered.length ? uncovered : undefined,
+            topicTag: lesson.title
+          }
+        }).catch(() => undefined);
+      }
+      setAssigned(true);
+      setTimeout(() => setAssigned(false), 3000);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="lesson-plan">
@@ -62,6 +96,12 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {mode === 'homework' && isTeacher && studentIds.length > 0 && (
+        <button type="button" className="cta-primary plan-assign" disabled={busy} onClick={assignHomework}>
+          {assigned ? t('homeworkAssigned') : t('assignHomework')}
+        </button>
       )}
     </div>
   );

@@ -71,6 +71,8 @@ export interface LiveLessonApi {
   treeLessons: TreeLesson[];
   loadTree: () => void;
   loadMaterialLive: (id: string) => void;
+  // Student profile ids booked on this calendar lesson (for assigning homework).
+  studentIds: string[];
 }
 
 // Sprint 3 #7: remember the material a teacher last taught in THIS lesson so the
@@ -94,6 +96,7 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
   const [level, setLevel] = useState('Elementary');
   const [treeLessons, setTreeLessons] = useState<TreeLesson[]>([]);
   const [answers, setAnswers] = useState<Record<string, ExerciseState>>({});
+  const [studentIds, setStudentIds] = useState<string[]>([]);
 
   const isTeacher = role === 'teacher';
   const isStudent = role === 'student';
@@ -201,10 +204,11 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
       // it survives a device change). Teachers fall back to the last material
       // they taught here (localStorage). Guarded by lessonRef so this only fills
       // in material — it never overrides one an active /session already pushed.
-      const cal = await apiFetch<{ materialLessonId?: string | null }>(`/lessons/${lessonId}`, {
-        token,
-        locale
-      }).catch(() => null);
+      const cal = await apiFetch<{
+        materialLessonId?: string | null;
+        participants?: { studentProfileId: string }[];
+      }>(`/lessons/${lessonId}`, { token, locale }).catch(() => null);
+      setStudentIds((cal?.participants ?? []).map((p) => p.studentProfileId));
       let attached = cal?.materialLessonId ?? null;
       if (!attached && r === 'teacher') {
         try {
@@ -267,6 +271,7 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
     setLevel,
     treeLessons,
     loadTree,
-    loadMaterialLive
+    loadMaterialLive,
+    studentIds
   };
 }

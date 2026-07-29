@@ -242,7 +242,9 @@
     "stageDone": "Erledigt",
     "viewTimeline": "Zeitleiste",
     "viewFocus": "Fokus",
-    "currentTask": "aktuelle Aufgabe"
+    "currentTask": "aktuelle Aufgabe",
+    "assignHomework": "Hausaufgabe zuweisen",
+    "homeworkAssigned": "Hausaufgabe zugewiesen ✓"
   },
   "board": {
     "title": "Whiteboard",

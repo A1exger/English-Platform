@@ -242,7 +242,9 @@
     "stageDone": "Klaar",
     "viewTimeline": "Tijdlijn",
     "viewFocus": "Focus",
-    "currentTask": "huidige taak"
+    "currentTask": "huidige taak",
+    "assignHomework": "Huiswerk toewijzen",
+    "homeworkAssigned": "Huiswerk toegewezen ✓"
   },
   "board": {
     "title": "Whiteboard",
