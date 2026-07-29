@@ -181,6 +181,38 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
       .expect(503);
   });
 
+  it('manual per-locale wordlist translations are served by request locale', async () => {
+    await api()
+      .put(`/api/v1/content/lessons/${lesson1}/wordlist`)
+      .set(auth(tutor.accessToken))
+      .send({ entries: [{ word: 'commute', translation: 'ехать' }] })
+      .expect(200);
+    await api()
+      .put(`/api/v1/content/lessons/${lesson1}/wordlist-translations`)
+      .set(auth(tutor.accessToken))
+      .send({ entries: [{ word: 'commute', translations: { fr: 'faire la navette', de: 'pendeln' } }] })
+      .expect(200);
+
+    // A French student gets the French gloss…
+    const fr = await api()
+      .get(`/api/v1/content/lessons/${lesson1}`)
+      .set(auth(student.accessToken))
+      .set('x-lang', 'fr')
+      .expect(200);
+    expect(fr.body.wordlist.entries.find((e: { word: string }) => e.word === 'commute').translation).toBe(
+      'faire la navette',
+    );
+    // …a Dutch student (no nl translation) falls back to the authored default.
+    const nl = await api()
+      .get(`/api/v1/content/lessons/${lesson1}`)
+      .set(auth(student.accessToken))
+      .set('x-lang', 'nl')
+      .expect(200);
+    expect(nl.body.wordlist.entries.find((e: { word: string }) => e.word === 'commute').translation).toBe(
+      'ехать',
+    );
+  });
+
   it('deleting a lesson closes the level-wide order gap', async () => {
     await api().delete(`/api/v1/content/lessons/${lesson2}`).set(auth(tutor.accessToken)).expect(200);
     expect(await orders()).toEqual(['1:L1', '2:L1.5', '3:L3']);

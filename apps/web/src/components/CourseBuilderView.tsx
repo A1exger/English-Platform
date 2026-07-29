@@ -628,9 +628,14 @@ interface LessonDetail {
   title: string;
   objectives: string[];
   pages: PageRow[];
-  wordlist?: { entries: { word: string; translation?: string | null }[] } | null;
+  wordlist?: {
+    entries: { word: string; translation?: string | null; translations?: Record<string, string> }[];
+  } | null;
   grammarReference?: { title: string; meaning: string; form: string } | null;
 }
+
+// Locales the wordlist can carry a manual translation for (matches the API).
+const TRANSLATE_LOCALES = ['en', 'ru', 'de', 'fr', 'nl', 'ar'];
 
 function LessonEditor({
   lessonId,
@@ -658,6 +663,8 @@ function LessonEditor({
   const [pageForm, setPageForm] = useState({ type: 'practice', inHw: true });
   const [taskForms, setTaskForms] = useState<Record<string, TaskFormState>>({});
   const [translating, setTranslating] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
+  // Manual per-locale translations table (V3), keyed by word.
+  const [trans, setTrans] = useState<Record<string, Record<string, string>>>({});
 
   const token = () => tokenStore.get();
 
@@ -678,6 +685,13 @@ function LessonEditor({
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Rebuild the per-locale table whenever the loaded wordlist changes.
+  useEffect(() => {
+    const map: Record<string, Record<string, string>> = {};
+    for (const e of detail?.wordlist?.entries ?? []) map[e.word] = { ...(e.translations ?? {}) };
+    setTrans(map);
+  }, [detail?.wordlist]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -739,6 +753,17 @@ function LessonEditor({
       setTranslating('error');
       setTimeout(() => setTranslating('idle'), 3500);
     }
+  }
+
+  // Save the manually edited per-locale translations (V3).
+  async function saveTranslations() {
+    const tok = token();
+    if (!tok) return;
+    const entries = Object.entries(trans).map(([word, translations]) => ({ word, translations }));
+    await apiPut(`/content/lessons/${lessonId}/wordlist-translations`, { entries }, tok, locale).catch(
+      () => undefined
+    );
+    onChanged();
   }
 
   async function patchPage(id: string, body: Record<string, unknown>) {
@@ -886,6 +911,38 @@ function LessonEditor({
           <textarea value={wordlist} onChange={(e) => { setWordlist(e.target.value); setSaved(false); }} onBlur={() => void saveLesson()} />
         </div>
       </div>
+
+      {(detail.wordlist?.entries?.length ?? 0) > 0 && (
+        <details className="ed-translations">
+          <summary>{t('editTranslations')}</summary>
+          <div className="ed-trans-scroll">
+            <div className="ed-trans-row ed-trans-head">
+              <span className="ed-trans-word">{t('word')}</span>
+              {TRANSLATE_LOCALES.map((l) => (
+                <span key={l}>{l.toUpperCase()}</span>
+              ))}
+            </div>
+            {(detail.wordlist?.entries ?? []).map((e) => (
+              <div key={e.word} className="ed-trans-row">
+                <span className="ed-trans-word">{e.word}</span>
+                {TRANSLATE_LOCALES.map((l) => (
+                  <input
+                    key={l}
+                    value={trans[e.word]?.[l] ?? ''}
+                    onChange={(ev) =>
+                      setTrans((prev) => ({ ...prev, [e.word]: { ...prev[e.word], [l]: ev.target.value } }))
+                    }
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+          <button type="button" className="ghost ed-trans-save" onClick={saveTranslations}>
+            {t('saveTranslations')}
+          </button>
+        </details>
+      )}
+
       <div className="form-grid">
         <strong>{t('grammar')}</strong>
         <label>{t('grammarTitle')}<input value={grammar.title} onChange={(e) => { setGrammar({ ...grammar, title: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>

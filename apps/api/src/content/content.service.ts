@@ -36,19 +36,22 @@ import {
 
 // Pick a wordlist entry's translation for the request locale, falling back to
 // the authored default. `translations` is a JSON map { locale: text } (V1).
+function parseTranslations(raw: string | null): Record<string, string> {
+  if (!raw) return {};
+  try {
+    const map = JSON.parse(raw) as Record<string, string>;
+    return map && typeof map === 'object' ? map : {};
+  } catch {
+    return {};
+  }
+}
+
 function resolveWordTranslation(
   entry: { translation: string | null; translations: string | null },
   lang: string,
 ): string | null {
-  if (entry.translations) {
-    try {
-      const map = JSON.parse(entry.translations) as Record<string, string>;
-      if (map[lang]) return map[lang];
-    } catch {
-      /* ignore malformed */
-    }
-  }
-  return entry.translation;
+  const map = parseTranslations(entry.translations);
+  return map[lang] || entry.translation;
 }
 
 @Injectable()
@@ -177,10 +180,19 @@ export class ContentService {
     const wordlist = lesson.wordlist
       ? {
           ...lesson.wordlist,
-          entries: lesson.wordlist.entries.map(({ translations, ...e }) => ({
-            ...e,
-            translation: resolveWordTranslation({ translation: e.translation, translations }, lang),
-          })),
+          entries: lesson.wordlist.entries.map(({ translations, ...e }) =>
+            hideKeys
+              ? {
+                  // Students get the single translation for their locale.
+                  ...e,
+                  translation: resolveWordTranslation({ translation: e.translation, translations }, lang),
+                }
+              : {
+                  // Tutors get the full per-locale map to edit (V3).
+                  ...e,
+                  translations: parseTranslations(translations),
+                },
+          ),
         }
       : lesson.wordlist;
     return {
@@ -727,6 +739,42 @@ export class ContentService {
     );
 
     return { translated: wl.entries.length, locales };
+  }
+
+  /** Manually set per-locale wordlist translations, matched by word (V3). */
+  async setWordlistTranslations(
+    user: AuthenticatedUser,
+    lessonId: string,
+    entries: { word: string; translations: Record<string, string> }[],
+  ) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+    const wl = await this.prisma.wordlist.findUnique({
+      where: { courseLessonId: lessonId },
+      include: { entries: true },
+    });
+    if (!wl) throw new BadRequestException('No wordlist');
+
+    const byWord = new Map(entries.map((e) => [e.word, e.translations]));
+    const locales = ContentService.TRANSLATE_LOCALES;
+    await this.prisma.$transaction(
+      wl.entries
+        .filter((e) => byWord.has(e.word))
+        .map((e) => {
+          const map = byWord.get(e.word) ?? {};
+          const clean: Record<string, string> = {};
+          for (const loc of locales) {
+            const v = map[loc];
+            if (typeof v === 'string' && v.trim()) clean[loc] = v.trim();
+          }
+          return this.prisma.wordlistEntry.update({
+            where: { id: e.id },
+            data: { translations: Object.keys(clean).length ? JSON.stringify(clean) : null },
+          });
+        }),
+    );
+    return { updated: true };
   }
 
   /** Create or update the lesson grammar reference (Meaning / Form). */

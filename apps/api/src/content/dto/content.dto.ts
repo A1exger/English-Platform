@@ -322,6 +322,23 @@ export class SetWordlistDto {
   entries!: WordlistEntryDto[];
 }
 
+export class WordlistTranslationEntryDto {
+  @IsString()
+  @Length(1, 120)
+  word!: string;
+
+  // { "fr": "…", "de": "…" } — validated loosely; unknown locales are dropped.
+  @IsObject()
+  translations!: Record<string, string>;
+}
+
+export class SetWordlistTranslationsDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WordlistTranslationEntryDto)
+  entries!: WordlistTranslationEntryDto[];
+}
+
 export class SetGrammarDto {
   @IsString()
   @Length(1, 200)

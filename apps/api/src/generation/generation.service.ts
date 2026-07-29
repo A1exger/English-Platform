@@ -234,7 +234,12 @@ export class GenerationService {
         });
       }
     }
-    if (plan.wordlist.length) await this.content.setWordlist(user, lessonId, plan.wordlist);
+    if (plan.wordlist.length) {
+      await this.content.setWordlist(user, lessonId, plan.wordlist);
+      // Auto-translate the generated wordlist into every locale (best-effort —
+      // a translation hiccup must never fail the whole generation job).
+      await this.content.translateWordlist(user, lessonId).catch(() => undefined);
+    }
     if (plan.grammar) await this.content.setGrammarReference(user, lessonId, plan.grammar);
   }
 

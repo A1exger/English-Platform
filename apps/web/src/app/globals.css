@@ -1032,6 +1032,49 @@ select.err {
   font-size: 12px;
   padding: 4px 10px;
 }
+/* V3: manual per-locale wordlist translations table */
+.ed-translations {
+  margin-block-start: 4px;
+  font-size: 13px;
+}
+.ed-translations > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--slate);
+  padding: 6px 0;
+}
+.ed-trans-scroll {
+  overflow-x: auto;
+  margin-block: 8px;
+}
+.ed-trans-row {
+  display: grid;
+  grid-template-columns: 120px repeat(6, minmax(90px, 1fr));
+  gap: 6px;
+  align-items: center;
+  margin-block-end: 6px;
+}
+.ed-trans-head {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mist);
+  text-transform: uppercase;
+}
+.ed-trans-word {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-trans-row input {
+  inline-size: 100%;
+  padding: 4px 6px;
+  font-size: 13px;
+}
+.ed-trans-save {
+  font-size: 12px;
+  padding: 4px 12px;
+}
 .ed-pages {
   display: flex;
   flex-direction: column;

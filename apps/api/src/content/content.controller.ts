@@ -37,6 +37,7 @@ import {
   UpdatePageMediaDto,
   SetGrammarDto,
   SetWordlistDto,
+  SetWordlistTranslationsDto,
   UpdateCourseDto,
   UpdateCourseLessonDto,
   UpdateTaskDto,
@@ -245,6 +246,17 @@ export class ContentController {
       }
       throw e;
     }
+  }
+
+  // Manually edit the per-locale wordlist translations (V3).
+  @Roles('tutor', 'admin')
+  @Put('lessons/:id/wordlist-translations')
+  setWordlistTranslations(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: SetWordlistTranslationsDto,
+  ) {
+    return this.content.setWordlistTranslations(user, id, dto.entries);
   }
 
   @Roles('tutor', 'admin')
