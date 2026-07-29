@@ -15,6 +15,11 @@ RUN rm -rf .next
 # here (the browser calls it directly — use the public API URL in production).
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# The UI's date time zone. The locale shell is statically prerendered (next-intl
+# setRequestLocale), so the zone is resolved here at build time — it must be set
+# now, not only at runtime, or static pages bake UTC. See i18n/request.ts.
+ARG APP_TIMEZONE
+ENV APP_TIMEZONE=$APP_TIMEZONE
 RUN npm run build
 
 # ---- runtime stage ----

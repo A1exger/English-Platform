@@ -62,6 +62,8 @@ services:
       - "3001:3001"
     volumes:
       - apiuploads:/app/uploads
+      # Resolve the host's local zone so server-side dates match the web UI.
+      - /etc/localtime:/etc/localtime:ro
     healthcheck:
       test:
         - CMD
@@ -80,9 +82,22 @@ services:
       args:
         # Baked into the client bundle at build time — must be browser-reachable.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+        # Resolved into the statically-prerendered shell at build time (the same
+        # value is also passed at runtime below for the dynamic schedule route).
+        APP_TIMEZONE: ${APP_TIMEZONE:-}
     restart: unless-stopped
     depends_on:
       - api
+    environment:
+      # Time zone the whole UI renders dates in (see apps/web/src/i18n/request.ts).
+      # Pin it to the server's zone, e.g. Europe/Moscow, so "today" and the
+      # schedule show the server's local day for every viewer regardless of their
+      # browser zone. When empty, the zone from /etc/localtime (mounted below) is
+      # used, falling back to UTC.
+      APP_TIMEZONE: ${APP_TIMEZONE:-}
+    volumes:
+      # Lets the container resolve the host's local zone when APP_TIMEZONE is unset.
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - "3000:3000"
 

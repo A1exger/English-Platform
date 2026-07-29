@@ -1,5 +1,5 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import { getMessages, getTimeZone, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing, isRtl, type Locale } from '@/i18n/routing';
 import '../globals.css';
@@ -25,6 +25,9 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  // Explicit zone (from i18n/request.ts) so client components format dates in the
+  // server's configured time zone rather than each viewer's browser zone.
+  const timeZone = await getTimeZone();
   const dir = isRtl(locale) ? 'rtl' : 'ltr';
 
   return (
@@ -38,7 +41,7 @@ export default async function LocaleLayout({
           href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cairo:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={messages} timeZone={timeZone}>{children}</NextIntlClientProvider>
       </body>
     </html>
   );

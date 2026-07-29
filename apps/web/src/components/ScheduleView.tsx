@@ -1,7 +1,7 @@
 'use client';
 
 import { CSSProperties, FormEvent, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useLocale, useTimeZone, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
@@ -21,17 +21,53 @@ interface Lesson {
 // tree endpoint is per-level, so the material picker needs one.
 const LEVELS = ['Beginner', 'Elementary', 'PreIntermediate', 'Intermediate', 'UpperIntermediate', 'Advanced'];
 
-function startOfWeek(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  const day = (x.getDay() + 6) % 7; // Monday = 0
-  x.setDate(x.getDate() - day);
-  return x;
+// ——— Time-zone-aware calendar math ———
+// "Today", the week/day boundaries and where each lesson lands are all computed
+// in the app's configured zone (useTimeZone → i18n/request.ts) rather than the
+// browser's. That keeps the grid consistent with the formatted labels and with
+// the server's local day — a viewer west of the server no longer sees the whole
+// calendar shifted a day back near midnight.
+
+// Civil wall-clock fields of an instant as observed in `tz`.
+function zonedParts(date: Date, tz: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false
+  }).formatToParts(date);
+  const val = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  return { year: val('year'), month: val('month'), day: val('day'), hour: val('hour') % 24, minute: val('minute') };
 }
-function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
+
+// Day number since the epoch for the civil date `date` falls on in `tz`. Integer
+// and monotonic, so day arithmetic and comparisons are exact and DST-proof.
+function zonedDayNumber(date: Date, tz: string): number {
+  const { year, month, day } = zonedParts(date, tz);
+  return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+}
+
+// Inverse of zonedDayNumber: civil (Y, M, D) of a day number.
+function ymdFromDayNumber(n: number) {
+  const d = new Date(n * 86400000);
+  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
+}
+
+// The instant at which the wall clock in `tz` reads the given civil fields. Two
+// steps: assume the civil time is UTC, then correct by the zone offset there.
+function zonedInstant(year: number, month: number, day: number, hour: number, minute: number, tz: string): Date {
+  const guess = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const back = zonedParts(new Date(guess), tz);
+  const backAsUtc = Date.UTC(back.year, back.month - 1, back.day, back.hour, back.minute, 0);
+  return new Date(guess - (backAsUtc - guess));
+}
+
+// Monday-relative weekday (Mon=0 … Sun=6) of a day number. Epoch day 0 is a Thursday.
+function mondayIndex(dayNumber: number): number {
+  return ((dayNumber % 7) + 3) % 7;
 }
 
 export function ScheduleView() {
@@ -43,14 +79,17 @@ export function ScheduleView() {
   const router = useRouter();
   const { showUndo } = useToast();
 
+  // Dates are rendered in the app's configured zone (next-intl); do all calendar
+  // math in that same zone so the grid and the labels never disagree.
+  const tz = useTimeZone() || 'UTC';
+
   const [canManage, setCanManage] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [view, setView] = useState<'week' | 'day'>('week');
-  // Initialised on the client (see effect below) so "today" and the week start
-  // use the viewer's own timezone — computing it during SSR pins it to the
-  // server clock (UTC) and drifts a day near midnight for east-of-UTC users.
-  const [anchor, setAnchor] = useState<Date | null>(null);
+  // Day number of the first visible day. Initialised on the client (see effect
+  // below) so "today" is computed once the app zone is known, not during SSR.
+  const [anchorDay, setAnchorDay] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [slot, setSlot] = useState<{ date: Date; key: string } | null>(null);
   const [form, setForm] = useState({
@@ -67,29 +106,28 @@ export function ScheduleView() {
   const [matLevel, setMatLevel] = useState('Elementary');
   const [matLessons, setMatLessons] = useState<{ id: string; title: string }[]>([]);
 
-  // Times are shown in the viewer's own zone; make that explicit.
-  const tz = useMemo(() => {
-    try {
-      return Intl.DateTimeFormat().resolvedOptions().timeZone;
-    } catch {
-      return '';
-    }
-  }, []);
-
   useEffect(() => {
-    if (!anchor) setAnchor(startOfWeek(new Date()));
-  }, [anchor]);
+    if (anchorDay === null) {
+      const today = zonedDayNumber(new Date(), tz);
+      setAnchorDay(today - mondayIndex(today)); // default view is 'week'
+    }
+  }, [anchorDay, tz]);
 
-  const days = useMemo(() => {
-    if (!anchor) return [] as Date[];
-    return view === 'day'
-      ? [new Date(anchor)]
-      : Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(anchor);
-          d.setDate(d.getDate() + i);
-          return d;
-        });
-  }, [anchor, view]);
+  // Day numbers of the visible column(s), and a representative instant (civil
+  // noon in tz) for each so next-intl formats it as the right civil day.
+  const dayNumbers = useMemo(() => {
+    if (anchorDay === null) return [] as number[];
+    return view === 'day' ? [anchorDay] : Array.from({ length: 7 }, (_, i) => anchorDay + i);
+  }, [anchorDay, view]);
+
+  const days = useMemo(
+    () =>
+      dayNumbers.map((n) => {
+        const { year, month, day } = ymdFromDayNumber(n);
+        return zonedInstant(year, month, day, 12, 0, tz);
+      }),
+    [dayNumbers, tz]
+  );
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -153,59 +191,62 @@ export function ScheduleView() {
     };
   }, [form.courseId, matLevel, locale]);
 
-  const rangeStart = days[0];
-  const rangeEnd = useMemo(() => {
-    if (days.length === 0) return new Date();
-    const d = new Date(days[days.length - 1]);
-    d.setDate(d.getDate() + 1);
-    return d;
-  }, [days]);
+  const firstDay = dayNumbers[0];
+  const lastDay = dayNumbers[dayNumbers.length - 1];
+
+  // Each lesson mapped to the civil day + hour it starts at in the app zone.
+  const placed = useMemo(
+    () =>
+      lessons.map((l) => {
+        const p = zonedParts(new Date(l.startsAt), tz);
+        return { lesson: l, dayNumber: Math.floor(Date.UTC(p.year, p.month - 1, p.day) / 86400000), hour: p.hour };
+      }),
+    [lessons, tz]
+  );
 
   // The visible hour range follows the data. A fixed 08:00–21:00 grid silently
   // hid any lesson outside it — the lesson existed but had no row to render in.
   const hours = useMemo(() => {
-    const inRange = lessons
-      .map((l) => new Date(l.startsAt))
-      .filter((s) => s >= rangeStart && s < rangeEnd)
-      .map((s) => s.getHours());
+    const inRange = placed.filter((x) => x.dayNumber >= firstDay && x.dayNumber <= lastDay).map((x) => x.hour);
     const from = Math.min(8, ...inRange);
     const to = Math.max(21, ...inRange);
     return Array.from({ length: to - from + 1 }, (_, i) => i + from);
-  }, [lessons, rangeStart, rangeEnd]);
+  }, [placed, firstDay, lastDay]);
 
   const byCell = useMemo(() => {
     const map = new Map<string, Lesson[]>();
-    for (const l of lessons) {
-      const s = new Date(l.startsAt);
-      if (s < rangeStart || s >= rangeEnd) continue;
-      const dayIndex = Math.floor((startOfDay(s).getTime() - startOfDay(rangeStart).getTime()) / 86400000);
-      const key = `${dayIndex}-${s.getHours()}`;
+    for (const x of placed) {
+      if (x.dayNumber < firstDay || x.dayNumber > lastDay) continue;
+      const key = `${x.dayNumber - firstDay}-${x.hour}`;
       const arr = map.get(key) ?? [];
-      arr.push(l);
+      arr.push(x.lesson);
       map.set(key, arr);
     }
     return map;
-  }, [lessons, rangeStart, rangeEnd]);
+  }, [placed, firstDay, lastDay]);
 
   function shift(dir: number) {
-    const d = new Date(anchor ?? new Date());
-    d.setDate(d.getDate() + dir * (view === 'day' ? 1 : 7));
-    setAnchor(view === 'day' ? startOfDay(d) : startOfWeek(d));
+    setAnchorDay((a) => (a ?? zonedDayNumber(new Date(), tz)) + dir * (view === 'day' ? 1 : 7));
   }
   function goToday() {
-    setAnchor(view === 'day' ? startOfDay(new Date()) : startOfWeek(new Date()));
+    const today = zonedDayNumber(new Date(), tz);
+    setAnchorDay(view === 'day' ? today : today - mondayIndex(today));
   }
   function switchView(next: 'week' | 'day') {
     // Day view opens on the actual current day; week view on the current week.
-    setAnchor(next === 'day' ? startOfDay(new Date()) : startOfWeek(anchor ?? new Date()));
+    const today = zonedDayNumber(new Date(), tz);
+    const base = anchorDay ?? today;
+    setAnchorDay(next === 'day' ? today : base - mondayIndex(base));
     setView(next);
     setSlot(null);
   }
 
   function openSlot(dayIndex: number, hour: number) {
     if (!canManage) return;
-    const date = new Date(days[dayIndex]);
-    date.setHours(hour, 0, 0, 0);
+    const dn = dayNumbers[dayIndex];
+    if (dn === undefined) return;
+    const { year, month, day } = ymdFromDayNumber(dn);
+    const date = zonedInstant(year, month, day, hour, 0, tz);
     setSlot({ date, key: `${dayIndex}-${hour}` });
     setForm({ title: '', duration: '60', price: '25', studentProfileId: '', courseId: '', materialLessonId: '' });
   }
@@ -251,13 +292,14 @@ export function ScheduleView() {
     });
   }
 
-  if (state === 'loading' || !anchor) return <div className="content"><Skeleton lines={6} /></div>;
+  if (state === 'loading' || anchorDay === null) return <div className="content"><Skeleton lines={6} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
+  const todayNum = zonedDayNumber(new Date(), tz);
   const rangeLabel =
     view === 'day'
       ? format.dateTime(days[0], { weekday: 'long', day: 'numeric', month: 'short' })
-      : `${format.dateTime(days[0], { day: 'numeric', month: 'short' })} – ${format.dateTime(days[6], { day: 'numeric', month: 'short' })}`;
+      : `${format.dateTime(days[0], { day: 'numeric', month: 'short' })} – ${format.dateTime(days[days.length - 1], { day: 'numeric', month: 'short' })}`;
 
   const slotForm = slot && (
     <div className="slot-popover" onClick={(e) => e.stopPropagation()}>
@@ -357,7 +399,7 @@ export function ScheduleView() {
       <div className={`cal${view === 'day' ? ' cal-day' : ''}`} style={{ '--cal-days': days.length } as CSSProperties} onClick={() => slot && setSlot(null)}>
         <div className="cal-head cal-corner" />
         {days.map((d, i) => {
-          const isToday = startOfDay(d).getTime() === startOfDay(new Date()).getTime();
+          const isToday = dayNumbers[i] === todayNum;
           return (
             <div key={i} className={`cal-head${isToday ? ' today' : ''}`}>
               {format.dateTime(d, { weekday: 'short' })}{' '}
