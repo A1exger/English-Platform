@@ -3145,6 +3145,40 @@ select.err {
   margin-block: 0;
   flex-wrap: wrap;
 }
+/* AI course generation form — single column in the narrow drawer so nothing
+   overflows; units/lessons pair, aspects are proper wrapping pill chips. */
+.gen-form {
+  grid-template-columns: 1fr;
+}
+.gen-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.chip-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip-toggle {
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--card);
+  color: var(--slate);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.chip-toggle:hover {
+  border-color: var(--indigo);
+  color: var(--ink);
+}
+.chip-toggle.on {
+  background: var(--indigo);
+  border-color: var(--indigo);
+  color: #fff;
+}
 .ex-form .field {
   margin-block-end: 8px;
 }

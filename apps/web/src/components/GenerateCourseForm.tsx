@@ -105,7 +105,7 @@ export function GenerateCourseForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="form-grid">
+    <div className="form-grid gen-form">
       <strong>{t('generate')}</strong>
       {job ? (
         <p className="note">{t('aiGenerating')}</p>
@@ -120,18 +120,19 @@ export function GenerateCourseForm({ onDone }: { onDone: () => void }) {
               ))}
             </select>
           </label>
-          <div className="two-col">
+          <div className="gen-row">
             <label>{t('aiUnits')}<input type="number" min={1} max={12} value={form.units} onChange={(e) => setForm({ ...form, units: Number(e.target.value) })} /></label>
             <label>{t('aiLessons')}<input type="number" min={1} max={10} value={form.lessonsPerUnit} onChange={(e) => setForm({ ...form, lessonsPerUnit: Number(e.target.value) })} /></label>
           </div>
           <div className="field">
             <span>{t('aiAspects')}</span>
-            <div className="tabs tabs-inline filter-chips">
+            <div className="chip-select">
               {ASPECTS.map((a) => (
                 <button
                   key={a}
                   type="button"
-                  className={aspects.includes(a) ? 'active' : ''}
+                  className={`chip-toggle${aspects.includes(a) ? ' on' : ''}`}
+                  aria-pressed={aspects.includes(a)}
                   onClick={() => setAspects((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))}
                 >
                   {a}

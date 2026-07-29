@@ -42,7 +42,15 @@ export class AiClient {
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      throw new Error(`Anthropic API ${res.status}: ${body.slice(0, 300)}`);
+      // Surface the common misconfigurations as a plain, actionable message
+      // rather than dumping the raw provider JSON into the job error.
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('AI authentication failed — check that ANTHROPIC_API_KEY is a valid, active key.');
+      }
+      if (res.status === 429) {
+        throw new Error('AI rate limit reached — please try again in a moment.');
+      }
+      throw new Error(`AI request failed (Anthropic API ${res.status}): ${body.slice(0, 160)}`);
     }
     const data = (await res.json()) as { content?: { type: string; text?: string }[] };
     const text = (data.content ?? [])
