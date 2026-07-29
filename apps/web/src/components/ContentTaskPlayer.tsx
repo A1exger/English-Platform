@@ -38,7 +38,8 @@ export function ContentTaskPlayer({
   initialState,
   initialResult,
   feedback,
-  onStateChange
+  onStateChange,
+  spectator = false
 }: {
   task: ContentTask;
   onResult?: (r: { taskId: string; score?: number; completed: boolean }) => void;
@@ -51,6 +52,9 @@ export function ContentTaskPlayer({
   feedback?: string | null;
   // Live-session progress stream (exercise:progress): fires on every edit.
   onStateChange?: (taskId: string, state: ExerciseState) => void;
+  // Teacher watching the student's live answer: read-only, no actions, and the
+  // rendered answer tracks incoming updates (no draft, no streaming).
+  spectator?: boolean;
 }) {
   const t = useTranslations('learn');
   const locale = useLocale();
@@ -62,12 +66,18 @@ export function ContentTaskPlayer({
   const draftKey = `answer:${task.id}`;
 
   const done = result !== null;
+  const readOnly = done || spectator;
+
+  // Spectator (teacher): mirror the student's streamed answer as it arrives.
+  useEffect(() => {
+    if (spectator) setState(initialState ?? {});
+  }, [spectator, initialState]);
 
   // Autosave (Sprint 2.3): restore any local draft so a reload never loses work.
   // ContentTaskPlayer has no server draft endpoint (backend is out of scope), so
   // in-progress answers persist to localStorage; the draft is cleared on submit.
   useEffect(() => {
-    if (done) return;
+    if (done || spectator) return;
     try {
       const raw = localStorage.getItem(draftKey);
       if (raw) setState(JSON.parse(raw) as ExerciseState);
@@ -79,7 +89,7 @@ export function ContentTaskPlayer({
 
   // Stream in-progress answers to the teacher + debounce-save the draft.
   useEffect(() => {
-    if (done) return;
+    if (done || spectator) return;
     if (onStateChange) onStateChange(task.id, state);
     if (!Object.keys(state).length) return;
     setSaved(false);
@@ -140,7 +150,7 @@ export function ContentTaskPlayer({
           question={q as unknown as Question}
           state={state}
           onChange={setState}
-          readOnly={done}
+          readOnly={readOnly}
           review={(result?.solution as ExerciseState) ?? null}
         />
       )}
@@ -166,7 +176,7 @@ export function ContentTaskPlayer({
                   key={opt}
                   type="button"
                   className={`chip${cls}`}
-                  disabled={done}
+                  disabled={readOnly}
                   onClick={() => setState({ answer: opt })}
                 >
                   {opt}
@@ -193,7 +203,7 @@ export function ContentTaskPlayer({
           <textarea
             placeholder={t('essayPlaceholder')}
             value={(state.text as string) ?? ''}
-            disabled={done}
+            disabled={readOnly}
             onChange={(e) => setState({ text: e.target.value })}
           />
         </div>
@@ -212,6 +222,8 @@ export function ContentTaskPlayer({
           )}
           {feedback ? <p className="ex-feedback"><Icon name="edit" size={14} /> {feedback}</p> : null}
         </>
+      ) : spectator ? (
+        <p className="muted saved-tag">● {t('liveAnswer')}</p>
       ) : (
         <div className="row-between task-actions">
           <button type="button" disabled={busy} onClick={() => check()}>

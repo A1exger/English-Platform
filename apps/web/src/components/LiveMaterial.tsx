@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { ContentTaskPlayer } from './ContentTaskPlayer';
+import { PageMediaBlock } from './PageMediaBlock';
 import { CONTENT_LEVELS, LiveLessonApi } from './useLiveLesson';
 
 // Teacher's material picker (course → level → the level's lessons). The room
@@ -118,6 +119,7 @@ export function StageBody({ live }: { live: LiveLessonApi }) {
           <p>{page.text}</p>
         </div>
       )}
+      {page.media && page.media.length > 0 && <PageMediaBlock media={page.media} />}
       {page.tasks.map((task) =>
         isStudent ? (
           <ContentTaskPlayer
@@ -126,7 +128,8 @@ export function StageBody({ live }: { live: LiveLessonApi }) {
             onStateChange={(taskId, s) => live.emitProgress(taskId, s)}
           />
         ) : (
-          <ContentTaskPlayer key={task.id} task={task} initialResult={{ completed: true }} />
+          // Teacher watches the student's live answer in place, in real time.
+          <ContentTaskPlayer key={task.id} task={task} spectator initialState={live.answers[task.id]} />
         )
       )}
     </div>

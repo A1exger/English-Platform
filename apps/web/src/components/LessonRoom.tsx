@@ -13,10 +13,9 @@ import { useLiveLesson } from './useLiveLesson';
 import { LessonTimeline } from './LessonTimeline';
 import { LiveAnswers } from './LiveAnswers';
 import { LessonPlanPanel } from './LessonPlanPanel';
-import { PageMediaBlock } from './PageMediaBlock';
 import { useBoardSocket } from '@/lib/board';
 
-type Tab = 'plan' | 'lesson' | 'media' | 'grammar' | 'answers' | 'exercise';
+type Tab = 'plan' | 'lesson' | 'grammar' | 'answers' | 'exercise';
 
 // Named CEFR levels → the short code shown in the header tag (e.g. «A1 · Beginner»).
 const CEFR: Record<string, string> = {
@@ -237,9 +236,6 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
           <button type="button" role="tab" aria-selected={tab === 'lesson'} className={tab === 'lesson' ? 'active' : ''} onClick={() => setTab('lesson')}>
             {tr('lessonTab')}
           </button>
-          <button type="button" role="tab" aria-selected={tab === 'media'} className={tab === 'media' ? 'active' : ''} onClick={() => setTab('media')}>
-            {tr('mediaTab')}
-          </button>
           <button type="button" role="tab" aria-selected={tab === 'grammar'} className={tab === 'grammar' ? 'active' : ''} onClick={() => setTab('grammar')}>
             {tr('grammarTab')}
           </button>
@@ -256,7 +252,6 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
         <div className="room-content-body">
           {tab === 'plan' && <LessonPlanPanel live={live} />}
           {tab === 'lesson' && <LessonTimeline live={live} />}
-          {tab === 'media' && <PageMediaBlock media={live.page?.media} />}
           {tab === 'grammar' &&
             (grammar ? (
               <div className="card">
@@ -287,8 +282,7 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
               </button>
             )}
             <span className="mono-num">
-              {tr('pageLabel')} {pageLabel}
-              {pageIdx > 0 ? ` / ${lesson.pages.length}` : ''}
+              {pageIdx + 1} / {totalSteps}
             </span>
             {isTeacher && (
               <button type="button" className="ghost" disabled={pageIdx >= totalSteps - 1} onClick={() => live.goTo(pageIdx + 1)}>
