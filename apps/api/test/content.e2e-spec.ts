@@ -174,6 +174,13 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     expect(detail2.body.wordlist.entries.length).toBe(1);
   });
 
+  it('translate-wordlist reports 503 when AI is not configured (no key in tests)', async () => {
+    await api()
+      .post(`/api/v1/content/lessons/${lesson1}/translate-wordlist`)
+      .set(auth(tutor.accessToken))
+      .expect(503);
+  });
+
   it('deleting a lesson closes the level-wide order gap', async () => {
     await api().delete(`/api/v1/content/lessons/${lesson2}`).set(auth(tutor.accessToken)).expect(200);
     expect(await orders()).toEqual(['1:L1', '2:L1.5', '3:L3']);

@@ -657,6 +657,7 @@ function LessonEditor({
   const [grammar, setGrammar] = useState({ title: '', meaning: '', form: '' });
   const [pageForm, setPageForm] = useState({ type: 'practice', inHw: true });
   const [taskForms, setTaskForms] = useState<Record<string, TaskFormState>>({});
+  const [translating, setTranslating] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
 
   const token = () => tokenStore.get();
 
@@ -722,6 +723,23 @@ function LessonEditor({
       setBusy(false);
     }
   }, [lessonId, locale, objectives, wordlist, grammar, onChanged]);
+
+  // AI-translate the wordlist into every locale (V2). Persist the current words
+  // first so the entries exist, then fill their per-locale translations.
+  async function translateWordlist() {
+    const tok = token();
+    if (!tok) return;
+    setTranslating('busy');
+    try {
+      await saveLesson();
+      await apiFetch(`/content/lessons/${lessonId}/translate-wordlist`, { method: 'POST', token: tok, locale });
+      setTranslating('done');
+      setTimeout(() => setTranslating('idle'), 2500);
+    } catch {
+      setTranslating('error');
+      setTimeout(() => setTranslating('idle'), 3500);
+    }
+  }
 
   async function patchPage(id: string, body: Record<string, unknown>) {
     const tok = token();
@@ -847,10 +865,26 @@ function LessonEditor({
           {t('objectives')}
           <textarea value={objectives} onChange={(e) => { setObjectives(e.target.value); setSaved(false); }} onBlur={() => void saveLesson()} />
         </label>
-        <label className="ed-field">
-          {t('wordlist')}
+        <div className="ed-field">
+          <div className="ed-field-head">
+            <span>{t('wordlist')}</span>
+            <button
+              type="button"
+              className="ghost ed-translate"
+              disabled={translating === 'busy' || !wordlist.trim()}
+              onClick={translateWordlist}
+            >
+              {translating === 'busy'
+                ? t('translating')
+                : translating === 'done'
+                  ? t('translated')
+                  : translating === 'error'
+                    ? t('translateError')
+                    : t('translate')}
+            </button>
+          </div>
           <textarea value={wordlist} onChange={(e) => { setWordlist(e.target.value); setSaved(false); }} onBlur={() => void saveLesson()} />
-        </label>
+        </div>
       </div>
       <div className="form-grid">
         <strong>{t('grammar')}</strong>

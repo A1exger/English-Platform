@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../prisma/prisma.service';
+import { AiClient } from '../generation/ai-client';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { scoreContentTask, toContentQuestion } from './task-check';
 import { applyReview, isDue, nextReviewAt } from './spaced-repetition';
@@ -52,7 +53,13 @@ function resolveWordTranslation(
 
 @Injectable()
 export class ContentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ai: AiClient,
+  ) {}
+
+  // Locales the AI translate step fills for the wordlist (matches the web i18n).
+  private static readonly TRANSLATE_LOCALES = ['en', 'ru', 'de', 'fr', 'nl', 'ar'];
 
   /** Course owner or admin may edit; other tutors read-only. */
   private async assertCourseEditable(user: AuthenticatedUser, courseId: string) {
@@ -638,6 +645,15 @@ export class ContentService {
       update: {},
       create: { courseLessonId: lessonId },
     });
+    // Keep any AI-filled per-locale translations for words that stay in the list,
+    // so editing one entry doesn't wipe the rest (V2).
+    const previous = await this.prisma.wordlistEntry.findMany({
+      where: { wordlistId: wl.id },
+      select: { word: true, translations: true },
+    });
+    const keepByWord = new Map(
+      previous.filter((p) => p.translations).map((p) => [p.word, p.translations as string]),
+    );
     await this.prisma.wordlistEntry.deleteMany({ where: { wordlistId: wl.id } });
     if (entries.length) {
       await this.prisma.wordlistEntry.createMany({
@@ -645,6 +661,7 @@ export class ContentService {
           wordlistId: wl.id,
           word: e.word,
           translation: e.translation,
+          translations: keepByWord.get(e.word) ?? null,
           example: e.example,
           order: i,
         })),
@@ -654,6 +671,62 @@ export class ContentService {
       where: { id: wl.id },
       include: { entries: { orderBy: { order: 'asc' } } },
     });
+  }
+
+  /**
+   * AI translate step (V2): fill each wordlist entry's per-locale translations
+   * so the lesson can serve the word's meaning in the viewer's language. Throws
+   * AiUnavailableError when no API key is configured (handled by the controller).
+   */
+  async translateWordlist(user: AuthenticatedUser, lessonId: string) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+
+    const wl = await this.prisma.wordlist.findUnique({
+      where: { courseLessonId: lessonId },
+      include: { entries: { orderBy: { order: 'asc' } } },
+    });
+    if (!wl || wl.entries.length === 0) {
+      throw new BadRequestException('No wordlist to translate');
+    }
+
+    const locales = ContentService.TRANSLATE_LOCALES;
+    const system =
+      'You translate vocabulary glosses for an English-learning app. For each ' +
+      'English word or phrase, give a SHORT translation of its meaning (1–3 words, ' +
+      'never a sentence) in every requested language, using the provided meaning/' +
+      'example to pick the right sense. Return ONLY minified JSON of the form ' +
+      '{"items":[{"t":{"en":"…","ru":"…","de":"…","fr":"…","nl":"…","ar":"…"}}]} ' +
+      'with exactly one item per input word, in the same order.';
+    const userMsg = JSON.stringify({
+      targetLanguages: locales,
+      words: wl.entries.map((e) => ({
+        word: e.word,
+        meaning: e.translation ?? undefined,
+        example: e.example ?? undefined,
+      })),
+    });
+
+    const out = await this.ai.json<{ items?: { t?: Record<string, string> }[] }>(system, userMsg);
+    const items = out.items ?? [];
+
+    await this.prisma.$transaction(
+      wl.entries.map((e, i) => {
+        const raw = items[i]?.t ?? {};
+        const clean: Record<string, string> = {};
+        for (const loc of locales) {
+          const v = raw[loc];
+          if (typeof v === 'string' && v.trim()) clean[loc] = v.trim();
+        }
+        return this.prisma.wordlistEntry.update({
+          where: { id: e.id },
+          data: { translations: Object.keys(clean).length ? JSON.stringify(clean) : null },
+        });
+      }),
+    );
+
+    return { translated: wl.entries.length, locales };
   }
 
   /** Create or update the lesson grammar reference (Meaning / Form). */

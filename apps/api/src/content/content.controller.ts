@@ -8,9 +8,11 @@ import {
   Post,
   Put,
   Query,
+  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 import { ContentService } from './content.service';
+import { AiUnavailableError } from '../generation/ai-client';
 import {
   AddDictionaryDto,
   CheckTaskDto,
@@ -229,6 +231,20 @@ export class ContentController {
     @Body() dto: SetWordlistDto,
   ) {
     return this.content.setWordlist(user, id, dto.entries);
+  }
+
+  // AI-translate the lesson wordlist into every supported locale (V2).
+  @Roles('tutor', 'admin')
+  @Post('lessons/:id/translate-wordlist')
+  async translateWordlist(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    try {
+      return await this.content.translateWordlist(user, id);
+    } catch (e) {
+      if (e instanceof AiUnavailableError) {
+        throw new ServiceUnavailableException(e.message);
+      }
+      throw e;
+    }
   }
 
   @Roles('tutor', 'admin')
