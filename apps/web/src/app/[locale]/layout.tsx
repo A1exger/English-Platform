@@ -1,8 +1,8 @@
-import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing, isRtl, type Locale } from '@/i18n/routing';
 import { fixedTimeZone } from '@/i18n/request';
+import { AppIntlProvider } from '@/components/AppIntlProvider';
 import '../globals.css';
 
 export function generateStaticParams() {
@@ -26,9 +26,9 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
-  // Optional fixed zone (from i18n/request.ts). When APP_TIMEZONE/TZ is unset this
-  // is undefined, so next-intl formats dates in each viewer's own browser zone
-  // (per-viewer local time). When set, everyone sees that one zone.
+  // Optional fixed zone (from i18n/request.ts). Undefined when APP_TIMEZONE/TZ is
+  // unset — AppIntlProvider then resolves the zone on the client (Settings pick →
+  // browser). When set, it forces that one zone for everyone.
   const timeZone = fixedTimeZone();
   const dir = isRtl(locale) ? 'rtl' : 'ltr';
 
@@ -43,7 +43,9 @@ export default async function LocaleLayout({
           href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cairo:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
-        <NextIntlClientProvider messages={messages} timeZone={timeZone}>{children}</NextIntlClientProvider>
+        <AppIntlProvider locale={locale} messages={messages} fixedTimeZone={timeZone}>
+          {children}
+        </AppIntlProvider>
       </body>
     </html>
   );

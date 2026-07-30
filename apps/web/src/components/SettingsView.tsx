@@ -7,6 +7,7 @@ import { locales, type Locale } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
+import { useAppTimeZone } from './AppIntlProvider';
 
 // Curated IANA time zones offered as an explicit override. "Auto" (empty value)
 // is added in the <select> and means "use the viewer's own browser zone".
@@ -58,6 +59,7 @@ export function SettingsView() {
   const locale = useLocale();
   const router = useRouter();
   const browserTz = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
+  const { setProfileTimeZone } = useAppTimeZone();
 
   const [me, setMe] = useState<Me | null>(null);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -122,6 +124,8 @@ export function SettingsView() {
         }
       });
       setSaved(true);
+      // Apply the new zone across the app immediately (no reload needed).
+      setProfileTimeZone(form.timezone);
       // If the UI language changed, switch the route locale so it takes effect.
       if (form.locale !== locale) {
         router.replace('/settings', { locale: form.locale });

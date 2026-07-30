@@ -8,6 +8,7 @@ import { fetchMe, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { Icon } from './Icon';
+import { useAppTimeZone } from './AppIntlProvider';
 
 interface Lesson {
   id: string;
@@ -23,9 +24,9 @@ const LEVELS = ['Beginner', 'Elementary', 'PreIntermediate', 'Intermediate', 'Up
 
 // ——— Time-zone-aware calendar math ———
 // "Today", the week/day boundaries and where each lesson lands are all computed
-// in the app's configured zone (useTimeZone → i18n/request.ts) rather than the
-// browser's. That keeps the grid consistent with the formatted labels and with
-// the server's local day — a viewer west of the server no longer sees the whole
+// in the effective display zone (APP_TIMEZONE → the user's Settings zone → their
+// browser, resolved by AppIntlProvider and read via useTimeZone). That keeps the
+// grid consistent with the formatted labels, so a viewer never sees the whole
 // calendar shifted a day back near midnight.
 
 // Civil wall-clock fields of an instant as observed in `tz`.
@@ -79,19 +80,11 @@ export function ScheduleView() {
   const router = useRouter();
   const { showUndo } = useToast();
 
-  // Effective display zone, highest priority first:
-  //   1. APP_TIMEZONE — a single zone forced for everyone (via next-intl)
-  //   2. the zone the user picked in Settings (their profile timezone)
-  //   3. the viewer's own browser zone (auto-detected)
-  //   4. UTC
-  // A profile timezone of '' or 'UTC' means "no explicit pick" → fall through to
-  // auto. Calendar math and every label use this same tz so they never disagree.
-  const fixedTz = useTimeZone();
-  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  // null until the profile loads, so "today" isn't anchored in the wrong zone.
-  const [profileTz, setProfileTz] = useState<string | null>(null);
-  const chosenTz = profileTz && profileTz !== 'UTC' ? profileTz : null;
-  const tz = fixedTz || chosenTz || browserTz;
+  // The effective display zone is resolved app-wide by AppIntlProvider (APP_TIMEZONE
+  // → the user's Settings zone → browser). Read it via next-intl so calendar math
+  // matches the labels; fall back to the browser zone if somehow unset.
+  const tz = useTimeZone() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const { ready: tzReady } = useAppTimeZone();
 
   const [canManage, setCanManage] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -116,29 +109,13 @@ export function ScheduleView() {
   const [matLevel, setMatLevel] = useState('Elementary');
   const [matLessons, setMatLessons] = useState<{ id: string; title: string }[]>([]);
 
-  // The zone the user picked in Settings (empty/UTC ⇒ use their browser zone).
   useEffect(() => {
-    const token = tokenStore.get();
-    if (!token) {
-      setProfileTz('');
-      return;
-    }
-    let cancelled = false;
-    apiFetch<{ timezone?: string }>('/users/me', { token, locale })
-      .then((me) => !cancelled && setProfileTz(me.timezone || ''))
-      .catch(() => !cancelled && setProfileTz(''));
-    return () => {
-      cancelled = true;
-    };
-  }, [locale]);
-
-  useEffect(() => {
-    // Wait for the profile (profileTz !== null) so "today" is anchored in the final zone.
-    if (anchorDay === null && profileTz !== null) {
+    // Wait until the zone is resolved (tzReady) so "today" is anchored in the final zone.
+    if (anchorDay === null && tzReady) {
       const today = zonedDayNumber(new Date(), tz);
       setAnchorDay(today - mondayIndex(today)); // default view is 'week'
     }
-  }, [anchorDay, tz, profileTz]);
+  }, [anchorDay, tz, tzReady]);
 
   // Day numbers of the visible column(s), and a representative instant (civil
   // noon in tz) for each so next-intl formats it as the right civil day.
