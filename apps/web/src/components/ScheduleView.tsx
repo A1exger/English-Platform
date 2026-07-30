@@ -79,9 +79,11 @@ export function ScheduleView() {
   const router = useRouter();
   const { showUndo } = useToast();
 
-  // Dates are rendered in the app's configured zone (next-intl); do all calendar
-  // math in that same zone so the grid and the labels never disagree.
-  const tz = useTimeZone() || 'UTC';
+  // The zone every date is rendered and reasoned about in. When a fixed zone is
+  // pinned (APP_TIMEZONE) useTimeZone() returns it; otherwise we fall back to the
+  // viewer's own browser zone, so a student sees the grid, "today" and the labels
+  // in their local time. Calendar math uses this same tz so they never disagree.
+  const tz = useTimeZone() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
   const [canManage, setCanManage] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);

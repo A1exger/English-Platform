@@ -89,14 +89,15 @@ services:
     depends_on:
       - api
     environment:
-      # Time zone the whole UI renders dates in (see apps/web/src/i18n/request.ts).
-      # Pin it to the server's zone, e.g. Europe/Moscow, so "today" and the
-      # schedule show the server's local day for every viewer regardless of their
-      # browser zone. When empty, the zone from /etc/localtime (mounted below) is
-      # used, falling back to UTC.
+      # Optional FIXED display zone for the UI (see apps/web/src/i18n/request.ts).
+      # Leave empty (the default) and every viewer sees dates in their OWN browser
+      # zone — a student in Berlin sees Berlin time and their "today" is their local
+      # day, like Google Calendar. Set it (e.g. Europe/Moscow) to force that single
+      # zone for everyone instead.
       APP_TIMEZONE: ${APP_TIMEZONE:-}
     volumes:
-      # Lets the container resolve the host's local zone when APP_TIMEZONE is unset.
+      # The container's own clock/logs. The UI zone is APP_TIMEZONE (if set) or the
+      # viewer's browser zone — this mount no longer drives it.
       - /etc/localtime:/etc/localtime:ro
     ports:
       - "3000:3000"

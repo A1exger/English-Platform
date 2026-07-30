@@ -2,29 +2,20 @@ import { getRequestConfig } from 'next-intl/server';
 import { routing } from './routing';
 
 /**
- * The single time zone every date is rendered in — server- and client-side.
+ * Optional *fixed* display time zone for the whole UI.
  *
- * Without this, next-intl formats dates in the *runtime* zone: the server's zone
- * during SSR, but the *browser's* zone on the client. A viewer west of the server
- * then sees the previous calendar day around midnight ("yesterday, all day"),
- * because the client re-renders "today" in its own, earlier zone. Pinning one zone
- * makes `format.dateTime`, "today" and the schedule grid agree with the server's
- * local day for everyone.
+ * - When set (APP_TIMEZONE, or the container's TZ), every viewer sees dates and
+ *   times in this one zone — predictable "all times are Moscow time".
+ * - When unset (returns undefined), no zone is pinned, so next-intl and the
+ *   schedule fall back to each viewer's own browser zone — a student in Berlin
+ *   sees lesson times in Berlin time and their "today" is their local day, like
+ *   Google Calendar. This is the default.
  *
- * Resolution order (first non-empty wins):
- *   1. APP_TIMEZONE — explicit override (recommended in prod, e.g. Europe/Moscow)
- *   2. TZ           — the container's system zone
- *   3. the zone resolved from /etc/localtime (what the OS/Docker mount reports)
- *   4. UTC          — last-resort fallback
+ * Either way the day math and the formatting use the *same* zone, so "today"
+ * never drifts to "yesterday" (the bug this originally fixed).
  */
-function resolveTimeZone(): string {
-  const explicit = process.env.APP_TIMEZONE || process.env.TZ;
-  if (explicit) return explicit;
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
+export function fixedTimeZone(): string | undefined {
+  return process.env.APP_TIMEZONE || process.env.TZ || undefined;
 }
 
 export default getRequestConfig(async ({ requestLocale }) => {
@@ -37,7 +28,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    timeZone: resolveTimeZone(),
+    // undefined ⇒ next-intl uses the viewer's browser zone (per-viewer local time).
+    timeZone: fixedTimeZone(),
     messages: (await import(`../../messages/${locale}.json`)).default
   };
 });
