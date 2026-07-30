@@ -18,7 +18,14 @@ export type IconName =
   | 'book'
   | 'help'
   | 'logout'
-  | 'arrow-left';
+  | 'arrow-left'
+  | 'users'
+  | 'clock'
+  | 'calendar'
+  | 'calendar-plus'
+  | 'clipboard'
+  | 'chart'
+  | 'check-circle';
 
 const STROKE: Partial<Record<IconName, ReactNode>> = {
   close: <path d="M6 6l12 12M18 6L6 18" />,
@@ -83,6 +90,50 @@ const STROKE: Partial<Record<IconName, ReactNode>> = {
     <>
       <path d="M19 12H5" />
       <path d="M12 19l-7-7 7-7" />
+    </>
+  ),
+  users: (
+    <>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </>
+  ),
+  calendar: (
+    <>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </>
+  ),
+  'calendar-plus': (
+    <>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4" />
+    </>
+  ),
+  clipboard: (
+    <>
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+    </>
+  ),
+  chart: (
+    <>
+      <path d="M3 3v18h18" />
+      <path d="M7 14l4-4 3 3 5-6" />
+    </>
+  ),
+  'check-circle': (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M8 12l3 3 5-6" />
     </>
   )
 };

@@ -331,7 +331,15 @@
     "seeAll": "عرض الكل",
     "noLessons": "لا دروس قادمة",
     "bookLesson": "احجز درسًا",
-    "continueLearning": "متابعة التعلم"
+    "continueLearning": "متابعة التعلم",
+    "thisWeek": "هذا الأسبوع",
+    "graded": "الواجبات المصححة",
+    "upcomingLessons": "الدروس القادمة",
+    "calendarClear": "لا دروس قادمة — جدولك فارغ.",
+    "quickActions": "إجراءات سريعة",
+    "reviewAssignments": "مراجعة الواجبات",
+    "buildExercise": "إنشاء تمرين",
+    "viewAnalytics": "عرض التحليلات"
   },
   "studentProfile": {
     "title": "ملف الطالب",

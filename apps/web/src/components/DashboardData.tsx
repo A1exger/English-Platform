@@ -5,9 +5,9 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
-import { ScoreRing } from './ScoreRing';
 import { EmptyState } from './EmptyState';
 import { Skeleton } from './Skeleton';
+import { Icon } from './Icon';
 
 interface Lesson {
   id: string;
@@ -15,34 +15,18 @@ interface Lesson {
   startsAt: string;
   status: string;
 }
-interface Homework {
-  id: string;
-  title?: string | null;
-  status: string;
-  dueAt?: string | null;
-}
-interface Progress {
-  cefrLevel: string | null;
-  lessonsCompleted: number;
-  attendanceRate: number | null;
-}
-interface CourseProgress {
-  courseId: string;
-  title: string;
-  level: string;
-  courseCompletion: number; // 0–100 %
-  lessonsDone: number;
-  lessonsRequired: number;
-}
-interface ContentProgress {
-  overall: { goalProgress: number | null };
-  courses: CourseProgress[];
+// Teacher KPI trio from GET /analytics/overview.
+interface Overview {
+  activeStudents: number;
+  hoursThisWeek: number;
+  assignmentsGradedPct: number | null;
 }
 
 type State = 'loading' | 'unauth' | 'error' | 'ready';
 
-// Editorial Overview: one primary action (join the next lesson), the signature
-// goal ring, a few metrics, then homework + upcoming — all from real endpoints.
+// Broadsheet Overview. Teachers get a workload dashboard (stats + upcoming +
+// quick actions); students see only their upcoming lesson(s) — progress, courses
+// and homework each live on their own tab.
 export function DashboardData() {
   const tApp = useTranslations('app');
   const tDash = useTranslations('dashboard');
@@ -51,10 +35,7 @@ export function DashboardData() {
 
   const [me, setMe] = useState<Me | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [homework, setHomework] = useState<Homework[]>([]);
-  const [progress, setProgress] = useState<Progress | null>(null);
-  const [goal, setGoal] = useState<number | null>(null);
-  const [courses, setCourses] = useState<CourseProgress[]>([]);
+  const [overview, setOverview] = useState<Overview | null>(null);
   const [state, setState] = useState<State>('loading');
 
   const load = useCallback(
@@ -69,16 +50,11 @@ export function DashboardData() {
         setMe(profile);
         const list = await apiFetch<Lesson[]>('/lessons', { token, locale });
         setLessons(list);
-        if (profile.role === 'student') {
-          const [hw, pr, cp] = await Promise.all([
-            apiFetch<Homework[]>('/homework', { token, locale }).catch(() => [] as Homework[]),
-            apiFetch<Progress>('/analytics/progress', { token, locale }).catch(() => null),
-            apiFetch<ContentProgress>('/content/progress', { token, locale }).catch(() => null)
-          ]);
-          setHomework(hw);
-          setProgress(pr);
-          setGoal(cp?.overall.goalProgress ?? null);
-          setCourses(cp?.courses ?? []);
+        // Teacher/admin stat cards; students don't need them here.
+        if (profile.role !== 'student') {
+          setOverview(
+            await apiFetch<Overview>('/analytics/overview', { token, locale }).catch(() => null)
+          );
         }
         setState('ready');
       } catch (e) {
@@ -90,7 +66,7 @@ export function DashboardData() {
 
   useEffect(() => {
     void load();
-    // Re-fetch when the tab/page regains focus so a lesson deleted elsewhere
+    // Re-fetch when the tab/page regains focus so a lesson changed elsewhere
     // (e.g. on the schedule) is reflected here without a hard reload.
     const onVisible = () => {
       if (document.visibilityState === 'visible') void load(true);
@@ -119,147 +95,126 @@ export function DashboardData() {
   const relevant = [...lessons]
     .filter((l) => new Date(l.startsAt).getTime() >= now - DAY)
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-  // The hero is the soonest upcoming lesson; if none, a just-started one still
-  // showing within its 24h window (so you can still join a lesson you're late to).
+  // Soonest upcoming lesson (or a just-started one still in its 24h window).
   const next = relevant.find((l) => new Date(l.startsAt).getTime() >= now) ?? relevant[0];
-  const rest = relevant
-    .filter((l) => l.id !== next?.id && new Date(l.startsAt).getTime() >= now)
-    .slice(0, 3);
-  const pendingHw = homework.filter((h) => h.status !== 'graded');
+  const upcoming = relevant.filter((l) => new Date(l.startsAt).getTime() >= now);
   const dt = (s: string) => format.dateTime(new Date(s), { dateStyle: 'medium', timeStyle: 'short' });
-  const isStudent = me?.role === 'student';
-  // Courses the student has started but not finished — the Skyeng «continue»
-  // entry point back into a course, most-progressed first.
-  const continuing = courses
-    .filter((c) => c.courseCompletion > 0 && c.courseCompletion < 100)
-    .sort((a, b) => b.courseCompletion - a.courseCompletion);
+  const greeting = tDash('greeting', { name: me?.firstName ?? '' });
 
+  // ——— Student: only the upcoming lesson(s) ———
+  if (me?.role === 'student') {
+    return (
+      <div className="content">
+        <div className="overview-head">
+          <h2>{greeting}</h2>
+        </div>
+        {next ? (
+          <div className="card hero-lesson">
+            <div className="hero-lesson-main">
+              <span className="hero-kicker">{tDash('nextLesson')}</span>
+              <strong className="hero-title">{next.title ?? next.id}</strong>
+              <span className="muted">{dt(next.startsAt)}</span>
+            </div>
+            <Link href={`/lessons/${next.id}/room`} className="cta-primary">
+              {tDash('joinLesson')}
+            </Link>
+          </div>
+        ) : (
+          <div className="card">
+            <EmptyState title={tDash('noLessons')} />
+          </div>
+        )}
+        {upcoming.length > 1 && (
+          <div className="card">
+            <div className="card-kicker">{tDash('upcomingLessons')}</div>
+            <ul className="lesson-list">
+              {upcoming.slice(1, 5).map((l) => (
+                <li key={l.id}>
+                  <span>{l.title ?? l.id}</span>
+                  <span className="muted">{dt(l.startsAt)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ——— Teacher / admin: stats + upcoming + quick actions ———
+  const pct = overview?.assignmentsGradedPct;
   return (
     <div className="content">
       <div className="overview-head">
-        <h2>{tDash('greeting', { name: me?.firstName ?? '' })}</h2>
+        <h2>{greeting}</h2>
+        <Link href="/schedule" className="cta-primary">
+          <Icon name="calendar-plus" size={16} /> {tDash('bookLesson')}
+        </Link>
       </div>
 
-      {next && (
-        <div className="card hero-lesson">
-          <div className="hero-lesson-main">
-            <span className="hero-kicker">{tDash('nextLesson')}</span>
-            <strong className="hero-title">{next.title ?? next.id}</strong>
-            <span className="muted">{dt(next.startsAt)}</span>
-          </div>
-          <Link href={`/lessons/${next.id}/room`} className="cta-primary">
-            {tDash('joinLesson')}
-          </Link>
-        </div>
-      )}
-
-      {!next && (
-        <div className="card">
-          {/* Students don't self-book — the tutor schedules lessons. They only
-              need to see upcoming ones, so no booking CTA here. */}
-          <EmptyState
-            title={tDash('noLessons')}
-            action={isStudent ? undefined : { label: tDash('bookLesson'), href: '/schedule' }}
-          />
-        </div>
-      )}
-
-      {isStudent && (
-        <div className="card stats-row">
-          <ScoreRing
-            value={(goal ?? 0) * 10}
-            display={goal === null ? '—' : String(goal)}
-            label={tDash('goal')}
-          />
-          <div className="stats-metrics">
-            <div className="metric">
-              <span className="metric-value">{progress?.cefrLevel ?? '—'}</span>
-              <span className="metric-label">{tDash('level')}</span>
-            </div>
-            <div className="metric">
-              <span className="metric-value">{progress?.lessonsCompleted ?? 0}</span>
-              <span className="metric-label">{tDash('lessonsDone')}</span>
-            </div>
-            <div className="metric">
-              <span className="metric-value">
-                {progress?.attendanceRate == null ? '—' : `${progress.attendanceRate}%`}
-              </span>
-              <span className="metric-label">{tDash('attendance')}</span>
-            </div>
+      <div className="stat-grid">
+        <div className="card stat-card">
+          <Icon name="users" size={26} className="stat-ic" />
+          <div>
+            <div className="stat-value">{overview?.activeStudents ?? 0}</div>
+            <div className="stat-label">{tDash('activeStudents')}</div>
           </div>
         </div>
-      )}
-
-      {isStudent && continuing.length > 0 && (
-        <div className="card">
-          <div className="row-between">
-            <strong>{tDash('continueLearning')}</strong>
-            <Link href="/courses" className="link">
-              {tDash('seeAll')}
-            </Link>
-          </div>
-          <div className="continue-row">
-            {continuing.map((c) => (
-              <Link key={c.courseId} href={`/courses/${c.courseId}`} className="continue-card">
-                <div className="continue-cover">
-                  <span className="continue-level">{c.level}</span>
-                  <span className="continue-pct mono-num">{c.courseCompletion}%</span>
-                </div>
-                <div className="continue-body">
-                  <strong className="continue-title">{c.title}</strong>
-                  <div className="result-bar">
-                    <div
-                      className="result-bar-fill"
-                      style={{ inlineSize: `${c.courseCompletion}%` }}
-                    />
-                  </div>
-                  <span className="muted continue-meta">
-                    {c.lessonsDone}/{c.lessonsRequired}
-                  </span>
-                </div>
-              </Link>
-            ))}
+        <div className="card stat-card">
+          <Icon name="clock" size={26} className="stat-ic" />
+          <div>
+            <div className="stat-value">{overview?.hoursThisWeek ?? 0}h</div>
+            <div className="stat-label">{tDash('thisWeek')}</div>
           </div>
         </div>
-      )}
-
-      {isStudent && pendingHw.length > 0 && (
-        <div className="card">
-          <div className="row-between">
-            <strong>{tDash('homework')}</strong>
-            <Link href="/homework" className="link">
-              {tDash('seeAll')}
-            </Link>
+        <div className="card stat-card">
+          <Icon name="check-circle" size={26} className="stat-ic alt" />
+          <div>
+            <div className="stat-value">{pct == null ? '—' : `${pct}%`}</div>
+            <div className="stat-label">{tDash('graded')}</div>
           </div>
-          <ul className="assign-list">
-            {pendingHw.slice(0, 3).map((h) => (
-              <li key={h.id} className="assign-row" style={{ cursor: 'default' }}>
-                <div className="assign-row-main">
-                  <span>{h.title ?? h.id}</span>
-                </div>
-                <div className="assign-row-side">
-                  <span className={`chip status-${h.status}`}>{h.status}</span>
-                  {h.dueAt && <span className="mono-num muted">{dt(h.dueAt)}</span>}
-                </div>
-              </li>
-            ))}
-          </ul>
         </div>
-      )}
+      </div>
 
-      {rest.length > 0 && (
-        <div className="card">
-          <strong>{tDash('upcoming')}</strong>
+      <div className="card-kicker">{tDash('upcomingLessons')}</div>
+      {upcoming.length === 0 ? (
+        <div className="card upcoming-empty" style={{ marginBlockEnd: 30 }}>
+          <Icon name="calendar" size={20} />
+          <span>{tDash('calendarClear')}</span>
+        </div>
+      ) : (
+        <div className="card" style={{ marginBlockEnd: 30 }}>
           <ul className="lesson-list">
-            {rest.map((l) => (
+            {upcoming.slice(0, 5).map((l) => (
               <li key={l.id}>
                 <span>{l.title ?? l.id}</span>
-                <span className="muted">{dt(l.startsAt)}</span>
+                <span className="lesson-list-side">
+                  <span className="muted">{dt(l.startsAt)}</span>
+                  <Link href={`/lessons/${l.id}/room`} className="link">
+                    {tDash('joinLesson')}
+                  </Link>
+                </span>
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      <div className="card-kicker">{tDash('quickActions')}</div>
+      <div className="qa-grid">
+        <Link href="/assignments" className="card qa-card">
+          <Icon name="clipboard" size={22} className="qa-ic" />
+          <span className="qa-label">{tDash('reviewAssignments')}</span>
+        </Link>
+        <Link href="/exercises" className="card qa-card">
+          <Icon name="edit" size={22} className="qa-ic" />
+          <span className="qa-label">{tDash('buildExercise')}</span>
+        </Link>
+        <Link href="/analytics" className="card qa-card">
+          <Icon name="chart" size={22} className="qa-ic" />
+          <span className="qa-label">{tDash('viewAnalytics')}</span>
+        </Link>
+      </div>
     </div>
   );
 }

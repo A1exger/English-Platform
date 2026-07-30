@@ -331,7 +331,15 @@
     "seeAll": "Tout voir",
     "noLessons": "Aucune leçon à venir",
     "bookLesson": "Réserver une leçon",
-    "continueLearning": "Continuer l'apprentissage"
+    "continueLearning": "Continuer l'apprentissage",
+    "thisWeek": "Cette semaine",
+    "graded": "Devoirs corrigés",
+    "upcomingLessons": "Cours à venir",
+    "calendarClear": "Aucun cours à venir — votre agenda est vide.",
+    "quickActions": "Actions rapides",
+    "reviewAssignments": "Corriger les devoirs",
+    "buildExercise": "Créer un exercice",
+    "viewAnalytics": "Voir les analyses"
   },
   "studentProfile": {
     "title": "Profil de l'élève",

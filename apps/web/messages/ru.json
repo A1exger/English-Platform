@@ -331,7 +331,15 @@
     "seeAll": "Все",
     "noLessons": "Нет предстоящих уроков",
     "bookLesson": "Записаться на урок",
-    "continueLearning": "Продолжить обучение"
+    "continueLearning": "Продолжить обучение",
+    "thisWeek": "На этой неделе",
+    "graded": "Работы проверены",
+    "upcomingLessons": "Предстоящие уроки",
+    "calendarClear": "Предстоящих уроков нет — расписание свободно.",
+    "quickActions": "Быстрые действия",
+    "reviewAssignments": "Проверить задания",
+    "buildExercise": "Создать упражнение",
+    "viewAnalytics": "Открыть аналитику"
   },
   "studentProfile": {
     "title": "Профиль ученика",

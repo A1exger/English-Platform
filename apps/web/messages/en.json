@@ -331,7 +331,15 @@
     "seeAll": "See all",
     "noLessons": "No upcoming lessons",
     "bookLesson": "Book a lesson",
-    "continueLearning": "Continue learning"
+    "continueLearning": "Continue learning",
+    "thisWeek": "This week",
+    "graded": "Assignments graded",
+    "upcomingLessons": "Upcoming lessons",
+    "calendarClear": "No upcoming lessons — your calendar is clear.",
+    "quickActions": "Quick actions",
+    "reviewAssignments": "Review assignments",
+    "buildExercise": "Build an exercise",
+    "viewAnalytics": "View analytics"
   },
   "studentProfile": {
     "title": "Student profile",

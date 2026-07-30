@@ -331,7 +331,15 @@
     "seeAll": "Alles",
     "noLessons": "Geen aankomende lessen",
     "bookLesson": "Een les boeken",
-    "continueLearning": "Verder leren"
+    "continueLearning": "Verder leren",
+    "thisWeek": "Deze week",
+    "graded": "Opdrachten beoordeeld",
+    "upcomingLessons": "Aankomende lessen",
+    "calendarClear": "Geen aankomende lessen — je agenda is leeg.",
+    "quickActions": "Snelle acties",
+    "reviewAssignments": "Opdrachten nakijken",
+    "buildExercise": "Oefening maken",
+    "viewAnalytics": "Analyses bekijken"
   },
   "studentProfile": {
     "title": "Leerlingprofiel",

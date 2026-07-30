@@ -331,7 +331,15 @@
     "seeAll": "Alle",
     "noLessons": "Keine anstehenden Stunden",
     "bookLesson": "Stunde buchen",
-    "continueLearning": "Weiterlernen"
+    "continueLearning": "Weiterlernen",
+    "thisWeek": "Diese Woche",
+    "graded": "Aufgaben bewertet",
+    "upcomingLessons": "Anstehende Stunden",
+    "calendarClear": "Keine anstehenden Stunden — dein Kalender ist frei.",
+    "quickActions": "Schnellaktionen",
+    "reviewAssignments": "Aufgaben prüfen",
+    "buildExercise": "Übung erstellen",
+    "viewAnalytics": "Analytik ansehen"
   },
   "studentProfile": {
     "title": "Schülerprofil",
