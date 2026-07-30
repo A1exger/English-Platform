@@ -3317,12 +3317,75 @@ select.err {
 
 /* courses — student/author cards (4.2) */
 .course-cat {
+  margin: 0;
+  padding: 16px 18px;
+}
+.course-cat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block-end: 8px;
+}
+.course-cat-head strong {
+  font-size: 16px;
+}
+/* Skyeng "Classroom" compact grouping: category boxes flow into columns, each
+   holding a dense list of course-name links instead of big cover cards. */
+.course-cats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-items: start;
+  gap: 16px;
   margin-block-start: 16px;
 }
-.course-cat > strong {
-  display: block;
-  margin-block-end: 12px;
-  font-size: 16px;
+.course-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.course-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.course-row-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-inline-size: 0;
+  padding: 7px 8px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  color: var(--ink);
+}
+.course-row-link:hover {
+  background: var(--indigo-50);
+}
+.course-dot {
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: 50%;
+  background: var(--mist);
+  flex: none;
+}
+.course-row-link:hover .course-dot {
+  background: var(--indigo);
+}
+.course-row-name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+}
+.course-row-pct {
+  font-size: 12px;
+  color: var(--slate);
+  flex: none;
 }
 .course-cards {
   list-style: none;
