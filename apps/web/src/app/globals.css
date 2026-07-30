@@ -2,32 +2,37 @@
    Light-first. RTL via logical properties only (no left/right). */
 
 :root {
+  /* Broadsheet — newsprint light theme, cyan primary accent, near-square corners.
+     Applied platform-wide (the lesson room shares these values). Brand ramps keep
+     their old --indigo-/--spark- names so existing components inherit the new hues
+     with no per-component edits. */
+
   /* surfaces */
-  --paper: #ffffff;
-  --card: #ffffff;
-  --cloud: #f4f3ef;
-  --line: #ebe9e3;
-  --line-strong: #d8d5cd;
+  --paper: #f3f2f2;   /* page background (newsprint) */
+  --card: #ffffff;    /* cards / panels */
+  --cloud: #eae9e9;   /* sidebar / inset surface (a touch darker than paper) */
+  --line: rgba(32, 30, 29, 0.14);
+  --line-strong: rgba(32, 30, 29, 0.26);
 
   /* ink */
-  --ink: #16192b;
-  --slate: #5b6172;
-  --mist: #9aa0b0;
+  --ink: #201e1d;
+  --slate: #605d5d;
+  --mist: #9b9797;
 
-  /* brand: indigo */
-  --indigo-50: #f5f4fe;
-  --indigo-100: #eeecfb;
-  --indigo: #4338ca;
-  --indigo-700: #3730a3;
-  --indigo-900: #232178;
+  /* brand: cyan (primary interactive) — name kept for back-compat */
+  --indigo-50: #e9f8ff;
+  --indigo-100: #cbeeff;
+  --indigo: #0088b0;
+  --indigo-700: #006786;
+  --indigo-900: #0a303e;
 
-  /* spark: amber */
-  --spark-50: #fff9ec;
-  --spark-100: #fef2da;
-  --spark: #f6a623;
-  --spark-700: #b4740c;
+  /* second accent: magenta (rare) — name kept for back-compat */
+  --spark-50: #fff1f4;
+  --spark-100: #ffdee6;
+  --spark: #d6006c;
+  --spark-700: #aa0b56;
 
-  /* grade tiers */
+  /* grade tiers (semantic, unchanged) */
   --high: #1fa971;
   --high-100: #e2f5ec;
   --mid: #e8a93b;
@@ -35,25 +40,25 @@
   --low: #e5544b;
   --low-100: #fbe7e5;
 
-  /* type */
-  --font-display: 'Inter', system-ui, sans-serif;
+  /* type — serif headings/labels, sans (Inter) for body & data */
+  --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-ar: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
 
-  /* radius */
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 20px;
+  /* radius — near-square throughout */
+  --r-sm: 1px;
+  --r-md: 2px;
+  --r-lg: 4px;
+  --r-xl: 6px;
   --r-pill: 999px;
 
   /* elevation */
   --sh-xs: none;
-  --sh-sm: 0 1px 3px rgba(22, 25, 43, 0.05);
-  --sh-md: 0 10px 30px rgba(22, 25, 43, 0.08);
-  --ring: 0 0 0 3px rgba(67, 56, 202, 0.26);
+  --sh-sm: 0 1px 2px rgba(45, 43, 43, 0.14);
+  --sh-md: 0 3px 10px rgba(45, 43, 43, 0.16);
+  --ring: 0 0 0 3px rgba(0, 136, 176, 0.28);
 
   /* motion */
   --e-out: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -113,7 +118,8 @@ h2 { font-weight: 700; }
 /* ——— header ——— */
 
 .brand {
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-weight: 600;
   font-size: 18px;
   color: var(--ink);
   text-decoration: none;
@@ -129,10 +135,10 @@ h2 { font-weight: 700; }
 /* ——— cards ——— */
 .card {
   background: var(--card);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   padding: 20px;
   border: 1px solid var(--line);
-  box-shadow: var(--sh-xs);
+  box-shadow: var(--sh-sm);
 }
 
 /* ——— hero / login ——— */
@@ -247,24 +253,27 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: var(--r-md);
   color: var(--slate);
   text-decoration: none;
+  font-family: var(--font-display);
   font-weight: 500;
-  font-size: 15px;
+  font-size: 14px;
   transition: background var(--t-fast), color var(--t-fast);
+}
+.nav-item:hover {
+  background: var(--indigo-50);
+  color: var(--ink);
 }
 .nav-item:hover {
   background: var(--cloud);
   color: var(--ink);
 }
 .nav-item.active {
-  background: var(--indigo-100);
+  background: var(--indigo-50);
   color: var(--indigo-700);
   font-weight: 600;
-  border-inline-start: 2px solid var(--indigo);
-  border-radius: 0;
 }
 .nav-badge {
   color: var(--mist);
@@ -401,6 +410,11 @@ button:disabled {
 }
 .lesson-list li:last-child {
   border-bottom: 0;
+}
+.lesson-list-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .stacked {
   flex-direction: column;
@@ -1650,10 +1664,14 @@ select.err {
   margin-block-start: 14px;
 }
 .nav-group-label {
-  font-size: 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--mist);
-  padding-inline: 10px;
-  margin-block-end: 2px;
+  padding-inline: 12px;
+  margin-block: 4px 4px;
 }
 
 /* ——— Editorial: top-bar search + avatar menu ——— */
@@ -1758,7 +1776,97 @@ select.err {
 
 /* ——— Editorial: overview hero + stats ——— */
 .overview-head {
-  margin-block-end: 4px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-block-end: 24px;
+}
+.overview-head h2 {
+  margin: 0;
+}
+
+/* small-caps section label above stat / upcoming / quick-action groups */
+.card-kicker {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--indigo-700);
+  margin-block-end: 8px;
+}
+
+.stat-grid,
+.qa-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-block-end: 30px;
+}
+@media (max-width: 760px) {
+  .stat-grid,
+  .qa-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.stat-ic {
+  color: var(--indigo-700);
+  flex: none;
+}
+.stat-ic.alt {
+  color: var(--spark);
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.1;
+}
+.stat-label {
+  color: var(--slate);
+  font-size: 13px;
+}
+
+.qa-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: box-shadow var(--t-fast), transform var(--t-fast) var(--e-out);
+}
+.qa-card:hover {
+  box-shadow: var(--sh-md);
+  transform: translateY(-1px);
+}
+.qa-ic {
+  color: var(--indigo-700);
+}
+.qa-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.upcoming-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  color: var(--slate);
+  font-size: 14px;
+}
+.upcoming-empty .icon {
+  color: var(--mist);
+  flex: none;
 }
 .hero-lesson {
   display: flex;
@@ -1900,7 +2008,7 @@ select.err {
   flex-direction: column;
   gap: 18px;
   padding: 20px 14px;
-  background: var(--card);
+  background: var(--cloud);
   border-inline-end: 1px solid var(--line);
   z-index: 20;
 }
