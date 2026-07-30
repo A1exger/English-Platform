@@ -2306,9 +2306,7 @@ select.err {
   display: flex;
   gap: 4px;
   border-block-end: 1px solid var(--line);
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  flex-wrap: wrap;
 }
 .tabs button {
   background: transparent;

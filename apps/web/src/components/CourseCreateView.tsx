@@ -109,7 +109,7 @@ export function CourseCreateView() {
       <Link href="/courses" className="link">← {t('back')}</Link>
       <PageHeader title={t('newCourse')} />
 
-      <div className="two-col">
+      <div className="two-col" style={{ alignItems: 'start' }}>
         <form className="card form-grid" onSubmit={addCourse}>
           <strong>{t('newCourse')}</strong>
           <label>

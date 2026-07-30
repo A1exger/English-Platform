@@ -131,6 +131,7 @@ export function ExercisesView() {
   const [aspect, setAspect] = useState<string>('Grammar');
   const [isPublic, setIsPublic] = useState(false);
   const [previewState, setPreviewState] = useState<Record<string, unknown>>({});
+  const [showPreview, setShowPreview] = useState(false);
 
   // Assign panel
   const [assignFor, setAssignFor] = useState<string | null>(null);
@@ -425,8 +426,7 @@ export function ExercisesView() {
     <div className="content">
       <PageHeader title={t('title')} />
 
-      <div className="two-col">
-        <form className="card ex-form" onSubmit={create}>
+      <form className="card ex-form" onSubmit={create}>
           <strong>{editingId ? t('edit') : t('create')}</strong>
           <div className="field">
             <span>{t('type')}</span>
@@ -584,26 +584,35 @@ export function ExercisesView() {
             <button type="submit" disabled={busy || (isCanonical(type) && !!canonicalErr)}>
               {busy ? t('creating') : t('save')}
             </button>
+            <button type="button" className="ghost" onClick={() => setShowPreview(true)}>
+              {t('preview')}
+            </button>
             {editingId && (
               <button type="button" className="ghost" aria-label={tc('close')} onClick={cancelEdit}><Icon name="close" /></button>
             )}
           </div>
         </form>
 
-        <div className="card">
-          <strong>{t('preview')}</strong>
-          {isCanonical(type) && canonicalPreview ? (
-            <TaskRenderer
-              type={canonicalPreview.previewType}
-              def={canonicalPreview.def}
-              state={previewState}
-              onChange={(s) => setPreviewState(s as Record<string, unknown>)}
-            />
-          ) : (
-            <ExerciseRenderer question={question} state={preview} onChange={setPreview} />
-          )}
-        </div>
-      </div>
+        {showPreview && (
+          <div className="modal-overlay" onClick={() => setShowPreview(false)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="row-between">
+                <strong>{t('preview')}</strong>
+                <button type="button" className="ghost" aria-label={tc('close')} onClick={() => setShowPreview(false)}><Icon name="close" /></button>
+              </div>
+              {isCanonical(type) && canonicalPreview ? (
+                <TaskRenderer
+                  type={canonicalPreview.previewType}
+                  def={canonicalPreview.def}
+                  state={previewState}
+                  onChange={(s) => setPreviewState(s as Record<string, unknown>)}
+                />
+              ) : (
+                <ExerciseRenderer question={question} state={preview} onChange={setPreview} />
+              )}
+            </div>
+          </div>
+        )}
 
       {viewing && (
         <div className="modal-overlay" onClick={() => setViewing(null)}>
