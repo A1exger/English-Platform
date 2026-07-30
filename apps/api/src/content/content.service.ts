@@ -511,6 +511,13 @@ export class ContentService {
     return this.prisma.course.update({ where: { id }, data: { ...dto } });
   }
 
+  /** Delete a course and its whole tree (sections → units → lessons cascade). */
+  async deleteCourse(user: AuthenticatedUser, id: string) {
+    await this.assertCourseEditable(user, id);
+    await this.prisma.course.delete({ where: { id } });
+    return { deleted: true };
+  }
+
   async createSection(user: AuthenticatedUser, dto: CreateSectionDto) {
     await this.assertCourseEditable(user, dto.courseId);
     return this.prisma.section.create({

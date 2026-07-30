@@ -551,7 +551,11 @@
     "aiApproved": "Gepubliceerd",
     "aiGenLesson": "Een les genereren met AI",
     "insertInline": "In tekst invoegen",
-    "stageName": "Fasenaam (optioneel)"
+    "stageName": "Fasenaam (optioneel)",
+    "rename": "Hernoemen",
+    "deleteCourse": "Verwijderen",
+    "courseDeleted": "Cursus verwijderd",
+    "cancel": "Annuleren"
   },
   "learn": {
     "title": "Les",

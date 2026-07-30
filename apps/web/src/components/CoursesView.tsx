@@ -64,6 +64,8 @@ function CourseCardBody({
   pct,
   isActive,
   onToggle,
+  onRename,
+  onDelete,
   handle
 }: {
   c: Course;
@@ -72,6 +74,8 @@ function CourseCardBody({
   pct?: number;
   isActive: boolean;
   onToggle: () => void;
+  onRename?: () => void;
+  onDelete?: () => void;
   handle?: ReactNode;
 }) {
   const t = useTranslations('courses');
@@ -114,9 +118,15 @@ function CourseCardBody({
             <summary aria-label={t('more')}>⋯</summary>
             <div className="row-menu-pop">
               <Link className="menu-item" href={`/courses/${c.id}`}>{t('edit')}</Link>
+              {onRename && (
+                <button type="button" className="menu-item" onClick={onRename}>{t('rename')}</button>
+              )}
               <button type="button" className="menu-item" onClick={onToggle}>
                 {c.status === 'published' ? t('unpublish') : t('publish')}
               </button>
+              {onDelete && (
+                <button type="button" className="menu-item danger" onClick={onDelete}>{t('deleteCourse')}</button>
+              )}
             </div>
           </details>
         )}
@@ -138,6 +148,8 @@ function SortableCourse(props: {
   pct?: number;
   isActive: boolean;
   onToggle: () => void;
+  onRename?: () => void;
+  onDelete?: () => void;
 }) {
   const t = useTranslations('courses');
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.c.id });
@@ -181,6 +193,7 @@ export function CoursesView() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [catTitle, setCatTitle] = useState('');
   const [course, setCourse] = useState({ categoryId: '', title: '', description: '', coverUrl: '' });
+  const [renaming, setRenaming] = useState<{ id: string; title: string } | null>(null);
 
   // Mouse + touch (touch delayed so a drag never fights page scroll, §11).
   const sensors = useSensors(
@@ -297,6 +310,35 @@ export function CoursesView() {
     });
   }
 
+  // Rename in place — optimistic, then PATCH the title.
+  async function saveRename() {
+    const token = tokenStore.get();
+    if (!token || !renaming || !renaming.title.trim()) return;
+    const { id } = renaming;
+    const title = renaming.title.trim();
+    setCats((prev) =>
+      prev.map((cat) => ({ ...cat, courses: cat.courses.map((x) => (x.id === id ? { ...x, title } : x)) }))
+    );
+    setRenaming(null);
+    await apiFetch(`/content/courses/${id}`, { method: 'PATCH', token, locale, body: { title } }).catch(
+      () => void load()
+    );
+  }
+
+  // Delete a course — optimistic remove with an undo window before the DELETE.
+  function removeCourse(c: Course) {
+    setCats((prev) => prev.map((cat) => ({ ...cat, courses: cat.courses.filter((x) => x.id !== c.id) })));
+    showUndo(t('courseDeleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/content/courses/${c.id}`, { method: 'DELETE', token, locale }).catch(() => undefined);
+        await load();
+      }
+    });
+  }
+
   function persist(path: string, body: unknown) {
     const token = tokenStore.get();
     if (!token) return;
@@ -375,6 +417,8 @@ export function CoursesView() {
                 pct={progress[c.id]}
                 isActive={c.id === activeId}
                 onToggle={() => togglePublish(c)}
+                onRename={() => setRenaming({ id: c.id, title: c.title })}
+                onDelete={() => removeCourse(c)}
               />
             ))}
           </ul>
@@ -391,6 +435,8 @@ export function CoursesView() {
               pct={progress[c.id]}
               isActive={c.id === activeId}
               onToggle={() => togglePublish(c)}
+              onRename={() => setRenaming({ id: c.id, title: c.title })}
+              onDelete={() => removeCourse(c)}
             />
           </li>
         ))}
@@ -501,6 +547,34 @@ export function CoursesView() {
         </DndContext>
       ) : (
         shownCats.map((cat) => <div key={cat.id}>{catBlock(cat)}</div>)
+      )}
+
+      {renaming && (
+        <div className="modal-overlay" onMouseDown={() => setRenaming(null)}>
+          <form
+            className="card rename-modal"
+            onMouseDown={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void saveRename();
+            }}
+          >
+            <strong>{t('rename')}</strong>
+            <input
+              autoFocus
+              value={renaming.title}
+              onChange={(e) => setRenaming({ ...renaming, title: e.target.value })}
+            />
+            <div className="row-actions">
+              <button type="button" className="ghost" onClick={() => setRenaming(null)}>
+                {t('cancel')}
+              </button>
+              <button type="submit" disabled={!renaming.title.trim()}>
+                {t('save')}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );

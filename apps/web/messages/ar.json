@@ -551,7 +551,11 @@
     "aiApproved": "منشور",
     "aiGenLesson": "إنشاء درس بالذكاء الاصطناعي",
     "insertInline": "إدراج في النص",
-    "stageName": "اسم المرحلة (اختياري)"
+    "stageName": "اسم المرحلة (اختياري)",
+    "rename": "إعادة تسمية",
+    "deleteCourse": "حذف",
+    "courseDeleted": "تم حذف الدورة",
+    "cancel": "إلغاء"
   },
   "learn": {
     "title": "الدرس",

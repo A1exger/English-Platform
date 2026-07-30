@@ -551,7 +551,11 @@
     "aiApproved": "Published",
     "aiGenLesson": "Generate a lesson with AI",
     "insertInline": "Insert in text",
-    "stageName": "Stage name (optional)"
+    "stageName": "Stage name (optional)",
+    "rename": "Rename",
+    "deleteCourse": "Delete",
+    "courseDeleted": "Course deleted",
+    "cancel": "Cancel"
   },
   "learn": {
     "title": "Lesson",

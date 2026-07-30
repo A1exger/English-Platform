@@ -551,7 +551,11 @@
     "aiApproved": "Publié",
     "aiGenLesson": "Générer une leçon avec l'IA",
     "insertInline": "Insérer dans le texte",
-    "stageName": "Nom de l'étape (facultatif)"
+    "stageName": "Nom de l'étape (facultatif)",
+    "rename": "Renommer",
+    "deleteCourse": "Supprimer",
+    "courseDeleted": "Cours supprimé",
+    "cancel": "Annuler"
   },
   "learn": {
     "title": "Leçon",

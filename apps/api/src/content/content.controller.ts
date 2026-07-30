@@ -181,6 +181,12 @@ export class ContentController {
   }
 
   @Roles('tutor', 'admin')
+  @Delete('courses/:id')
+  deleteCourse(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.deleteCourse(user, id);
+  }
+
+  @Roles('tutor', 'admin')
   @Post('sections')
   createSection(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateSectionDto) {
     return this.content.createSection(user, dto);

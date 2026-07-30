@@ -551,7 +551,11 @@
     "aiApproved": "Veröffentlicht",
     "aiGenLesson": "Lektion mit KI generieren",
     "insertInline": "In Text einfügen",
-    "stageName": "Etappenname (optional)"
+    "stageName": "Etappenname (optional)",
+    "rename": "Umbenennen",
+    "deleteCourse": "Löschen",
+    "courseDeleted": "Kurs gelöscht",
+    "cancel": "Abbrechen"
   },
   "learn": {
     "title": "Lektion",
