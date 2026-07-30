@@ -271,7 +271,7 @@
     "dashboard": "Dashboard",
     "createAccount": "Create an account",
     "search": "Search",
-    "searchPlaceholder": "Search pages…",
+    "searchPlaceholder": "Search words, lessons, students…",
     "noResults": "Nothing found",
     "undo": "Undo",
     "menu": "Menu",
@@ -284,7 +284,8 @@
     "student": "Student",
     "word": "Word",
     "pages": "Pages",
-    "course": "Course"
+    "course": "Course",
+    "searchHint": "Type to search words, lessons, courses and students"
   },
   "nav": {
     "overview": "Overview",
@@ -598,7 +599,7 @@
   },
   "dictionary": {
     "title": "Dictionary",
-    "empty": "No words yet. Add them from lesson wordlists.",
+    "empty": "No words yet. Add one above, or from lesson wordlists.",
     "train": "Train",
     "due": "Due",
     "reveal": "Reveal",
@@ -609,7 +610,10 @@
     "nothingDue": "Nothing due today",
     "nextReview": "next review {date}",
     "shortcuts": "Space to reveal · 1 didn’t know · 2 knew it",
-    "repsHint": "Times reviewed"
+    "repsHint": "Times reviewed",
+    "wordPlaceholder": "Word",
+    "translationPlaceholder": "Translation (optional)",
+    "add": "Add"
   },
   "enum": {
     "role": {

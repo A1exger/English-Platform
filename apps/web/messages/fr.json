@@ -271,7 +271,7 @@
     "dashboard": "Tableau de bord",
     "createAccount": "Créer un compte",
     "search": "Rechercher",
-    "searchPlaceholder": "Rechercher des pages…",
+    "searchPlaceholder": "Rechercher mots, leçons, élèves…",
     "noResults": "Aucun résultat",
     "undo": "Annuler",
     "menu": "Menu",
@@ -284,7 +284,8 @@
     "student": "Élève",
     "word": "Mot",
     "pages": "Pages",
-    "course": "Cours"
+    "course": "Cours",
+    "searchHint": "Tapez pour rechercher mots, leçons, cours et élèves"
   },
   "nav": {
     "overview": "Aperçu",
@@ -598,7 +599,7 @@
   },
   "dictionary": {
     "title": "Dictionnaire",
-    "empty": "Aucun mot. Ajoutez-en depuis les listes de vocabulaire.",
+    "empty": "Aucun mot pour l’instant. Ajoutez-en un ci-dessus ou depuis les listes de mots des leçons.",
     "train": "S'entraîner",
     "due": "À réviser",
     "reveal": "Révéler",
@@ -609,7 +610,10 @@
     "nothingDue": "Rien à réviser aujourd’hui",
     "nextReview": "prochaine révision {date}",
     "shortcuts": "Espace pour révéler · 1 pas su · 2 su",
-    "repsHint": "Nombre de révisions"
+    "repsHint": "Nombre de révisions",
+    "wordPlaceholder": "Mot",
+    "translationPlaceholder": "Traduction (facultatif)",
+    "add": "Ajouter"
   },
   "enum": {
     "role": {

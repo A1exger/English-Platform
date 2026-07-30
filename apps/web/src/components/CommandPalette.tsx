@@ -6,41 +6,9 @@ import { useRouter } from '@/i18n/routing';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 
-type Cmd = { key: string; href: string };
 type Item = { id: string; label: string; href: string; hint?: string };
 
-function commandsForRole(role: string | null): Cmd[] {
-  const base: Cmd[] = [
-    { key: 'overview', href: '/dashboard' },
-    { key: 'schedule', href: '/schedule' },
-    { key: 'materials', href: '/materials' },
-    { key: 'settings', href: '/settings' },
-    { key: 'billing', href: '/billing' }
-  ];
-  const extra: Cmd[] = [];
-  if (role === 'tutor' || role === 'admin') {
-    extra.push(
-      { key: 'students', href: '/students' },
-      { key: 'assignments', href: '/assignments' },
-      { key: 'courses', href: '/courses' },
-      { key: 'exercises', href: '/exercises' },
-      { key: 'analytics', href: '/analytics' }
-    );
-  }
-  if (role === 'admin') extra.push({ key: 'users', href: '/admin/users' });
-  if (role === 'student') {
-    extra.push(
-      { key: 'homework', href: '/homework' },
-      { key: 'progress', href: '/progress' },
-      { key: 'dictionary', href: '/dictionary' },
-      { key: 'courses', href: '/courses' }
-    );
-  }
-  return [...base.slice(0, 3), ...extra, ...base.slice(3)];
-}
-
 export function CommandPalette({ role, onClose }: { role: string | null; onClose: () => void }) {
-  const nav = useTranslations('nav');
   const tCommon = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
@@ -48,13 +16,9 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
   const [active, setActive] = useState(0);
   const [content, setContent] = useState<Item[]>([]);
 
-  const pageItems = useMemo<Item[]>(
-    () => commandsForRole(role).map((c) => ({ id: `p:${c.key}`, label: nav(c.key), href: c.href })),
-    [role, nav]
-  );
-
-  // Sprint 5.3: the palette reaches past page names into content — lessons,
-  // materials, students, dictionary words — so ⌘K finds a student by name.
+  // The palette is a keyword search over CONTENT — dictionary words, lessons,
+  // courses, materials, students — not a page list (pages already live in the
+  // rail). So ⌘K finds a word from the dictionary or a student by name.
   useEffect(() => {
     const token = tokenStore.get();
     if (!token) return;
@@ -84,23 +48,13 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
     };
   }, [role, locale, tCommon]);
 
-  const filteredPages = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return pageItems.filter((c) => c.label.toLowerCase().includes(needle));
-  }, [q, pageItems]);
-
-  const filteredContent = useMemo(() => {
+  // Match content by word: a query hits every item whose label contains it, so a
+  // dictionary word, a lesson title or a student name all surface the same way.
+  const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return [];
     return content.filter((c) => c.label.toLowerCase().includes(needle)).slice(0, 12);
   }, [q, content]);
-
-  // A search matches CONTENT only (courses, words, lessons, materials, students).
-  // The page shortcuts show only on the empty palette — they are already in the rail.
-  const filtered = useMemo(
-    () => (q.trim() ? filteredContent : filteredPages),
-    [q, filteredContent, filteredPages]
-  );
 
   useEffect(() => setActive(0), [q]);
 
@@ -141,7 +95,9 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
           onChange={(e) => setQ(e.target.value)}
         />
         <ul className="palette-list">
-          {filtered.length === 0 && <li className="palette-empty">{tCommon('noResults')}</li>}
+          {filtered.length === 0 && (
+            <li className="palette-empty">{q.trim() ? tCommon('noResults') : tCommon('searchHint')}</li>
+          )}
           {filtered.map((c, idx) => (
             <li key={c.id}>
               <button

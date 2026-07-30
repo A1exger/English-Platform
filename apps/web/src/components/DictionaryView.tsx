@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
@@ -38,6 +38,11 @@ export function DictionaryView() {
   const [idx, setIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [dueOnly, setDueOnly] = useState(false);
+  // Manual "add a word" — the dictionary also fills from lesson wordlists, but a
+  // student can type any word + translation here to build vocabulary directly.
+  const [newWord, setNewWord] = useState('');
+  const [newTr, setNewTr] = useState('');
+  const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -60,6 +65,32 @@ export function DictionaryView() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const addWord = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      const token = tokenStore.get();
+      const word = newWord.trim();
+      if (!token || !word || adding) return;
+      setAdding(true);
+      try {
+        await apiFetch('/content/dictionary', {
+          method: 'POST',
+          token,
+          locale,
+          body: { word, translation: newTr.trim() || undefined }
+        });
+        setNewWord('');
+        setNewTr('');
+        await load();
+      } catch {
+        // Keep the typed word on failure so the student can retry.
+      } finally {
+        setAdding(false);
+      }
+    },
+    [newWord, newTr, adding, locale, load]
+  );
 
   const dueCount = entries.filter((e) => e.due).length;
   const learnedCount = entries.filter((e) => e.repetitions >= LEARNED_AT).length;
@@ -179,6 +210,27 @@ export function DictionaryView() {
           )}
         </div>
       </div>
+
+      <form className="dict-add" onSubmit={addWord}>
+        <input
+          className="dict-add-word"
+          placeholder={t('wordPlaceholder')}
+          aria-label={t('wordPlaceholder')}
+          value={newWord}
+          maxLength={120}
+          onChange={(e) => setNewWord(e.target.value)}
+        />
+        <input
+          className="dict-add-tr"
+          placeholder={t('translationPlaceholder')}
+          aria-label={t('translationPlaceholder')}
+          value={newTr}
+          onChange={(e) => setNewTr(e.target.value)}
+        />
+        <button type="submit" disabled={!newWord.trim() || adding}>
+          {t('add')}
+        </button>
+      </form>
 
       <DataList
         items={entries}

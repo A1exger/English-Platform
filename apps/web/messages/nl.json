@@ -271,7 +271,7 @@
     "dashboard": "Dashboard",
     "createAccount": "Account aanmaken",
     "search": "Zoeken",
-    "searchPlaceholder": "Zoek pagina's…",
+    "searchPlaceholder": "Zoek woorden, lessen, studenten…",
     "noResults": "Niets gevonden",
     "undo": "Ongedaan maken",
     "menu": "Menu",
@@ -284,7 +284,8 @@
     "student": "Leerling",
     "word": "Woord",
     "pages": "Pagina's",
-    "course": "Cursus"
+    "course": "Cursus",
+    "searchHint": "Typ om woorden, lessen, cursussen en studenten te zoeken"
   },
   "nav": {
     "overview": "Overzicht",
@@ -598,7 +599,7 @@
   },
   "dictionary": {
     "title": "Woordenboek",
-    "empty": "Nog geen woorden. Voeg ze toe vanuit woordenlijsten.",
+    "empty": "Nog geen woorden. Voeg er hierboven een toe of vanuit de woordenlijsten van lessen.",
     "train": "Oefenen",
     "due": "Te herhalen",
     "reveal": "Tonen",
@@ -609,7 +610,10 @@
     "nothingDue": "Niets te doen vandaag",
     "nextReview": "volgende herhaling {date}",
     "shortcuts": "Spatie om te tonen · 1 niet geweten · 2 geweten",
-    "repsHint": "Aantal herhalingen"
+    "repsHint": "Aantal herhalingen",
+    "wordPlaceholder": "Woord",
+    "translationPlaceholder": "Vertaling (optioneel)",
+    "add": "Toevoegen"
   },
   "enum": {
     "role": {

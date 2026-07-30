@@ -271,7 +271,7 @@
     "dashboard": "Dashboard",
     "createAccount": "Konto erstellen",
     "search": "Suche",
-    "searchPlaceholder": "Seiten suchen…",
+    "searchPlaceholder": "Wörter, Lektionen, Studenten suchen…",
     "noResults": "Nichts gefunden",
     "undo": "Rückgängig",
     "menu": "Menü",
@@ -284,7 +284,8 @@
     "student": "Schüler",
     "word": "Wort",
     "pages": "Seiten",
-    "course": "Kurs"
+    "course": "Kurs",
+    "searchHint": "Tippen, um Wörter, Lektionen, Kurse und Studenten zu suchen"
   },
   "nav": {
     "overview": "Übersicht",
@@ -598,7 +599,7 @@
   },
   "dictionary": {
     "title": "Wörterbuch",
-    "empty": "Noch keine Wörter. Füge sie aus den Wortlisten hinzu.",
+    "empty": "Noch keine Wörter. Fügen Sie oben eines hinzu oder aus den Wortlisten der Lektionen.",
     "train": "Üben",
     "due": "Fällig",
     "reveal": "Aufdecken",
@@ -609,7 +610,10 @@
     "nothingDue": "Heute nichts fällig",
     "nextReview": "nächste Wiederholung {date}",
     "shortcuts": "Leertaste zum Aufdecken · 1 nicht gewusst · 2 gewusst",
-    "repsHint": "Wiederholungen"
+    "repsHint": "Wiederholungen",
+    "wordPlaceholder": "Wort",
+    "translationPlaceholder": "Übersetzung (optional)",
+    "add": "Hinzufügen"
   },
   "enum": {
     "role": {

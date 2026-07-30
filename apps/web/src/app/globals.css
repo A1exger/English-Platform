@@ -4185,6 +4185,26 @@ input[type='radio']:focus-visible {
   align-items: center;
   gap: 3px;
 }
+/* manual "add a word" row above the list */
+.dict-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-block-end: 16px;
+}
+.dict-add-word {
+  flex: 0 0 auto;
+  inline-size: 220px;
+  max-inline-size: 100%;
+}
+.dict-add-tr {
+  flex: 1 1 220px;
+  min-inline-size: 0;
+}
+.dict-add button {
+  flex: 0 0 auto;
+}
 
 /* 6.10 schedule — slot popover · day view · header */
 .sched-head {
