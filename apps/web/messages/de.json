@@ -96,7 +96,9 @@
     "email": "E-Mail",
     "role": "Rolle",
     "save": "Speichern",
-    "saved": "Gespeichert"
+    "saved": "Gespeichert",
+    "timezoneAuto": "Automatisch (Browser)",
+    "timezoneHint": "Bestimmt die Zeitzone deines Stundenplans."
   },
   "register": {
     "title": "Konto erstellen",

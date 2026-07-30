@@ -96,7 +96,9 @@
     "email": "Email",
     "role": "Role",
     "save": "Save",
-    "saved": "Saved"
+    "saved": "Saved",
+    "timezoneAuto": "Auto (browser)",
+    "timezoneHint": "Used to show your schedule in the right time zone."
   },
   "register": {
     "title": "Create your account",

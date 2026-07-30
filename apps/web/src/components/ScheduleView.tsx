@@ -79,11 +79,19 @@ export function ScheduleView() {
   const router = useRouter();
   const { showUndo } = useToast();
 
-  // The zone every date is rendered and reasoned about in. When a fixed zone is
-  // pinned (APP_TIMEZONE) useTimeZone() returns it; otherwise we fall back to the
-  // viewer's own browser zone, so a student sees the grid, "today" and the labels
-  // in their local time. Calendar math uses this same tz so they never disagree.
-  const tz = useTimeZone() || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  // Effective display zone, highest priority first:
+  //   1. APP_TIMEZONE — a single zone forced for everyone (via next-intl)
+  //   2. the zone the user picked in Settings (their profile timezone)
+  //   3. the viewer's own browser zone (auto-detected)
+  //   4. UTC
+  // A profile timezone of '' or 'UTC' means "no explicit pick" → fall through to
+  // auto. Calendar math and every label use this same tz so they never disagree.
+  const fixedTz = useTimeZone();
+  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  // null until the profile loads, so "today" isn't anchored in the wrong zone.
+  const [profileTz, setProfileTz] = useState<string | null>(null);
+  const chosenTz = profileTz && profileTz !== 'UTC' ? profileTz : null;
+  const tz = fixedTz || chosenTz || browserTz;
 
   const [canManage, setCanManage] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -108,12 +116,29 @@ export function ScheduleView() {
   const [matLevel, setMatLevel] = useState('Elementary');
   const [matLessons, setMatLessons] = useState<{ id: string; title: string }[]>([]);
 
+  // The zone the user picked in Settings (empty/UTC ⇒ use their browser zone).
   useEffect(() => {
-    if (anchorDay === null) {
+    const token = tokenStore.get();
+    if (!token) {
+      setProfileTz('');
+      return;
+    }
+    let cancelled = false;
+    apiFetch<{ timezone?: string }>('/users/me', { token, locale })
+      .then((me) => !cancelled && setProfileTz(me.timezone || ''))
+      .catch(() => !cancelled && setProfileTz(''));
+    return () => {
+      cancelled = true;
+    };
+  }, [locale]);
+
+  useEffect(() => {
+    // Wait for the profile (profileTz !== null) so "today" is anchored in the final zone.
+    if (anchorDay === null && profileTz !== null) {
       const today = zonedDayNumber(new Date(), tz);
       setAnchorDay(today - mondayIndex(today)); // default view is 'week'
     }
-  }, [anchorDay, tz]);
+  }, [anchorDay, tz, profileTz]);
 
   // Day numbers of the visible column(s), and a representative instant (civil
   // noon in tz) for each so next-intl formats it as the right civil day.
@@ -300,14 +325,14 @@ export function ScheduleView() {
   const todayNum = zonedDayNumber(new Date(), tz);
   const rangeLabel =
     view === 'day'
-      ? format.dateTime(days[0], { weekday: 'long', day: 'numeric', month: 'short' })
-      : `${format.dateTime(days[0], { day: 'numeric', month: 'short' })} – ${format.dateTime(days[days.length - 1], { day: 'numeric', month: 'short' })}`;
+      ? format.dateTime(days[0], { weekday: 'long', day: 'numeric', month: 'short', timeZone: tz })
+      : `${format.dateTime(days[0], { day: 'numeric', month: 'short', timeZone: tz })} – ${format.dateTime(days[days.length - 1], { day: 'numeric', month: 'short', timeZone: tz })}`;
 
   const slotForm = slot && (
     <div className="slot-popover" onClick={(e) => e.stopPropagation()}>
       <form className="form-grid" onSubmit={createLesson}>
         <div className="row-between slot-popover-head">
-          <strong>{format.dateTime(slot.date, { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</strong>
+          <strong>{format.dateTime(slot.date, { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: tz })}</strong>
           <button type="button" className="ghost" aria-label={t('cancel')} onClick={() => setSlot(null)}>
             <Icon name="close" />
           </button>
@@ -404,8 +429,8 @@ export function ScheduleView() {
           const isToday = dayNumbers[i] === todayNum;
           return (
             <div key={i} className={`cal-head${isToday ? ' today' : ''}`}>
-              {format.dateTime(d, { weekday: 'short' })}{' '}
-              <span className="muted">{format.dateTime(d, { day: 'numeric' })}</span>
+              {format.dateTime(d, { weekday: 'short', timeZone: tz })}{' '}
+              <span className="muted">{format.dateTime(d, { day: 'numeric', timeZone: tz })}</span>
             </div>
           );
         })}

@@ -96,7 +96,9 @@
     "email": "E-mail",
     "role": "Rôle",
     "save": "Enregistrer",
-    "saved": "Enregistré"
+    "saved": "Enregistré",
+    "timezoneAuto": "Auto (navigateur)",
+    "timezoneHint": "Détermine le fuseau horaire de votre emploi du temps."
   },
   "register": {
     "title": "Créer un compte",

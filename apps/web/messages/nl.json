@@ -96,7 +96,9 @@
     "email": "E-mail",
     "role": "Rol",
     "save": "Opslaan",
-    "saved": "Opgeslagen"
+    "saved": "Opgeslagen",
+    "timezoneAuto": "Automatisch (browser)",
+    "timezoneHint": "Bepaalt de tijdzone van je rooster."
   },
   "register": {
     "title": "Account aanmaken",

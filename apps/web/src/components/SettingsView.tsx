@@ -8,9 +8,9 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 
-// Curated IANA time zones (label = UTC offset shown for orientation).
+// Curated IANA time zones offered as an explicit override. "Auto" (empty value)
+// is added in the <select> and means "use the viewer's own browser zone".
 const TIMEZONES = [
-  'UTC',
   'Europe/London',
   'Europe/Lisbon',
   'Europe/Berlin',
@@ -37,6 +37,12 @@ const TIMEZONES = [
   'Australia/Sydney'
 ];
 
+// '' means "auto (browser zone)". The legacy default 'UTC' is treated as auto too,
+// so users who never picked a zone keep seeing their own local time.
+function autoTz(v?: string): string {
+  return v && v !== 'UTC' ? v : '';
+}
+
 const localeLabels: Record<Locale, string> = {
   en: 'English',
   ru: 'Русский',
@@ -51,6 +57,7 @@ export function SettingsView() {
   const tApp = useTranslations('app');
   const locale = useLocale();
   const router = useRouter();
+  const browserTz = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
 
   const [me, setMe] = useState<Me | null>(null);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -81,7 +88,7 @@ export function SettingsView() {
           email: profile.email ?? '',
           firstName: profile.firstName ?? '',
           lastName: profile.lastName ?? '',
-          timezone: (profile as { timezone?: string }).timezone ?? 'UTC',
+          timezone: autoTz((profile as { timezone?: string }).timezone),
           locale: (profile.locale as Locale) ?? locale
         });
         setState('ready');
@@ -165,6 +172,9 @@ export function SettingsView() {
             value={form.timezone}
             onChange={(e) => setForm({ ...form, timezone: e.target.value })}
           >
+            <option value="">
+              {t('timezoneAuto')}{browserTz ? ` (${browserTz})` : ''}
+            </option>
             {!TIMEZONES.includes(form.timezone) && form.timezone && (
               <option value={form.timezone}>{form.timezone}</option>
             )}
@@ -174,6 +184,7 @@ export function SettingsView() {
               </option>
             ))}
           </select>
+          <small className="muted">{t('timezoneHint')}</small>
         </label>
         <label>
           {t('language')}
