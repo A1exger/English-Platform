@@ -555,7 +555,9 @@
     "rename": "إعادة تسمية",
     "deleteCourse": "حذف",
     "courseDeleted": "تم حذف الدورة",
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "uploadMedia": "رفع صورة / ملف",
+    "orUrl": "أو عبر رابط"
   },
   "learn": {
     "title": "الدرس",

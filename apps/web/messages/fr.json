@@ -555,7 +555,9 @@
     "rename": "Renommer",
     "deleteCourse": "Supprimer",
     "courseDeleted": "Cours supprimé",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "uploadMedia": "Téléverser image / fichier",
+    "orUrl": "ou par URL"
   },
   "learn": {
     "title": "Leçon",

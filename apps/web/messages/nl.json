@@ -555,7 +555,9 @@
     "rename": "Hernoemen",
     "deleteCourse": "Verwijderen",
     "courseDeleted": "Cursus verwijderd",
-    "cancel": "Annuleren"
+    "cancel": "Annuleren",
+    "uploadMedia": "Afbeelding / bestand uploaden",
+    "orUrl": "of via URL"
   },
   "learn": {
     "title": "Les",

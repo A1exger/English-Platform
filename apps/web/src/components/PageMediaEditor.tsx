@@ -108,7 +108,13 @@ export function PageMediaEditor({
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
 
-  async function upload(file: File) {
+  const kindFromFile = (file: File) =>
+    file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'image';
+
+  // Upload a file and attach it in one step — the kind is taken from the file
+  // itself (image/video/audio), so dropping in a picture just works. Caption
+  // can be edited inline on the row afterwards.
+  async function uploadAndAdd(file: File) {
     const token = tokenStore.get();
     if (!token) return;
     setBusy(true);
@@ -116,9 +122,15 @@ export function PageMediaEditor({
       const fd = new FormData();
       fd.append('file', file);
       const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token, locale });
-      setUrl(res.url);
+      await apiFetch(`/content/pages/${pageId}/media`, {
+        method: 'POST',
+        token,
+        locale,
+        body: { kind: kindFromFile(file), url: res.url }
+      });
+      onChanged();
     } catch {
-      /* ignore */
+      /* ignore — upload/attach failed, nothing added */
     } finally {
       setBusy(false);
     }
@@ -196,16 +208,21 @@ export function PageMediaEditor({
         </DndContext>
       )}
       <div className="media-add">
+        <label className="media-upload">
+          {t('uploadMedia')}{busy ? ' …' : ''}
+          <input
+            type="file"
+            accept="image/*,video/*,audio/*"
+            disabled={busy}
+            onChange={(e) => e.target.files?.[0] && uploadAndAdd(e.target.files[0])}
+          />
+        </label>
+        <span className="muted media-add-or">{t('orUrl')}</span>
         <select value={kind} onChange={(e) => setKind(e.target.value)} aria-label={t('media')}>
           {KINDS.map((k) => (
             <option key={k} value={k}>{k}</option>
           ))}
         </select>
-        <input
-          type="file"
-          accept="image/*,video/*,audio/*"
-          onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
-        />
         <input placeholder={t('mediaUrl')} value={url} onChange={(e) => setUrl(e.target.value)} />
         <input placeholder={t('caption')} value={caption} onChange={(e) => setCaption(e.target.value)} />
         {kind === 'audio' && (

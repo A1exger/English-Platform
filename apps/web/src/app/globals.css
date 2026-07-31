@@ -3576,6 +3576,31 @@ select.err {
   gap: 8px;
   align-items: center;
 }
+/* primary "upload a file" affordance — a button-styled <label> wrapping a hidden
+   file input, so adding an image is one click. */
+.media-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  background: var(--indigo);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.media-upload:hover {
+  background: var(--indigo-700);
+}
+.media-upload input {
+  display: none;
+}
+.media-add-or {
+  font-size: 13px;
+}
 /* AI media slot — empty attachment awaiting an upload (ФТ-К407) */
 .media-slot {
   display: flex;

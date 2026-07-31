@@ -555,7 +555,9 @@
     "rename": "Переименовать",
     "deleteCourse": "Удалить",
     "courseDeleted": "Курс удалён",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "uploadMedia": "Загрузить картинку / файл",
+    "orUrl": "или по ссылке"
   },
   "learn": {
     "title": "Урок",
