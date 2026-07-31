@@ -828,8 +828,16 @@ textarea {
   align-items: center;
   justify-content: center;
 }
-.video-panel .lk-participant-tile {
-  max-height: 150px;
+/* Let the video fill the panel (LiveKit lays out its own grid). The old
+   max-height:150px squashed the tile into a cropped strip. */
+.video-panel .lk-video-conference,
+.video-panel .lk-grid-layout {
+  block-size: 100%;
+}
+/* In the corner PiP (board on), the full LiveKit control bar can't fit — hide it;
+   mic/camera/share stay available in the main Video view. */
+.room-video-pip .lk-control-bar {
+  display: none;
 }
 
 /* ——— exercises ——— */
