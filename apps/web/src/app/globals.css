@@ -828,15 +828,83 @@ textarea {
   align-items: center;
   justify-content: center;
 }
-/* Let the video fill the panel (LiveKit lays out its own grid). The old
-   max-height:150px squashed the tile into a cropped strip. */
-.video-panel .lk-video-conference,
-.video-panel .lk-grid-layout {
+/* ——— custom 1:1 call layout (see VideoRoom.tsx) ——— */
+.call {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  background: #0e1020;
+  overflow: hidden;
+}
+/* the OTHER participant fills the whole stage */
+.call-main {
+  position: absolute;
+  inset: 0;
+}
+.call-main .lk-participant-tile {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
   block-size: 100%;
 }
-/* In the corner PiP (board on), the full LiveKit control bar can't fit — hide it;
-   mic/camera/share stay available in the main Video view. */
-.room-video-pip .lk-control-bar {
+/* group / screen-share → an even auto grid instead of a single fill */
+.call-main.call-main-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-content: stretch;
+}
+.call-main.call-main-grid .lk-participant-tile {
+  position: relative;
+  inset: auto;
+}
+/* the video itself fills its tile — cover (not contain) so there are no black
+   bars and no cropped strip; it just fills, trimming the overflow edge. */
+.call .lk-participant-tile video,
+.call .lk-participant-media-video {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+/* your own camera as a small overlay in the bottom-right, above the remote */
+.call-self {
+  position: absolute;
+  inset-block-end: 12px;
+  inset-inline-end: 12px;
+  inline-size: 24%;
+  min-inline-size: 128px;
+  max-inline-size: 220px;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--sh-md);
+  z-index: 5;
+}
+.call-self .lk-participant-tile {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+/* minimal control bar, floating pill at the bottom-center */
+.call > .lk-control-bar {
+  position: absolute;
+  inset-block-end: 12px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  border: none;
+  background: rgba(10, 12, 24, 0.62);
+  border-radius: 999px;
+  padding: 4px 8px;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--sh-md);
+}
+/* compact corner PiP (board on): just the remote video — no self-view, no
+   controls, so nothing overflows the small window. */
+.call-compact .call-self,
+.call-compact > .lk-control-bar {
   display: none;
 }
 
@@ -3027,7 +3095,7 @@ select.err {
   position: absolute;
   inset-block-end: 12px;
   inset-inline-end: 12px;
-  inline-size: 220px;
+  inline-size: 227px;
   aspect-ratio: 16 / 10;
   border-radius: var(--r-md);
   overflow: hidden;

@@ -208,7 +208,7 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
             <BoardCanvas lessonId={lessonId} socket={board} embedded />
           </div>
           <div className={showBoard ? 'room-video-pip' : 'room-video-full'}>
-            <VideoRoom lessonId={lessonId} />
+            <VideoRoom lessonId={lessonId} compact={showBoard} />
           </div>
         </div>
       </section>
