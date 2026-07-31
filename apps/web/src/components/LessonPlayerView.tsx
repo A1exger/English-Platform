@@ -27,7 +27,7 @@ interface LessonDetail {
   courseId: string;
   objectives: string[];
   pages: PageRow[];
-  wordlist?: { entries: { word: string; translation?: string | null }[] } | null;
+  wordlist?: { entries: { word: string; translation?: string | null; translations?: Record<string, string> | null }[] } | null;
   grammarReference?: { title: string; meaning: string; form: string } | null;
 }
 
@@ -177,14 +177,16 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
                   <li key={e.word}>
                     <span>
                       <b>{e.word}</b>
-                      {e.translation ? <span className="muted"> — {e.translation}</span> : null}
+                      {(e.translations?.[locale] ?? e.translation) ? (
+                        <span className="muted"> — {e.translations?.[locale] ?? e.translation}</span>
+                      ) : null}
                     </span>
                     {isStudent && (
                       <button
                         type="button"
                         className="ghost"
                         disabled={!!added[e.word]}
-                        onClick={() => addToDictionary(e.word, e.translation)}
+                        onClick={() => addToDictionary(e.word, e.translations?.[locale] ?? e.translation)}
                       >
                         {added[e.word] ? t('added') : <><Icon name="spark" /> {t('addToDict')}</>}
                       </button>

@@ -70,8 +70,12 @@ export class ContentController {
   }
 
   @Get('lessons/:id')
-  lesson(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.content.lessonDetail(user, id);
+  lesson(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('edit') edit?: string,
+  ) {
+    return this.content.lessonDetail(user, id, edit === '1' || edit === 'true');
   }
 
   // Server-side task check (AUTO scores 0-10; MANUAL/COMPLETION -> completed).

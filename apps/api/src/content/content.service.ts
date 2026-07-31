@@ -152,8 +152,10 @@ export class ContentService {
     return { course, level, sections };
   }
 
-  /** One lesson with pages, tasks (sans answer keys for students), prep data. */
-  async lessonDetail(user: AuthenticatedUser, lessonId: string) {
+  /** One lesson with pages, tasks (sans answer keys for students), prep data.
+   *  `edit=true` (authors only) returns the raw wordlist + per-locale map for the
+   *  builder; otherwise the wordlist is resolved to the request locale. */
+  async lessonDetail(user: AuthenticatedUser, lessonId: string, edit = false) {
     const lesson = await this.prisma.courseLesson.findUnique({
       where: { id: lessonId },
       include: {
@@ -177,20 +179,20 @@ export class ContentService {
     // Serve each wordlist entry's translation in the request locale, falling
     // back to the authored default (V1: per-locale wordlist translations).
     const lang = I18nContext.current()?.lang ?? 'en';
+    // The builder (edit=true, authors only) needs the raw base + full per-locale
+    // map. Every *playing* view — student, or teacher in the live room — gets the
+    // one translation resolved to the request locale, so switching the interface
+    // language actually changes the glosses.
+    const forEditor = user.role !== 'student' && edit;
     const wordlist = lesson.wordlist
       ? {
           ...lesson.wordlist,
           entries: lesson.wordlist.entries.map(({ translations, ...e }) =>
-            hideKeys
-              ? {
-                  // Students get the single translation for their locale.
+            forEditor
+              ? { ...e, translations: parseTranslations(translations) }
+              : {
                   ...e,
                   translation: resolveWordTranslation({ translation: e.translation, translations }, lang),
-                }
-              : {
-                  // Tutors get the full per-locale map to edit (V3).
-                  ...e,
-                  translations: parseTranslations(translations),
                 },
           ),
         }

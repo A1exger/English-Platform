@@ -671,7 +671,7 @@ function LessonEditor({
   const load = useCallback(async () => {
     const tok = token();
     if (!tok) return;
-    const d = await apiFetch<LessonDetail>(`/content/lessons/${lessonId}`, { token: tok, locale });
+    const d = await apiFetch<LessonDetail>(`/content/lessons/${lessonId}?edit=1`, { token: tok, locale });
     setDetail(d);
     setObjectives((d.objectives ?? []).join('\n'));
     setWordlist((d.wordlist?.entries ?? []).map((e) => (e.translation ? `${e.word} = ${e.translation}` : e.word)).join('\n'));
@@ -703,7 +703,7 @@ function LessonEditor({
   const reloadPages = useCallback(async () => {
     const tok = token();
     if (!tok) return;
-    setDetail(await apiFetch<LessonDetail>(`/content/lessons/${lessonId}`, { token: tok, locale }));
+    setDetail(await apiFetch<LessonDetail>(`/content/lessons/${lessonId}?edit=1`, { token: tok, locale }));
     onChanged();
   }, [lessonId, locale, onChanged]);
 
