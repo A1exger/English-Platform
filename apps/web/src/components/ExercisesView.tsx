@@ -101,7 +101,7 @@ export function ExercisesView() {
   const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
-  const { showUndo } = useToast();
+  const { showUndo, show } = useToast();
 
   const [list, setList] = useState<ExerciseRow[]>([]);
   const [students, setStudents] = useState<StudentRow[]>([]);
@@ -408,6 +408,9 @@ export function ExercisesView() {
       setAssignFor(null);
       setPicked({});
       setDue('');
+      show(t('assigned'));
+    } catch {
+      show(t('assignError'));
     } finally {
       setBusy(false);
     }
@@ -706,7 +709,13 @@ export function ExercisesView() {
                       </label>
                     ))}
                     <label>{t('due')}<input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></label>
-                    <button type="button" disabled={busy} onClick={() => assign(ex.id)}>{t('assignBtn')}</button>
+                    <button
+                      type="button"
+                      disabled={busy || !Object.values(picked).some(Boolean)}
+                      onClick={() => assign(ex.id)}
+                    >
+                      {t('assignBtn')}
+                    </button>
                   </div>
                 )}
               </li>

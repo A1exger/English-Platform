@@ -85,8 +85,18 @@ export function Sidebar() {
         if (!alive) return;
         setMe(profile);
         if (profile.role === 'student') {
-          apiFetch<{ status: string }[]>('/homework', { token, locale })
-            .then((hw) => alive && setHwCount(hw.filter((h) => h.status === 'assigned').length))
+          // Count outstanding work from BOTH homework surfaces (Homework model
+          // + lesson-player ContentAssignments), which the tab now merges.
+          Promise.all([
+            apiFetch<{ status: string }[]>('/homework', { token, locale }).catch(() => []),
+            apiFetch<{ status: string }[]>('/assignments', { token, locale }).catch(() => [])
+          ])
+            .then(([hw, as]) => {
+              if (!alive) return;
+              const open = (rows: { status: string }[]) =>
+                rows.filter((r) => r.status === 'assigned').length;
+              setHwCount(open(hw) + open(as));
+            })
             .catch(() => undefined);
         }
       })

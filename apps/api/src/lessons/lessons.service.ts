@@ -38,10 +38,20 @@ export class LessonsService {
     const room = this.livekit.roomNameForLesson(lesson.id);
     // Parents (if added later) would join subscribe-only; tutors/students publish.
     const canPublish = user.role !== 'parent';
+    // Label the video tile with the participant's display name (falls back to
+    // email) so tutors/students see each other by name, not raw address.
+    const profile = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { firstName: true, lastName: true, email: true },
+    });
+    const name =
+      [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim() ||
+      profile?.email ||
+      user.email;
     const token = this.livekit.createToken({
       room,
       identity: user.id,
-      name: user.email,
+      name,
       canPublish,
     });
     return { roomName: room, url: this.livekit.url, token };

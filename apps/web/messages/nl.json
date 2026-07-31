@@ -417,6 +417,7 @@
     "due": "Inleverdatum",
     "assignBtn": "Toewijzen",
     "assigned": "Toegewezen ✓",
+    "assignError": "Kon huiswerk niet toewijzen. Probeer het opnieuw.",
     "check": "Controleren",
     "score": "Score",
     "place": "plaatsen",

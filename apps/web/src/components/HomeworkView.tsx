@@ -22,21 +22,56 @@ interface Homework {
   dueAt?: string | null;
   submissions: Submission[];
 }
+// The Skyeng-style content homework (ContentAssignment) handed out from the
+// lesson player / room. Students have no separate "Assignments" tab, so these
+// are folded into the Homework list below (see UnifiedRow).
+interface AssignmentRow {
+  id: string;
+  kind: string;
+  topicTag: string | null;
+  dueAt: string | null;
+  status: string;
+  result: { overall: number | null } | null;
+}
 interface StudentRow {
   studentProfileId: string;
   name: string;
 }
 
+// One normalized row for the list, regardless of which backend model it came
+// from. `status` is collapsed to the Homework vocabulary so the tabs work for
+// both. `ringValue` is always on the 0-100 scale the ScoreRing expects.
+interface UnifiedRow {
+  id: string;
+  href: string;
+  title: string;
+  status: 'assigned' | 'submitted' | 'graded';
+  dueAt?: string | null;
+  ringValue?: number;
+  ringDisplay?: string;
+}
+
 const TABS = ['all', 'todo', 'submitted', 'graded'] as const;
 type Tab = (typeof TABS)[number];
 
+// ContentAssignment advances assigned -> in_progress -> done; map it onto the
+// Homework vocabulary the tabs and chips use.
+function assignmentStatus(s: string): UnifiedRow['status'] {
+  if (s === 'done') return 'graded';
+  if (s === 'in_progress') return 'submitted';
+  return 'assigned';
+}
+
 // Sprint 2.1: the list is only a list. One scannable row per homework — title,
 // due date (mono, marked overdue), status chip, a score ring when graded — that
-// links to the work screen (/homework/[id]). No inline exercise players (they
-// were an N+1 inside a list). Assigning happens in a drawer. Staff = tutor OR
-// admin (the old form was gated on tutor only, so admins saw nothing).
+// links to the work screen (/homework/[id] or /assignments/[id]). No inline
+// exercise players (they were an N+1 inside a list). Assigning happens in a
+// drawer. Staff = tutor OR admin (the old form was gated on tutor only, so
+// admins saw nothing). Students see BOTH the Homework model and their
+// ContentAssignments merged into one place (they have no Assignments tab).
 export function HomeworkView() {
   const t = useTranslations('homework');
+  const tAssign = useTranslations('assignments');
   const tApp = useTranslations('app');
   const locale = useLocale();
   const format = useFormatter();
@@ -44,6 +79,7 @@ export function HomeworkView() {
 
   const [me, setMe] = useState<Me | null>(null);
   const [items, setItems] = useState<Homework[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
@@ -61,7 +97,12 @@ export function HomeworkView() {
       const profile = await fetchMe(token, locale);
       setMe(profile);
       setItems(await apiFetch<Homework[]>('/homework', { token, locale }));
-      if (profile.role === 'tutor' || profile.role === 'admin') {
+      if (profile.role === 'student') {
+        // Fold in the lesson-player homework so it isn't invisible to them.
+        setAssignments(
+          await apiFetch<AssignmentRow[]>('/assignments', { token, locale }).catch(() => [])
+        );
+      } else if (profile.role === 'tutor' || profile.role === 'admin') {
         setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }).catch(() => []));
       }
       setState('ready');
@@ -106,9 +147,38 @@ export function HomeworkView() {
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const isStaff = me?.role === 'tutor' || me?.role === 'admin';
-  const statusLabel = (s: string) =>
+  const statusLabel = (s: UnifiedRow['status']) =>
     s === 'assigned' ? t('statusAssigned') : s === 'submitted' ? t('statusSubmitted') : t('statusGraded');
-  const filtered = items.filter((h) =>
+
+  const homeworkRows: UnifiedRow[] = items.map((h) => {
+    const grade = h.submissions[0]?.grade;
+    const graded = h.status === 'graded' && grade != null && grade !== '';
+    return {
+      id: `hw-${h.id}`,
+      href: `/homework/${h.id}`,
+      title: h.title,
+      status: h.status === 'submitted' || h.status === 'graded' ? h.status : 'assigned',
+      dueAt: h.dueAt,
+      ringValue: graded ? Number(grade) * 10 : undefined,
+      ringDisplay: graded ? String(grade) : undefined
+    };
+  });
+  const assignmentRows: UnifiedRow[] = assignments.map((a) => {
+    const overall = a.result?.overall;
+    const scored = overall != null;
+    return {
+      id: `as-${a.id}`,
+      href: `/assignments/${a.id}`,
+      title: a.topicTag || tAssign(a.kind === 'homework' ? 'homework' : 'lesson'),
+      status: assignmentStatus(a.status),
+      dueAt: a.dueAt,
+      ringValue: scored ? overall : undefined,
+      ringDisplay: scored ? String(overall) : undefined
+    };
+  });
+  const rows = [...homeworkRows, ...assignmentRows];
+
+  const filtered = rows.filter((h) =>
     tab === 'all'
       ? true
       : tab === 'todo'
@@ -155,11 +225,9 @@ export function HomeworkView() {
           action: isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined
         }}
         renderRow={(h) => {
-          const grade = h.submissions[0]?.grade;
-          const graded = h.status === 'graded' && grade != null && grade !== '';
           const overdue = !!h.dueAt && h.status === 'assigned' && new Date(h.dueAt).getTime() < now;
           return (
-            <Link className="assign-row" href={`/homework/${h.id}`}>
+            <Link className="assign-row" href={h.href}>
               <div className="assign-row-main">
                 <strong>{h.title}</strong>
                 {h.dueAt && (
@@ -170,7 +238,9 @@ export function HomeworkView() {
                 )}
               </div>
               <div className="assign-row-side">
-                {graded && <ScoreRing value={Number(grade) * 10} display={String(grade)} size={44} stroke={4} />}
+                {h.ringValue != null && (
+                  <ScoreRing value={h.ringValue} display={h.ringDisplay} size={44} stroke={4} />
+                )}
                 <span className={`chip status-${h.status}`}>{statusLabel(h.status)}</span>
               </div>
             </Link>

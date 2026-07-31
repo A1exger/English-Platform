@@ -417,6 +417,7 @@
     "due": "Fällig am",
     "assignBtn": "Zuweisen",
     "assigned": "Zugewiesen ✓",
+    "assignError": "Hausaufgabe konnte nicht zugewiesen werden. Bitte erneut versuchen.",
     "check": "Prüfen",
     "score": "Punkte",
     "place": "einordnen",

@@ -417,6 +417,7 @@
     "due": "Échéance",
     "assignBtn": "Attribuer",
     "assigned": "Attribué ✓",
+    "assignError": "Impossible d'attribuer le devoir. Veuillez réessayer.",
     "check": "Vérifier",
     "score": "Score",
     "place": "placer",

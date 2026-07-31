@@ -417,6 +417,7 @@
     "due": "Due date",
     "assignBtn": "Assign",
     "assigned": "Assigned ✓",
+    "assignError": "Couldn't assign homework. Please try again.",
     "check": "Check",
     "score": "Score",
     "place": "place",
