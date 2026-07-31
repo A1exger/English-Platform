@@ -43,7 +43,7 @@ export function GenerateCourseForm({ onDone }: { onDone: () => void }) {
     if (!token || !form.topic.trim()) return;
     setBusy(true);
     try {
-      const j = await apiFetch<Job>('/content/generate', { method: 'POST', token, locale, body: { ...form, aspects } });
+      const j = await apiFetch<Job>('/content/generate', { method: 'POST', token, locale, body: { ...form, aspects, language: locale } });
       setJob(j);
       setTimeout(() => void poll(j.id), 1500);
     } finally {

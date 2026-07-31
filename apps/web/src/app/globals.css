@@ -1036,6 +1036,21 @@ select.err {
 .ed-field textarea {
   min-height: 90px;
 }
+/* Grammar reference: full-width stacked fields (Title/Meaning/Form) instead of
+   three cramped columns that truncated the text. */
+.ed-grammar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-block: 8px 20px;
+}
+.ed-grammar > strong {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+.ed-grammar textarea {
+  min-block-size: 56px;
+}
 .ed-field-head {
   display: flex;
   align-items: center;

@@ -45,6 +45,12 @@ export class GenerateDto {
   @Length(0, 2000)
   notes?: string;
 
+  // Language for wordlist glosses / objectives / grammar (the request locale).
+  @IsOptional()
+  @IsString()
+  @Length(0, 10)
+  language?: string;
+
   @IsOptional()
   @IsString()
   courseId?: string;

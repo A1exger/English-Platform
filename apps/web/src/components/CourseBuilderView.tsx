@@ -943,11 +943,11 @@ function LessonEditor({
         </details>
       )}
 
-      <div className="form-grid">
+      <div className="ed-grammar">
         <strong>{t('grammar')}</strong>
-        <label>{t('grammarTitle')}<input value={grammar.title} onChange={(e) => { setGrammar({ ...grammar, title: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
-        <label>{t('meaning')}<input value={grammar.meaning} onChange={(e) => { setGrammar({ ...grammar, meaning: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
-        <label>{t('form')}<input value={grammar.form} onChange={(e) => { setGrammar({ ...grammar, form: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
+        <label className="ed-field">{t('grammarTitle')}<input value={grammar.title} onChange={(e) => { setGrammar({ ...grammar, title: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
+        <label className="ed-field">{t('meaning')}<textarea value={grammar.meaning} onChange={(e) => { setGrammar({ ...grammar, meaning: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
+        <label className="ed-field">{t('form')}<textarea value={grammar.form} onChange={(e) => { setGrammar({ ...grammar, form: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
       </div>
 
       <div className="ed-pages">

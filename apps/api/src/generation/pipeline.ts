@@ -18,7 +18,27 @@ export interface Brief {
   lessonsPerUnit: number;
   aspects: string[];
   notes?: string;
+  // Language for wordlist glosses, objectives and grammar explanations (the
+  // English terms being taught stay English). Defaults to the request locale.
+  language?: string;
   courseId?: string;
+}
+
+// Locale code → language name for the prompt. Mirrors the UI's locales.
+const LANG_NAMES: Record<string, string> = {
+  en: 'English',
+  ru: 'Russian',
+  de: 'German',
+  fr: 'French',
+  nl: 'Dutch',
+  ar: 'Arabic'
+};
+
+function langLine(brief: Brief): string {
+  const name = brief.language ? LANG_NAMES[brief.language] : undefined;
+  return name
+    ? `Write all wordlist translations, objectives and grammar explanations in ${name} — but keep the English words/phrases being taught in English.\n`
+    : '';
 }
 
 export interface SkeletonLesson {
@@ -80,6 +100,7 @@ export function skeletonPrompt(brief: Brief): { system: string; user: string } {
       `Topic: ${brief.topic}\nLevel: ${brief.level}\n` +
       `Units: ${brief.units}, lessons per unit: ${brief.lessonsPerUnit}\n` +
       `Aspects to cover: ${brief.aspects.join(', ')}\n` +
+      langLine(brief) +
       (brief.notes ? `Notes: ${brief.notes}\n` : '') +
       `Return JSON: {"units":[{"title":"...","lessons":[{"title":"...","objectives":["...","..."]}]}]}\n` +
       `Exactly ${brief.units} units, each with exactly ${brief.lessonsPerUnit} lessons; 2-4 objectives per lesson.`
@@ -98,6 +119,7 @@ export function lessonPrompt(
       `Write the LESSON content.\n` +
       `Course topic: ${brief.topic}\nUnit: ${ctx.unitTitle}\nLesson: ${ctx.lessonTitle}\n` +
       `Objectives: ${ctx.objectives.join('; ')}\nAspects: ${brief.aspects.join(', ')}\n` +
+      langLine(brief) +
       (brief.notes ? `Notes: ${brief.notes}\n` : '') +
       (ctx.instruction ? `\nREVISION INSTRUCTION: ${ctx.instruction}\nApply it; keep everything else consistent.\n` : '') +
       `Return JSON: {"pages":[{"type":"grammar|practice|listening|reading","text":"...",` +
@@ -270,6 +292,7 @@ export function parseBrief(raw: Record<string, unknown>): Brief {
     lessonsPerUnit: clamp(Math.round(Number(raw.lessonsPerUnit) || 3), 1, 10),
     aspects: aspects.length ? aspects : ['Grammar'],
     notes: str(raw.notes) || undefined,
+    language: str(raw.language) || undefined,
     courseId: str(raw.courseId) || undefined
   };
 }
