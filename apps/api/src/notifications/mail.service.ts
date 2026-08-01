@@ -45,14 +45,14 @@ export class MailService {
       return { delivered: 'skipped', reason: 'no_smtp' };
     }
     try {
-      await transport.sendMail({
-        from:
-          this.config.get<string>('MAIL_FROM') ??
-          `English Spark Studio <no-reply@${this.host as string}>`,
-        to,
-        subject,
-        text,
-      });
+      // Default to the authenticated mailbox: most providers (Gmail among them)
+      // reject or silently rewrite a From they do not own, so an invented
+      // no-reply@ address would be worse than useless.
+      const user = this.config.get<string>('SMTP_USER');
+      const from =
+        this.config.get<string>('MAIL_FROM') ||
+        (user ? `English Spark Studio <${user}>` : `no-reply@${this.host as string}`);
+      await transport.sendMail({ from, to, subject, text });
       return { delivered: 'sent' };
     } catch (e) {
       this.logger.warn(`Email send failed: ${String(e)}`);
