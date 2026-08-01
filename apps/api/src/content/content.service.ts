@@ -54,6 +54,65 @@ function resolveWordTranslation(
   return map[lang] || entry.translation;
 }
 
+/**
+ * word -> gloss in the request locale, built from the lesson's wordlist. Used to
+ * re-language vocabulary exercises whose glosses were baked in at authoring time
+ * (an AI-written lesson can carry e.g. Spanish rights regardless of the reader's
+ * language). Keys are lowercased for a forgiving match.
+ */
+function glossaryFor(
+  wordlist: { entries: { word: string; translation: string | null; translations: string | null }[] } | null,
+  lang: string,
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const e of wordlist?.entries ?? []) {
+    const t = resolveWordTranslation(e, lang);
+    if (t) out.set(e.word.trim().toLowerCase(), t);
+  }
+  return out;
+}
+
+/**
+ * Swap a word_matching task's right-hand column to the reader's language when
+ * the left-hand word is in the lesson wordlist. Any word missing a translation
+ * keeps its authored gloss, so a partially translated list still works. Other
+ * task types pass through untouched.
+ */
+function localizeTaskPayload(
+  type: string,
+  payload: Record<string, unknown>,
+  glossary: Map<string, string>,
+): Record<string, unknown> {
+  if (type !== 'word_matching' || glossary.size === 0) return payload;
+  const pairs = payload.pairs;
+  if (!Array.isArray(pairs)) return payload;
+  return {
+    ...payload,
+    pairs: pairs.map((p) => {
+      const pair = p as { left?: unknown; right?: unknown };
+      const left = String(pair.left ?? '').trim().toLowerCase();
+      const gloss = glossary.get(left);
+      return gloss ? { ...pair, right: gloss } : pair;
+    }),
+  };
+}
+
+/** The same swap for a word_matching answer key ({ map: { left: right } }). */
+function localizeAnswerKey(
+  type: string,
+  answerKey: Record<string, unknown>,
+  glossary: Map<string, string>,
+): Record<string, unknown> {
+  if (type !== 'word_matching' || glossary.size === 0) return answerKey;
+  const map = answerKey.map;
+  if (!map || typeof map !== 'object') return answerKey;
+  const next: Record<string, string> = {};
+  for (const [left, right] of Object.entries(map as Record<string, string>)) {
+    next[left] = glossary.get(left.trim().toLowerCase()) ?? right;
+  }
+  return { ...answerKey, map: next };
+}
+
 @Injectable()
 export class ContentService {
   constructor(
@@ -74,17 +133,69 @@ export class ContentService {
     return course;
   }
 
+  // --- course audience ------------------------------------------------------
+
+  /**
+   * What a student is allowed to open: any published course that is either
+   * shared with everyone (visibility "public") or individually granted to them
+   * (visibility "private" + a CourseAccess row). Used as the Prisma filter for
+   * list reads and mirrored by assertCourseVisible for single-course reads.
+   */
+  private async studentCourseFilter(userId: string) {
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    return {
+      status: 'published',
+      OR: [
+        { visibility: 'public' },
+        ...(student
+          ? [{ access: { some: { studentProfileId: student.id } } }]
+          : []),
+      ],
+    };
+  }
+
+  /** Single-course gate for students; tutors/admins always pass. */
+  private async assertCourseVisible(
+    user: AuthenticatedUser,
+    course: { id: string; status: string; visibility: string },
+  ) {
+    if (user.role !== 'student') return;
+    if (course.status !== 'published') {
+      throw new ForbiddenException('Course is not published');
+    }
+    if (course.visibility === 'public') return;
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+    const granted = student
+      ? await this.prisma.courseAccess.findUnique({
+          where: {
+            courseId_studentProfileId: {
+              courseId: course.id,
+              studentProfileId: student.id,
+            },
+          },
+        })
+      : null;
+    if (!granted) throw new ForbiddenException('Course is not shared with you');
+  }
+
   // --- catalog reads --------------------------------------------------------
 
-  /** Catalog: students see published courses; tutors/admins see everything. */
-  listCatalog(user: AuthenticatedUser) {
-    const where = user.role === 'student' ? { courses: { some: { status: 'published' } } } : {};
+  /** Catalog: students see the courses shared with them; staff see everything. */
+  async listCatalog(user: AuthenticatedUser) {
+    const courseWhere =
+      user.role === 'student' ? await this.studentCourseFilter(user.id) : null;
     return this.prisma.category.findMany({
-      where,
+      where: courseWhere ? { courses: { some: courseWhere } } : {},
       orderBy: { order: 'asc' },
       include: {
         courses: {
-          ...(user.role === 'student' ? { where: { status: 'published' } } : {}),
+          ...(courseWhere ? { where: courseWhere } : {}),
           orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           // Section levels drive the level chips/filter on the catalog cards.
           include: { sections: { select: { level: true }, orderBy: { order: 'asc' } } },
@@ -97,9 +208,7 @@ export class ContentService {
   async courseTree(user: AuthenticatedUser, courseId: string, level: string) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
-    if (user.role === 'student' && course.status !== 'published') {
-      throw new ForbiddenException('Course is not published');
-    }
+    await this.assertCourseVisible(user, course);
     const sections = await this.prisma.section.findMany({
       where: { courseId, level },
       orderBy: { order: 'asc' },
@@ -172,9 +281,7 @@ export class ContentService {
       },
     });
     if (!lesson) throw new NotFoundException('Lesson not found');
-    if (user.role === 'student' && lesson.course.status !== 'published') {
-      throw new ForbiddenException('Course is not published');
-    }
+    await this.assertCourseVisible(user, lesson.course);
     const hideKeys = user.role === 'student';
     // Serve each wordlist entry's translation in the request locale, falling
     // back to the authored default (V1: per-locale wordlist translations).
@@ -197,6 +304,11 @@ export class ContentService {
           ),
         }
       : lesson.wordlist;
+    // Vocabulary exercises carry their glosses inside the task payload, so they
+    // need the same per-locale treatment as the wordlist — otherwise a lesson
+    // authored with e.g. Spanish rights shows Spanish to every reader. The
+    // editor keeps the authored payload untouched.
+    const glossary = forEditor ? new Map<string, string>() : glossaryFor(lesson.wordlist, lang);
     return {
       ...lesson,
       wordlist,
@@ -204,7 +316,7 @@ export class ContentService {
       pages: lesson.pages.map((p) => ({
         ...p,
         tasks: p.tasks.map((t) => {
-          const payload = JSON.parse(t.payload);
+          const payload = localizeTaskPayload(t.type, JSON.parse(t.payload), glossary);
           if (hideKeys) {
             // Students get a sanitized question only: no payload (which can
             // reveal the solution, e.g. word order) and no answer key.
@@ -221,7 +333,9 @@ export class ContentService {
           return {
             ...t,
             payload,
-            answerKey: t.answerKey ? JSON.parse(t.answerKey) : null,
+            answerKey: t.answerKey
+              ? localizeAnswerKey(t.type, JSON.parse(t.answerKey), glossary)
+              : null,
             question: toContentQuestion(t.type, payload),
           };
         }),
@@ -237,18 +351,34 @@ export class ContentService {
   ) {
     const task = await this.prisma.lessonTask.findUnique({
       where: { id: taskId },
-      include: { page: { include: { courseLesson: { include: { course: true } } } } },
+      include: {
+        page: {
+          include: {
+            courseLesson: {
+              include: {
+                course: true,
+                wordlist: { include: { entries: true } },
+              },
+            },
+          },
+        },
+      },
     });
     if (!task) throw new NotFoundException('Task not found');
-    if (user.role === 'student' && task.page.courseLesson.course.status !== 'published') {
-      throw new ForbiddenException('Course is not published');
-    }
+    await this.assertCourseVisible(user, task.page.courseLesson.course);
 
     if (task.gradingMode !== 'AUTO') {
       // INV-5: MANUAL/COMPLETION never produce a number, only completion.
       return { completed: true, gradingMode: task.gradingMode };
     }
-    const answerKey = task.answerKey ? JSON.parse(task.answerKey) : {};
+    // Score against the key in the SAME language the student was shown, or every
+    // vocabulary answer would read as wrong once the glosses are localized.
+    const lang = I18nContext.current()?.lang ?? 'en';
+    const answerKey = localizeAnswerKey(
+      task.type,
+      task.answerKey ? JSON.parse(task.answerKey) : {},
+      glossaryFor(task.page.courseLesson.wordlist, lang),
+    );
     const result = scoreContentTask(task.type, answerKey, state);
     return {
       completed: true,
@@ -431,9 +561,55 @@ export class ContentService {
         order,
         selfStudy: dto.selfStudy ?? false,
         isNew: dto.isNew ?? false,
+        visibility: dto.visibility ?? 'public',
         ownerUserId: user.id,
       },
     });
+  }
+
+  // --- individual-course access (visibility = "private") --------------------
+
+  /** Students a private course is shared with (course owner / admin only). */
+  async listCourseAccess(user: AuthenticatedUser, courseId: string) {
+    await this.assertCourseEditable(user, courseId);
+    const rows = await this.prisma.courseAccess.findMany({
+      where: { courseId },
+      include: {
+        studentProfile: {
+          include: { user: { select: { firstName: true, lastName: true, email: true } } },
+        },
+      },
+    });
+    return rows.map((r) => ({
+      studentProfileId: r.studentProfileId,
+      name: `${r.studentProfile.user.firstName} ${r.studentProfile.user.lastName}`.trim(),
+      email: r.studentProfile.user.email,
+    }));
+  }
+
+  /**
+   * Replace the whole access list in one call, so the editor can just send the
+   * checked students. Unknown ids are ignored rather than failing the batch.
+   */
+  async setCourseAccess(
+    user: AuthenticatedUser,
+    courseId: string,
+    studentProfileIds: string[],
+  ) {
+    await this.assertCourseEditable(user, courseId);
+    const valid = await this.prisma.studentProfile.findMany({
+      where: { id: { in: studentProfileIds } },
+      select: { id: true },
+    });
+    await this.prisma.$transaction([
+      this.prisma.courseAccess.deleteMany({ where: { courseId } }),
+      ...valid.map((s) =>
+        this.prisma.courseAccess.create({
+          data: { courseId, studentProfileId: s.id },
+        }),
+      ),
+    ]);
+    return { granted: valid.length };
   }
 
   async reorderCategories(_user: AuthenticatedUser, ids: string[]) {

@@ -41,6 +41,7 @@ export class PrismaService
       this.courseLesson.deleteMany(),
       this.unit.deleteMany(),
       this.section.deleteMany(),
+      this.courseAccess.deleteMany(),
       this.course.deleteMany(),
       this.category.deleteMany(),
       this.exerciseInstance.deleteMany(),

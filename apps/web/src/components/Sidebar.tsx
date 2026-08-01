@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { AccountMenu } from './AccountMenu';
 import { CommandPalette } from './CommandPalette';
+import { NotificationsBell } from './NotificationsBell';
 
 type Item = { key: string; href: string; badge?: 'homework' };
 type Group = { labelKey: string; items: Item[] };
@@ -170,6 +171,7 @@ export function Sidebar() {
 
         <div className="rail-foot">
           <AccountMenu me={me} />
+          {me && <NotificationsBell />}
         </div>
       </nav>
 

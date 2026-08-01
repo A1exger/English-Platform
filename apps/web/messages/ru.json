@@ -558,7 +558,15 @@
     "courseDeleted": "Курс удалён",
     "cancel": "Отмена",
     "uploadMedia": "Загрузить картинку / файл",
-    "orUrl": "или по ссылке"
+    "orUrl": "или по ссылке",
+    "visibility": "Кому виден",
+    "visibilityPublic": "Всем студентам (общий)",
+    "visibilityPrivate": "Индивидуальный",
+    "visibilityPublicHint": "После публикации курс увидят все студенты.",
+    "visibilityPrivateHint": "Курс увидят только выбранные вами студенты. Выберите их в меню курса → Доступ.",
+    "manageAccess": "Доступ",
+    "manageAccessHint": "Выберите, кто из студентов может открыть этот курс. После сохранения курс станет индивидуальным.",
+    "noStudents": "Студентов пока нет."
   },
   "learn": {
     "title": "Урок",
@@ -661,5 +669,15 @@
       "discussion": "Обсуждение",
       "essay": "Эссе"
     }
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "empty": "Пока ничего нового.",
+    "markAll": "Отметить все",
+    "generic": "Есть обновление.",
+    "homework_assigned": "Новое домашнее задание: «{title}».",
+    "homework_feedback": "Преподаватель оставил отзыв на «{title}».",
+    "lesson_booked": "Урок забронирован: «{title}».",
+    "lesson_reminder": "Напоминание: скоро «{title}»."
   }
 }

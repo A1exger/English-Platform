@@ -447,6 +447,17 @@ button:disabled {
   font-weight: 500;
   color: var(--slate);
 }
+/* Top-align the fields so every control sits on the same line even when one
+   carries a hint under it (the timezone picker). The grid's `align-items: end`
+   stays for bare buttons, which should still hang at the row's bottom. */
+.form-grid > label {
+  align-self: start;
+}
+.form-grid > label > small {
+  margin-block-start: 2px;
+  font-weight: 400;
+  line-height: 1.35;
+}
 .inline-form {
   display: flex;
   gap: 8px;
@@ -866,20 +877,50 @@ textarea {
   block-size: 100%;
   object-fit: cover;
 }
-/* your own camera as a small overlay in the bottom-right, above the remote */
-.call-self {
+/* corner windows over the stage: your own camera in a normal call, or BOTH
+   cameras side by side while a screen is being shared */
+.call-corner {
   position: absolute;
   inset-block-end: 12px;
   inset-inline-end: 12px;
-  inline-size: 24%;
-  min-inline-size: 128px;
-  max-inline-size: 220px;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  max-inline-size: calc(100% - 24px);
+}
+.call-self {
+  /* positioning context for the tile inside — without it the tiles would all
+     resolve against .call-corner and stack on top of each other */
+  position: relative;
+  inline-size: 18vw;
+  min-inline-size: 124px;
+  max-inline-size: 210px;
   aspect-ratio: 16 / 10;
   border-radius: var(--r-sm);
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.5);
   box-shadow: var(--sh-md);
-  z-index: 5;
+  background: #16192b;
+  flex: 0 1 auto;
+}
+/* while sharing, the two camera windows are identical in size */
+.call-sharing .call-self {
+  flex: 1 1 0;
+}
+/* the shared screen must never be cropped — show the whole screen */
+.call-sharing .call-main .lk-participant-tile video,
+.call-sharing .call-main .lk-participant-media-video {
+  object-fit: contain;
+  background: #0e1020;
+}
+/* Two corner windows are wide enough to reach a centred control bar, so while
+   sharing the bar moves to the opposite side instead of sitting on top. The
+   doubled class keeps this ahead of the centred `.call > .lk-control-bar`
+   default regardless of source order. */
+.call.call-sharing > .lk-control-bar {
+  inset-inline-start: 12px;
+  transform: none;
 }
 .call-self .lk-participant-tile {
   position: absolute;
@@ -901,11 +942,51 @@ textarea {
   backdrop-filter: blur(6px);
   box-shadow: var(--sh-md);
 }
-/* compact corner PiP (board on): just the remote video — no self-view, no
-   controls, so nothing overflows the small window. */
-.call-compact .call-self,
+/* compact corner PiP (board on): the remote video plus a tiny mic/camera bar,
+   so the lesson can be muted without leaving the board. */
+.call-compact .call-corner,
 .call-compact > .lk-control-bar {
   display: none;
+}
+.call-mini-bar {
+  position: absolute;
+  inset-block-end: 6px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(10, 12, 24, 0.66);
+  backdrop-filter: blur(6px);
+  /* the PiP only fades the bar in on hover so it never hides the video */
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.room-video-pip:hover .call-mini-bar,
+.call-mini-bar:focus-within {
+  opacity: 1;
+}
+.call-mini-bar .lk-button {
+  inline-size: 26px;
+  block-size: 26px;
+  min-inline-size: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.call-mini-bar .lk-button:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+.call-mini-bar .lk-button svg {
+  inline-size: 14px;
+  block-size: 14px;
 }
 
 /* ——— exercises ——— */
@@ -2168,6 +2249,94 @@ select.err {
 .rail-foot {
   border-block-start: 1px solid var(--line);
   padding-block-start: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ——— in-app notifications (rail bell) ——— */
+.notif {
+  position: relative;
+  flex: 0 0 auto;
+}
+.notif-trigger {
+  position: relative;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--slate);
+  padding: 6px 8px;
+  line-height: 0;
+  cursor: pointer;
+}
+.notif-trigger:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.notif-dot {
+  position: absolute;
+  inset-block-start: -6px;
+  inset-inline-end: -6px;
+  min-inline-size: 16px;
+  block-size: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--magenta, #d6006c);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+.notif-pop {
+  position: absolute;
+  inset-block-end: calc(100% + 8px);
+  inset-inline-end: 0;
+  inline-size: 288px;
+  max-block-size: 60vh;
+  overflow-y: auto;
+  z-index: 40;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-md);
+  padding: 10px;
+}
+.notif-head {
+  margin-block-end: 6px;
+}
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.notif-item > button {
+  inline-size: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: start;
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 7px 8px;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  /* unread rows carry an accent edge; read ones fade out */
+  border-inline-start: 2px solid var(--magenta, #d6006c);
+}
+.notif-item > button:hover {
+  background: var(--bg);
+}
+.notif-item.read > button {
+  border-inline-start-color: transparent;
+  color: var(--slate);
 }
 
 /* Main column: offset by the rail, content centred in what remains. */
@@ -3320,6 +3489,10 @@ select.err {
   flex-direction: column;
   gap: 5px;
 }
+/* the checked score (or "answering") sits under the answer */
+.live-answer-state {
+  font-size: 13px;
+}
 
 /* focus-on-video theatre mode */
 .room-editorial.theatre .room-video {
@@ -3731,7 +3904,8 @@ select.err {
   font-size: 15px;
 }
 .badge-new,
-.badge-self {
+.badge-self,
+.badge-private {
   font-family: var(--font-mono);
   font-size: 11px;
   padding: 2px 8px;
@@ -3744,6 +3918,21 @@ select.err {
 .badge-self {
   color: var(--spark-700);
   background: var(--spark-100);
+}
+/* individual course — visible only to the students it was granted to */
+.badge-private {
+  color: var(--slate);
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+/* student picker in the course access modal */
+.access-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-block-size: 40vh;
+  overflow-y: auto;
+  margin-block: 4px;
 }
 
 /* row overflow menu (⋯) — publish/unpublish */

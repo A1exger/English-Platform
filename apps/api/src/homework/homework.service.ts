@@ -260,6 +260,20 @@ export class HomeworkService {
       where: { id },
       data: { status: 'graded' },
     });
+
+    // Tell the student their work was reviewed, so feedback isn't something
+    // they have to go looking for.
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { id: hw.studentProfileId },
+    });
+    if (student) {
+      await this.notifications.enqueue({
+        userId: student.userId,
+        templateKey: 'homework_feedback',
+        payload: { title: hw.title },
+      });
+    }
+
     return this.prisma.homework.findUnique({
       where: { id },
       include: HOMEWORK_INCLUDE,

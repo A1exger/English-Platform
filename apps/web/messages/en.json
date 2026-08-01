@@ -558,7 +558,15 @@
     "courseDeleted": "Course deleted",
     "cancel": "Cancel",
     "uploadMedia": "Upload image / file",
-    "orUrl": "or by URL"
+    "orUrl": "or by URL",
+    "visibility": "Who can see it",
+    "visibilityPublic": "All students (shared)",
+    "visibilityPrivate": "Individual",
+    "visibilityPublicHint": "Every student sees this course once it is published.",
+    "visibilityPrivateHint": "Only the students you choose will see it. Pick them from the course menu → Access.",
+    "manageAccess": "Access",
+    "manageAccessHint": "Choose which students can open this course. Saving makes it an individual course.",
+    "noStudents": "No students yet."
   },
   "learn": {
     "title": "Lesson",
@@ -661,5 +669,15 @@
       "discussion": "Discussion",
       "essay": "Essay"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Nothing new.",
+    "markAll": "Mark all read",
+    "generic": "You have an update.",
+    "homework_assigned": "New homework: “{title}”.",
+    "homework_feedback": "Your tutor left feedback on “{title}”.",
+    "lesson_booked": "Lesson booked: “{title}”.",
+    "lesson_reminder": "Reminder: “{title}” is coming up."
   }
 }

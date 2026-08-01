@@ -126,10 +126,26 @@ export function StageBody({ live }: { live: LiveLessonApi }) {
             key={task.id}
             task={task}
             onStateChange={(taskId, s) => live.emitProgress(taskId, s)}
+            // Push the checked answer + score so the teacher's copy stops
+            // showing "answering" and reports the result.
+            onResult={(r) =>
+              live.emitResult(r.taskId, {
+                state: r.state,
+                score: r.score,
+                correct: r.correct,
+                completed: r.completed
+              })
+            }
           />
         ) : (
           // Teacher watches the student's live answer in place, in real time.
-          <ContentTaskPlayer key={task.id} task={task} spectator initialState={live.answers[task.id]} />
+          <ContentTaskPlayer
+            key={task.id}
+            task={task}
+            spectator
+            initialState={live.answers[task.id]}
+            initialResult={live.results[task.id] ?? null}
+          />
         )
       )}
     </div>

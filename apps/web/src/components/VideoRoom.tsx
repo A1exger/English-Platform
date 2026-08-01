@@ -8,6 +8,7 @@ import {
   RoomAudioRenderer,
   ControlBar,
   ParticipantTile,
+  TrackToggle,
   useTracks,
   useLocalParticipant
 } from '@livekit/components-react';
@@ -22,11 +23,16 @@ interface Join {
 }
 
 // Custom call layout (replaces LiveKit's VideoConference grid, which forced an
-// equal split + its own control bar and cropped inside the corner PiP). The
-// OTHER participant fills the stage; your own camera rides along as a small
-// overlay in the bottom-right, like a normal 1:1 video call. In `compact` mode
-// (board on → corner PiP) we drop the self-view and controls so only the remote
-// video shows, filling the small window without cropping.
+// equal split + its own control bar and cropped inside the corner PiP).
+//
+// Normal call: the OTHER participant fills the stage and your own camera rides
+// along as a small overlay in the bottom-right, like any 1:1 video call.
+//
+// Screen share: the shared screen takes the whole stage, and BOTH cameras
+// (theirs + yours) drop into the bottom-right as two equal windows.
+//
+// `compact` (board on → corner PiP) shows only the remote video plus a tiny
+// mic/camera bar, so nothing overflows the small window.
 function CallLayout({ compact }: { compact: boolean }) {
   const tracks = useTracks(
     [
@@ -39,27 +45,49 @@ function CallLayout({ compact }: { compact: boolean }) {
 
   const isLocal = (t: (typeof tracks)[number]) =>
     t.participant.identity === localParticipant.identity;
-  const remote = tracks.filter((t) => !isLocal(t));
-  const selfCam = tracks.find((t) => isLocal(t) && t.source === Track.Source.Camera);
+  const cameras = tracks.filter((t) => t.source === Track.Source.Camera);
+  const share = tracks.find((t) => t.source === Track.Source.ScreenShare);
+  const remoteCams = cameras.filter((t) => !isLocal(t));
+  const selfCam = cameras.find(isLocal);
 
-  // The other person fills the stage. Alone in the room? Show your own camera so
-  // the stage is never an empty black box.
-  const main = remote.length > 0 ? remote : selfCam ? [selfCam] : [];
-  const showSelf = !compact && remote.length > 0 && !!selfCam;
+  // What fills the stage: the shared screen if someone is sharing, otherwise the
+  // other person. Alone and not sharing? Show your own camera so the stage is
+  // never an empty black box.
+  const main = share ? [share] : remoteCams.length > 0 ? remoteCams : selfCam ? [selfCam] : [];
+  // While sharing, both cameras sit in the corner as equal windows; otherwise
+  // only your own self-view does (the remote already fills the stage).
+  const corner = compact
+    ? []
+    : share
+      ? cameras
+      : remoteCams.length > 0 && selfCam
+        ? [selfCam]
+        : [];
 
   return (
-    <div className={`call${compact ? ' call-compact' : ''}`}>
+    <div className={`call${compact ? ' call-compact' : ''}${share ? ' call-sharing' : ''}`}>
       <div className={`call-main${main.length > 1 ? ' call-main-grid' : ''}`}>
         {main.map((tr) => (
           <ParticipantTile key={`${tr.participant.identity}:${tr.source}`} trackRef={tr} />
         ))}
       </div>
-      {showSelf && (
-        <div className="call-self">
-          <ParticipantTile trackRef={selfCam} disableSpeakingIndicator />
+      {corner.length > 0 && (
+        <div className="call-corner">
+          {corner.map((tr) => (
+            <div className="call-self" key={`${tr.participant.identity}:${tr.source}`}>
+              <ParticipantTile trackRef={tr} disableSpeakingIndicator />
+            </div>
+          ))}
         </div>
       )}
-      {!compact && (
+      {compact ? (
+        // Corner PiP: just mic + camera, so the lesson can be muted without
+        // switching back to the video stage.
+        <div className="call-mini-bar">
+          <TrackToggle source={Track.Source.Microphone} />
+          <TrackToggle source={Track.Source.Camera} />
+        </div>
+      ) : (
         <ControlBar
           variation="minimal"
           controls={{

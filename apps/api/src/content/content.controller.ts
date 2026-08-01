@@ -35,6 +35,7 @@ import {
   ReviewDictionaryDto,
   UpdatePageDto,
   UpdatePageMediaDto,
+  SetCourseAccessDto,
   SetGrammarDto,
   SetWordlistDto,
   SetWordlistTranslationsDto,
@@ -188,6 +189,23 @@ export class ContentController {
   @Delete('courses/:id')
   deleteCourse(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.content.deleteCourse(user, id);
+  }
+
+  // Who an individual (visibility = "private") course is shared with.
+  @Roles('tutor', 'admin')
+  @Get('courses/:id/access')
+  listCourseAccess(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.listCourseAccess(user, id);
+  }
+
+  @Roles('tutor', 'admin')
+  @Put('courses/:id/access')
+  setCourseAccess(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: SetCourseAccessDto,
+  ) {
+    return this.content.setCourseAccess(user, id, dto.studentProfileIds);
   }
 
   @Roles('tutor', 'admin')

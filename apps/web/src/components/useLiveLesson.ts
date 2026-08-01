@@ -51,6 +51,14 @@ export interface TreeLesson {
   title: string;
 }
 
+/** A task the student has checked: the answer plus how it scored. */
+export interface LiveResult {
+  state?: ExerciseState;
+  score?: number;
+  correct?: boolean;
+  completed: boolean;
+}
+
 export interface LiveLessonApi {
   role: 'teacher' | 'student' | 'other';
   isTeacher: boolean;
@@ -62,7 +70,11 @@ export interface LiveLessonApi {
   totalSteps: number;
   goTo: (idx: number) => void;
   answers: Record<string, ExerciseState>;
+  // Checked answers, streamed by the student on submit so the teacher sees the
+  // score instead of a task stuck on "answering".
+  results: Record<string, LiveResult>;
   emitProgress: (taskId: string, state: ExerciseState) => void;
+  emitResult: (taskId: string, result: LiveResult) => void;
   courses: CourseRow[];
   courseId: string;
   setCourseId: (v: string) => void;
@@ -96,6 +108,7 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
   const [level, setLevel] = useState('Elementary');
   const [treeLessons, setTreeLessons] = useState<TreeLesson[]>([]);
   const [answers, setAnswers] = useState<Record<string, ExerciseState>>({});
+  const [results, setResults] = useState<Record<string, LiveResult>>({});
   const [studentIds, setStudentIds] = useState<string[]>([]);
 
   const isTeacher = role === 'teacher';
@@ -112,6 +125,7 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
         setLesson(l);
         setPageIdx(0);
         setAnswers({});
+        setResults({});
       }
     },
     [locale]
@@ -135,6 +149,16 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
       } else if (e.type === 'exercise:progress') {
         const p = e.payload as { taskId?: string; state?: ExerciseState };
         if (p.taskId) setAnswers((prev) => ({ ...prev, [p.taskId as string]: p.state ?? {} }));
+      } else if (e.type === 'exercise:result') {
+        const p = e.payload as { taskId?: string } & LiveResult;
+        if (p.taskId) {
+          const taskId = p.taskId;
+          if (p.state) setAnswers((prev) => ({ ...prev, [taskId]: p.state as ExerciseState }));
+          setResults((prev) => ({
+            ...prev,
+            [taskId]: { state: p.state, score: p.score, correct: p.correct, completed: true },
+          }));
+        }
       }
     },
     [loadLesson, pageIndexOf]
@@ -249,6 +273,11 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
     [emit]
   );
 
+  const emitResult = useCallback(
+    (taskId: string, result: LiveResult) => emit('exercise:result', { taskId, ...result }),
+    [emit]
+  );
+
   const page = pageIdx > 0 ? (lesson?.pages[pageIdx - 1] ?? null) : null;
   const totalSteps = (lesson?.pages.length ?? 0) + 1;
 
@@ -263,7 +292,9 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
     totalSteps,
     goTo,
     answers,
+    results,
     emitProgress,
+    emitResult,
     courses,
     courseId,
     setCourseId,

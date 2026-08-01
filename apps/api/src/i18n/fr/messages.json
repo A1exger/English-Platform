@@ -6,7 +6,8 @@
   "notification": {
     "homework_assigned": "Nouveau devoir : \"{title}\".",
     "lesson_booked": "Cours réservé : \"{title}\".",
-    "lesson_reminder": "Rappel : \"{title}\" commence à {time}."
+    "lesson_reminder": "Rappel : \"{title}\" commence à {time}.",
+    "homework_feedback": "Retour sur votre devoir : « {title} »."
   },
   "auth": {
     "invalid_credentials": "E-mail ou mot de passe invalide."

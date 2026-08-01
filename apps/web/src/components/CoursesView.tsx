@@ -37,10 +37,17 @@ interface Course {
   status: string;
   selfStudy: boolean;
   isNew: boolean;
+  // "public" = shared with every student; "private" = individual course, only
+  // visible to the students the tutor grants access to.
+  visibility?: string;
   description?: string | null;
   coverUrl?: string | null;
   order: number;
   sections?: { level: string }[];
+}
+interface StudentOption {
+  studentProfileId: string;
+  name: string;
 }
 interface Category {
   id: string;
@@ -64,6 +71,7 @@ function CourseCardBody({
   onToggle,
   onRename,
   onDelete,
+  onAccess,
   handle
 }: {
   c: Course;
@@ -74,6 +82,7 @@ function CourseCardBody({
   onToggle: () => void;
   onRename?: () => void;
   onDelete?: () => void;
+  onAccess?: () => void;
   handle?: ReactNode;
 }) {
   const t = useTranslations('courses');
@@ -88,6 +97,9 @@ function CourseCardBody({
         {isStudent && pct !== undefined && <span className="course-row-pct mono-num">{pct}%</span>}
         {c.isNew && <span className="badge-new">{t('new')}</span>}
         {c.selfStudy && <span className="badge-self">{t('selfStudy')}</span>}
+        {/* An individual course is only visible to the students it was granted
+            to — flag it so it is never mistaken for a shared one. */}
+        {c.visibility === 'private' && <span className="badge-private">{t('visibilityPrivate')}</span>}
         {canAuthor && <span className={`status-pill ${c.status}`}>{t(c.status as 'draft' | 'published')}</span>}
       </Link>
       {canAuthor && (
@@ -101,6 +113,11 @@ function CourseCardBody({
             <button type="button" className="menu-item" onClick={onToggle}>
               {c.status === 'published' ? t('unpublish') : t('publish')}
             </button>
+            {onAccess && (
+              <button type="button" className="menu-item" onClick={onAccess}>
+                {t('manageAccess')}
+              </button>
+            )}
             {onDelete && (
               <button type="button" className="menu-item danger" onClick={onDelete}>{t('deleteCourse')}</button>
             )}
@@ -121,6 +138,7 @@ function SortableCourse(props: {
   onToggle: () => void;
   onRename?: () => void;
   onDelete?: () => void;
+  onAccess?: () => void;
 }) {
   const t = useTranslations('courses');
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.c.id });
@@ -160,6 +178,13 @@ export function CoursesView() {
   const [isStudent, setIsStudent] = useState(false);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [renaming, setRenaming] = useState<{ id: string; title: string } | null>(null);
+  // Individual-course access editor: which students may open this course.
+  const [access, setAccess] = useState<{
+    course: Course;
+    students: StudentOption[];
+    picked: Record<string, boolean>;
+  } | null>(null);
+  const [accessBusy, setAccessBusy] = useState(false);
 
   // Mouse + touch (touch delayed so a drag never fights page scroll, §11).
   const sensors = useSensors(
@@ -221,6 +246,65 @@ export function CoursesView() {
   }
 
   // Rename in place — optimistic, then PATCH the title.
+  // Open the access editor for a course: the tutor's students, pre-checked with
+  // whoever already has it. Switches the course to "private" on save, since a
+  // per-student list only means anything for an individual course.
+  async function openAccess(c: Course) {
+    const token = tokenStore.get();
+    if (!token) return;
+    const [students, granted] = await Promise.all([
+      apiFetch<StudentOption[]>('/crm/students', { token, locale }).catch(() => []),
+      apiFetch<{ studentProfileId: string }[]>(`/content/courses/${c.id}/access`, {
+        token,
+        locale
+      }).catch(() => [])
+    ]);
+    setAccess({
+      course: c,
+      students,
+      picked: Object.fromEntries(granted.map((g) => [g.studentProfileId, true]))
+    });
+  }
+
+  async function saveAccess() {
+    const token = tokenStore.get();
+    if (!token || !access) return;
+    const { course } = access;
+    const studentProfileIds = Object.entries(access.picked)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    setAccessBusy(true);
+    try {
+      await apiFetch(`/content/courses/${course.id}/access`, {
+        method: 'PUT',
+        token,
+        locale,
+        body: { studentProfileIds }
+      });
+      // A named list implies an individual course; flip it so the grant is
+      // actually enforced (a public course is visible to everyone regardless).
+      if (course.visibility !== 'private') {
+        await apiFetch(`/content/courses/${course.id}`, {
+          method: 'PATCH',
+          token,
+          locale,
+          body: { visibility: 'private' }
+        }).catch(() => undefined);
+        setCats((prev) =>
+          prev.map((cat) => ({
+            ...cat,
+            courses: cat.courses.map((x) =>
+              x.id === course.id ? { ...x, visibility: 'private' } : x
+            )
+          }))
+        );
+      }
+      setAccess(null);
+    } finally {
+      setAccessBusy(false);
+    }
+  }
+
   async function saveRename() {
     const token = tokenStore.get();
     if (!token || !renaming || !renaming.title.trim()) return;
@@ -329,6 +413,7 @@ export function CoursesView() {
                 onToggle={() => togglePublish(c)}
                 onRename={() => setRenaming({ id: c.id, title: c.title })}
                 onDelete={() => removeCourse(c)}
+                onAccess={() => void openAccess(c)}
               />
             ))}
           </ul>
@@ -347,6 +432,7 @@ export function CoursesView() {
               onToggle={() => togglePublish(c)}
               onRename={() => setRenaming({ id: c.id, title: c.title })}
               onDelete={() => removeCourse(c)}
+              onAccess={() => void openAccess(c)}
             />
           </li>
         ))}
@@ -440,6 +526,51 @@ export function CoursesView() {
                 {t('cancel')}
               </button>
               <button type="submit" disabled={!renaming.title.trim()}>
+                {t('save')}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {access && (
+        <div className="modal-overlay" onMouseDown={() => setAccess(null)}>
+          <form
+            className="card rename-modal"
+            onMouseDown={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void saveAccess();
+            }}
+          >
+            <strong>{t('manageAccess')}</strong>
+            <p className="muted">{t('manageAccessHint')}</p>
+            {access.students.length === 0 ? (
+              <p className="note">{t('noStudents')}</p>
+            ) : (
+              <div className="access-list">
+                {access.students.map((s) => (
+                  <label key={s.studentProfileId} className="check">
+                    <input
+                      type="checkbox"
+                      checked={!!access.picked[s.studentProfileId]}
+                      onChange={(e) =>
+                        setAccess({
+                          ...access,
+                          picked: { ...access.picked, [s.studentProfileId]: e.target.checked }
+                        })
+                      }
+                    />
+                    {s.name}
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="row-actions">
+              <button type="button" className="ghost" onClick={() => setAccess(null)}>
+                {t('cancel')}
+              </button>
+              <button type="submit" disabled={accessBusy}>
                 {t('save')}
               </button>
             </div>

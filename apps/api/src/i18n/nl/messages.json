@@ -6,7 +6,8 @@
   "notification": {
     "homework_assigned": "Nieuw huiswerk: \"{title}\".",
     "lesson_booked": "Les geboekt: \"{title}\".",
-    "lesson_reminder": "Herinnering: \"{title}\" begint om {time}."
+    "lesson_reminder": "Herinnering: \"{title}\" begint om {time}.",
+    "homework_feedback": "Feedback op je huiswerk: \"{title}\"."
   },
   "auth": {
     "invalid_credentials": "Ongeldig e-mailadres of wachtwoord."

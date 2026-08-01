@@ -558,7 +558,15 @@
     "courseDeleted": "تم حذف الدورة",
     "cancel": "إلغاء",
     "uploadMedia": "رفع صورة / ملف",
-    "orUrl": "أو عبر رابط"
+    "orUrl": "أو عبر رابط",
+    "visibility": "من يمكنه رؤيته",
+    "visibilityPublic": "جميع الطلاب (مشترك)",
+    "visibilityPrivate": "فردي",
+    "visibilityPublicHint": "بعد النشر سيرى جميع الطلاب هذه الدورة.",
+    "visibilityPrivateHint": "لن يراها إلا الطلاب الذين تختارهم. اخترهم من قائمة الدورة ← الوصول.",
+    "manageAccess": "الوصول",
+    "manageAccessHint": "اختر من يمكنه فتح هذه الدورة. الحفظ يجعلها دورة فردية.",
+    "noStudents": "لا يوجد طلاب بعد."
   },
   "learn": {
     "title": "الدرس",
@@ -661,5 +669,15 @@
       "discussion": "نقاش",
       "essay": "مقال"
     }
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا جديد.",
+    "markAll": "تعليم الكل كمقروء",
+    "generic": "لديك تحديث.",
+    "homework_assigned": "واجب جديد: “{title}”.",
+    "homework_feedback": "ترك معلمك ملاحظات على “{title}”.",
+    "lesson_booked": "تم حجز الدرس: “{title}”.",
+    "lesson_reminder": "تذكير: “{title}” قريبًا."
   }
 }

@@ -558,7 +558,15 @@
     "courseDeleted": "Cours supprimé",
     "cancel": "Annuler",
     "uploadMedia": "Téléverser image / fichier",
-    "orUrl": "ou par URL"
+    "orUrl": "ou par URL",
+    "visibility": "Qui peut le voir",
+    "visibilityPublic": "Tous les élèves (partagé)",
+    "visibilityPrivate": "Individuel",
+    "visibilityPublicHint": "Une fois publié, tous les élèves verront ce cours.",
+    "visibilityPrivateHint": "Seuls les élèves que vous choisissez le verront. Sélectionnez-les dans le menu du cours → Accès.",
+    "manageAccess": "Accès",
+    "manageAccessHint": "Choisissez qui peut ouvrir ce cours. L'enregistrement en fait un cours individuel.",
+    "noStudents": "Aucun élève pour le moment."
   },
   "learn": {
     "title": "Leçon",
@@ -661,5 +669,15 @@
       "discussion": "Discussion",
       "essay": "Rédaction"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Rien de nouveau.",
+    "markAll": "Tout marquer comme lu",
+    "generic": "Vous avez une mise à jour.",
+    "homework_assigned": "Nouveau devoir : « {title} ».",
+    "homework_feedback": "Votre professeur a laissé un retour sur « {title} ».",
+    "lesson_booked": "Cours réservé : « {title} ».",
+    "lesson_reminder": "Rappel : « {title} » arrive bientôt."
   }
 }

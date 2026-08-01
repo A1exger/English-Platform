@@ -6,6 +6,9 @@
 //   nav:goto            { pageId }   teacher -> room (teacher owns navigation)
 //   session:loadMaterial{ lessonId } teacher -> room (teacher feeds material)
 //   exercise:progress   { taskId, state } student -> room (teacher read-model)
+//   exercise:result     { taskId, state, score, correct } student -> room
+//                       (the checked answer, so the teacher sees the result and
+//                        not a task stuck on "answering")
 
 import { UserRole } from '../common/constants/enums';
 
@@ -40,6 +43,7 @@ export function isAuthorized(type: string, senderRole: EnvelopeRole): boolean {
     case 'session:loadMaterial':
       return senderRole === 'teacher';
     case 'exercise:progress':
+    case 'exercise:result':
       return senderRole === 'student';
     default:
       return false;

@@ -59,6 +59,12 @@ export class CreateCourseDto {
   @IsOptional()
   @IsBoolean()
   isNew?: boolean;
+
+  // "public" = shared with every student once published; "private" = only the
+  // students listed in CourseAccess (an individual course).
+  @IsOptional()
+  @IsIn(['public', 'private'])
+  visibility?: 'public' | 'private';
 }
 
 export class UpdateCourseDto {
@@ -89,6 +95,12 @@ export class UpdateCourseDto {
   @IsOptional()
   @IsBoolean()
   isNew?: boolean;
+
+  // "public" = shared with every student once published; "private" = only the
+  // students listed in CourseAccess (an individual course).
+  @IsOptional()
+  @IsIn(['public', 'private'])
+  visibility?: 'public' | 'private';
 
   @IsOptional()
   @IsIn(['draft', 'published'])
@@ -337,6 +349,13 @@ export class SetWordlistTranslationsDto {
   @ValidateNested({ each: true })
   @Type(() => WordlistTranslationEntryDto)
   entries!: WordlistTranslationEntryDto[];
+}
+
+/** Full replacement of an individual course's student list. */
+export class SetCourseAccessDto {
+  @IsArray()
+  @IsString({ each: true })
+  studentProfileIds!: string[];
 }
 
 export class SetGrammarDto {

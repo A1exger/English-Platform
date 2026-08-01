@@ -92,6 +92,7 @@ model StudentProfile {
   participants    LessonParticipant[]
   ledgerEntries   LedgerEntry[]
   studentPackages StudentPackage[]
+  courseAccess    CourseAccess[]
 }
 
 model TutorStudent {
@@ -474,14 +475,32 @@ model Course {
   isNew       Boolean  @default(false)
   // status: "draft" | "published"
   status      String   @default("draft")
+  // visibility: "public"  -> every student sees it once published (shared course)
+  //             "private" -> only students granted access (individual course)
+  visibility  String   @default("public")
   ownerUserId String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   sections Section[]
   lessons  CourseLesson[]
+  access   CourseAccess[]
 
   @@index([categoryId])
+}
+
+// Per-student grant for a "private" course, so a tutor can build individual
+// material for one learner without publishing it to everyone.
+model CourseAccess {
+  id               String   @id @default(cuid())
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+
+  @@unique([courseId, studentProfileId])
+  @@index([studentProfileId])
 }
 
 // level: "Beginner" | "Elementary" | "PreIntermediate" | "Intermediate" |

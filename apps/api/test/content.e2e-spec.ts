@@ -110,6 +110,76 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     expect(tree.body.sections[0].units.length).toBe(2);
   });
 
+  it('private courses stay hidden until the student is granted access', async () => {
+    const cat = await api()
+      .post('/api/v1/content/categories')
+      .set(auth(tutor.accessToken))
+      .send({ title: 'Individual' })
+      .expect(201);
+    // Published, but built for named students only.
+    const course = await api()
+      .post('/api/v1/content/courses')
+      .set(auth(tutor.accessToken))
+      .send({ categoryId: cat.body.id, title: 'One-to-one', visibility: 'private' })
+      .expect(201);
+    const privateId = course.body.id as string;
+    expect(course.body.visibility).toBe('private');
+    await api()
+      .patch(`/api/v1/content/courses/${privateId}`)
+      .set(auth(tutor.accessToken))
+      .send({ status: 'published' })
+      .expect(200);
+
+    const visibleTitles = async () => {
+      const cat = await api()
+        .get('/api/v1/content/catalog')
+        .set(auth(student.accessToken))
+        .expect(200);
+      return (cat.body as { courses: { title: string }[] }[]).flatMap((c) =>
+        c.courses.map((x) => x.title),
+      );
+    };
+
+    // Published but not shared: invisible in the catalog and closed on direct hit.
+    expect(await visibleTitles()).not.toContain('One-to-one');
+    await api()
+      .get(`/api/v1/content/courses/${privateId}/tree?level=Elementary`)
+      .set(auth(student.accessToken))
+      .expect(403);
+
+    // Grant it to this student.
+    const profile = await prisma.studentProfile.findFirstOrThrow({
+      where: { user: { email: 'c.student@test.com' } },
+    });
+    await api()
+      .put(`/api/v1/content/courses/${privateId}/access`)
+      .set(auth(tutor.accessToken))
+      .send({ studentProfileIds: [profile.id] })
+      .expect(200);
+
+    expect(await visibleTitles()).toContain('One-to-one');
+    await api()
+      .get(`/api/v1/content/courses/${privateId}/tree?level=Elementary`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    const access = await api()
+      .get(`/api/v1/content/courses/${privateId}/access`)
+      .set(auth(tutor.accessToken))
+      .expect(200);
+    expect(access.body).toHaveLength(1);
+
+    // Revoking closes it again (empty list replaces the grants).
+    await api()
+      .put(`/api/v1/content/courses/${privateId}/access`)
+      .set(auth(tutor.accessToken))
+      .send({ studentProfileIds: [] })
+      .expect(200);
+    await api()
+      .get(`/api/v1/content/courses/${privateId}/tree?level=Elementary`)
+      .set(auth(student.accessToken))
+      .expect(403);
+  });
+
   it('tasks validate payloads and hide answer keys from students', async () => {
     const page = await api()
       .post('/api/v1/content/pages')

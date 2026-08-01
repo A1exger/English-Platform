@@ -558,7 +558,15 @@
     "courseDeleted": "Kurs gelöscht",
     "cancel": "Abbrechen",
     "uploadMedia": "Bild / Datei hochladen",
-    "orUrl": "oder per URL"
+    "orUrl": "oder per URL",
+    "visibility": "Wer sieht ihn",
+    "visibilityPublic": "Alle Lernenden (geteilt)",
+    "visibilityPrivate": "Individuell",
+    "visibilityPublicHint": "Nach der Veröffentlichung sehen alle Lernenden diesen Kurs.",
+    "visibilityPrivateHint": "Nur die von dir gewählten Lernenden sehen ihn. Wähle sie im Kursmenü → Zugriff.",
+    "manageAccess": "Zugriff",
+    "manageAccessHint": "Wähle, wer diesen Kurs öffnen darf. Beim Speichern wird er zu einem individuellen Kurs.",
+    "noStudents": "Noch keine Lernenden."
   },
   "learn": {
     "title": "Lektion",
@@ -661,5 +669,15 @@
       "discussion": "Diskussion",
       "essay": "Aufsatz"
     }
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "empty": "Nichts Neues.",
+    "markAll": "Alle gelesen",
+    "generic": "Es gibt ein Update.",
+    "homework_assigned": "Neue Hausaufgabe: „{title}“.",
+    "homework_feedback": "Dein Tutor hat Feedback zu „{title}“ hinterlassen.",
+    "lesson_booked": "Unterricht gebucht: „{title}“.",
+    "lesson_reminder": "Erinnerung: „{title}“ steht an."
   }
 }

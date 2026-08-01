@@ -42,7 +42,13 @@ export function ContentTaskPlayer({
   spectator = false
 }: {
   task: ContentTask;
-  onResult?: (r: { taskId: string; score?: number; completed: boolean }) => void;
+  onResult?: (r: {
+    taskId: string;
+    score?: number;
+    correct?: boolean;
+    state?: ExerciseState;
+    completed: boolean;
+  }) => void;
   // Override where the answer goes. Default: self-study / live check endpoint.
   // Homework passes a submit that persists the card (see AssignmentPlayerView).
   submit?: (state: ExerciseState) => Promise<CheckResponse>;
@@ -68,10 +74,14 @@ export function ContentTaskPlayer({
   const done = result !== null;
   const readOnly = done || spectator;
 
-  // Spectator (teacher): mirror the student's streamed answer as it arrives.
+  // Spectator (teacher): mirror the student's streamed answer as it arrives,
+  // and switch to the checked result once they submit.
   useEffect(() => {
     if (spectator) setState(initialState ?? {});
   }, [spectator, initialState]);
+  useEffect(() => {
+    if (spectator) setResult(initialResult ?? null);
+  }, [spectator, initialResult]);
 
   // Autosave (Sprint 2.3): restore any local draft so a reload never loses work.
   // ContentTaskPlayer has no server draft endpoint (backend is out of scope), so
@@ -125,7 +135,15 @@ export function ContentTaskPlayer({
       } catch {
         /* ignore */
       }
-      onResult?.({ taskId: task.id, score: r.score, completed: true });
+      // Carry the final answer along so a live teacher sees WHAT was answered,
+      // not just the score.
+      onResult?.({
+        taskId: task.id,
+        score: r.score,
+        correct: r.correct,
+        state: payload,
+        completed: true
+      });
     } finally {
       setBusy(false);
     }

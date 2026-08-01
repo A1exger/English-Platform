@@ -6,7 +6,8 @@
   "notification": {
     "homework_assigned": "Neue Hausaufgabe: \"{title}\".",
     "lesson_booked": "Stunde gebucht: \"{title}\".",
-    "lesson_reminder": "Erinnerung: \"{title}\" beginnt um {time}."
+    "lesson_reminder": "Erinnerung: \"{title}\" beginnt um {time}.",
+    "homework_feedback": "Feedback zu deiner Hausaufgabe: „{title}“."
   },
   "auth": {
     "invalid_credentials": "Ungültige E-Mail oder Passwort."

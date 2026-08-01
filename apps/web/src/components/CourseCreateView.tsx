@@ -22,7 +22,15 @@ export function CourseCreateView() {
 
   const [cats, setCats] = useState<Category[]>([]);
   const [catTitle, setCatTitle] = useState('');
-  const [course, setCourse] = useState({ categoryId: '', title: '', description: '', coverUrl: '' });
+  const [course, setCourse] = useState({
+    categoryId: '',
+    title: '',
+    description: '',
+    coverUrl: '',
+    // "public" = every student sees it once published; "private" = only the
+    // students the tutor grants access to (an individual course).
+    visibility: 'public' as 'public' | 'private'
+  });
   const [busy, setBusy] = useState(false);
   const [coverBusy, setCoverBusy] = useState(false);
 
@@ -94,7 +102,8 @@ export function CourseCreateView() {
           categoryId: course.categoryId,
           title: course.title,
           description: course.description || undefined,
-          coverUrl: course.coverUrl || undefined
+          coverUrl: course.coverUrl || undefined,
+          visibility: course.visibility
         }
       });
       // Land in the new course so the author can start adding lessons right away.
@@ -132,6 +141,21 @@ export function CourseCreateView() {
           <label>
             {t('description')}
             <textarea value={course.description} onChange={(e) => setCourse({ ...course, description: e.target.value })} />
+          </label>
+          <label>
+            {t('visibility')}
+            <select
+              value={course.visibility}
+              onChange={(e) =>
+                setCourse({ ...course, visibility: e.target.value as 'public' | 'private' })
+              }
+            >
+              <option value="public">{t('visibilityPublic')}</option>
+              <option value="private">{t('visibilityPrivate')}</option>
+            </select>
+            <small className="muted">
+              {course.visibility === 'private' ? t('visibilityPrivateHint') : t('visibilityPublicHint')}
+            </small>
           </label>
           <label>
             {t('cover')}

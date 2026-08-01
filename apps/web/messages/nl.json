@@ -558,7 +558,15 @@
     "courseDeleted": "Cursus verwijderd",
     "cancel": "Annuleren",
     "uploadMedia": "Afbeelding / bestand uploaden",
-    "orUrl": "of via URL"
+    "orUrl": "of via URL",
+    "visibility": "Wie ziet hem",
+    "visibilityPublic": "Alle leerlingen (gedeeld)",
+    "visibilityPrivate": "Individueel",
+    "visibilityPublicHint": "Na publicatie zien alle leerlingen deze cursus.",
+    "visibilityPrivateHint": "Alleen de leerlingen die je kiest zien hem. Kies ze in het cursusmenu → Toegang.",
+    "manageAccess": "Toegang",
+    "manageAccessHint": "Kies wie deze cursus mag openen. Bij opslaan wordt het een individuele cursus.",
+    "noStudents": "Nog geen leerlingen."
   },
   "learn": {
     "title": "Les",
@@ -661,5 +669,15 @@
       "discussion": "Discussie",
       "essay": "Essay"
     }
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "empty": "Niets nieuws.",
+    "markAll": "Alles gelezen",
+    "generic": "Er is een update.",
+    "homework_assigned": "Nieuw huiswerk: “{title}”.",
+    "homework_feedback": "Je docent gaf feedback op “{title}”.",
+    "lesson_booked": "Les geboekt: “{title}”.",
+    "lesson_reminder": "Herinnering: “{title}” komt eraan."
   }
 }

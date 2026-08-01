@@ -6,7 +6,8 @@
   "notification": {
     "homework_assigned": "واجب جديد: \"{title}\".",
     "lesson_booked": "تم حجز الدرس: \"{title}\".",
-    "lesson_reminder": "تذكير: \"{title}\" يبدأ الساعة {time}."
+    "lesson_reminder": "تذكير: \"{title}\" يبدأ الساعة {time}.",
+    "homework_feedback": "ملاحظات على واجبك: \"{title}\"."
   },
   "auth": {
     "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة."

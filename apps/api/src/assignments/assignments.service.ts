@@ -289,6 +289,21 @@ export class AssignmentsService {
       },
     });
     await this.recomputeResult(card.assignmentId);
+
+    // Written feedback is the part a student would otherwise never notice.
+    if (dto.feedback) {
+      const student = await this.prisma.studentProfile.findUnique({
+        where: { id: card.assignment.studentProfileId },
+      });
+      if (student) {
+        await this.notifications.enqueue({
+          userId: student.userId,
+          templateKey: 'homework_feedback',
+          payload: { title: card.assignment.topicTag ?? 'Homework' },
+        });
+      }
+    }
+
     return this.getOne(user, card.assignmentId);
   }
 
