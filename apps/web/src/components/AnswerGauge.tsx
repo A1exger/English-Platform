@@ -1,33 +1,43 @@
-// Answer progress for the current page, as a ring in the corner of the course
-// page. Correct answers fill it in the platform's teal; wrong ones fill it in
-// bordeaux, so how the page is going reads at a glance without a number.
+// Progress ring used wherever work is scored — the lesson page and the homework
+// list. The arc length is how much of the work is finished; the split inside it
+// is how well it went, taken from the AVERAGE score of what was answered, so
+// partial credit counts properly rather than tallying right/wrong tasks.
 //
-//   <AnswerGauge correct={2} wrong={1} total={5} />
+// Teal = the marks earned, bordeaux = the marks lost, track = not attempted.
+//
+//   <AnswerGauge done={3} total={5} pct={80} />   // 3 of 5 done, averaging 8.0
 
 interface AnswerGaugeProps {
-  /** Tasks answered correctly (or completed, for ungraded ones). */
-  correct: number;
-  /** Tasks answered wrong / partially. */
-  wrong: number;
-  /** Tasks on the page. 0 renders nothing. */
+  /** Tasks finished. */
+  done: number;
+  /** Tasks in the page / homework. 0 renders nothing. */
   total: number;
+  /** Average success over the finished tasks, 0–100. null = not scored yet. */
+  pct?: number | null;
   /** Outer diameter in px. Default 44. */
   size?: number;
   label?: string;
 }
 
-export function AnswerGauge({ correct, wrong, total, size = 44, label }: AnswerGaugeProps) {
+/** The user-facing scale is 0–10 (see <Score>); percentages stay internal. */
+const toTen = (pct: number) => Math.round(pct) / 10;
+
+export function AnswerGauge({ done, total, pct = null, size = 44, label }: AnswerGaugeProps) {
   if (total <= 0) return null;
-  const done = Math.min(correct + wrong, total);
+  const finished = Math.min(Math.max(done, 0), total);
   const stroke = Math.max(3, Math.round(size * 0.1));
   const c = size / 2;
   const r = c - stroke / 2 - 1;
   const circumference = 2 * Math.PI * r;
-  const seg = (n: number) => (Math.min(n, total) / total) * circumference;
-  // The two arcs share one circle: correct starts at 12 o'clock, wrong picks up
-  // where it ends (a negative dash offset walks the stroke forward).
-  const okLen = seg(correct);
-  const badLen = seg(wrong);
+
+  const progress = (finished / total) * circumference;
+  // With no score yet (nothing answered, or manual-only work) the whole
+  // finished arc counts as earned — there is nothing to have got wrong.
+  const share = pct === null ? 1 : Math.min(Math.max(pct, 0), 100) / 100;
+  const okLen = progress * share;
+  const badLen = progress - okLen;
+
+  const center = pct === null ? `${finished}/${total}` : toTen(pct).toFixed(1);
 
   return (
     <div className="answer-gauge" title={label}>
@@ -36,10 +46,10 @@ export function AnswerGauge({ correct, wrong, total, size = 44, label }: AnswerG
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         role="img"
-        aria-label={label ?? `${done} / ${total}`}
+        aria-label={label ? `${label}: ${center}` : center}
       >
         <circle cx={c} cy={c} r={r} fill="none" stroke="var(--line)" strokeWidth={stroke} />
-        {wrong > 0 && (
+        {badLen > 0 && (
           <circle
             cx={c}
             cy={c}
@@ -52,7 +62,7 @@ export function AnswerGauge({ correct, wrong, total, size = 44, label }: AnswerG
             transform={`rotate(-90 ${c} ${c})`}
           />
         )}
-        {correct > 0 && (
+        {okLen > 0 && (
           <circle
             cx={c}
             cy={c}
@@ -71,7 +81,7 @@ export function AnswerGauge({ correct, wrong, total, size = 44, label }: AnswerG
           dominantBaseline="central"
           style={{ fontFamily: 'var(--font-mono)', fontSize: size * 0.28, fill: 'var(--ink)' }}
         >
-          {done}/{total}
+          {center}
         </text>
       </svg>
     </div>

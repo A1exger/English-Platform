@@ -7,7 +7,7 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { Drawer } from './Drawer';
-import { ScoreRing } from './ScoreRing';
+import { AnswerGauge } from './AnswerGauge';
 import { PageHeader } from './PageHeader';
 import { DataList } from './DataList';
 
@@ -21,6 +21,8 @@ interface Homework {
   status: string;
   dueAt?: string | null;
   submissions: Submission[];
+  // Per-exercise instances; `score` is 0–100 (see task-contract).
+  exercises?: { id: string; status: string; score?: number | null }[];
 }
 // The Skyeng-style content homework (ContentAssignment) handed out from the
 // lesson player / room. Students have no separate "Assignments" tab, so these
@@ -31,6 +33,9 @@ interface AssignmentRow {
   topicTag: string | null;
   dueAt: string | null;
   status: string;
+  cardCount: number;
+  submittedCount: number;
+  // `overall` is the 0–10 average of the auto-graded cards.
   result: { overall: number | null } | null;
 }
 interface StudentRow {
@@ -38,28 +43,39 @@ interface StudentRow {
   name: string;
 }
 
-// One normalized row for the list, regardless of which backend model it came
-// from. `status` is collapsed to the Homework vocabulary so the tabs work for
-// both. `ringValue` is always on the 0-100 scale the ScoreRing expects.
+/**
+ * One normalized row, whichever backend model it came from. Three states only:
+ * nothing started (new), part-way (progress), finished (done). Progress is
+ * `done/total` tasks and `pct` the average score over the finished ones, so the
+ * ring shows how much is left AND how it is going.
+ */
 interface UnifiedRow {
   id: string;
   href: string;
   title: string;
-  status: 'assigned' | 'submitted' | 'graded';
+  status: 'new' | 'progress' | 'done';
   dueAt?: string | null;
-  ringValue?: number;
-  ringDisplay?: string;
+  done: number;
+  total: number;
+  pct: number | null;
 }
 
-const TABS = ['all', 'todo', 'submitted', 'graded'] as const;
+const TABS = ['all', 'new', 'progress', 'done'] as const;
 type Tab = (typeof TABS)[number];
 
-// ContentAssignment advances assigned -> in_progress -> done; map it onto the
-// Homework vocabulary the tabs and chips use.
-function assignmentStatus(s: string): UnifiedRow['status'] {
-  if (s === 'done') return 'graded';
-  if (s === 'in_progress') return 'submitted';
-  return 'assigned';
+/** Homework a student has never opened, so it can be badged "new". */
+const SEEN_KEY = 'homework-seen';
+function readSeen(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function stateOf(done: number, total: number, finished: boolean): UnifiedRow['status'] {
+  if (finished || (total > 0 && done >= total)) return 'done';
+  return done > 0 ? 'progress' : 'new';
 }
 
 // Sprint 2.1: the list is only a list. One scannable row per homework — title,
@@ -84,6 +100,7 @@ export function HomeworkView() {
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<Tab>('all');
+  const [seen, setSeen] = useState<Set<string>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({ studentProfileId: '', title: '', due: '' });
 
@@ -119,6 +136,23 @@ export function HomeworkView() {
     void load();
   }, [load]);
 
+  // localStorage, not the server: "new" is a per-person reading cue, and this
+  // keeps opening a homework from needing a write round-trip.
+  useEffect(() => setSeen(readSeen()), []);
+
+  function markSeen(id: string) {
+    setSeen((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev).add(id);
+      try {
+        localStorage.setItem(SEEN_KEY, JSON.stringify([...next]));
+      } catch {
+        /* storage unavailable — the badge just shows again next time */
+      }
+      return next;
+    });
+  }
+
   async function assign(e: FormEvent) {
     e.preventDefault();
     const token = tokenStore.get();
@@ -148,45 +182,52 @@ export function HomeworkView() {
 
   const isStaff = me?.role === 'tutor' || me?.role === 'admin';
   const statusLabel = (s: UnifiedRow['status']) =>
-    s === 'assigned' ? t('statusAssigned') : s === 'submitted' ? t('statusSubmitted') : t('statusGraded');
+    s === 'new' ? t('statusNew') : s === 'progress' ? t('statusProgress') : t('statusDone');
 
   const homeworkRows: UnifiedRow[] = items.map((h) => {
+    const exercises = h.exercises ?? [];
+    const finishedEx = exercises.filter((e) => e.status !== 'open');
+    const scores = finishedEx
+      .map((e) => e.score)
+      .filter((s): s is number => typeof s === 'number');
     const grade = h.submissions[0]?.grade;
-    const graded = h.status === 'graded' && grade != null && grade !== '';
+    const hasGrade = grade != null && grade !== '';
+    // Exercise homework is measured by its instances; a written one by its
+    // single submission (graded 0–10 by the tutor).
+    const total = exercises.length || 1;
+    const done = exercises.length ? finishedEx.length : hasGrade || h.status !== 'assigned' ? 1 : 0;
+    const pct = exercises.length
+      ? scores.length
+        ? scores.reduce((s, v) => s + v, 0) / scores.length
+        : null
+      : hasGrade
+        ? Number(grade) * 10
+        : null;
     return {
       id: `hw-${h.id}`,
       href: `/homework/${h.id}`,
       title: h.title,
-      status: h.status === 'submitted' || h.status === 'graded' ? h.status : 'assigned',
+      status: stateOf(done, total, h.status === 'graded'),
       dueAt: h.dueAt,
-      ringValue: graded ? Number(grade) * 10 : undefined,
-      ringDisplay: graded ? String(grade) : undefined
+      done,
+      total,
+      pct
     };
   });
-  const assignmentRows: UnifiedRow[] = assignments.map((a) => {
-    const overall = a.result?.overall;
-    const scored = overall != null;
-    return {
-      id: `as-${a.id}`,
-      href: `/assignments/${a.id}`,
-      title: a.topicTag || tAssign(a.kind === 'homework' ? 'homework' : 'lesson'),
-      status: assignmentStatus(a.status),
-      dueAt: a.dueAt,
-      ringValue: scored ? overall : undefined,
-      ringDisplay: scored ? String(overall) : undefined
-    };
-  });
+  const assignmentRows: UnifiedRow[] = assignments.map((a) => ({
+    id: `as-${a.id}`,
+    href: `/assignments/${a.id}`,
+    title: a.topicTag || tAssign(a.kind === 'homework' ? 'homework' : 'lesson'),
+    status: stateOf(a.submittedCount, a.cardCount, a.status === 'done'),
+    dueAt: a.dueAt,
+    done: a.submittedCount,
+    total: a.cardCount,
+    // `overall` is already the average across the auto-graded cards.
+    pct: a.result?.overall != null ? a.result.overall * 10 : null
+  }));
   const rows = [...homeworkRows, ...assignmentRows];
 
-  const filtered = rows.filter((h) =>
-    tab === 'all'
-      ? true
-      : tab === 'todo'
-        ? h.status === 'assigned'
-        : tab === 'submitted'
-          ? h.status === 'submitted'
-          : h.status === 'graded'
-  );
+  const filtered = rows.filter((h) => tab === 'all' || h.status === tab);
   const now = Date.now();
 
   return (
@@ -225,11 +266,17 @@ export function HomeworkView() {
           action: isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined
         }}
         renderRow={(h) => {
-          const overdue = !!h.dueAt && h.status === 'assigned' && new Date(h.dueAt).getTime() < now;
+          const overdue = !!h.dueAt && h.status !== 'done' && new Date(h.dueAt).getTime() < now;
+          // "New" until it is opened once — the badge is the student's cue that
+          // something arrived, so it goes away on the first visit.
+          const isNew = h.status === 'new' && !seen.has(h.id);
           return (
-            <Link className="assign-row" href={h.href}>
+            <Link className="assign-row" href={h.href} onClick={() => markSeen(h.id)}>
               <div className="assign-row-main">
-                <strong>{h.title}</strong>
+                <strong>
+                  {h.title}
+                  {isNew && <span className="badge-new-gold">{t('badgeNew')}</span>}
+                </strong>
                 {h.dueAt && (
                   <span className={`mono-num${overdue ? ' overdue' : ' muted'}`}>
                     {t('due')} {format.dateTime(new Date(h.dueAt), { dateStyle: 'medium' })}
@@ -238,10 +285,8 @@ export function HomeworkView() {
                 )}
               </div>
               <div className="assign-row-side">
-                {h.ringValue != null && (
-                  <ScoreRing value={h.ringValue} display={h.ringDisplay} size={44} stroke={4} />
-                )}
-                <span className={`chip status-${h.status}`}>{statusLabel(h.status)}</span>
+                <AnswerGauge done={h.done} total={h.total} pct={h.pct} label={t('title')} />
+                <span className={`chip hw-${h.status}`}>{statusLabel(h.status)}</span>
               </div>
             </Link>
           );

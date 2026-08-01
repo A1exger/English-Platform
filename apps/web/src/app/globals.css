@@ -1532,6 +1532,35 @@ select.err {
   color: #0f7a4f;
 }
 
+/* ——— homework state: new · in progress · done ——— */
+.chip.hw-new {
+  background: var(--cloud);
+  color: var(--slate);
+}
+.chip.hw-progress {
+  background: var(--indigo-100);
+  color: var(--indigo-700);
+}
+.chip.hw-done {
+  background: var(--high-100);
+  color: #0f7a4f;
+}
+/* gold "New" flag on homework the student has not opened yet */
+.badge-new-gold {
+  margin-inline-start: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  color: #6b4b00;
+  background: linear-gradient(180deg, #ffdf7e, #f0b429);
+  border: 1px solid #d99e12;
+  vertical-align: middle;
+}
+
 /* results screen */
 .result-card {
   gap: 16px;

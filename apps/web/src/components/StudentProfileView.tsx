@@ -149,7 +149,7 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
   const completed = past.filter((l) => l.status === 'completed').length;
   const attendance = past.length ? Math.round((completed / past.length) * 100) : null;
   const hwStatus = (s: string) =>
-    s === 'assigned' ? th('statusAssigned') : s === 'submitted' ? th('statusSubmitted') : th('statusGraded');
+    s === 'assigned' ? th('statusNew') : s === 'submitted' ? th('statusProgress') : th('statusDone');
 
   return (
     <div className="content">

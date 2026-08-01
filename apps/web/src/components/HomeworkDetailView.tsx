@@ -114,14 +114,20 @@ export function HomeworkDetailView({ homeworkId }: { homeworkId: string }) {
   const graded = hw.status === 'graded' && sub?.grade != null && sub.grade !== '';
   const hasExercises = !!hw.exercises && hw.exercises.length > 0;
   const statusLabel =
-    hw.status === 'assigned' ? t('statusAssigned') : hw.status === 'submitted' ? t('statusSubmitted') : t('statusGraded');
+    hw.status === 'assigned' ? t('statusNew') : hw.status === 'submitted' ? t('statusProgress') : t('statusDone');
 
   return (
     <div className="content learn">
       <Link className="link" href="/homework">← {t('back')}</Link>
       <div className="row-between">
         <h2>{hw.title}</h2>
-        <span className={`chip status-${hw.status}`}>{statusLabel}</span>
+        <span
+          className={`chip hw-${
+            hw.status === 'assigned' ? 'new' : hw.status === 'submitted' ? 'progress' : 'done'
+          }`}
+        >
+          {statusLabel}
+        </span>
       </div>
       {hw.dueAt && (
         <p className="muted mono-num">
@@ -134,7 +140,7 @@ export function HomeworkDetailView({ homeworkId }: { homeworkId: string }) {
           <div className="result-tier">
             <ScoreRing value={Number(sub!.grade) * 10} display={String(sub!.grade)} size={64} />
             <div>
-              <strong>{t('statusGraded')}</strong>
+              <strong>{t('statusDone')}</strong>
               {sub?.feedback && <p className="muted">{sub.feedback}</p>}
             </div>
           </div>

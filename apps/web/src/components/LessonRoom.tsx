@@ -124,21 +124,20 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
   const stageName =
     pageIdx === 0 ? t('preparation') : live.page?.title || live.page?.type || pageLabel;
 
-  // How the current page is going, for the corner gauge: each checked task
-  // counts as correct or wrong (an ungraded one that was completed counts as
-  // correct — there is nothing to get wrong).
-  const answerTally = (live.page?.tasks ?? []).reduce(
-    (acc, task) => {
-      const r = live.results[task.id];
-      if (r) {
-        if (r.score === undefined ? true : r.correct) acc.correct += 1;
-        else acc.wrong += 1;
-      }
-      acc.total += 1;
-      return acc;
-    },
-    { correct: 0, wrong: 0, total: 0 }
-  );
+  // How the current page is going, for the corner gauge: how much is finished,
+  // and the average score over what was answered. Task scores are 0–10; an
+  // ungraded task that was completed counts as full marks (nothing to lose).
+  const pageTasks = live.page?.tasks ?? [];
+  const answered = pageTasks.filter((tk) => live.results[tk.id]);
+  const scored = answered.map((tk) => {
+    const r = live.results[tk.id];
+    return r?.score === undefined ? 100 : Math.round(r.score * 10);
+  });
+  const pageProgress = {
+    done: answered.length,
+    total: pageTasks.length,
+    pct: scored.length ? scored.reduce((s, v) => s + v, 0) / scored.length : null
+  };
 
   const levelLabel = lesson?.level
     ? `${CEFR[lesson.level] ? `${CEFR[lesson.level]} · ` : ''}${lesson.level}`
@@ -218,9 +217,9 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
             {/* Page progress: teal fills as answers land correct, bordeaux when
                 they don't. */}
             <AnswerGauge
-              correct={answerTally.correct}
-              wrong={answerTally.wrong}
-              total={answerTally.total}
+              done={pageProgress.done}
+              total={pageProgress.total}
+              pct={pageProgress.pct}
               label={tr('lessonProgress')}
             />
           </div>
