@@ -33,6 +33,10 @@
   --spark-700: #aa0b56;
 
   /* grade tiers (semantic, unchanged) */
+  /* answer gauge: the platform's deep teal when a task is answered correctly,
+     bordeaux when it is not */
+  --gauge-ok: #006786;
+  --gauge-wrong: #8c1b3d;
   --high: #1fa971;
   --high-100: #e2f5ec;
   --mid: #e8a93b;
@@ -830,10 +834,17 @@ textarea {
   padding: 2px 8px;
 }
 
+/* Video corners. LiveKit's own tile is rounded, so a near-square container left
+   dark wedges showing through at each corner. One radius drives the window and
+   the tile inside it, so the two always agree and no backdrop peeks out. */
+:root {
+  --video-r: 10px;
+  --video-r-sm: 8px;
+}
 .video-panel {
   height: 100%;
   background: #16192b;
-  border-radius: var(--r-md);
+  border-radius: var(--video-r);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -846,6 +857,26 @@ textarea {
   block-size: 100%;
   background: #0e1020;
   overflow: hidden;
+  border-radius: var(--video-r);
+}
+/* every tile and the media inside share the window's radius */
+.call .lk-participant-tile,
+.call .lk-participant-tile video,
+.call .lk-participant-media-video {
+  border-radius: var(--video-r);
+  overflow: hidden;
+}
+.call-self,
+.call-self .lk-participant-tile,
+.call-self .lk-participant-tile video,
+.call-self .lk-participant-media-video,
+.room-video-pip,
+.room-video-pip .video-panel,
+.room-video-pip .call,
+.room-video-pip .lk-participant-tile,
+.room-video-pip .lk-participant-tile video,
+.room-video-pip .lk-participant-media-video {
+  border-radius: var(--video-r-sm);
 }
 /* the OTHER participant fills the whole stage */
 .call-main {
@@ -897,7 +928,7 @@ textarea {
   min-inline-size: 124px;
   max-inline-size: 210px;
   aspect-ratio: 16 / 10;
-  border-radius: var(--r-sm);
+  border-radius: var(--video-r-sm);
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.5);
   box-shadow: var(--sh-md);
@@ -3270,7 +3301,7 @@ select.err {
   inset-inline-end: 12px;
   inline-size: 227px;
   aspect-ratio: 16 / 10;
-  border-radius: var(--r-md);
+  border-radius: var(--video-r-sm);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow: var(--sh-md);
@@ -3310,80 +3341,139 @@ select.err {
   padding: 2px 10px;
 }
 /* «План урока / План домашки» — the lesson as a list of stages (Э2.2) */
-.lesson-plan {
+/* ——— Plan tab: courses → contents → teach / pick homework ——— */
+.plan {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
-.plan-assign {
-  align-self: flex-start;
-  margin-block-start: 4px;
+.plan-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.plan-stages {
+.plan-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.plan-courses,
+.plan-lessons,
+.plan-pages,
+.plan-tasks {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
-.plan-stage > button {
+.plan-course {
   inline-size: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   text-align: start;
   cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
 }
-.plan-stage > button:hover {
+.plan-course:hover {
   background: var(--cloud);
 }
-.plan-stage.active > button {
-  border-color: var(--indigo);
-  background: var(--indigo-100);
+.plan-course.open {
+  border-color: var(--rm-accent, var(--indigo));
+  background: var(--rm-accent-100, var(--indigo-100));
 }
-.plan-stage-num {
-  inline-size: 22px;
-  text-align: center;
+.plan-caret {
   color: var(--muted);
   flex: 0 0 auto;
 }
-.plan-stage-main {
-  flex: 1;
-  min-inline-size: 0;
+/* the opened course's contents, indented under it */
+.plan-inner {
+  margin-block-start: 6px;
+  margin-inline-start: 10px;
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--line);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
-.plan-stage-name {
-  font-weight: 600;
-  text-transform: capitalize;
+.plan-levels {
+  flex-wrap: wrap;
+}
+.plan-lesson {
+  inline-size: 100%;
+  padding: 7px 10px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  text-align: start;
+  cursor: pointer;
   color: var(--ink);
 }
-/* room: cyan active stage with readable ink text */
-.room-broadsheet .plan-stage.active > button {
-  background: var(--rm-accent-100);
-  border-color: var(--rm-accent);
+.plan-lesson:hover {
+  background: var(--cloud);
 }
-.room-broadsheet .plan-stage-name {
-  color: var(--rm-ink);
-}
-.plan-stage-meta {
-  font-size: 12px;
-  text-transform: capitalize;
-}
-.plan-stage-hw {
-  flex: 0 0 auto;
-  font-size: 11px;
+.plan-lesson.active {
+  border-color: var(--rm-accent, var(--indigo));
+  background: var(--rm-accent-100, var(--indigo-100));
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--accent);
-  color: var(--accent);
+}
+/* the chosen lesson: what it contains + what to hand out */
+.plan-preview {
+  border-block-start: 1px solid var(--line);
+  padding-block-start: 12px;
+}
+.plan-objectives {
+  margin: 0;
+  padding-inline-start: 18px;
+  color: var(--slate);
+  font-size: 13px;
+}
+.plan-page {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 8px 10px;
+}
+.plan-page-head {
+  font-weight: 600;
+}
+.plan-page-name {
+  flex: 1;
+}
+.plan-page-text {
+  margin: 4px 0 0;
+  font-size: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.plan-tasks {
+  margin-block-start: 6px;
+  padding-inline-start: 22px;
+  gap: 3px;
+}
+.plan-tasks .check {
+  font-size: 12px;
+  gap: 6px;
+}
+.plan-assign {
+  align-self: flex-start;
+  margin-block-start: 6px;
+}
+/* answer progress ring, top-right of the course page */
+.answer-gauge {
+  flex: 0 0 auto;
+  line-height: 0;
 }
 .live-material {
   display: flex;

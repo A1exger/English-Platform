@@ -8,14 +8,13 @@ import { tokenStore } from '@/lib/auth';
 import { Icon } from './Icon';
 import { BoardCanvas } from './BoardCanvas';
 import { VideoRoom } from './VideoRoom';
-import { LessonExercisePanel } from './LessonExercisePanel';
 import { useLiveLesson } from './useLiveLesson';
-import { LessonTimeline } from './LessonTimeline';
-import { LiveAnswers } from './LiveAnswers';
+import { StageBody } from './LiveMaterial';
 import { LessonPlanPanel } from './LessonPlanPanel';
+import { AnswerGauge } from './AnswerGauge';
 import { useBoardSocket } from '@/lib/board';
 
-type Tab = 'plan' | 'lesson' | 'grammar' | 'answers' | 'exercise';
+type Tab = 'plan' | 'lesson';
 
 // Named CEFR levels → the short code shown in the header tag (e.g. «A1 · Beginner»).
 const CEFR: Record<string, string> = {
@@ -120,22 +119,27 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
 
   const { lesson, pageIdx, totalSteps, isTeacher, isStudent } = live;
   const pageLabel = pageIdx === 0 ? t('preparation') : String(pageIdx);
-  const grammar = lesson?.grammarReference;
 
-  // The current stage's name + how far through the lesson we are (0–100),
-  // shown in the content header (#45).
+  // The current stage's name, shown in the content header.
   const stageName =
     pageIdx === 0 ? t('preparation') : live.page?.title || live.page?.type || pageLabel;
-  const stagePct = totalSteps > 1 ? Math.round((pageIdx / (totalSteps - 1)) * 100) : 0;
 
-  // Global lesson progress for the header bar (Broadsheet «Step X of N · M min
-  // left»): the step is 1-based (prep = 1), and «min left» sums the estimated
-  // minutes of the current stage onward.
-  const pageMinutes = (p: { tasks: { estimatedMinutes?: number }[] }) =>
-    p.tasks.reduce((s, tk) => s + (tk.estimatedMinutes || 0), 0);
-  const minLeft = (lesson?.pages ?? [])
-    .slice(pageIdx === 0 ? 0 : pageIdx - 1)
-    .reduce((s, p) => s + pageMinutes(p), 0);
+  // How the current page is going, for the corner gauge: each checked task
+  // counts as correct or wrong (an ungraded one that was completed counts as
+  // correct — there is nothing to get wrong).
+  const answerTally = (live.page?.tasks ?? []).reduce(
+    (acc, task) => {
+      const r = live.results[task.id];
+      if (r) {
+        if (r.score === undefined ? true : r.correct) acc.correct += 1;
+        else acc.wrong += 1;
+      }
+      acc.total += 1;
+      return acc;
+    },
+    { correct: 0, wrong: 0, total: 0 }
+  );
+
   const levelLabel = lesson?.level
     ? `${CEFR[lesson.level] ? `${CEFR[lesson.level]} · ` : ''}${lesson.level}`
     : '';
@@ -170,20 +174,6 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
         </div>
       </header>
 
-      {/* global lesson progress */}
-      <div className="room-progress">
-        <div className="room-progress-meta">
-          <span>{tr('lessonProgress')}</span>
-          <span>
-            {tr('stepOf', { n: pageIdx + 1, total: totalSteps })}
-            {minLeft > 0 ? ` · ${tr('minLeft', { min: minLeft })}` : ''}
-          </span>
-        </div>
-        <div className="room-progressbar">
-          <div className="room-progressbar-fill" style={{ inlineSize: `${stagePct}%` }} />
-        </div>
-      </div>
-
       {/* LEFT: video ⇄ board (video shrinks to a PiP when the board is on) */}
       <section className="room-stage">
         <div className="room-stage-bar">
@@ -213,7 +203,9 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
         </div>
       </section>
 
-      {/* RIGHT: stage header + lesson content in tabs + stepper */}
+      {/* RIGHT: the course page. Teachers get Plan (pick material / homework)
+          and Lesson (exactly what the student sees); students get only the page
+          itself, full height, with the answer gauge in its corner. */}
       <aside className="room-content">
         {lesson && (
           <div className="room-content-head">
@@ -223,58 +215,39 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
               </span>
               <strong className="room-content-stage">{stageName}</strong>
             </div>
-            <span className="room-content-badge mono-num" aria-label={`${stagePct}%`}>
-              {stagePct}%
-            </span>
+            {/* Page progress: teal fills as answers land correct, bordeaux when
+                they don't. */}
+            <AnswerGauge
+              correct={answerTally.correct}
+              wrong={answerTally.wrong}
+              total={answerTally.total}
+              label={tr('lessonProgress')}
+            />
           </div>
         )}
 
-        <div className="tabs room-content-tabs" role="tablist">
-          <button type="button" role="tab" aria-selected={tab === 'plan'} className={tab === 'plan' ? 'active' : ''} onClick={() => setTab('plan')}>
-            {tr('planTab')}
-          </button>
-          <button type="button" role="tab" aria-selected={tab === 'lesson'} className={tab === 'lesson' ? 'active' : ''} onClick={() => setTab('lesson')}>
-            {tr('lessonTab')}
-          </button>
-          <button type="button" role="tab" aria-selected={tab === 'grammar'} className={tab === 'grammar' ? 'active' : ''} onClick={() => setTab('grammar')}>
-            {tr('grammarTab')}
-          </button>
-          <button type="button" role="tab" aria-selected={tab === 'exercise'} className={tab === 'exercise' ? 'active' : ''} onClick={() => setTab('exercise')}>
-            {tr('exerciseTab')}
-          </button>
-          {isTeacher && (
-            <button type="button" role="tab" aria-selected={tab === 'answers'} className={tab === 'answers' ? 'active' : ''} onClick={() => setTab('answers')}>
-              {tr('answersTab')}
+        {isTeacher && (
+          <div className="tabs room-content-tabs" role="tablist">
+            <button type="button" role="tab" aria-selected={tab === 'plan'} className={tab === 'plan' ? 'active' : ''} onClick={() => setTab('plan')}>
+              {tr('planTab')}
             </button>
+            <button type="button" role="tab" aria-selected={tab === 'lesson'} className={tab === 'lesson' ? 'active' : ''} onClick={() => setTab('lesson')}>
+              {tr('lessonTab')}
+            </button>
+          </div>
+        )}
+
+        <div className="room-content-body">
+          {isTeacher && tab === 'plan' ? (
+            <LessonPlanPanel live={live} />
+          ) : !lesson ? (
+            <p className="note">{isTeacher ? tr('pickMaterial') : tr('waiting')}</p>
+          ) : (
+            <StageBody live={live} />
           )}
         </div>
 
-        <div className="room-content-body">
-          {tab === 'plan' && <LessonPlanPanel live={live} />}
-          {tab === 'lesson' && <LessonTimeline live={live} />}
-          {tab === 'grammar' &&
-            (grammar ? (
-              <div className="card">
-                <strong>{t('grammar')}: {grammar.title}</strong>
-                <div className="grammar-table">
-                  <div className="grammar-row">
-                    <span className="grammar-key">{t('meaning')}</span>
-                    <span>{grammar.meaning}</span>
-                  </div>
-                  <div className="grammar-row">
-                    <span className="grammar-key">{t('form')}</span>
-                    <span>{grammar.form}</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="note">{tr('waiting')}</p>
-            ))}
-          {tab === 'exercise' && <LessonExercisePanel lessonId={lessonId} socket={board} />}
-          {tab === 'answers' && isTeacher && <LiveAnswers live={live} />}
-        </div>
-
-        {lesson && (
+        {lesson && (isTeacher ? tab === 'lesson' : true) && (
           <div className="room-stepper">
             {isTeacher && (
               <button type="button" className="ghost" disabled={pageIdx === 0} onClick={() => live.goTo(pageIdx - 1)}>

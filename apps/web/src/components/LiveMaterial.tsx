@@ -3,57 +3,12 @@
 import { useTranslations } from 'next-intl';
 import { ContentTaskPlayer } from './ContentTaskPlayer';
 import { PageMediaBlock } from './PageMediaBlock';
-import { CONTENT_LEVELS, LiveLessonApi } from './useLiveLesson';
-
-// Teacher's material picker (course → level → the level's lessons). The room
-// remembers the last material per lesson so it usually opens ready (#7).
-export function MaterialPicker({ live }: { live: LiveLessonApi }) {
-  const tr = useTranslations('room');
-  if (!live.isTeacher) return null;
-  return (
-    <details className="live-picker">
-      <summary>{live.lesson ? live.lesson.title : tr('pickMaterial')}</summary>
-      <div className="inline-form">
-        <select value={live.courseId} onChange={(e) => live.setCourseId(e.target.value)}>
-          {live.courses.length === 0 && <option value="">—</option>}
-          {live.courses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.title}
-            </option>
-          ))}
-        </select>
-        <select value={live.level} onChange={(e) => live.setLevel(e.target.value)}>
-          {CONTENT_LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-        <button type="button" onClick={live.loadTree} disabled={!live.courseId}>
-          {tr('loadLessons')}
-        </button>
-      </div>
-      {live.treeLessons.length > 0 && (
-        <div className="live-lesson-list">
-          {live.treeLessons.map((l) => (
-            <button
-              key={l.id}
-              type="button"
-              className={`ghost${live.lesson?.id === l.id ? ' active' : ''}`}
-              onClick={() => live.loadMaterialLive(l.id)}
-            >
-              {l.title}
-            </button>
-          ))}
-        </div>
-      )}
-    </details>
-  );
-}
+import { LiveLessonApi } from './useLiveLesson';
 
 // The current stage's body — the Preparation summary, or the current page's text
 // plus its interactive tasks (students stream answers over /session; teachers see
-// them read-only). Rendered inline in the current timeline card.
+// them read-only). This is the whole right-hand panel: the student sees only
+// this, and the teacher sees the same thing under the Lesson tab.
 export function StageBody({ live }: { live: LiveLessonApi }) {
   const t = useTranslations('learn');
   const { isStudent, lesson, pageIdx, page } = live;
@@ -147,22 +102,6 @@ export function StageBody({ live }: { live: LiveLessonApi }) {
             initialResult={live.results[task.id] ?? null}
           />
         )
-      )}
-    </div>
-  );
-}
-
-// Back-compat center-stage view: the teacher picker over the current stage body.
-// (The room's Lesson tab now uses LessonTimeline; this stays for any other use.)
-export function LiveMaterial({ live }: { live: LiveLessonApi }) {
-  const tr = useTranslations('room');
-  return (
-    <div className="live-material">
-      <MaterialPicker live={live} />
-      {!live.lesson ? (
-        <p className="note">{live.isTeacher ? tr('pickMaterial') : tr('waiting')}</p>
-      ) : (
-        <StageBody live={live} />
       )}
     </div>
   );

@@ -45,6 +45,10 @@ export interface LiveLesson {
 export interface CourseRow {
   id: string;
   title: string;
+  description?: string | null;
+  // Levels this course actually has content for — drives the level chips in the
+  // plan panel so a teacher never picks an empty one.
+  sections?: { level: string }[];
 }
 export interface TreeLesson {
   id: string;
@@ -274,7 +278,13 @@ export function useLiveLesson(lessonId: string): LiveLessonApi {
   );
 
   const emitResult = useCallback(
-    (taskId: string, result: LiveResult) => emit('exercise:result', { taskId, ...result }),
+    (taskId: string, result: LiveResult) => {
+      // Record it locally too: the socket only relays to the OTHER side, so a
+      // student would otherwise never see their own answers in the progress
+      // gauge. The teacher fills the same map from exercise:result.
+      setResults((prev) => ({ ...prev, [taskId]: result }));
+      emit('exercise:result', { taskId, ...result });
+    },
     [emit]
   );
 
