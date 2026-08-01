@@ -189,7 +189,7 @@
     "reference": "Reference",
     "mtcn": "Tracking number (MTCN)",
     "submitReference": "Submit",
-    "transferSent": "Submitted — awaiting admin confirmation.",
+    "transferSent": "Submitted — awaiting your tutor's confirmation.",
     "pendingTransfers": "Transfers awaiting confirmation",
     "confirm": "Confirm",
     "currency": "Currency",
@@ -678,6 +678,9 @@
     "homework_assigned": "New homework: “{title}”.",
     "homework_feedback": "Your tutor left feedback on “{title}”.",
     "lesson_booked": "Lesson booked: “{title}”.",
-    "lesson_reminder": "Reminder: “{title}” is coming up."
+    "lesson_reminder": "Reminder: “{title}” is coming up.",
+    "homework_submitted": "{student} submitted homework: “{title}”.",
+    "transfer_pending": "{student} sent a payment — confirm receipt.",
+    "payment_confirmed": "Payment confirmed — your balance has been credited."
   }
 }

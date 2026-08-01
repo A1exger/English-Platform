@@ -7,7 +7,11 @@
     "homework_assigned": "Nouveau devoir : \"{title}\".",
     "lesson_booked": "Cours réservé : \"{title}\".",
     "lesson_reminder": "Rappel : \"{title}\" commence à {time}.",
-    "homework_feedback": "Retour sur votre devoir : « {title} »."
+    "homework_feedback": "Retour sur votre devoir : « {title} ».",
+    "subject": "English Spark Studio",
+    "homework_submitted": "{student} a rendu le devoir : « {title} ».",
+    "transfer_pending": "{student} a envoyé un paiement et attend votre confirmation.",
+    "payment_confirmed": "Paiement confirmé — votre solde a été crédité."
   },
   "auth": {
     "invalid_credentials": "E-mail ou mot de passe invalide."

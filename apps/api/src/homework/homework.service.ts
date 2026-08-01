@@ -226,9 +226,34 @@ export class HomeworkService {
       where: { id },
       data: { status: 'submitted' },
     });
+
+    // Tell the tutor there is work waiting to be checked.
+    await this.notifyTutor(hw.tutorProfileId, hw.title, user.id);
+
     return this.prisma.homework.findUnique({
       where: { id },
       include: HOMEWORK_INCLUDE,
+    });
+  }
+
+  /** "<student> submitted homework" → the owning tutor. Best-effort. */
+  private async notifyTutor(tutorProfileId: string, title: string, studentUserId: string) {
+    const [tutor, student] = await Promise.all([
+      this.prisma.tutorProfile.findUnique({ where: { id: tutorProfileId } }),
+      this.prisma.user.findUnique({
+        where: { id: studentUserId },
+        select: { firstName: true, lastName: true, email: true },
+      }),
+    ]);
+    if (!tutor) return;
+    const name =
+      [student?.firstName, student?.lastName].filter(Boolean).join(' ').trim() ||
+      student?.email ||
+      '';
+    await this.notifications.enqueue({
+      userId: tutor.userId,
+      templateKey: 'homework_submitted',
+      payload: { student: name, title },
     });
   }
 

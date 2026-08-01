@@ -13,6 +13,7 @@ import { CreateTransferDto } from './dto/create-transfer.dto';
 import { SubmitReferenceDto } from './dto/submit-reference.dto';
 import { CheckoutProvider, OFFLINE_PROVIDERS } from '../common/constants/enums';
 import { PaymentProviderRegistry } from './providers/payment-provider.registry';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface LessonForCharge {
   id: string;
@@ -27,7 +28,30 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly providers: PaymentProviderRegistry,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
+
+  /** Display name for notification copy, falling back to the address. */
+  private async displayName(userId: string): Promise<string> {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true, email: true },
+    });
+    return [u?.firstName, u?.lastName].filter(Boolean).join(' ').trim() || u?.email || '';
+  }
+
+  /** The tutors a student is assigned to (transfer confirmations go to them). */
+  private async tutorUserIdsForStudent(userId: string): Promise<string[]> {
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { userId },
+    });
+    if (!student) return [];
+    const links = await this.prisma.tutorStudent.findMany({
+      where: { studentProfileId: student.id },
+      include: { tutorProfile: { select: { userId: true } } },
+    });
+    return links.map((l) => l.tutorProfile.userId);
+  }
 
   // --- profiles -------------------------------------------------------------
 
@@ -322,10 +346,22 @@ export class BillingService {
     }
     const metadata = tx.metadata ? JSON.parse(tx.metadata) : {};
     metadata.mtcn = dto.reference;
-    return this.prisma.transaction.update({
+    const updated = await this.prisma.transaction.update({
       where: { id: tx.id },
       data: { metadata: JSON.stringify(metadata) },
     });
+
+    // The tracking number is the signal that the money is on its way — ask the
+    // student's tutor(s) to confirm receipt.
+    const student = await this.displayName(user.id);
+    for (const tutorUserId of await this.tutorUserIdsForStudent(user.id)) {
+      await this.notifications.enqueue({
+        userId: tutorUserId,
+        templateKey: 'transfer_pending',
+        payload: { student },
+      });
+    }
+    return updated;
   }
 
   /**
@@ -379,6 +415,11 @@ export class BillingService {
       throw new BadRequestException('Transfer already processed');
     }
     await this.creditTransaction(tx.id);
+    // Close the loop for the student: their balance (or lessons) is now live.
+    await this.notifications.enqueue({
+      userId: tx.userId,
+      templateKey: 'payment_confirmed',
+    });
     return { confirmed: true, transactionId: tx.id };
   }
 

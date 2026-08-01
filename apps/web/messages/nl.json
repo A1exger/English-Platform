@@ -189,7 +189,7 @@
     "reference": "Referentie",
     "mtcn": "Trackingnummer (MTCN)",
     "submitReference": "Versturen",
-    "transferSent": "Verzonden — wacht op bevestiging door de beheerder.",
+    "transferSent": "Verzonden — wacht op bevestiging door je docent.",
     "pendingTransfers": "Overboekingen die op bevestiging wachten",
     "confirm": "Bevestigen",
     "currency": "Valuta",
@@ -678,6 +678,9 @@
     "homework_assigned": "Nieuw huiswerk: “{title}”.",
     "homework_feedback": "Je docent gaf feedback op “{title}”.",
     "lesson_booked": "Les geboekt: “{title}”.",
-    "lesson_reminder": "Herinnering: “{title}” komt eraan."
+    "lesson_reminder": "Herinnering: “{title}” komt eraan.",
+    "homework_submitted": "{student} heeft huiswerk ingeleverd: “{title}”.",
+    "transfer_pending": "{student} heeft een betaling gestuurd — bevestig de ontvangst.",
+    "payment_confirmed": "Betaling bevestigd — je saldo is bijgeschreven."
   }
 }

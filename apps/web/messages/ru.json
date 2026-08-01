@@ -189,7 +189,7 @@
     "reference": "Код перевода",
     "mtcn": "Номер перевода (MTCN)",
     "submitReference": "Отправить",
-    "transferSent": "Отправлено — ожидает подтверждения администратором.",
+    "transferSent": "Отправлено — ожидает подтверждения преподавателем.",
     "pendingTransfers": "Переводы, ожидающие подтверждения",
     "confirm": "Подтвердить",
     "currency": "Валюта",
@@ -678,6 +678,9 @@
     "homework_assigned": "Новое домашнее задание: «{title}».",
     "homework_feedback": "Преподаватель оставил отзыв на «{title}».",
     "lesson_booked": "Урок забронирован: «{title}».",
-    "lesson_reminder": "Напоминание: скоро «{title}»."
+    "lesson_reminder": "Напоминание: скоро «{title}».",
+    "homework_submitted": "{student} сдал(а) домашнее задание: «{title}».",
+    "transfer_pending": "{student} отправил(а) оплату — подтвердите получение.",
+    "payment_confirmed": "Оплата подтверждена — баланс пополнен."
   }
 }

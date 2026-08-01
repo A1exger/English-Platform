@@ -7,7 +7,11 @@
     "homework_assigned": "Nieuw huiswerk: \"{title}\".",
     "lesson_booked": "Les geboekt: \"{title}\".",
     "lesson_reminder": "Herinnering: \"{title}\" begint om {time}.",
-    "homework_feedback": "Feedback op je huiswerk: \"{title}\"."
+    "homework_feedback": "Feedback op je huiswerk: \"{title}\".",
+    "subject": "English Spark Studio",
+    "homework_submitted": "{student} heeft het huiswerk ingeleverd: \"{title}\".",
+    "transfer_pending": "{student} heeft een betaling gestuurd en wacht op je bevestiging.",
+    "payment_confirmed": "Betaling bevestigd — je saldo is bijgeschreven."
   },
   "auth": {
     "invalid_credentials": "Ongeldig e-mailadres of wachtwoord."

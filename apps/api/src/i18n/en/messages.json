@@ -7,7 +7,11 @@
     "homework_assigned": "New homework: \"{title}\".",
     "lesson_booked": "Lesson booked: \"{title}\".",
     "lesson_reminder": "Reminder: \"{title}\" starts at {time}.",
-    "homework_feedback": "Feedback on your homework: \"{title}\"."
+    "homework_feedback": "Feedback on your homework: \"{title}\".",
+    "subject": "English Spark Studio",
+    "homework_submitted": "{student} submitted homework: \"{title}\".",
+    "transfer_pending": "{student} sent a payment and is waiting for your confirmation.",
+    "payment_confirmed": "Payment confirmed — your balance has been credited."
   },
   "auth": {
     "invalid_credentials": "Invalid email or password."

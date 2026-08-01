@@ -9,3 +9,6 @@ process.env.STRIPE_WEBHOOK_SECRET = 'test-stripe-webhook-secret';
 process.env.PAYPAL_WEBHOOK_SECRET = 'test-paypal-webhook-secret';
 // Tests provision admin accounts via the register endpoint.
 process.env.ALLOW_ADMIN_REGISTRATION = 'true';
+// Never run the background notification dispatcher during tests — the suites
+// drive dispatchQueued() themselves so delivery is deterministic.
+process.env.NOTIFY_DISPATCH = 'off';

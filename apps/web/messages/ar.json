@@ -189,7 +189,7 @@
     "reference": "المرجع",
     "mtcn": "رقم التتبع (MTCN)",
     "submitReference": "إرسال",
-    "transferSent": "تم الإرسال — بانتظار تأكيد المشرف.",
+    "transferSent": "تم الإرسال — بانتظار تأكيد معلمك.",
     "pendingTransfers": "تحويلات بانتظار التأكيد",
     "confirm": "تأكيد",
     "currency": "العملة",
@@ -678,6 +678,9 @@
     "homework_assigned": "واجب جديد: “{title}”.",
     "homework_feedback": "ترك معلمك ملاحظات على “{title}”.",
     "lesson_booked": "تم حجز الدرس: “{title}”.",
-    "lesson_reminder": "تذكير: “{title}” قريبًا."
+    "lesson_reminder": "تذكير: “{title}” قريبًا.",
+    "homework_submitted": "سلّم {student} الواجب: “{title}”.",
+    "transfer_pending": "أرسل {student} دفعة — أكّد الاستلام.",
+    "payment_confirmed": "تم تأكيد الدفع — تمت إضافة الرصيد."
   }
 }

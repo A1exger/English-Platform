@@ -7,7 +7,11 @@
     "homework_assigned": "واجب جديد: \"{title}\".",
     "lesson_booked": "تم حجز الدرس: \"{title}\".",
     "lesson_reminder": "تذكير: \"{title}\" يبدأ الساعة {time}.",
-    "homework_feedback": "ملاحظات على واجبك: \"{title}\"."
+    "homework_feedback": "ملاحظات على واجبك: \"{title}\".",
+    "subject": "English Spark Studio",
+    "homework_submitted": "سلّم {student} الواجب: \"{title}\".",
+    "transfer_pending": "أرسل {student} دفعة وينتظر تأكيدك.",
+    "payment_confirmed": "تم تأكيد الدفع — تمت إضافة الرصيد."
   },
   "auth": {
     "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة."

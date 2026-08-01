@@ -189,7 +189,7 @@
     "reference": "Référence",
     "mtcn": "Numéro de suivi (MTCN)",
     "submitReference": "Envoyer",
-    "transferSent": "Envoyé — en attente de confirmation par l'administrateur.",
+    "transferSent": "Envoyé — en attente de confirmation par votre professeur.",
     "pendingTransfers": "Transferts en attente de confirmation",
     "confirm": "Confirmer",
     "currency": "Devise",
@@ -678,6 +678,9 @@
     "homework_assigned": "Nouveau devoir : « {title} ».",
     "homework_feedback": "Votre professeur a laissé un retour sur « {title} ».",
     "lesson_booked": "Cours réservé : « {title} ».",
-    "lesson_reminder": "Rappel : « {title} » arrive bientôt."
+    "lesson_reminder": "Rappel : « {title} » arrive bientôt.",
+    "homework_submitted": "{student} a rendu le devoir : « {title} ».",
+    "transfer_pending": "{student} a envoyé un paiement — confirmez la réception.",
+    "payment_confirmed": "Paiement confirmé — votre solde a été crédité."
   }
 }

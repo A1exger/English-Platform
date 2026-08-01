@@ -16,7 +16,15 @@ interface NotificationRow {
 
 // Templates the app knows how to render. Anything else falls back to a generic
 // line, so a new backend template never renders as a raw key.
-const KNOWN = ['homework_assigned', 'homework_feedback', 'lesson_booked', 'lesson_reminder'];
+const KNOWN = [
+  'homework_assigned',
+  'homework_feedback',
+  'homework_submitted',
+  'transfer_pending',
+  'payment_confirmed',
+  'lesson_booked',
+  'lesson_reminder'
+];
 
 // In-app inbox: the backend already queues a Notification per event (homework
 // assigned, feedback left, lesson booked). This surfaces them in the rail with
@@ -64,13 +72,17 @@ export function NotificationsBell() {
 
   function textFor(n: NotificationRow): string {
     let title = '';
+    let student = '';
     try {
-      const p = n.payload ? (JSON.parse(n.payload) as { title?: string }) : null;
+      const p = n.payload
+        ? (JSON.parse(n.payload) as { title?: string; student?: string })
+        : null;
       title = p?.title ?? '';
+      student = p?.student ?? '';
     } catch {
       /* malformed payload — fall back to an untitled message */
     }
-    return KNOWN.includes(n.templateKey) ? t(n.templateKey, { title }) : t('generic');
+    return KNOWN.includes(n.templateKey) ? t(n.templateKey, { title, student }) : t('generic');
   }
 
   async function markRead(id: string) {

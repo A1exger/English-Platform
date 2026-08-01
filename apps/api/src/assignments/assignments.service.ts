@@ -262,6 +262,25 @@ export class AssignmentsService {
     });
     await this.recomputeResult(card.assignmentId);
 
+    // Notify the tutor once the whole assignment is finished — per-card pings
+    // would be noise, and manual (essay) cards are what they need to review.
+    const after = await this.prisma.contentAssignment.findUnique({
+      where: { id: card.assignmentId },
+    });
+    if (after && after.status === 'done' && card.assignment.status !== 'done') {
+      const who = await this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: { firstName: true, lastName: true, email: true },
+      });
+      const name =
+        [who?.firstName, who?.lastName].filter(Boolean).join(' ').trim() || who?.email || '';
+      await this.notifications.enqueue({
+        userId: after.assignedByUserId,
+        templateKey: 'homework_submitted',
+        payload: { student: name, title: after.topicTag ?? 'Homework' },
+      });
+    }
+
     return {
       completed: grade.completed,
       gradingMode: snap.gradingMode,

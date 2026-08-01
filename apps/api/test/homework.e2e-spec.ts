@@ -142,6 +142,26 @@ describe('Phase 4/6: homework, results, dictionary, progress (e2e)', () => {
     expect(essayCard.feedback).toBe('Great work!');
   });
 
+  it('notifies the tutor when homework is finished and the student when feedback lands', async () => {
+    // Finishing the assignment (previous tests) pinged the tutor…
+    const tutorUser = await prisma.user.findUniqueOrThrow({
+      where: { email: 'h.tutor@test.com' },
+    });
+    const toTutor = await prisma.notification.findMany({
+      where: { userId: tutorUser.id, templateKey: 'homework_submitted' },
+    });
+    expect(toTutor.length).toBeGreaterThan(0);
+
+    // …and the tutor's written feedback pinged the student, on every channel.
+    const studentUser = await prisma.user.findUniqueOrThrow({
+      where: { email: 'h.student@test.com' },
+    });
+    const toStudent = await prisma.notification.findMany({
+      where: { userId: studentUser.id, templateKey: 'homework_feedback' },
+    });
+    expect(toStudent.map((n) => n.channel).sort()).toEqual(['email', 'in_app']);
+  });
+
   it('assignments are private: another student cannot view, students cannot grade', async () => {
     await api().get(`/api/v1/assignments/${assignmentId}`).set(auth(other.accessToken)).expect(403);
     await api()
