@@ -98,7 +98,13 @@
     "save": "Speichern",
     "saved": "Gespeichert",
     "timezoneAuto": "Automatisch (Browser)",
-    "timezoneHint": "Bestimmt die Zeitzone deines Stundenplans."
+    "timezoneHint": "Bestimmt die Zeitzone deines Stundenplans.",
+    "notifications": "Benachrichtigungen",
+    "emailChannel": "E-Mails gehen an {email} — nichts einzurichten.",
+    "telegramHint": "Benachrichtigungen auch in Telegram erhalten.",
+    "telegramOn": "Telegram ist verbunden.",
+    "telegramConnect": "Telegram verbinden",
+    "telegramDisconnect": "Trennen"
   },
   "register": {
     "title": "Konto erstellen",

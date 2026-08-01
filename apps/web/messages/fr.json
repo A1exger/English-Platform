@@ -98,7 +98,13 @@
     "save": "Enregistrer",
     "saved": "Enregistré",
     "timezoneAuto": "Auto (navigateur)",
-    "timezoneHint": "Détermine le fuseau horaire de votre emploi du temps."
+    "timezoneHint": "Détermine le fuseau horaire de votre emploi du temps.",
+    "notifications": "Notifications",
+    "emailChannel": "Les e-mails sont envoyés à {email} — rien à configurer.",
+    "telegramHint": "Recevoir aussi les notifications dans Telegram.",
+    "telegramOn": "Telegram est connecté.",
+    "telegramConnect": "Connecter Telegram",
+    "telegramDisconnect": "Déconnecter"
   },
   "register": {
     "title": "Créer un compte",

@@ -98,7 +98,13 @@
     "save": "Opslaan",
     "saved": "Opgeslagen",
     "timezoneAuto": "Automatisch (browser)",
-    "timezoneHint": "Bepaalt de tijdzone van je rooster."
+    "timezoneHint": "Bepaalt de tijdzone van je rooster.",
+    "notifications": "Meldingen",
+    "emailChannel": "E-mails gaan naar {email} — niets in te stellen.",
+    "telegramHint": "Ontvang meldingen ook in Telegram.",
+    "telegramOn": "Telegram is verbonden.",
+    "telegramConnect": "Telegram verbinden",
+    "telegramDisconnect": "Ontkoppelen"
   },
   "register": {
     "title": "Account aanmaken",

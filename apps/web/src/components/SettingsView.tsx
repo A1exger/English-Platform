@@ -65,6 +65,11 @@ export function SettingsView() {
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Telegram is opt-in per person: the bot cannot message anyone who has not
+  // pressed Start, so each user connects their own chat from here (one tap).
+  const [telegram, setTelegram] = useState<{ connected: boolean; url: string | null } | null>(
+    null
+  );
   const [form, setForm] = useState({
     email: '',
     firstName: '',
@@ -93,6 +98,12 @@ export function SettingsView() {
           timezone: autoTz((profile as { timezone?: string }).timezone),
           locale: (profile.locale as Locale) ?? locale
         });
+        setTelegram(
+          await apiFetch<{ connected: boolean; url: string | null }>('/notifications/telegram', {
+            token,
+            locale
+          }).catch(() => null)
+        );
         setState('ready');
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -133,6 +144,15 @@ export function SettingsView() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function disconnectTelegram() {
+    const token = tokenStore.get();
+    if (!token) return;
+    setTelegram((prev) => (prev ? { ...prev, connected: false } : prev));
+    await apiFetch('/notifications/telegram', { method: 'DELETE', token, locale }).catch(
+      () => undefined
+    );
   }
 
   if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
@@ -207,6 +227,35 @@ export function SettingsView() {
           {saving ? '…' : saved ? t('saved') : t('save')}
         </button>
       </form>
+
+      {/* Notification channels. Email needs nothing — it goes to the address
+          above. Telegram is a one-tap connect, only offered when the server has
+          a bot configured. */}
+      <div className="card">
+        <strong>{t('notifications')}</strong>
+        <p className="muted">{t('emailChannel', { email: form.email })}</p>
+        {telegram?.url && (
+          <div className="row-between tg-row">
+            <span className="muted">
+              {telegram.connected ? t('telegramOn') : t('telegramHint')}
+            </span>
+            {telegram.connected ? (
+              <button type="button" className="ghost" onClick={disconnectTelegram}>
+                {t('telegramDisconnect')}
+              </button>
+            ) : (
+              <a
+                className="cta-primary"
+                href={telegram.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('telegramConnect')}
+              </a>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -98,7 +98,13 @@
     "save": "حفظ",
     "saved": "تم الحفظ",
     "timezoneAuto": "تلقائي (المتصفح)",
-    "timezoneHint": "يحدد المنطقة الزمنية لجدولك."
+    "timezoneHint": "يحدد المنطقة الزمنية لجدولك.",
+    "notifications": "الإشعارات",
+    "emailChannel": "تُرسل الرسائل إلى {email} — لا شيء لإعداده.",
+    "telegramHint": "استلم الإشعارات في تيليجرام أيضًا.",
+    "telegramOn": "تم ربط تيليجرام.",
+    "telegramConnect": "ربط تيليجرام",
+    "telegramDisconnect": "إلغاء الربط"
   },
   "register": {
     "title": "إنشاء حساب",

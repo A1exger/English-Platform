@@ -98,7 +98,13 @@
     "save": "Save",
     "saved": "Saved",
     "timezoneAuto": "Auto (browser)",
-    "timezoneHint": "Used to show your schedule in the right time zone."
+    "timezoneHint": "Used to show your schedule in the right time zone.",
+    "notifications": "Notifications",
+    "emailChannel": "Emails go to {email} — nothing to set up.",
+    "telegramHint": "Also get notifications in Telegram.",
+    "telegramOn": "Telegram is connected.",
+    "telegramConnect": "Connect Telegram",
+    "telegramDisconnect": "Disconnect"
   },
   "register": {
     "title": "Create your account",

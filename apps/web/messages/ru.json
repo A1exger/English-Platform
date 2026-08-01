@@ -98,7 +98,13 @@
     "save": "Сохранить",
     "saved": "Сохранено",
     "timezoneAuto": "Авто (по браузеру)",
-    "timezoneHint": "Влияет на отображение времени в расписании."
+    "timezoneHint": "Влияет на отображение времени в расписании.",
+    "notifications": "Уведомления",
+    "emailChannel": "Письма приходят на {email} — настраивать ничего не нужно.",
+    "telegramHint": "Получать уведомления ещё и в Telegram.",
+    "telegramOn": "Telegram подключён.",
+    "telegramConnect": "Подключить Telegram",
+    "telegramDisconnect": "Отключить"
   },
   "register": {
     "title": "Создание аккаунта",
