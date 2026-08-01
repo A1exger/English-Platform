@@ -52,7 +52,7 @@ export const CHECKOUT_PROVIDERS = ['stripe', 'paypal'] as const;
 export type CheckoutProvider = (typeof CHECKOUT_PROVIDERS)[number];
 
 // Money-transfer methods settled manually: the student sends funds and submits
-// a reference (MTCN), then an admin confirms receipt.
+// a reference (MTCN), then their tutor (or an admin) confirms receipt.
 export const OFFLINE_PROVIDERS = ['westernunion', 'moneygram'] as const;
 export type OfflineProvider = (typeof OFFLINE_PROVIDERS)[number];
 

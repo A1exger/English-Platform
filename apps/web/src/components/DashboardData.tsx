@@ -13,6 +13,7 @@ interface Lesson {
   id: string;
   title?: string | null;
   startsAt: string;
+  endsAt?: string | null;
   status: string;
 }
 // Teacher KPI trio from GET /analytics/overview.
@@ -90,14 +91,18 @@ export function DashboardData() {
   if (state === 'error') return <p className="error">{tApp('loadError')}</p>;
 
   const now = Date.now();
-  const DAY = 24 * 60 * 60 * 1000;
-  // A lesson stays on the overview until 24h after it starts, then drops off.
+  const HOUR = 60 * 60 * 1000;
+  // When a lesson is over. Older rows may not carry endsAt, so assume an hour.
+  const endOf = (l: Lesson) =>
+    l.endsAt ? new Date(l.endsAt).getTime() : new Date(l.startsAt).getTime() + HOUR;
+  // A lesson leaves the overview once it has actually ended (or was cancelled)
+  // — showing a finished lesson as "next" is worse than showing nothing.
   const relevant = [...lessons]
-    .filter((l) => new Date(l.startsAt).getTime() >= now - DAY)
+    .filter((l) => l.status !== 'cancelled' && l.status !== 'completed' && endOf(l) > now)
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-  // Soonest upcoming lesson (or a just-started one still in its 24h window).
-  const next = relevant.find((l) => new Date(l.startsAt).getTime() >= now) ?? relevant[0];
-  const upcoming = relevant.filter((l) => new Date(l.startsAt).getTime() >= now);
+  // The soonest lesson still ahead, or the one running right now.
+  const next = relevant[0];
+  const upcoming = relevant;
   const dt = (s: string) => format.dateTime(new Date(s), { dateStyle: 'medium', timeStyle: 'short' });
   const greeting = tDash('greeting', { name: me?.firstName ?? '' });
 

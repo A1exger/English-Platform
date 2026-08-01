@@ -104,9 +104,12 @@ export function BillingView() {
         setTxns(tx);
         setInvoices(inv);
       }
-      if (profile.role === 'admin') {
+      // The tutor receives the transfer, so they confirm it (their students only).
+      if (profile.role === 'tutor' || profile.role === 'admin') {
         setPending(
-          await apiFetch<PendingTransfer[]>('/billing/transfers/pending', { token, locale })
+          await apiFetch<PendingTransfer[]>('/billing/transfers/pending', { token, locale }).catch(
+            () => []
+          )
         );
       }
       setState('ready');
@@ -386,7 +389,7 @@ export function BillingView() {
         </div>
       )}
 
-      {isAdmin && (
+      {(isTutor || isAdmin) && (
         <div className="card">
           <strong>{t('pendingTransfers')}</strong>
           {pending.length === 0 ? (

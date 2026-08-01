@@ -237,14 +237,14 @@ export class BillingService {
     return (
       `Send the amount via ${label} to "${receiver}" (${country}). ` +
       `Use reference "${reference}" and submit the tracking number (MTCN) here. ` +
-      `Your balance is credited once an admin confirms receipt.`
+      `Your balance is credited once your tutor confirms receipt.`
     );
   }
 
   /**
    * Start a manual money transfer. Creates a pending transaction with a unique
-   * reference and returns sending instructions. No funds move until an admin
-   * confirms (see confirmTransfer).
+   * reference and returns sending instructions. No funds move until the tutor
+   * (or an admin) confirms receipt (see confirmTransfer).
    */
   async createTransfer(user: AuthenticatedUser, dto: CreateTransferDto) {
     const student = await this.studentProfileForUser(user.id);
@@ -328,24 +328,52 @@ export class BillingService {
     });
   }
 
-  /** Admin: list money transfers awaiting confirmation. */
-  listPendingTransfers() {
+  /**
+   * The users a tutor may act on financially: the students assigned to them.
+   * The money is received by the tutor, so they confirm it — but only for their
+   * own students, never anyone else's.
+   */
+  private async studentUserIdsForTutor(userId: string): Promise<string[]> {
+    const tutor = await this.prisma.tutorProfile.findUnique({
+      where: { userId },
+    });
+    if (!tutor) return [];
+    const links = await this.prisma.tutorStudent.findMany({
+      where: { tutorProfileId: tutor.id },
+      include: { studentProfile: { select: { userId: true } } },
+    });
+    return links.map((l) => l.studentProfile.userId);
+  }
+
+  /** Money transfers awaiting confirmation (tutor: their students'; admin: all). */
+  async listPendingTransfers(user: AuthenticatedUser) {
+    const scope =
+      user.role === 'admin'
+        ? {}
+        : { userId: { in: await this.studentUserIdsForTutor(user.id) } };
     return this.prisma.transaction.findMany({
       where: {
         provider: { in: OFFLINE_PROVIDERS as unknown as string[] },
         status: 'pending',
+        ...scope,
       },
       orderBy: { createdAt: 'asc' },
     });
   }
 
-  /** Admin: confirm receipt of a money transfer and credit the student. */
-  async confirmTransfer(transactionId: string) {
+  /** Confirm receipt of a money transfer and credit the student. */
+  async confirmTransfer(user: AuthenticatedUser, transactionId: string) {
     const tx = await this.prisma.transaction.findUnique({
       where: { id: transactionId },
     });
     if (!tx || !OFFLINE_PROVIDERS.includes(tx.provider as never)) {
       throw new NotFoundException('Transfer not found');
+    }
+    if (user.role !== 'admin') {
+      const own = await this.studentUserIdsForTutor(user.id);
+      if (!own.includes(tx.userId)) {
+        throw new ForbiddenException('Not your student');
+      }
     }
     if (tx.status !== 'pending') {
       throw new BadRequestException('Transfer already processed');

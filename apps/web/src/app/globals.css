@@ -2292,8 +2292,12 @@ select.err {
 .notif-pop {
   position: absolute;
   inset-block-end: calc(100% + 8px);
-  inset-inline-end: 0;
-  inline-size: 288px;
+  /* Open away from the rail edge: the bell sits at the end of a 248px rail, so
+     an end-anchored panel would hang off the screen. Logical properties keep
+     this mirrored correctly in RTL. */
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+  inline-size: min(288px, calc(100vw - 32px));
   max-block-size: 60vh;
   overflow-y: auto;
   z-index: 40;
