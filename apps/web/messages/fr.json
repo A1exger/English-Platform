@@ -239,7 +239,10 @@
     "planCourses": "Cours",
     "planTeach": "Utiliser en cours",
     "planPickHomework": "Choisissez des pages ou des exercices pour le devoir",
-    "planNoLessons": "Aucune leçon à ce niveau."
+    "planNoLessons": "Aucune leçon à ce niveau.",
+    "planDraft": "brouillon",
+    "planPrivate": "individuel",
+    "planDraftHint": "Ce cours est un brouillon — publiez-le, sinon l'élève ne verra pas ce contenu."
   },
   "board": {
     "title": "Tableau",

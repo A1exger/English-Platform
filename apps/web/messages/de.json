@@ -239,7 +239,10 @@
     "planCourses": "Kurse",
     "planTeach": "Jetzt unterrichten",
     "planPickHomework": "Seiten oder Aufgaben für die Hausaufgabe wählen",
-    "planNoLessons": "Keine Lektionen auf diesem Niveau."
+    "planNoLessons": "Keine Lektionen auf diesem Niveau.",
+    "planDraft": "Entwurf",
+    "planPrivate": "individuell",
+    "planDraftHint": "Dieser Kurs ist ein Entwurf — veröffentliche ihn, sonst sieht die Lernende dieses Material nicht."
   },
   "board": {
     "title": "Whiteboard",

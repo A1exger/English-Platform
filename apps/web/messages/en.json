@@ -239,7 +239,10 @@
     "planCourses": "Courses",
     "planTeach": "Teach this",
     "planPickHomework": "Pick pages or tasks for homework",
-    "planNoLessons": "No lessons at this level."
+    "planNoLessons": "No lessons at this level.",
+    "planDraft": "draft",
+    "planPrivate": "individual",
+    "planDraftHint": "This course is a draft — publish it, or the student will not see this material."
   },
   "board": {
     "title": "Whiteboard",

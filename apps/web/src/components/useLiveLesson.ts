@@ -46,6 +46,13 @@ export interface CourseRow {
   id: string;
   title: string;
   description?: string | null;
+  // "draft" | "published". Students can only open published courses, so the
+  // plan panel flags a draft rather than letting a teacher push material the
+  // student's side will refuse to load.
+  status?: string;
+  // "public" | "private" — a private course is only visible to the students it
+  // was granted to.
+  visibility?: string;
   // Levels this course actually has content for — drives the level chips in the
   // plan panel so a teacher never picks an empty one.
   sections?: { level: string }[];

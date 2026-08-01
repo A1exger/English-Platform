@@ -239,7 +239,10 @@
     "planCourses": "الدورات",
     "planTeach": "استخدم في الدرس",
     "planPickHomework": "اختر صفحات أو تمارين للواجب",
-    "planNoLessons": "لا دروس في هذا المستوى."
+    "planNoLessons": "لا دروس في هذا المستوى.",
+    "planDraft": "مسودة",
+    "planPrivate": "فردي",
+    "planDraftHint": "هذه الدورة مسودة — انشرها، وإلا لن يرى الطالب هذه المادة."
   },
   "board": {
     "title": "اللوحة",

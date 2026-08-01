@@ -130,11 +130,27 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
   const levelsOf = (courseId: string) => {
     const c = courses.find((x) => x.id === courseId);
     const own = Array.from(new Set((c?.sections ?? []).map((s) => s.level)));
-    return own.length > 0 ? own : CONTENT_LEVELS;
+    // Keep the canonical order rather than whatever the sections came back in.
+    return own.length > 0 ? CONTENT_LEVELS.filter((l) => own.includes(l)) : CONTENT_LEVELS;
   };
+
+  // Open a course on a level it actually has content for. Without this the
+  // level stayed on whatever was picked last, so a course with no lessons at
+  // that level looked broken — an empty list and nothing to select.
+  function toggleCourse(courseId: string) {
+    if (openCourse === courseId) {
+      setOpenCourse('');
+      return;
+    }
+    const levels = levelsOf(courseId);
+    setOpenCourse(courseId);
+    setLevel(levels.includes(level) ? level : levels[0]);
+    setPreview(null);
+  }
   const lessonsOf = (tr: Tree | null) =>
     (tr?.sections ?? []).flatMap((s) => s.units.flatMap((u) => u.lessons));
   const pickedCount = selectedTaskIds().length;
+  const openCourseRow = courses.find((c) => c.id === openCourse);
 
   return (
     <div className="plan">
@@ -150,12 +166,18 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
                 <button
                   type="button"
                   className={`plan-course${openCourse === c.id ? ' open' : ''}`}
-                  onClick={() => {
-                    setOpenCourse(openCourse === c.id ? '' : c.id);
-                    setPreview(null);
-                  }}
+                  onClick={() => toggleCourse(c.id)}
                 >
                   <span className="plan-course-name">{c.title}</span>
+                  {/* A student cannot open an unpublished course, so say so
+                      here instead of letting the teacher push material that
+                      silently never arrives. */}
+                  {c.status !== 'published' && (
+                    <span className="plan-flag">{t('planDraft')}</span>
+                  )}
+                  {c.status === 'published' && c.visibility === 'private' && (
+                    <span className="plan-flag plan-flag-soft">{t('planPrivate')}</span>
+                  )}
                   <span className="plan-caret" aria-hidden>
                     {openCourse === c.id ? '▾' : '▸'}
                   </span>
@@ -218,6 +240,9 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
               {t('planTeach')}
             </button>
           </div>
+          {openCourseRow && openCourseRow.status !== 'published' && (
+            <p className="plan-warn">{t('planDraftHint')}</p>
+          )}
 
           {preview.objectives.length > 0 && (
             <ul className="plan-objectives">

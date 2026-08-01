@@ -239,7 +239,10 @@
     "planCourses": "Cursussen",
     "planTeach": "Nu behandelen",
     "planPickHomework": "Kies pagina's of oefeningen voor het huiswerk",
-    "planNoLessons": "Geen lessen op dit niveau."
+    "planNoLessons": "Geen lessen op dit niveau.",
+    "planDraft": "concept",
+    "planPrivate": "individueel",
+    "planDraftHint": "Deze cursus is een concept — publiceer hem, anders ziet de leerling dit materiaal niet."
   },
   "board": {
     "title": "Whiteboard",
