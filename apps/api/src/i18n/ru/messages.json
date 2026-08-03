@@ -6,9 +6,15 @@
   "notification": {
     "homework_assigned": "Новое домашнее задание: \"{title}\".",
     "lesson_booked": "Урок забронирован: \"{title}\".",
-    "lesson_reminder": "Напоминание: \"{title}\" начинается в {time}."
+    "lesson_reminder": "Напоминание: \"{title}\" начинается в {time}.",
+    "homework_feedback": "Отзыв на ваше домашнее задание: «{title}».",
+    "subject": "English Spark Studio",
+    "homework_submitted": "{student} сдал(а) домашнее задание: «{title}».",
+    "transfer_pending": "{student} отправил(а) оплату и ждёт вашего подтверждения.",
+    "payment_confirmed": "Оплата подтверждена — баланс пополнен."
   },
   "auth": {
-    "invalid_credentials": "Неверный email или пароль."
+    "invalid_credentials": "Неверный email или пароль.",
+    "reset_email": "Восстановление пароля в English Spark Studio: {link}\n\nСсылка действует один час. Если вы не запрашивали смену пароля — просто проигнорируйте это письмо."
   }
 }

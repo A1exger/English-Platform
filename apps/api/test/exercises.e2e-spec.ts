@@ -13,6 +13,7 @@ describe('Interactive exercises (e2e)', () => {
   let orderId: string;
   let fillId: string;
   let lessonId: string;
+  let canonicalId: string;
 
   const api = () => request(app.getHttpServer());
   const register = async (email: string, role: string) => {
@@ -148,5 +149,267 @@ describe('Interactive exercises (e2e)', () => {
     const gradedHw = after.body.find((h: { title: string }) => h.title === 'HW exercises');
     expect(gradedHw.status).toBe('graded');
     expect(gradedHw.exercises[0].score).toBe(100);
+  });
+
+  // --- Stage 2: canonical standalone exercises ------------------------------
+
+  it('canonical: creates a sentence_ordering exercise; owner sees the tokens', async () => {
+    const res = await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'sentence_ordering',
+        title: 'Never been',
+        prompt: 'Put the words in order',
+        aspect: 'Grammar',
+        payload: { tokens: ['I', 'have', 'never', 'been', 'to', 'London'] },
+      })
+      .expect(201);
+    canonicalId = res.body.id;
+    const full = await api()
+      .get(`/api/v1/exercises/${canonicalId}`)
+      .set(auth(tutor.accessToken))
+      .expect(200);
+    expect(full.body.type).toBe('sentence_ordering');
+    expect(full.body.payload.tokens).toHaveLength(6);
+    expect(full.body.answerKey).toBeNull(); // order is the answer; nothing extra to hide
+  });
+
+  it('canonical: blocks a sentence with fewer than 2 tokens (ФТ-У105)', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({ type: 'sentence_ordering', title: 'bad', payload: { tokens: ['only'] } })
+      .expect(400);
+  });
+
+  it('canonical: blocks a gap_fill whose answer is not in the bank (ФТ-У105)', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'gap_fill',
+        title: 'bad gap',
+        payload: { segments: ['I ', { gap: 'g1' }, ' to school.'], bank: ['run', 'walk'] },
+        answerKey: { g1: 'go' },
+      })
+      .expect(400);
+  });
+
+  it('canonical: accepts a valid gap_fill and keeps the answerKey server-side', async () => {
+    const res = await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'gap_fill',
+        title: 'good gap',
+        payload: { segments: ['I ', { gap: 'g1' }, ' to school.'], bank: ['go', 'went'] },
+        answerKey: { g1: 'go' },
+      })
+      .expect(201);
+    const full = await api()
+      .get(`/api/v1/exercises/${res.body.id}`)
+      .set(auth(tutor.accessToken))
+      .expect(200);
+    expect(full.body.answerKey).toEqual({ g1: 'go' });
+  });
+
+  it('canonical homework: assigns to multiple students; each solves + is graded (idempotent)', async () => {
+    const student2 = await register('ex.student2@test.com', 'student');
+    const student2ProfileId = (await prisma.studentProfile.findFirst({
+      where: { user: { email: 'ex.student2@test.com' } }
+    }))!.id;
+
+    await api()
+      .post('/api/v1/homework/assign')
+      .set(auth(tutor.accessToken))
+      .send({
+        studentProfileIds: [studentProfileId, student2ProfileId],
+        exerciseIds: [canonicalId],
+        title: 'Canon HW'
+      })
+      .expect(201);
+
+    // A card was created for each student (ФТ-У301).
+    const list1 = await api().get('/api/v1/homework').set(auth(student.accessToken)).expect(200);
+    const hw1 = list1.body.find((h: { title: string }) => h.title === 'Canon HW');
+    expect(hw1.exercises.length).toBe(1);
+    const list2 = await api().get('/api/v1/homework').set(auth(student2.accessToken)).expect(200);
+    expect(list2.body.some((h: { title: string }) => h.title === 'Canon HW')).toBe(true);
+
+    const instId = hw1.exercises[0].id;
+    const view = await api().get(`/api/v1/exercise-instances/${instId}`).set(auth(student.accessToken)).expect(200);
+    expect(view.body.kind).toBe('canonical'); // interactive render (ФТ-У401)
+    expect(view.body.state.order).toHaveLength(6); // server-seeded layout (ФТ-У302)
+    expect(view.body.answerKey).toBeUndefined(); // no эталон (ФТ-У501)
+
+    await api()
+      .patch(`/api/v1/exercise-instances/${instId}/state`)
+      .set(auth(student.accessToken))
+      .send({ state: { order: [0, 1, 2, 3, 4, 5] } })
+      .expect(200);
+    const check = await api().post(`/api/v1/exercise-instances/${instId}/check`).set(auth(student.accessToken)).expect(201);
+    expect(check.body.score).toBe(100);
+
+    // Idempotent resubmit — same score, no re-grade (ФТ-У403).
+    const again = await api().post(`/api/v1/exercise-instances/${instId}/check`).set(auth(student.accessToken)).expect(201);
+    expect(again.body.score).toBe(100);
+
+    const after = await api().get('/api/v1/homework').set(auth(student.accessToken)).expect(200);
+    const graded = after.body.find((h: { title: string }) => h.title === 'Canon HW');
+    expect(graded.status).toBe('graded');
+    expect(graded.exercises[0].score).toBe(100);
+
+    // Student 2's card is independent and still open (ФТ-У302).
+    const s2 = await api().get('/api/v1/homework').set(auth(student2.accessToken)).expect(200);
+    const s2hw = s2.body.find((h: { title: string }) => h.title === 'Canon HW');
+    expect(s2hw.status).not.toBe('graded');
+  });
+
+  // --- Stage 3: canonical tasks on the live board ---------------------------
+
+  it('canonical board: push sentence_ordering; server seeds a shuffled order', async () => {
+    const pushed = await api()
+      .post(`/api/v1/lessons/${lessonId}/board/exercises`)
+      .set(auth(tutor.accessToken))
+      .send({ exerciseId: canonicalId })
+      .expect(201);
+    expect(pushed.body.kind).toBe('canonical');
+    expect(pushed.body.taskType).toBe('sentence_ordering');
+    expect(pushed.body.state.order).toHaveLength(6); // seeded on the server
+
+    const instId = pushed.body.id;
+    const view = await api()
+      .get(`/api/v1/exercise-instances/${instId}`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    expect(view.body.kind).toBe('canonical');
+    expect(view.body.def.tokens).toHaveLength(6); // sanitized def
+    expect(view.body.answerKey).toBeUndefined(); // эталон never reaches the student
+    expect(view.body.result).toBeNull();
+
+    // Student arranges the correct order (payload tokens are already correct).
+    await api()
+      .patch(`/api/v1/exercise-instances/${instId}/state`)
+      .set(auth(student.accessToken))
+      .send({ state: { order: [0, 1, 2, 3, 4, 5] } })
+      .expect(200);
+    const check = await api()
+      .post(`/api/v1/exercise-instances/${instId}/check`)
+      .set(auth(student.accessToken))
+      .expect(201);
+    expect(check.body.correct).toBe(true);
+    expect(check.body.score).toBe(100);
+    expect(check.body.solution).toBeUndefined(); // canonical never returns the эталон
+
+    // Reload restores the persisted result (ФТ-У203/У503).
+    const restored = await api()
+      .get(`/api/v1/exercise-instances/${instId}`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    expect(restored.body.result.correct).toBe(true);
+
+    const listed = await api()
+      .get(`/api/v1/lessons/${lessonId}/board/exercises`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    expect(listed.body.some((i: { id: string }) => i.id === instId)).toBe(true);
+  });
+
+  it('canonical board: gap_fill returns per-gap marking, no answer leak', async () => {
+    const ex = await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'gap_fill',
+        title: 'Board gaps',
+        payload: { segments: ['I ', { gap: 'g1' }, ' to ', { gap: 'g2' }, '.'], bank: ['go', 'school', 'went', 'home'] },
+        answerKey: { g1: 'go', g2: 'school' }
+      })
+      .expect(201);
+    const pushed = await api()
+      .post(`/api/v1/lessons/${lessonId}/board/exercises`)
+      .set(auth(tutor.accessToken))
+      .send({ exerciseId: ex.body.id })
+      .expect(201);
+    const instId = pushed.body.id;
+
+    const view = await api()
+      .get(`/api/v1/exercise-instances/${instId}`)
+      .set(auth(student.accessToken))
+      .expect(200);
+    expect(view.body.def.bank).toEqual(expect.arrayContaining(['go', 'school']));
+    expect(view.body.answerKey).toBeUndefined();
+
+    // One gap right, one wrong → 50, with a per-gap map.
+    await api()
+      .patch(`/api/v1/exercise-instances/${instId}/state`)
+      .set(auth(student.accessToken))
+      .send({ state: { filled: { g1: 'go', g2: 'home' } } })
+      .expect(200);
+    const check = await api()
+      .post(`/api/v1/exercise-instances/${instId}/check`)
+      .set(auth(student.accessToken))
+      .expect(201);
+    expect(check.body.score).toBe(50);
+    expect(check.body.perToken).toEqual({ g1: true, g2: false });
+  });
+
+  // --- Stage 4: the remaining canonical types (create + ФТ-У105) ------------
+
+  it('canonical: word_matching creates, and needs at least 2 pairs', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'word_matching',
+        title: 'Animals',
+        payload: { rightType: 'text', pairs: [{ id: 'p1', left: 'cat', right: 'кошка' }, { id: 'p2', left: 'dog', right: 'собака' }] }
+      })
+      .expect(201);
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({ type: 'word_matching', title: 'bad', payload: { rightType: 'text', pairs: [{ id: 'p1', left: 'cat', right: 'кошка' }] } })
+      .expect(400);
+  });
+
+  it('canonical: categorization creates, and rejects an unknown category', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'categorization',
+        title: 'Parts of speech',
+        payload: {
+          categories: [{ id: 'c1', label: 'Verbs' }, { id: 'c2', label: 'Nouns' }],
+          items: [{ id: 'i1', text: 'run' }, { id: 'i2', text: 'table' }]
+        },
+        answerKey: { i1: 'c1', i2: 'c2' }
+      })
+      .expect(201);
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({
+        type: 'categorization',
+        title: 'bad',
+        payload: { categories: [{ id: 'c1', label: 'Verbs' }, { id: 'c2', label: 'Nouns' }], items: [{ id: 'i1', text: 'run' }] },
+        answerKey: { i1: 'c9' } // not a real category
+      })
+      .expect(400);
+  });
+
+  it('canonical: multiple_choice creates, and rejects an out-of-range answer', async () => {
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({ type: 'multiple_choice', title: 'Capitals', payload: { question: 'Capital of France?', options: ['Paris', 'Rome', 'Berlin'] }, answerKey: { correct: 0 } })
+      .expect(201);
+    await api()
+      .post('/api/v1/exercises')
+      .set(auth(tutor.accessToken))
+      .send({ type: 'multiple_choice', title: 'bad', payload: { question: 'x', options: ['a', 'b'] }, answerKey: { correct: 5 } })
+      .expect(400);
   });
 });

@@ -8,9 +8,11 @@ import {
   Post,
   Put,
   Query,
+  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 import { ContentService } from './content.service';
+import { AiUnavailableError } from '../generation/ai-client';
 import {
   AddDictionaryDto,
   CheckTaskDto,
@@ -18,12 +20,25 @@ import {
   CreateCourseDto,
   CreateCourseLessonDto,
   CreatePageDto,
+  CreatePageMediaDto,
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
+  ReorderCategoriesDto,
+  ReorderCoursesDto,
   ReorderLessonDto,
+  ReorderMediaDto,
+  ReorderPagesDto,
+  ReorderSectionsDto,
+  ReorderTasksDto,
+  ReorderUnitsDto,
+  ReviewDictionaryDto,
+  UpdatePageDto,
+  UpdatePageMediaDto,
+  SetCourseAccessDto,
   SetGrammarDto,
   SetWordlistDto,
+  SetWordlistTranslationsDto,
   UpdateCourseDto,
   UpdateCourseLessonDto,
   UpdateTaskDto,
@@ -56,8 +71,12 @@ export class ContentController {
   }
 
   @Get('lessons/:id')
-  lesson(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.content.lessonDetail(user, id);
+  lesson(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('edit') edit?: string,
+  ) {
+    return this.content.lessonDetail(user, id, edit === '1' || edit === 'true');
   }
 
   // Server-side task check (AUTO scores 0-10; MANUAL/COMPLETION -> completed).
@@ -86,6 +105,24 @@ export class ContentController {
     return this.content.listDictionary(user);
   }
 
+  // Spaced-repetition review of one dictionary word.
+  @Roles('student')
+  @Post('dictionary/:id/review')
+  reviewDictionary(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ReviewDictionaryDto,
+  ) {
+    return this.content.reviewDictionaryEntry(user, id, dto.remembered);
+  }
+
+  // Both progress counters + goal forecast for the cabinet (INV-3).
+  @Roles('student')
+  @Get('progress')
+  progress(@CurrentUser() user: AuthenticatedUser) {
+    return this.content.studentProgress(user);
+  }
+
   // --- authoring (tutor/admin) ---
 
   @Roles('tutor', 'admin')
@@ -100,6 +137,44 @@ export class ContentController {
     return this.content.createCourse(user, dto);
   }
 
+  // Drag-reorder persistence (ФТ-К104). POST /reorder never clashes with the
+  // PATCH :id / POST create routes above.
+  @Roles('tutor', 'admin')
+  @Post('categories/reorder')
+  reorderCategories(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderCategoriesDto) {
+    return this.content.reorderCategories(user, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('courses/reorder')
+  reorderCourses(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderCoursesDto) {
+    return this.content.reorderCourses(user, dto.categoryId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('sections/reorder')
+  reorderSections(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderSectionsDto) {
+    return this.content.reorderSections(user, dto.courseId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('units/reorder')
+  reorderUnits(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderUnitsDto) {
+    return this.content.reorderUnits(user, dto.sectionId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('pages/reorder')
+  reorderPages(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderPagesDto) {
+    return this.content.reorderPages(user, dto.courseLessonId, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('tasks/reorder')
+  reorderTasks(@CurrentUser() user: AuthenticatedUser, @Body() dto: ReorderTasksDto) {
+    return this.content.reorderTasks(user, dto.pageId, dto.ids);
+  }
+
   @Roles('tutor', 'admin')
   @Patch('courses/:id')
   updateCourse(
@@ -108,6 +183,29 @@ export class ContentController {
     @Body() dto: UpdateCourseDto,
   ) {
     return this.content.updateCourse(user, id, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Delete('courses/:id')
+  deleteCourse(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.deleteCourse(user, id);
+  }
+
+  // Who an individual (visibility = "private") course is shared with.
+  @Roles('tutor', 'admin')
+  @Get('courses/:id/access')
+  listCourseAccess(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.listCourseAccess(user, id);
+  }
+
+  @Roles('tutor', 'admin')
+  @Put('courses/:id/access')
+  setCourseAccess(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: SetCourseAccessDto,
+  ) {
+    return this.content.setCourseAccess(user, id, dto.studentProfileIds);
   }
 
   @Roles('tutor', 'admin')
@@ -164,6 +262,31 @@ export class ContentController {
     return this.content.setWordlist(user, id, dto.entries);
   }
 
+  // AI-translate the lesson wordlist into every supported locale (V2).
+  @Roles('tutor', 'admin')
+  @Post('lessons/:id/translate-wordlist')
+  async translateWordlist(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    try {
+      return await this.content.translateWordlist(user, id);
+    } catch (e) {
+      if (e instanceof AiUnavailableError) {
+        throw new ServiceUnavailableException(e.message);
+      }
+      throw e;
+    }
+  }
+
+  // Manually edit the per-locale wordlist translations (V3).
+  @Roles('tutor', 'admin')
+  @Put('lessons/:id/wordlist-translations')
+  setWordlistTranslations(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: SetWordlistTranslationsDto,
+  ) {
+    return this.content.setWordlistTranslations(user, id, dto.entries);
+  }
+
   @Roles('tutor', 'admin')
   @Put('lessons/:id/grammar')
   setGrammar(
@@ -178,6 +301,54 @@ export class ContentController {
   @Post('pages')
   createPage(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreatePageDto) {
     return this.content.createPage(user, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Patch('pages/:id')
+  updatePage(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePageDto,
+  ) {
+    return this.content.updatePage(user, id, dto);
+  }
+
+  // --- page media (§7) ---
+
+  @Roles('tutor', 'admin')
+  @Post('pages/:id/media')
+  addMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: CreatePageMediaDto,
+  ) {
+    return this.content.addPageMedia(user, id, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('pages/:id/media/reorder')
+  reorderMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: ReorderMediaDto,
+  ) {
+    return this.content.reorderPageMedia(user, id, dto.ids);
+  }
+
+  @Roles('tutor', 'admin')
+  @Patch('media/:id')
+  updateMedia(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: UpdatePageMediaDto,
+  ) {
+    return this.content.updatePageMedia(user, id, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Delete('media/:id')
+  deleteMedia(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.deletePageMedia(user, id);
   }
 
   @Roles('tutor', 'admin')

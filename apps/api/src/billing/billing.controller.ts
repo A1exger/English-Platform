@@ -104,18 +104,23 @@ export class BillingController {
     return this.billing.submitTransferReference(user, id, dto);
   }
 
+  // The tutor receives the money, so the tutor confirms it (scoped to their own
+  // students in the service); admins can still confirm anything.
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('tutor', 'admin')
   @Get('transfers/pending')
-  pendingTransfers() {
-    return this.billing.listPendingTransfers();
+  pendingTransfers(@CurrentUser() user: AuthenticatedUser) {
+    return this.billing.listPendingTransfers(user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('tutor', 'admin')
   @Post('transfer/:id/confirm')
-  confirmTransfer(@Param('id') id: string) {
-    return this.billing.confirmTransfer(id);
+  confirmTransfer(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    return this.billing.confirmTransfer(user, id);
   }
 
   /**

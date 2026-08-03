@@ -6,10 +6,12 @@ import { useRouter } from '@/i18n/routing';
 import { locales, type Locale } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { useAppTimeZone } from './AppIntlProvider';
 
-// Curated IANA time zones (label = UTC offset shown for orientation).
+// Curated IANA time zones offered as an explicit override. "Auto" (empty value)
+// is added in the <select> and means "use the viewer's own browser zone".
 const TIMEZONES = [
-  'UTC',
   'Europe/London',
   'Europe/Lisbon',
   'Europe/Berlin',
@@ -36,6 +38,12 @@ const TIMEZONES = [
   'Australia/Sydney'
 ];
 
+// '' means "auto (browser zone)". The legacy default 'UTC' is treated as auto too,
+// so users who never picked a zone keep seeing their own local time.
+function autoTz(v?: string): string {
+  return v && v !== 'UTC' ? v : '';
+}
+
 const localeLabels: Record<Locale, string> = {
   en: 'English',
   ru: 'Русский',
@@ -50,11 +58,18 @@ export function SettingsView() {
   const tApp = useTranslations('app');
   const locale = useLocale();
   const router = useRouter();
+  const browserTz = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
+  const { setProfileTimeZone } = useAppTimeZone();
 
   const [me, setMe] = useState<Me | null>(null);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Telegram is opt-in per person: the bot cannot message anyone who has not
+  // pressed Start, so each user connects their own chat from here (one tap).
+  const [telegram, setTelegram] = useState<{ connected: boolean; url: string | null } | null>(
+    null
+  );
   const [form, setForm] = useState({
     email: '',
     firstName: '',
@@ -80,9 +95,15 @@ export function SettingsView() {
           email: profile.email ?? '',
           firstName: profile.firstName ?? '',
           lastName: profile.lastName ?? '',
-          timezone: (profile as { timezone?: string }).timezone ?? 'UTC',
+          timezone: autoTz((profile as { timezone?: string }).timezone),
           locale: (profile.locale as Locale) ?? locale
         });
+        setTelegram(
+          await apiFetch<{ connected: boolean; url: string | null }>('/notifications/telegram', {
+            token,
+            locale
+          }).catch(() => null)
+        );
         setState('ready');
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -114,6 +135,8 @@ export function SettingsView() {
         }
       });
       setSaved(true);
+      // Apply the new zone across the app immediately (no reload needed).
+      setProfileTimeZone(form.timezone);
       // If the UI language changed, switch the route locale so it takes effect.
       if (form.locale !== locale) {
         router.replace('/settings', { locale: form.locale });
@@ -123,7 +146,16 @@ export function SettingsView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  async function disconnectTelegram() {
+    const token = tokenStore.get();
+    if (!token) return;
+    setTelegram((prev) => (prev ? { ...prev, connected: false } : prev));
+    await apiFetch('/notifications/telegram', { method: 'DELETE', token, locale }).catch(
+      () => undefined
+    );
+  }
+
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   return (
@@ -164,6 +196,9 @@ export function SettingsView() {
             value={form.timezone}
             onChange={(e) => setForm({ ...form, timezone: e.target.value })}
           >
+            <option value="">
+              {t('timezoneAuto')}{browserTz ? ` (${browserTz})` : ''}
+            </option>
             {!TIMEZONES.includes(form.timezone) && form.timezone && (
               <option value={form.timezone}>{form.timezone}</option>
             )}
@@ -173,6 +208,7 @@ export function SettingsView() {
               </option>
             ))}
           </select>
+          <small className="muted">{t('timezoneHint')}</small>
         </label>
         <label>
           {t('language')}
@@ -191,6 +227,35 @@ export function SettingsView() {
           {saving ? '…' : saved ? t('saved') : t('save')}
         </button>
       </form>
+
+      {/* Notification channels. Email needs nothing — it goes to the address
+          above. Telegram is a one-tap connect, only offered when the server has
+          a bot configured. */}
+      <div className="card">
+        <strong>{t('notifications')}</strong>
+        <p className="muted">{t('emailChannel', { email: form.email })}</p>
+        {telegram?.url && (
+          <div className="row-between tg-row">
+            <span className="muted">
+              {telegram.connected ? t('telegramOn') : t('telegramHint')}
+            </span>
+            {telegram.connected ? (
+              <button type="button" className="ghost" onClick={disconnectTelegram}>
+                {t('telegramDisconnect')}
+              </button>
+            ) : (
+              <a
+                className="cta-primary"
+                href={telegram.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('telegramConnect')}
+              </a>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

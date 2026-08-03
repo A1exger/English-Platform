@@ -6,9 +6,15 @@
   "notification": {
     "homework_assigned": "Nouveau devoir : \"{title}\".",
     "lesson_booked": "Cours réservé : \"{title}\".",
-    "lesson_reminder": "Rappel : \"{title}\" commence à {time}."
+    "lesson_reminder": "Rappel : \"{title}\" commence à {time}.",
+    "homework_feedback": "Retour sur votre devoir : « {title} ».",
+    "subject": "English Spark Studio",
+    "homework_submitted": "{student} a rendu le devoir : « {title} ».",
+    "transfer_pending": "{student} a envoyé un paiement et attend votre confirmation.",
+    "payment_confirmed": "Paiement confirmé — votre solde a été crédité."
   },
   "auth": {
-    "invalid_credentials": "E-mail ou mot de passe invalide."
+    "invalid_credentials": "E-mail ou mot de passe invalide.",
+    "reset_email": "Réinitialisez votre mot de passe English Spark Studio : {link}\n\nLe lien est valable une heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail."
   }
 }

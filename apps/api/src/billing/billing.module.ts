@@ -6,8 +6,10 @@ import { StripeProvider } from './providers/stripe.provider';
 import { PaypalProvider } from './providers/paypal.provider';
 import { PaymentProviderRegistry } from './providers/payment-provider.registry';
 import { PAYMENT_PROVIDERS_TOKEN } from './providers/payment-provider.interface';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
+  imports: [NotificationsModule],
   controllers: [BillingController],
   providers: [
     BillingService,
