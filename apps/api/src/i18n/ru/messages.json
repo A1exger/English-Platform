@@ -14,6 +14,7 @@
     "payment_confirmed": "Оплата подтверждена — баланс пополнен."
   },
   "auth": {
-    "invalid_credentials": "Неверный email или пароль."
+    "invalid_credentials": "Неверный email или пароль.",
+    "reset_email": "Восстановление пароля в English Spark Studio: {link}\n\nСсылка действует один час. Если вы не запрашивали смену пароля — просто проигнорируйте это письмо."
   }
 }

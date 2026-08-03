@@ -14,6 +14,7 @@
     "payment_confirmed": "Payment confirmed — your balance has been credited."
   },
   "auth": {
-    "invalid_credentials": "Invalid email or password."
+    "invalid_credentials": "Invalid email or password.",
+    "reset_email": "Reset your English Spark Studio password: {link}\n\nThe link works for one hour. If you did not ask for this, ignore this email."
   }
 }

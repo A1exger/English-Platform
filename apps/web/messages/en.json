@@ -141,7 +141,15 @@
     "forbidden": "Admins only.",
     "deleted": "User deleted",
     "name": "Name",
-    "created": "Created"
+    "created": "Created",
+    "edit": "Edit",
+    "editUser": "Edit user",
+    "save": "Save",
+    "active": "Account active",
+    "newPassword": "New password",
+    "passwordUnchanged": "leave blank to keep",
+    "passwordHint": "Only fill this in to set a new password.",
+    "emailTaken": "That email is already registered."
   },
   "schedule": {
     "title": "Schedule",
@@ -284,7 +292,21 @@
     "word": "Word",
     "pages": "Pages",
     "course": "Course",
-    "searchHint": "Type to search words, lessons, courses and students"
+    "searchHint": "Type to search words, lessons, courses and students",
+    "forgotPassword": "Forgot your password?",
+    "forgotTitle": "Reset your password",
+    "forgotHint": "Enter your email and we'll send you a link to set a new password.",
+    "forgotSubmit": "Send the link",
+    "forgotSent": "If that address has an account, a link is on its way. Check your inbox.",
+    "backToSignIn": "Back to sign in",
+    "resetTitle": "Set a new password",
+    "newPassword": "New password",
+    "confirmPassword": "Repeat the password",
+    "passwordTooShort": "At least 8 characters.",
+    "passwordMismatch": "The passwords do not match.",
+    "resetSubmit": "Save the password",
+    "resetDone": "Password changed. Taking you to sign in…",
+    "resetInvalid": "This link is invalid or has expired. Request a new one."
   },
   "nav": {
     "overview": "Overview",

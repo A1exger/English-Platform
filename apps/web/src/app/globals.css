@@ -1546,6 +1546,21 @@ select.err {
   color: #0f7a4f;
 }
 /* gold "New" flag on homework the student has not opened yet */
+/* a button that reads as a link (forgot password, back to sign in) */
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link-button:hover {
+  color: var(--indigo-700);
+}
 .badge-new-gold {
   margin-inline-start: 8px;
   font-family: var(--font-mono);

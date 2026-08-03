@@ -141,7 +141,15 @@
     "forbidden": "Nur für Admins.",
     "deleted": "Benutzer gelöscht",
     "name": "Name",
-    "created": "Erstellt"
+    "created": "Erstellt",
+    "edit": "Bearbeiten",
+    "editUser": "Benutzer bearbeiten",
+    "save": "Speichern",
+    "active": "Konto aktiv",
+    "newPassword": "Neues Passwort",
+    "passwordUnchanged": "leer lassen",
+    "passwordHint": "Nur ausfüllen, um ein neues Passwort zu setzen.",
+    "emailTaken": "Diese E-Mail ist bereits registriert."
   },
   "schedule": {
     "title": "Zeitplan",
@@ -284,7 +292,21 @@
     "word": "Wort",
     "pages": "Seiten",
     "course": "Kurs",
-    "searchHint": "Tippen, um Wörter, Lektionen, Kurse und Studenten zu suchen"
+    "searchHint": "Tippen, um Wörter, Lektionen, Kurse und Studenten zu suchen",
+    "forgotPassword": "Passwort vergessen?",
+    "forgotTitle": "Passwort zurücksetzen",
+    "forgotHint": "Gib deine E-Mail ein — wir senden dir einen Link für ein neues Passwort.",
+    "forgotSubmit": "Link senden",
+    "forgotSent": "Falls es zu dieser Adresse ein Konto gibt, ist der Link unterwegs.",
+    "backToSignIn": "Zurück zur Anmeldung",
+    "resetTitle": "Neues Passwort setzen",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort wiederholen",
+    "passwordTooShort": "Mindestens 8 Zeichen.",
+    "passwordMismatch": "Die Passwörter stimmen nicht überein.",
+    "resetSubmit": "Passwort speichern",
+    "resetDone": "Passwort geändert. Weiter zur Anmeldung…",
+    "resetInvalid": "Dieser Link ist ungültig oder abgelaufen. Fordere einen neuen an."
   },
   "nav": {
     "overview": "Übersicht",

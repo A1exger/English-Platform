@@ -14,6 +14,7 @@
     "payment_confirmed": "Zahlung bestätigt — dein Guthaben wurde gutgeschrieben."
   },
   "auth": {
-    "invalid_credentials": "Ungültige E-Mail oder Passwort."
+    "invalid_credentials": "Ungültige E-Mail oder Passwort.",
+    "reset_email": "Passwort für English Spark Studio zurücksetzen: {link}\n\nDer Link gilt eine Stunde. Wenn du das nicht angefordert hast, ignoriere diese E-Mail."
   }
 }

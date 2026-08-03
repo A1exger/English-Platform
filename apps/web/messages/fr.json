@@ -141,7 +141,15 @@
     "forbidden": "Réservé aux administrateurs.",
     "deleted": "Utilisateur supprimé",
     "name": "Nom",
-    "created": "Créé"
+    "created": "Créé",
+    "edit": "Modifier",
+    "editUser": "Modifier l'utilisateur",
+    "save": "Enregistrer",
+    "active": "Compte actif",
+    "newPassword": "Nouveau mot de passe",
+    "passwordUnchanged": "laisser vide",
+    "passwordHint": "À remplir uniquement pour définir un nouveau mot de passe.",
+    "emailTaken": "Cet e-mail est déjà enregistré."
   },
   "schedule": {
     "title": "Planning",
@@ -284,7 +292,21 @@
     "word": "Mot",
     "pages": "Pages",
     "course": "Cours",
-    "searchHint": "Tapez pour rechercher mots, leçons, cours et élèves"
+    "searchHint": "Tapez pour rechercher mots, leçons, cours et élèves",
+    "forgotPassword": "Mot de passe oublié ?",
+    "forgotTitle": "Réinitialiser le mot de passe",
+    "forgotHint": "Saisissez votre e-mail — nous vous enverrons un lien pour définir un nouveau mot de passe.",
+    "forgotSubmit": "Envoyer le lien",
+    "forgotSent": "Si un compte existe pour cette adresse, le lien est en route.",
+    "backToSignIn": "Retour à la connexion",
+    "resetTitle": "Nouveau mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Répétez le mot de passe",
+    "passwordTooShort": "8 caractères minimum.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "resetSubmit": "Enregistrer le mot de passe",
+    "resetDone": "Mot de passe modifié. Redirection vers la connexion…",
+    "resetInvalid": "Ce lien est invalide ou expiré. Demandez-en un nouveau."
   },
   "nav": {
     "overview": "Aperçu",

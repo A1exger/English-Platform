@@ -141,7 +141,15 @@
     "forbidden": "Alleen voor beheerders.",
     "deleted": "Gebruiker verwijderd",
     "name": "Naam",
-    "created": "Aangemaakt"
+    "created": "Aangemaakt",
+    "edit": "Bewerken",
+    "editUser": "Gebruiker bewerken",
+    "save": "Opslaan",
+    "active": "Account actief",
+    "newPassword": "Nieuw wachtwoord",
+    "passwordUnchanged": "laat leeg",
+    "passwordHint": "Alleen invullen om een nieuw wachtwoord te zetten.",
+    "emailTaken": "Dit e-mailadres is al geregistreerd."
   },
   "schedule": {
     "title": "Rooster",
@@ -284,7 +292,21 @@
     "word": "Woord",
     "pages": "Pagina's",
     "course": "Cursus",
-    "searchHint": "Typ om woorden, lessen, cursussen en studenten te zoeken"
+    "searchHint": "Typ om woorden, lessen, cursussen en studenten te zoeken",
+    "forgotPassword": "Wachtwoord vergeten?",
+    "forgotTitle": "Wachtwoord herstellen",
+    "forgotHint": "Vul je e-mail in — we sturen een link om een nieuw wachtwoord in te stellen.",
+    "forgotSubmit": "Stuur de link",
+    "forgotSent": "Als er een account bij dit adres hoort, is de link onderweg.",
+    "backToSignIn": "Terug naar inloggen",
+    "resetTitle": "Nieuw wachtwoord",
+    "newPassword": "Nieuw wachtwoord",
+    "confirmPassword": "Herhaal het wachtwoord",
+    "passwordTooShort": "Minimaal 8 tekens.",
+    "passwordMismatch": "De wachtwoorden komen niet overeen.",
+    "resetSubmit": "Wachtwoord opslaan",
+    "resetDone": "Wachtwoord gewijzigd. Je gaat naar inloggen…",
+    "resetInvalid": "Deze link is ongeldig of verlopen. Vraag een nieuwe aan."
   },
   "nav": {
     "overview": "Overzicht",

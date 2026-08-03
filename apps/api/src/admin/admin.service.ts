@@ -7,6 +7,7 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 const USER_SELECT = {
   id: true,
@@ -48,6 +49,56 @@ export class AdminService {
         locale: dto.locale ?? 'en',
         ...(dto.role === 'tutor' ? { tutorProfile: { create: {} } } : {}),
         ...(dto.role === 'student' ? { studentProfile: { create: {} } } : {}),
+      },
+      select: USER_SELECT,
+    });
+  }
+
+  /**
+   * Edit another account. Changing the role provisions the matching profile if
+   * it does not exist yet (an account promoted to tutor needs a TutorProfile
+   * before it can own courses or lessons); the old profile is left in place so
+   * its history is never destroyed by a role change.
+   */
+  async updateUser(currentUserId: string, id: string, dto: UpdateUserDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { tutorProfile: true, studentProfile: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (dto.email && dto.email !== user.email) {
+      const taken = await this.prisma.user.findUnique({ where: { email: dto.email } });
+      if (taken) {
+        throw new ConflictException('Email already registered');
+      }
+    }
+    // Guard against an admin locking themselves out of the admin area.
+    if (id === currentUserId) {
+      if (dto.role && dto.role !== user.role) {
+        throw new BadRequestException('You cannot change your own role');
+      }
+      if (dto.isActive === false) {
+        throw new BadRequestException('You cannot deactivate your own account');
+      }
+    }
+
+    const role = dto.role ?? user.role;
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        ...(dto.email !== undefined ? { email: dto.email } : {}),
+        ...(dto.role !== undefined ? { role: dto.role } : {}),
+        ...(dto.firstName !== undefined ? { firstName: dto.firstName } : {}),
+        ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
+        ...(dto.locale !== undefined ? { locale: dto.locale } : {}),
+        ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
+        ...(dto.password ? { passwordHash: await bcrypt.hash(dto.password, 10) } : {}),
+        ...(role === 'tutor' && !user.tutorProfile ? { tutorProfile: { create: {} } } : {}),
+        ...(role === 'student' && !user.studentProfile
+          ? { studentProfile: { create: {} } }
+          : {}),
       },
       select: USER_SELECT,
     });

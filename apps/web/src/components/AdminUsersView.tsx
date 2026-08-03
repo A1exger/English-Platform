@@ -18,6 +18,7 @@ interface UserRow {
   firstName: string;
   lastName: string;
   locale: string;
+  isActive?: boolean;
   createdAt: string;
 }
 
@@ -37,6 +38,11 @@ export function AdminUsersView() {
   const [busy, setBusy] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [roleFilter, setRoleFilter] = useState('');
+  // Editing an existing account. `password` is optional here: blank = leave it.
+  const [editing, setEditing] = useState<
+    (UserRow & { password: string; isActive: boolean }) | null
+  >(null);
+  const [editError, setEditError] = useState('');
   const [form, setForm] = useState({
     role: 'student',
     firstName: '',
@@ -87,6 +93,37 @@ export function AdminUsersView() {
     }
   }
 
+  async function saveEdit(e: FormEvent) {
+    e.preventDefault();
+    const token = tokenStore.get();
+    if (!token || !editing) return;
+    setBusy(true);
+    setEditError('');
+    try {
+      await apiFetch(`/admin/users/${editing.id}`, {
+        method: 'PATCH',
+        token,
+        locale,
+        body: {
+          email: editing.email,
+          firstName: editing.firstName,
+          lastName: editing.lastName,
+          role: editing.role,
+          locale: editing.locale,
+          isActive: editing.isActive,
+          // Only send a password when one was actually typed.
+          ...(editing.password ? { password: editing.password } : {})
+        }
+      });
+      setEditing(null);
+      await load();
+    } catch (err) {
+      setEditError(err instanceof ApiError && err.status === 409 ? t('emailTaken') : tApp('loadError'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // Optimistic + undoable. Deleting a user used to be one unconfirmed click.
   function remove(id: string) {
     setUsers((prev) => prev.filter((u) => u.id !== id));
@@ -128,9 +165,22 @@ export function AdminUsersView() {
       label: '',
       align: 'end',
       render: (u) => (
-        <button type="button" className="ghost" disabled={busy} onClick={() => remove(u.id)}>
-          {t('delete')}
-        </button>
+        <span className="row-actions">
+          <button
+            type="button"
+            className="ghost"
+            disabled={busy}
+            onClick={() => {
+              setEditError('');
+              setEditing({ ...u, password: '', isActive: u.isActive !== false });
+            }}
+          >
+            {t('edit')}
+          </button>
+          <button type="button" className="ghost" disabled={busy} onClick={() => remove(u.id)}>
+            {t('delete')}
+          </button>
+        </span>
       )
     }
   ];
@@ -138,6 +188,70 @@ export function AdminUsersView() {
   return (
     <div className="content">
       <PageHeader title={t('title')} primary={{ label: t('create'), onClick: () => setDrawerOpen(true) }} />
+
+      <Drawer open={!!editing} onClose={() => setEditing(null)} title={t('editUser')}>
+        {editing && (
+          <form className="form-grid" onSubmit={saveEdit}>
+            <label>
+              {t('role')}
+              <select
+                value={editing.role}
+                onChange={(e) => setEditing({ ...editing, role: e.target.value })}
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {te(`role.${r}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('firstName')}
+              <input
+                value={editing.firstName}
+                onChange={(e) => setEditing({ ...editing, firstName: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('lastName')}
+              <input
+                value={editing.lastName}
+                onChange={(e) => setEditing({ ...editing, lastName: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('email')}
+              <input
+                type="email"
+                value={editing.email}
+                onChange={(e) => setEditing({ ...editing, email: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('newPassword')}
+              <input
+                type="password"
+                value={editing.password}
+                placeholder={t('passwordUnchanged')}
+                onChange={(e) => setEditing({ ...editing, password: e.target.value })}
+              />
+              <small className="muted">{t('passwordHint')}</small>
+            </label>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={editing.isActive}
+                onChange={(e) => setEditing({ ...editing, isActive: e.target.checked })}
+              />
+              {t('active')}
+            </label>
+            {editError && <p className="error">{editError}</p>}
+            <button type="submit" disabled={busy}>
+              {busy ? '…' : t('save')}
+            </button>
+          </form>
+        )}
+      </Drawer>
 
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('newUser')}>
         <form className="form-grid" onSubmit={create}>

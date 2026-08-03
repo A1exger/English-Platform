@@ -40,6 +40,8 @@ services:
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      # Used to build the password-reset link in emails.
+      APP_URL: ${APP_URL:-}
       ALLOW_ADMIN_REGISTRATION: ${ALLOW_ADMIN_REGISTRATION:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}

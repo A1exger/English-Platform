@@ -14,6 +14,7 @@
     "payment_confirmed": "Paiement confirmé — votre solde a été crédité."
   },
   "auth": {
-    "invalid_credentials": "E-mail ou mot de passe invalide."
+    "invalid_credentials": "E-mail ou mot de passe invalide.",
+    "reset_email": "Réinitialisez votre mot de passe English Spark Studio : {link}\n\nLe lien est valable une heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail."
   }
 }
