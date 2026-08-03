@@ -1545,22 +1545,40 @@ select.err {
   background: var(--high-100);
   color: #0f7a4f;
 }
-/* gold "New" flag on homework the student has not opened yet */
-/* a button that reads as a link (forgot password, back to sign in) */
-.link-button {
+/* A button that reads as a link (forgot password, back to sign in).
+   Qualified with `button` on purpose: the base `button:hover` rule is (0,1,1)
+   and would otherwise repaint the accent background on hover, swallowing the
+   link text. Every interactive state has to be reset, not just the resting one. */
+button.link-button,
+button.link-button:hover,
+button.link-button:focus-visible,
+button.link-button:active {
   background: none;
   border: none;
   padding: 0;
-  color: var(--accent);
+  box-shadow: none;
+  transform: none;
+  font-family: inherit;
   font-size: 13px;
+  font-weight: 500;
   text-align: center;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.link-button:hover {
+button.link-button {
+  color: var(--accent);
+}
+button.link-button:hover {
   color: var(--indigo-700);
 }
+button.link-button:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* gold "New" flag on homework the student has not opened yet */
 .badge-new-gold {
   margin-inline-start: 8px;
   font-family: var(--font-mono);
