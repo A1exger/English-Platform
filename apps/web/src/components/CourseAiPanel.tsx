@@ -113,7 +113,9 @@ export function CourseAiPanel({
         method: 'POST',
         token,
         locale,
-        body: { targetType: 'LESSON', courseId, topic: topic.trim(), level: genLevel, aspects }
+        // `language` drives the gloss language of the generated wordlist and
+        // vocabulary tasks. Omitting it left the model to pick one on its own.
+        body: { targetType: 'LESSON', courseId, topic: topic.trim(), level: genLevel, aspects, language: locale }
       });
       setTopic('');
       setGenOpen(false);

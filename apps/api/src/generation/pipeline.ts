@@ -34,11 +34,20 @@ const LANG_NAMES: Record<string, string> = {
   ar: 'Arabic'
 };
 
+/** Language the glosses must be written in. Falls back to English, never to
+ *  "unspecified" — an unnamed target is what let the model pick its own. */
+function glossLanguage(brief: Brief): string {
+  return (brief.language && LANG_NAMES[brief.language]) || 'English';
+}
+
 function langLine(brief: Brief): string {
-  const name = brief.language ? LANG_NAMES[brief.language] : undefined;
-  return name
-    ? `Write all wordlist translations, objectives and grammar explanations in ${name} — but keep the English words/phrases being taught in English.\n`
-    : '';
+  const name = glossLanguage(brief);
+  return (
+    `Write all wordlist translations, objectives, grammar explanations and the ` +
+    `right-hand column of every word_matching task in ${name} — but keep the ` +
+    `English words/phrases being taught in English. Never use any other ` +
+    `language for translations.\n`
+  );
 }
 
 export interface SkeletonLesson {
@@ -82,13 +91,23 @@ const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 
-const TASK_FORMATS = `Task formats (use EXACTLY these shapes):
+/**
+ * The shapes the model must emit. Built per-brief because the word_matching
+ * example carries a gloss, and the model copies the language it sees there: a
+ * hard-coded Spanish "gato" made freshly generated courses come back in Spanish
+ * whatever the brief asked for. The example now names the target language
+ * instead of demonstrating one.
+ */
+function taskFormats(brief: Brief): string {
+  const name = glossLanguage(brief);
+  return `Task formats (use EXACTLY these shapes):
 - sentence_ordering: {"type":"sentence_ordering","aspect":"Grammar","payload":{"words":["I","have","never","been","to","London"]}}  (words in the CORRECT order, 2-30 tokens)
-- word_matching: {"type":"word_matching","aspect":"Vocabulary","payload":{"pairs":[{"left":"cat","right":"gato"}]}}  (2-12 pairs)
+- word_matching: {"type":"word_matching","aspect":"Vocabulary","payload":{"pairs":[{"left":"cat","right":"<the ${name} word for 'cat'>"}]}}  (2-12 pairs; "left" is always the English word, "right" is always its ${name} translation — write real ${name}, not the placeholder)
 - gap_fill: {"type":"gap_fill","aspect":"Grammar","payload":{"text":"I [go] to [school] every day."}}  (answers wrapped in [brackets], 1-12 gaps)
 - categorization: {"type":"categorization","aspect":"Vocabulary","payload":{"categories":["Verbs","Nouns"],"items":[{"text":"run","category":"Verbs"}]}}  (2-6 categories)
 - multiple_choice: {"type":"multiple_choice","aspect":"Reading","payload":{"question":"...","options":["a","b","c"]},"answerKey":{"correct":"a"}}  (correct MUST equal one option)
 Every task also has "gradingMode":"AUTO" and an "aspect" from: ${ASPECTS.join(', ')}.`;
+}
 
 export function skeletonPrompt(brief: Brief): { system: string; user: string } {
   return {
@@ -114,7 +133,7 @@ export function lessonPrompt(
   return {
     system:
       'You are an expert English-lesson author. Respond with ONLY a JSON object, no prose. ' +
-      `Level "${brief.level}": keep vocabulary/grammar at that level. ${TASK_FORMATS}`,
+      `Level "${brief.level}": keep vocabulary/grammar at that level. ${taskFormats(brief)}`,
     user:
       `Write the LESSON content.\n` +
       `Course topic: ${brief.topic}\nUnit: ${ctx.unitTitle}\nLesson: ${ctx.lessonTitle}\n` +
