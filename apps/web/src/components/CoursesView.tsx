@@ -6,6 +6,7 @@ import { Link, useRouter } from '@/i18n/routing';
 import { useLocale } from 'next-intl';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
+import { usePopoverDismiss } from '@/lib/use-popover-dismiss';
 import {
   DndContext,
   DragEndEvent,
@@ -167,6 +168,8 @@ export function CoursesView() {
   const locale = useLocale();
   const router = useRouter();
   const { showUndo } = useToast();
+  // Dismiss the per-row ⋯ menus on an outside click / Escape.
+  usePopoverDismiss();
 
   const [cats, setCats] = useState<Category[]>([]);
   const [q, setQ] = useState('');

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
+import { usePopoverDismiss } from '@/lib/use-popover-dismiss';
 import { Icon } from './Icon';
 import { BoardCanvas } from './BoardCanvas';
 import { VideoRoom } from './VideoRoom';
@@ -116,6 +117,8 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
   const board = useBoardSocket(lessonId);
   const [showBoard, setShowBoard] = useState(false);
   const [tab, setTab] = useState<Tab>('lesson');
+  // Dismiss the dictionary/help pop-outs on an outside click / Escape.
+  usePopoverDismiss();
 
   const { lesson, pageIdx, totalSteps, isTeacher, isStudent } = live;
   const pageLabel = pageIdx === 0 ? t('preparation') : String(pageIdx);
