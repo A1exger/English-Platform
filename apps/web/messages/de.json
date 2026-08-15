@@ -416,7 +416,7 @@
     "fill": "Lücken füllen",
     "categorize": "Kategorisieren",
     "words": "Wörter (richtige Reihenfolge)",
-    "statements": "Aussagen (eine pro Zeile: Text = true/false)",
+    "statements": "Aussagen",
     "wordsHint": "Wörter mit Leerzeichen trennen.",
     "prompt": "Hinweis (optional)",
     "pairs": "Paare",
@@ -475,7 +475,9 @@
     "matchWord": "Wort",
     "matchUpload": "Bild hochladen",
     "matchAddPair": "Paar hinzufügen",
-    "matchImageHint": "Ordnen Sie jedem Wort ein hochgeladenes Bild zu (mindestens 2)."
+    "matchImageHint": "Ordnen Sie jedem Wort ein hochgeladenes Bild zu (mindestens 2).",
+    "statementsHint": "Eine pro Zeile: Aussage = true/false. Mindestens zwei.",
+    "tfMin": "Füge mindestens zwei Aussagen hinzu, jede endet auf = true oder = false."
   },
   "courses": {
     "title": "Kurse",

@@ -416,7 +416,7 @@
     "fill": "Compléter",
     "categorize": "Catégoriser",
     "words": "Mots (ordre correct)",
-    "statements": "Affirmations (une par ligne : texte = true/false)",
+    "statements": "Affirmations",
     "wordsHint": "Séparez les mots par des espaces.",
     "prompt": "Consigne (optionnel)",
     "pairs": "Paires",
@@ -475,7 +475,9 @@
     "matchWord": "Mot",
     "matchUpload": "Téléverser une image",
     "matchAddPair": "Ajouter une paire",
-    "matchImageHint": "Associez chaque mot à une image téléversée (au moins 2)."
+    "matchImageHint": "Associez chaque mot à une image téléversée (au moins 2).",
+    "statementsHint": "Une par ligne : affirmation = true/false. Au moins deux.",
+    "tfMin": "Ajoutez au moins deux affirmations, chacune terminée par = true ou = false."
   },
   "courses": {
     "title": "Cours",

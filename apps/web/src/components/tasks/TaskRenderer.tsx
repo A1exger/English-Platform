@@ -33,7 +33,9 @@ import type {
   SentenceState,
   TaskRendererProps,
   TaskType,
-  ExerciseResult
+  ExerciseResult,
+  TrueFalseDef,
+  TrueFalseState
 } from './types';
 
 // Pointer for mouse, delayed touch so a drag never fights the page scroll
@@ -313,6 +315,41 @@ function MultipleChoice({ def, state, onChange, readOnly, result }: TaskRenderer
   );
 }
 
+// ——— true_false (no dnd) ———
+function TrueFalse({ def, state, onChange, readOnly, result }: TaskRendererProps<TrueFalseDef, TrueFalseState>) {
+  return (
+    <div className="tf-list">
+      {def.statements.map((st) => {
+        const picked = state.values?.[st.id];
+        // `perToken` marks each statement independently, so a partly-right
+        // answer shows exactly which rows were missed.
+        const marked = result?.perToken?.[st.id];
+        return (
+          <div
+            key={st.id}
+            className={`tf-row${marked === true ? ' ok' : marked === false ? ' bad' : ''}`}
+          >
+            <span className="tf-text">{st.text}</span>
+            <span className="tf-choice">
+              {[true, false].map((v) => (
+                <button
+                  key={String(v)}
+                  type="button"
+                  className={`chip${picked === v ? ' active-choice' : ''}`}
+                  disabled={readOnly}
+                  onClick={() => onChange({ values: { ...(state.values ?? {}), [st.id]: v } })}
+                >
+                  {v ? 'True' : 'False'}
+                </button>
+              ))}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ——— dispatcher: the single entry point for every task type ———
 export interface TaskProps {
   type: TaskType;
@@ -336,6 +373,8 @@ export function TaskRenderer({ type, def, state, readOnly, result, onChange }: T
       return <Categorization def={def as CategorizeDef} state={state as CategorizeState} {...common} />;
     case 'multiple_choice':
       return <MultipleChoice def={def as McqDef} state={state as McqState} {...common} />;
+    case 'true_false':
+      return <TrueFalse def={def as TrueFalseDef} state={state as TrueFalseState} {...common} />;
     default:
       return null;
   }

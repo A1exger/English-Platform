@@ -7,7 +7,20 @@ export type TaskType =
   | 'word_matching'
   | 'gap_fill'
   | 'categorization'
-  | 'multiple_choice';
+  | 'multiple_choice'
+  | 'true_false';
+
+export interface TrueFalseStatement {
+  id: string;
+  text: string;
+}
+export interface TrueFalseDef {
+  statements: TrueFalseStatement[];
+}
+export interface TrueFalseState {
+  // statement id -> the student's pick; null/absent while unanswered.
+  values: Record<string, boolean | null>;
+}
 
 export interface ExerciseResult {
   correct: boolean;

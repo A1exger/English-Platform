@@ -25,6 +25,7 @@ export interface CanonicalForm {
   mcqQuestion: string; // multiple_choice
   mcqOptions: string; // multiple_choice — one option per line
   mcqCorrect: number; // multiple_choice — index of the correct option
+  statements: string; // true_false — "statement = true/false" per line
 }
 
 export const EMPTY_FORM: CanonicalForm = {
@@ -36,6 +37,7 @@ export const EMPTY_FORM: CanonicalForm = {
   distractors: '',
   categories: '',
   items: '',
+  statements: '',
   mcqQuestion: '',
   mcqOptions: '',
   mcqCorrect: 0
@@ -65,6 +67,24 @@ function parseItemLines(s: string): { text: string; category: string }[] {
     .map((l) => l.split('='))
     .filter((p) => p.length === 2 && p[0].trim() && p[1].trim())
     .map((p) => ({ text: p[0].trim(), category: p[1].trim() }));
+}
+
+/**
+ * "The text says X. = true" per line. A line with no true/false marker is
+ * dropped rather than guessed, so a typo cannot silently become an answer.
+ */
+export function parseStatementLines(src: string): { text: string; value: boolean }[] {
+  return src
+    .split('\n')
+    .map((line) => {
+      const at = line.lastIndexOf('=');
+      if (at < 0) return null;
+      const text = line.slice(0, at).trim();
+      const flag = line.slice(at + 1).trim().toLowerCase();
+      if (!text || (flag !== 'true' && flag !== 'false')) return null;
+      return { text, value: flag === 'true' };
+    })
+    .filter((x): x is { text: string; value: boolean } => x !== null);
 }
 
 /** Build the {payload, answerKey?} to POST for a canonical draft. */
@@ -100,6 +120,15 @@ export function toCanonicalPayload(
       });
       return { payload: { categories: cats, items }, answerKey };
     }
+    case 'true_false': {
+      const parsed = parseStatementLines(form.statements);
+      const statements = parsed.map((st, i) => ({ id: `s${i + 1}`, text: st.text }));
+      const answerKey: Record<string, unknown> = {};
+      parsed.forEach((st, i) => {
+        answerKey[`s${i + 1}`] = st.value;
+      });
+      return { payload: { statements }, answerKey };
+    }
     case 'multiple_choice':
       return {
         payload: { question: form.mcqQuestion.trim(), options: lines(form.mcqOptions) },
@@ -129,6 +158,8 @@ export function canonicalError(type: string, form: CanonicalForm): string | null
       const set = new Set(cats);
       return parsed.some((it) => !set.has(it.category)) ? 'catMin' : null;
     }
+    case 'true_false':
+      return parseStatementLines(form.statements).length >= 2 ? null : 'tfMin';
     case 'multiple_choice': {
       const options = lines(form.mcqOptions);
       if (options.length < 2) return 'mcqMin';
@@ -165,6 +196,8 @@ export function initialStateFor(type: string, payload: Record<string, unknown>):
       return { filled: {} };
     case 'categorization':
       return { placement: {} };
+    case 'true_false':
+      return { values: {} };
     case 'multiple_choice':
       return { choice: null };
     default:
@@ -211,6 +244,11 @@ export function editFormFromCanonical(
         items: its.map((it) => `${it.text} = ${idToLabel.get(key[it.id]) ?? ''}`).join('\n')
       };
     }
+    case 'true_false': {
+      const sts = (payload.statements as { id: string; text: string }[]) ?? [];
+      const key = (answerKey ?? {}) as Record<string, boolean>;
+      return { ...EMPTY_FORM, statements: sts.map((st) => `${st.text} = ${key[st.id] ? 'true' : 'false'}`).join('\n') };
+    }
     case 'multiple_choice': {
       const options = (payload.options as string[]) ?? [];
       const key = (answerKey ?? {}) as { correct?: number };
@@ -226,5 +264,6 @@ export const CANONICAL_TYPES: TaskType[] = [
   'word_matching',
   'gap_fill',
   'categorization',
-  'multiple_choice'
+  'multiple_choice',
+  'true_false'
 ];

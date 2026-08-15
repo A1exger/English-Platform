@@ -416,7 +416,7 @@
     "fill": "Fill the blanks",
     "categorize": "Categorize",
     "words": "Words (correct order)",
-    "statements": "Statements (one per line: text = true/false)",
+    "statements": "Statements",
     "wordsHint": "Separate words by spaces.",
     "prompt": "Prompt (optional)",
     "pairs": "Pairs",
@@ -475,7 +475,9 @@
     "matchWord": "Word",
     "matchUpload": "Upload picture",
     "matchAddPair": "Add pair",
-    "matchImageHint": "Pair each word with an uploaded picture (at least 2)."
+    "matchImageHint": "Pair each word with an uploaded picture (at least 2).",
+    "statementsHint": "One per line: statement = true/false. At least two.",
+    "tfMin": "Add at least two statements, each ending in = true or = false."
   },
   "courses": {
     "title": "Courses",

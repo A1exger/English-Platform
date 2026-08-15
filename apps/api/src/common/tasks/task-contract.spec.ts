@@ -84,6 +84,22 @@ describe('task-contract sanitize()', () => {
     // items carry no category
     expect(cat.items[0].category).toBeUndefined();
   });
+
+  it('true_false gives partial credit and marks each statement', () => {
+    const answerKey = { s1: true, s2: false, s3: true };
+    const all = grade('true_false', {}, answerKey, { values: { s1: true, s2: false, s3: true } });
+    expect(all).toEqual({ correct: true, score: 100, perToken: { s1: true, s2: true, s3: true } });
+
+    // Two of three right, and the wrong row is identifiable.
+    const some = grade('true_false', {}, answerKey, { values: { s1: true, s2: true, s3: true } });
+    expect(some.correct).toBe(false);
+    expect(some.score).toBe(67);
+    expect(some.perToken).toEqual({ s1: true, s2: false, s3: true });
+
+    // An unanswered statement counts as wrong, never as a lucky match.
+    const blank = grade('true_false', {}, answerKey, { values: { s1: true } });
+    expect(blank.perToken).toEqual({ s1: true, s2: false, s3: false });
+  });
 });
 
 describe('task-contract parseGaps()', () => {

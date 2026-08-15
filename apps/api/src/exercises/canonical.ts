@@ -3,6 +3,7 @@ import {
   GapSegment,
   MatchPair,
   shuffle,
+  TrueFalseStatement,
   TASK_TYPES,
   TaskType,
 } from '../common/tasks/task-contract';
@@ -141,6 +142,26 @@ export function normalizeCanonical(
           options: optList.map((o) => (o as string).trim()),
         },
         answerKey: { correct },
+      };
+      break;
+    }
+    case 'true_false': {
+      const statements = p.statements;
+      if (!Array.isArray(statements) || statements.length < 2) fail('need at least 2 statements');
+      const list = statements as TrueFalseStatement[];
+      if (list.length > 12) fail('at most 12 statements');
+      if (list.some((st) => !nonEmpty(st?.id) || !nonEmpty(st?.text))) fail('statement with empty id/text');
+      if (new Set(list.map((st) => st.id)).size !== list.length) fail('duplicate statement id');
+      const resolvedKey: Record<string, boolean> = {};
+      for (const st of list) {
+        // Only real booleans: a missing or string answer would grade every
+        // statement as wrong without ever telling the author why.
+        if (typeof key[st.id] !== 'boolean') fail(`statement ${st.id} has no true/false answer`);
+        resolvedKey[st.id] = key[st.id] as boolean;
+      }
+      out = {
+        payload: { statements: list.map((st) => ({ id: st.id, text: st.text.trim() })) },
+        answerKey: resolvedKey,
       };
       break;
     }

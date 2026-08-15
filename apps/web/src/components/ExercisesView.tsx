@@ -128,6 +128,9 @@ export function ExercisesView() {
   const [mcqQuestion, setMcqQuestion] = useState('Where is Big Ben?');
   const [mcqOptions, setMcqOptions] = useState('London\nParis\nBerlin');
   const [mcqCorrect, setMcqCorrect] = useState(0);
+  // Starts empty with the example in the placeholder, so it can never be saved
+  // by an author who did not notice it.
+  const [statements, setStatements] = useState('');
   const [aspect, setAspect] = useState<string>('Grammar');
   const [isPublic, setIsPublic] = useState(false);
   const [previewState, setPreviewState] = useState<Record<string, unknown>>({});
@@ -164,8 +167,8 @@ export function ExercisesView() {
   }, [load]);
 
   const canonicalForm = useMemo<CanonicalForm>(
-    () => ({ sentence, pairs, matchRightType, imagePairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect }),
-    [sentence, pairs, matchRightType, imagePairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect]
+    () => ({ sentence, pairs, matchRightType, imagePairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect, statements }),
+    [sentence, pairs, matchRightType, imagePairs, fillText, distractors, categories, items, mcqQuestion, mcqOptions, mcqCorrect, statements]
   );
   const canonicalErr = isCanonical(type) ? canonicalError(type, canonicalForm) : null;
 
@@ -304,6 +307,7 @@ export function ExercisesView() {
       setMcqQuestion(f.mcqQuestion);
       setMcqOptions(f.mcqOptions);
       setMcqCorrect(f.mcqCorrect);
+      setStatements(f.statements);
       setPrompt(ex.prompt ?? '');
       setAspect(ex.aspect ?? 'Grammar');
       setIsPublic(!!ex.isPublic);
@@ -546,6 +550,19 @@ export function ExercisesView() {
               <small className="muted">{t('categoriesHint')}</small>
               <label>{t('items')}<textarea value={items} onChange={(e) => setItems(e.target.value)} /></label>
               <small className="muted">{t('itemsHint')}</small>
+            </>
+          )}
+          {type === 'true_false' && (
+            <>
+              <label>
+                {t('statements')}
+                <textarea
+                  value={statements}
+                  placeholder={'Peter lives in London. = true\nPeter is a doctor. = false'}
+                  onChange={(e) => setStatements(e.target.value)}
+                />
+              </label>
+              <small className="muted">{t('statementsHint')}</small>
             </>
           )}
           {type === 'multiple_choice' && (

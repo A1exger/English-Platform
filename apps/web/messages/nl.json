@@ -416,7 +416,7 @@
     "fill": "Vul in",
     "categorize": "Categoriseren",
     "words": "Woorden (juiste volgorde)",
-    "statements": "Stellingen (één per regel: tekst = true/false)",
+    "statements": "Stellingen",
     "wordsHint": "Scheid woorden met spaties.",
     "prompt": "Opdracht (optioneel)",
     "pairs": "Paren",
@@ -475,7 +475,9 @@
     "matchWord": "Woord",
     "matchUpload": "Afbeelding uploaden",
     "matchAddPair": "Paar toevoegen",
-    "matchImageHint": "Koppel elk woord aan een geüploade afbeelding (minimaal 2)."
+    "matchImageHint": "Koppel elk woord aan een geüploade afbeelding (minimaal 2).",
+    "statementsHint": "Eén per regel: stelling = true/false. Minimaal twee.",
+    "tfMin": "Voeg minstens twee stellingen toe, elk eindigend op = true of = false."
   },
   "courses": {
     "title": "Cursussen",

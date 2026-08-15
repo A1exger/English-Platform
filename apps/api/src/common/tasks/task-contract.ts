@@ -15,10 +15,15 @@ export const TASK_TYPES = [
   'gap_fill',
   'categorization',
   'multiple_choice',
+  'true_false',
 ] as const;
 export type TaskType = (typeof TASK_TYPES)[number];
 
 // ——— App. A shapes (loose Records at the boundary; branches cast) ———
+export interface TrueFalseStatement {
+  id: string;
+  text: string;
+}
 export interface MatchPair {
   id: string;
   left: string;
@@ -135,6 +140,14 @@ export function grade(
       const ok = state.choice === (answerKey as { correct: number }).correct;
       return { correct: ok, score: ok ? 100 : 0 };
     }
+    case 'true_false': {
+      // Partial credit with a per-statement map, like the drag types — a
+      // reading check with six statements should not be all-or-nothing.
+      const key = (answerKey as Record<string, boolean>) ?? {};
+      const values = (state.values as Record<string, boolean | null>) ?? {};
+      const per = Object.fromEntries(Object.entries(key).map(([id, v]) => [id, values[id] === v]));
+      return { correct: Object.values(per).every(Boolean), score: pct(per), perToken: per };
+    }
     default:
       return { correct: false, score: 0 };
   }
@@ -158,6 +171,8 @@ export function sanitize(
       right: shuffle(pairs.map((p) => ({ id: p.id, text: p.right }))),
     };
   }
-  // gap_fill / categorization / sentence_ordering / multiple_choice
+  // gap_fill / categorization / sentence_ordering / multiple_choice / true_false
+  // (true_false needs no reshaping: its payload is statements only, and the
+  // booleans are kept in the server-side answerKey.)
   return payload;
 }

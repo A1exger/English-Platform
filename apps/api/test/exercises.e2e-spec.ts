@@ -214,6 +214,30 @@ describe('Interactive exercises (e2e)', () => {
     expect(full.body.answerKey).toEqual({ g1: 'go' });
   });
 
+  it('canonical: true_false validates its answers and grades per statement', async () => {
+    const post = (body: object) =>
+      api().post('/api/v1/exercises').set(auth(tutor.accessToken)).send(body);
+
+    const base = {
+      type: 'true_false',
+      title: 'About Peter',
+      payload: { statements: [{ id: 's1', text: 'Peter lives in London.' }, { id: 's2', text: 'Peter is a doctor.' }] },
+    };
+
+    // Every statement needs a real boolean — a missing or non-boolean answer
+    // would silently grade that row as wrong.
+    await post({ ...base, answerKey: { s1: true } }).expect(400);
+    await post({ ...base, answerKey: { s1: true, s2: 'false' } }).expect(400);
+    await post({ ...base, payload: { statements: [{ id: 's1', text: 'Only one.' }] }, answerKey: { s1: true } }).expect(400);
+
+    const created = await post({ ...base, answerKey: { s1: true, s2: false } }).expect(201);
+    const full = await api()
+      .get(`/api/v1/exercises/${created.body.id}`)
+      .set(auth(tutor.accessToken))
+      .expect(200);
+    expect(full.body.answerKey).toEqual({ s1: true, s2: false });
+  });
+
   it('canonical homework: assigns to multiple students; each solves + is graded (idempotent)', async () => {
     const student2 = await register('ex.student2@test.com', 'student');
     const student2ProfileId = (await prisma.studentProfile.findFirst({

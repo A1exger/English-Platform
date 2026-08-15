@@ -131,7 +131,6 @@ something is wrong.
 
 ## Related
 
-- Telegram (opt-in per user, one tap in Settings): see `TELEGRAM_*` in
-  `.env.prod.example`.
+- Telegram (opt-in per user, one tap in Settings): `docs/09-telegram-setup.md`.
 - Turn off the built-in dispatcher with `NOTIFY_DISPATCH=off` if you ever run an
   external worker instead.
