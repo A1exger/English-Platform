@@ -555,6 +555,7 @@
     "aiLessons": "Lessen per unit",
     "aiAspects": "Aspecten",
     "aiNotes": "Notities (optioneel)",
+    "aiNotesHint": "bijv. meer luisteren, zakelijke woordenschat, geen schrijfopdrachten",
     "aiGenerate": "Genereren",
     "aiGenerating": "Bezig met genereren… dit kan even duren.",
     "aiReady": "Concept klaar voor beoordeling.",

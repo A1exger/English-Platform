@@ -555,6 +555,7 @@
     "aiLessons": "Lessons per unit",
     "aiAspects": "Aspects",
     "aiNotes": "Notes (optional)",
+    "aiNotesHint": "e.g. more listening, business vocabulary, no essay tasks",
     "aiGenerate": "Generate",
     "aiGenerating": "Generating… this can take a minute.",
     "aiReady": "Draft ready for review.",

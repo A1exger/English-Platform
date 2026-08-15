@@ -555,6 +555,7 @@
     "aiLessons": "Leçons par unité",
     "aiAspects": "Aspects",
     "aiNotes": "Notes (facultatif)",
+    "aiNotesHint": "ex. : plus d’écoute, vocabulaire des affaires, pas de rédaction",
     "aiGenerate": "Générer",
     "aiGenerating": "Génération… cela peut prendre une minute.",
     "aiReady": "Brouillon prêt à être relu.",

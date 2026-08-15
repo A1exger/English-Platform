@@ -140,7 +140,14 @@ export function GenerateCourseForm({ onDone }: { onDone: () => void }) {
               ))}
             </div>
           </div>
-          <label>{t('aiNotes')}<textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
+          <label>
+            {t('aiNotes')}
+            <textarea
+              value={form.notes}
+              placeholder={t('aiNotesHint')}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            />
+          </label>
           <button type="button" disabled={busy || !form.topic.trim()} onClick={generate}>{t('aiGenerate')}</button>
         </>
       )}

@@ -555,6 +555,7 @@
     "aiLessons": "Lektionen pro Einheit",
     "aiAspects": "Aspekte",
     "aiNotes": "Notizen (optional)",
+    "aiNotesHint": "z. B. mehr Hörverstehen, Business-Wortschatz, keine Aufsätze",
     "aiGenerate": "Erstellen",
     "aiGenerating": "Wird erstellt… das kann eine Minute dauern.",
     "aiReady": "Entwurf bereit zur Prüfung.",

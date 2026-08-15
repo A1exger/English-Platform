@@ -40,6 +40,7 @@ export function CourseAiPanel({
   const [refine, setRefine] = useState('');
   const [genOpen, setGenOpen] = useState(false);
   const [topic, setTopic] = useState('');
+  const [notes, setNotes] = useState('');
   const [aspects, setAspects] = useState<string[]>(['Grammar']);
 
   const loadJobs = useCallback(async () => {
@@ -113,9 +114,18 @@ export function CourseAiPanel({
         locale,
         // `language` drives the gloss language of the generated wordlist and
         // vocabulary tasks. Omitting it left the model to pick one on its own.
-        body: { targetType: 'LESSON', courseId, topic: topic.trim(), level, aspects, language: locale }
+        body: {
+          targetType: 'LESSON',
+          courseId,
+          topic: topic.trim(),
+          level,
+          aspects,
+          notes: notes.trim() || undefined,
+          language: locale
+        }
       });
       setTopic('');
+      setNotes('');
       setGenOpen(false);
       setJob(j);
       setTimeout(() => void poll(j.id), 1500);
@@ -169,6 +179,17 @@ export function CourseAiPanel({
                   ))}
                 </div>
               </div>
+              {/* Free-text wishes, kept apart from the topic: the topic becomes
+                  the section, unit and lesson title, so anything discursive put
+                  there ends up as the lesson's name. */}
+              <label>
+                {t('aiNotes')}
+                <textarea
+                  value={notes}
+                  placeholder={t('aiNotesHint')}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </label>
               <div className="row-actions">
                 <button type="button" disabled={busy || !topic.trim()} onClick={genLesson}>{t('aiGenerate')}</button>
                 <button type="button" className="ghost" onClick={() => setGenOpen(false)}>{tc('close')}</button>
