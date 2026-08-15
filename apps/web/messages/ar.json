@@ -566,6 +566,8 @@
     "refineInstruction": "التحسين بتعليمة",
     "selectLesson": "اختر درسًا للتعديل",
     "lessonDeleted": "تم حذف الدرس",
+    "sectionDeleted": "تم حذف القسم مع وحداته ودروسه",
+    "unitDeleted": "تم حذف الوحدة مع دروسها",
     "taskDeleted": "تمت إزالة المهمة",
     "aiGenerated": "أُنشئ بواسطة الذكاء الاصطناعي",
     "aiApprove": "الموافقة والنشر",

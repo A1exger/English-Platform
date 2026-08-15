@@ -566,6 +566,8 @@
     "refineInstruction": "Mit einer Anweisung verfeinern",
     "selectLesson": "Lektion zum Bearbeiten wählen",
     "lessonDeleted": "Lektion gelöscht",
+    "sectionDeleted": "Abschnitt mit seinen Einheiten und Stunden gelöscht",
+    "unitDeleted": "Einheit mit ihren Stunden gelöscht",
     "taskDeleted": "Aufgabe entfernt",
     "aiGenerated": "Von KI erstellt",
     "aiApprove": "Genehmigen & veröffentlichen",

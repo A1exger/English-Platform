@@ -713,6 +713,58 @@ export class ContentService {
   }
 
   /**
+   * Renumber a level's lessons to a dense 1..n (createLesson starts at 1).
+   * Lesson order is level-wide and unique (INV-1, @@unique([courseId, level,
+   * order])), so removing a whole unit or section leaves holes that the ±1
+   * shifts in createLesson/reorderLesson would then misread. Safe against the
+   * unique index: rows are walked in ascending order and only ever move down,
+   * so the slot being written to has already been vacated.
+   */
+  private async repackLessonOrder(
+    db: Prisma.TransactionClient,
+    courseId: string,
+    level: string,
+  ) {
+    const rows = await db.courseLesson.findMany({
+      where: { courseId, level },
+      orderBy: { order: 'asc' },
+      select: { id: true, order: true },
+    });
+    for (const [i, row] of rows.entries()) {
+      if (row.order !== i + 1) {
+        await db.courseLesson.update({ where: { id: row.id }, data: { order: i + 1 } });
+      }
+    }
+  }
+
+  /** Delete a unit with its lessons (DB cascade), then close the order gaps. */
+  async deleteUnit(user: AuthenticatedUser, id: string) {
+    const unit = await this.prisma.unit.findUnique({
+      where: { id },
+      include: { section: true },
+    });
+    if (!unit) throw new NotFoundException('Unit not found');
+    await this.assertCourseEditable(user, unit.section.courseId);
+    await this.prisma.$transaction(async (db) => {
+      await db.unit.delete({ where: { id } });
+      await this.repackLessonOrder(db, unit.section.courseId, unit.section.level);
+    });
+    return { deleted: true };
+  }
+
+  /** Delete a section with its units and lessons, then close the order gaps. */
+  async deleteSection(user: AuthenticatedUser, id: string) {
+    const section = await this.prisma.section.findUnique({ where: { id } });
+    if (!section) throw new NotFoundException('Section not found');
+    await this.assertCourseEditable(user, section.courseId);
+    await this.prisma.$transaction(async (db) => {
+      await db.section.delete({ where: { id } });
+      await this.repackLessonOrder(db, section.courseId, section.level);
+    });
+    return { deleted: true };
+  }
+
+  /**
    * INV-1: lesson order is level-wide. Appends at the end by default; an
    * explicit position shifts every later lesson (across all units) up by one.
    */

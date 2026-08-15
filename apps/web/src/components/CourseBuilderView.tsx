@@ -323,6 +323,45 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
     });
   }
 
+  // Same optimistic + undoable shape as removeLesson. Both cascade server-side
+  // (section → units → lessons), so the tree is pruned locally to match, and the
+  // open lesson is deselected when it was inside what went away.
+  function removeUnit(unit: UnitRow) {
+    setTree((prev) =>
+      prev
+        ? { ...prev, sections: prev.sections.map((s) => ({ ...s, units: s.units.filter((u) => u.id !== unit.id) })) }
+        : prev
+    );
+    if (unit.lessons.some((l) => l.id === selected)) setSelected(null);
+    showUndo(t('unitDeleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const tok = token();
+        if (!tok) return;
+        await apiFetch(`/content/units/${unit.id}`, { method: 'DELETE', token: tok, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
+  }
+
+  function removeSection(section: SectionRow) {
+    setTree((prev) => (prev ? { ...prev, sections: prev.sections.filter((s) => s.id !== section.id) } : prev));
+    if (section.units.some((u) => u.lessons.some((l) => l.id === selected))) setSelected(null);
+    showUndo(t('sectionDeleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const tok = token();
+        if (!tok) return;
+        await apiFetch(`/content/sections/${section.id}`, { method: 'DELETE', token: tok, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
+  }
+
   if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !tree) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
@@ -365,6 +404,18 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                   +
                 </button>
               )}
+              {canAuthor && (
+                <button
+                  type="button"
+                  className="tree-del ghost"
+                  aria-label={t('del')}
+                  title={t('del')}
+                  disabled={busy}
+                  onClick={() => removeSection(s)}
+                >
+                  <Icon name="close" />
+                </button>
+              )}
             </div>
 
             {s.units.map((u) => (
@@ -382,6 +433,18 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                   {canAuthor && (
                     <button type="button" className="tree-add" aria-label={t('newLesson')} onClick={() => openCreate({ mode: 'lesson', unitId: u.id })}>
                       +
+                    </button>
+                  )}
+                  {canAuthor && (
+                    <button
+                      type="button"
+                      className="tree-del ghost"
+                      aria-label={t('del')}
+                      title={t('del')}
+                      disabled={busy}
+                      onClick={() => removeUnit(u)}
+                    >
+                      <Icon name="close" />
                     </button>
                   )}
                 </div>

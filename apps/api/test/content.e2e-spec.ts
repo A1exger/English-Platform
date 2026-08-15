@@ -453,4 +453,49 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
       .send({ courseId, ids: [s1.id] })
       .expect(403);
   });
+  // --- deleting a section / unit takes its subtree with it -------------------
+
+  it('deletes units and sections, repacking the level-wide lesson order', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const post = (path: string, body: object) => api().post(`/api/v1/content/${path}`).set(auth2).send(body).expect(201);
+    // A level of its own so the other suites' fixtures are untouched.
+    const orders = async () => {
+      const t = await api().get(`/api/v1/content/courses/${courseId}/tree?level=Advanced`).set(auth2).expect(200);
+      return t.body.sections
+        .flatMap((s: { units: { lessons: { order: number; title: string }[] }[] }) =>
+          s.units.flatMap((u) => u.lessons))
+        .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+        .map((l: { order: number; title: string }) => `${l.order}:${l.title}`);
+    };
+
+    const s1 = (await post('sections', { courseId, level: 'Advanced', title: 'C1-S1' })).body;
+    const s2 = (await post('sections', { courseId, level: 'Advanced', title: 'C1-S2' })).body;
+    const uA = (await post('units', { sectionId: s1.id, title: 'UA' })).body;
+    const uB = (await post('units', { sectionId: s1.id, title: 'UB' })).body;
+    const uC = (await post('units', { sectionId: s2.id, title: 'UC' })).body;
+    // Interleaved across units, so order is genuinely level-wide (INV-1).
+    await post('lessons', { unitId: uA.id, title: 'A1' });
+    await post('lessons', { unitId: uB.id, title: 'B1' });
+    await post('lessons', { unitId: uA.id, title: 'A2' });
+    await post('lessons', { unitId: uC.id, title: 'C1' });
+    expect(await orders()).toEqual(['1:A1', '2:B1', '3:A2', '4:C1']);
+
+    // Removing a unit takes its lessons and closes the gap it left mid-sequence.
+    await api().delete(`/api/v1/content/units/${uA.id}`).set(auth2).expect(200);
+    expect(await orders()).toEqual(['1:B1', '2:C1']);
+
+    // Removing a section takes its remaining units + lessons the same way.
+    await api().delete(`/api/v1/content/sections/${s1.id}`).set(auth2).expect(200);
+    expect(await orders()).toEqual(['1:C1']);
+    const left = await api().get(`/api/v1/content/courses/${courseId}/tree?level=Advanced`).set(auth2).expect(200);
+    expect(left.body.sections.map((s: { id: string }) => s.id)).toEqual([s2.id]);
+
+    // A dense order means the next lesson still appends cleanly.
+    const appended = (await post('lessons', { unitId: uC.id, title: 'C2' })).body;
+    expect(appended.order).toBe(2);
+
+    // RBAC + unknown ids.
+    await api().delete(`/api/v1/content/sections/${s2.id}`).set(auth(student.accessToken)).expect(403);
+    await api().delete(`/api/v1/content/units/does-not-exist`).set(auth2).expect(404);
+  });
 });

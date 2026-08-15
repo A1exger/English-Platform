@@ -566,6 +566,8 @@
     "refineInstruction": "Verfijnen met een instructie",
     "selectLesson": "Kies een les om te bewerken",
     "lessonDeleted": "Les verwijderd",
+    "sectionDeleted": "Sectie verwijderd met de units en lessen",
+    "unitDeleted": "Unit verwijderd met de lessen",
     "taskDeleted": "Taak verwijderd",
     "aiGenerated": "Gegenereerd door AI",
     "aiApprove": "Goedkeuren en publiceren",

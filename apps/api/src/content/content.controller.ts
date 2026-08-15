@@ -215,9 +215,21 @@ export class ContentController {
   }
 
   @Roles('tutor', 'admin')
+  @Delete('sections/:id')
+  deleteSection(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.deleteSection(user, id);
+  }
+
+  @Roles('tutor', 'admin')
   @Post('units')
   createUnit(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateUnitDto) {
     return this.content.createUnit(user, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Delete('units/:id')
+  deleteUnit(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.deleteUnit(user, id);
   }
 
   @Roles('tutor', 'admin')

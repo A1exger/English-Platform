@@ -566,6 +566,8 @@
     "refineInstruction": "Affiner avec une instruction",
     "selectLesson": "Choisissez une leçon à modifier",
     "lessonDeleted": "Leçon supprimée",
+    "sectionDeleted": "Section supprimée avec ses unités et ses leçons",
+    "unitDeleted": "Unité supprimée avec ses leçons",
     "taskDeleted": "Tâche supprimée",
     "aiGenerated": "Généré par l'IA",
     "aiApprove": "Approuver et publier",

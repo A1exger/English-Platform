@@ -5177,3 +5177,21 @@ input[type='radio']:focus-visible {
   outline: 2px solid var(--indigo);
   outline-offset: 1px;
 }
+
+/* Delete on a section/unit head: same 26px square as the neighbouring + so the
+   two line up, and muted until hover — it removes the whole subtree. */
+.tree-section-head .tree-del,
+.tree-unit-head .tree-del {
+  flex: none;
+  inline-size: 26px;
+  block-size: 26px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mist);
+}
+.tree-section-head .tree-del:hover,
+.tree-unit-head .tree-del:hover {
+  color: var(--low, #8c1b3d);
+}
