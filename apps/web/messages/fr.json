@@ -691,15 +691,15 @@
   },
   "notifications": {
     "title": "Notifications",
-    "empty": "Rien de nouveau.",
+    "empty": "Rien de nouveau pour l’instant.",
     "markAll": "Tout marquer comme lu",
-    "generic": "Vous avez une mise à jour.",
-    "homework_assigned": "Nouveau devoir : « {title} ».",
-    "homework_feedback": "Votre professeur a laissé un retour sur « {title} ».",
-    "lesson_booked": "Cours réservé : « {title} ».",
-    "lesson_reminder": "Rappel : « {title} » arrive bientôt.",
-    "homework_submitted": "{student} a rendu le devoir : « {title} ».",
-    "transfer_pending": "{student} a envoyé un paiement — confirmez la réception.",
-    "payment_confirmed": "Paiement confirmé — votre solde a été crédité."
+    "generic": "Il y a du nouveau.",
+    "homework_assigned": "Votre professeur vous a attribué un nouveau devoir : « {title} ». Ouvrez-le pour commencer.",
+    "homework_feedback": "Votre professeur a corrigé « {title} » et vous a laissé un commentaire.",
+    "homework_submitted": "{student} a rendu le devoir « {title} » — il attend votre correction.",
+    "lesson_booked": "Le cours « {title} » a été ajouté à votre planning.",
+    "lesson_reminder": "Votre cours « {title} » commence bientôt.",
+    "transfer_pending": "{student} a signalé un paiement et attend votre confirmation.",
+    "payment_confirmed": "Paiement confirmé — les cours ont été ajoutés à votre solde."
   }
 }

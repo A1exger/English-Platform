@@ -694,12 +694,12 @@
     "empty": "Пока ничего нового.",
     "markAll": "Отметить все",
     "generic": "Есть обновление.",
-    "homework_assigned": "Новое домашнее задание: «{title}».",
-    "homework_feedback": "Преподаватель оставил отзыв на «{title}».",
-    "lesson_booked": "Урок забронирован: «{title}».",
-    "lesson_reminder": "Напоминание: скоро «{title}».",
-    "homework_submitted": "{student} сдал(а) домашнее задание: «{title}».",
-    "transfer_pending": "{student} отправил(а) оплату — подтвердите получение.",
-    "payment_confirmed": "Оплата подтверждена — баланс пополнен."
+    "homework_assigned": "Преподаватель назначил Вам новое домашнее задание: «{title}». Откройте его, чтобы приступить.",
+    "homework_feedback": "Преподаватель проверил работу «{title}» и оставил отзыв.",
+    "homework_submitted": "{student} сдал(а) домашнее задание «{title}» — работа ждёт проверки.",
+    "lesson_booked": "Урок «{title}» добавлен в Ваше расписание.",
+    "lesson_reminder": "Скоро начнётся урок «{title}».",
+    "transfer_pending": "{student} сообщил(а) об оплате и ждёт подтверждения.",
+    "payment_confirmed": "Оплата подтверждена — уроки зачислены на баланс."
   }
 }

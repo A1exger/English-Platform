@@ -691,15 +691,15 @@
   },
   "notifications": {
     "title": "Meldingen",
-    "empty": "Niets nieuws.",
-    "markAll": "Alles gelezen",
+    "empty": "Nog niets nieuws.",
+    "markAll": "Alles als gelezen markeren",
     "generic": "Er is een update.",
-    "homework_assigned": "Nieuw huiswerk: “{title}”.",
-    "homework_feedback": "Je docent gaf feedback op “{title}”.",
-    "lesson_booked": "Les geboekt: “{title}”.",
-    "lesson_reminder": "Herinnering: “{title}” komt eraan.",
-    "homework_submitted": "{student} heeft huiswerk ingeleverd: “{title}”.",
-    "transfer_pending": "{student} heeft een betaling gestuurd — bevestig de ontvangst.",
-    "payment_confirmed": "Betaling bevestigd — je saldo is bijgeschreven."
+    "homework_assigned": "Je docent heeft je nieuw huiswerk gegeven: \"{title}\". Open het om te beginnen.",
+    "homework_feedback": "Je docent heeft \"{title}\" nagekeken en feedback voor je achtergelaten.",
+    "homework_submitted": "{student} heeft het huiswerk \"{title}\" ingeleverd — het wacht op nakijken.",
+    "lesson_booked": "De les \"{title}\" is aan je rooster toegevoegd.",
+    "lesson_reminder": "Je les \"{title}\" begint binnenkort.",
+    "transfer_pending": "{student} heeft een betaling gemeld en wacht op je bevestiging.",
+    "payment_confirmed": "Betaling bevestigd — de lessen zijn aan je saldo toegevoegd."
   }
 }

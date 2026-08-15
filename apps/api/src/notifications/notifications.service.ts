@@ -127,6 +127,24 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Email subject for one event type, in the recipient's locale. Every message
+   * used to arrive as a bare "English Spark Studio", which is unreadable in an
+   * inbox — you could not tell new homework from a payment. Falls back to that
+   * brand line for any template without its own subject.
+   */
+  private async subjectFor(templateKey: string, locale: string): Promise<string> {
+    const brand = String(
+      await this.i18n.translate('messages.notification.subject', { lang: locale }),
+    );
+    return String(
+      await this.i18n.translate(`messages.notification.subject_${templateKey}`, {
+        lang: locale,
+        defaultValue: brand,
+      }),
+    );
+  }
+
+  /**
    * Simulate the background dispatch worker: render each queued notification in
    * its locale and mark it sent. Returns the rendered messages for inspection.
    */
@@ -168,9 +186,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
           where: { id: n.userId },
           select: { email: true },
         });
-        const subject = String(
-          await this.i18n.translate('messages.notification.subject', { lang: n.locale }),
-        );
+        const subject = await this.subjectFor(n.templateKey, n.locale);
         const result = user?.email
           ? await this.mail.sendMail(user.email, subject, text)
           : { delivered: 'skipped' as const, reason: 'no_address' };

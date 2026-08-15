@@ -691,15 +691,15 @@
   },
   "notifications": {
     "title": "الإشعارات",
-    "empty": "لا جديد.",
+    "empty": "لا جديد حتى الآن.",
     "markAll": "تعليم الكل كمقروء",
-    "generic": "لديك تحديث.",
-    "homework_assigned": "واجب جديد: “{title}”.",
-    "homework_feedback": "ترك معلمك ملاحظات على “{title}”.",
-    "lesson_booked": "تم حجز الدرس: “{title}”.",
-    "lesson_reminder": "تذكير: “{title}” قريبًا.",
-    "homework_submitted": "سلّم {student} الواجب: “{title}”.",
-    "transfer_pending": "أرسل {student} دفعة — أكّد الاستلام.",
-    "payment_confirmed": "تم تأكيد الدفع — تمت إضافة الرصيد."
+    "generic": "هناك تحديث.",
+    "homework_assigned": "أسند إليك معلّمك واجبًا جديدًا: \"{title}\". افتحه لتبدأ.",
+    "homework_feedback": "راجع معلّمك \"{title}\" وترك لك ملاحظات.",
+    "homework_submitted": "سلّم {student} الواجب \"{title}\" — وهو بانتظار التصحيح.",
+    "lesson_booked": "تمت إضافة الدرس \"{title}\" إلى جدولك.",
+    "lesson_reminder": "سيبدأ درسك \"{title}\" قريبًا.",
+    "transfer_pending": "أبلغ {student} عن دفعة وينتظر تأكيدك.",
+    "payment_confirmed": "تم تأكيد الدفع — أُضيفت الدروس إلى رصيدك."
   }
 }

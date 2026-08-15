@@ -691,15 +691,15 @@
   },
   "notifications": {
     "title": "Benachrichtigungen",
-    "empty": "Nichts Neues.",
-    "markAll": "Alle gelesen",
-    "generic": "Es gibt ein Update.",
-    "homework_assigned": "Neue Hausaufgabe: „{title}“.",
-    "homework_feedback": "Dein Tutor hat Feedback zu „{title}“ hinterlassen.",
-    "lesson_booked": "Unterricht gebucht: „{title}“.",
-    "lesson_reminder": "Erinnerung: „{title}“ steht an.",
-    "homework_submitted": "{student} hat die Hausaufgabe abgegeben: „{title}“.",
-    "transfer_pending": "{student} hat eine Zahlung gesendet — Empfang bestätigen.",
-    "payment_confirmed": "Zahlung bestätigt — dein Guthaben wurde gutgeschrieben."
+    "empty": "Noch nichts Neues.",
+    "markAll": "Alle als gelesen markieren",
+    "generic": "Es gibt eine Neuigkeit.",
+    "homework_assigned": "Deine Lehrkraft hat dir eine neue Hausaufgabe gegeben: „{title}“. Öffne sie, um zu starten.",
+    "homework_feedback": "Deine Lehrkraft hat „{title}“ korrigiert und dir ein Feedback hinterlassen.",
+    "homework_submitted": "{student} hat die Hausaufgabe „{title}“ abgegeben — sie wartet auf deine Korrektur.",
+    "lesson_booked": "Die Stunde „{title}“ wurde in deinen Zeitplan eingetragen.",
+    "lesson_reminder": "Deine Stunde „{title}“ beginnt bald.",
+    "transfer_pending": "{student} hat eine Zahlung gemeldet und wartet auf deine Bestätigung.",
+    "payment_confirmed": "Zahlung bestätigt — die Stunden wurden deinem Guthaben gutgeschrieben."
   }
 }
