@@ -737,6 +737,20 @@ export class ContentService {
     }
   }
 
+  async renameSection(user: AuthenticatedUser, id: string, title: string) {
+    const section = await this.prisma.section.findUnique({ where: { id } });
+    if (!section) throw new NotFoundException('Section not found');
+    await this.assertCourseEditable(user, section.courseId);
+    return this.prisma.section.update({ where: { id }, data: { title } });
+  }
+
+  async renameUnit(user: AuthenticatedUser, id: string, title: string) {
+    const unit = await this.prisma.unit.findUnique({ where: { id }, include: { section: true } });
+    if (!unit) throw new NotFoundException('Unit not found');
+    await this.assertCourseEditable(user, unit.section.courseId);
+    return this.prisma.unit.update({ where: { id }, data: { title } });
+  }
+
   /** Delete a unit with its lessons (DB cascade), then close the order gaps. */
   async deleteUnit(user: AuthenticatedUser, id: string) {
     const unit = await this.prisma.unit.findUnique({

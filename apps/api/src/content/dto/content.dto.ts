@@ -241,6 +241,13 @@ export class CreateUnitDto {
   order?: number;
 }
 
+/** Rename a section or a unit (title is the only editable field on both). */
+export class RenameNodeDto {
+  @IsString()
+  @Length(1, 200)
+  title!: string;
+}
+
 export class CreateCourseLessonDto {
   @IsString()
   unitId!: string;

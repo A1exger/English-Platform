@@ -24,6 +24,7 @@ import {
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
+  RenameNodeDto,
   ReorderCategoriesDto,
   ReorderCoursesDto,
   ReorderLessonDto,
@@ -215,6 +216,16 @@ export class ContentController {
   }
 
   @Roles('tutor', 'admin')
+  @Patch('sections/:id')
+  renameSection(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: RenameNodeDto,
+  ) {
+    return this.content.renameSection(user, id, dto.title);
+  }
+
+  @Roles('tutor', 'admin')
   @Delete('sections/:id')
   deleteSection(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.content.deleteSection(user, id);
@@ -224,6 +235,16 @@ export class ContentController {
   @Post('units')
   createUnit(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateUnitDto) {
     return this.content.createUnit(user, dto);
+  }
+
+  @Roles('tutor', 'admin')
+  @Patch('units/:id')
+  renameUnit(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: RenameNodeDto,
+  ) {
+    return this.content.renameUnit(user, id, dto.title);
   }
 
   @Roles('tutor', 'admin')

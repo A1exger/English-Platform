@@ -140,13 +140,19 @@ export function lessonPrompt(
       `Objectives: ${ctx.objectives.join('; ')}\nAspects: ${brief.aspects.join(', ')}\n` +
       langLine(brief) +
       (brief.notes ? `Notes: ${brief.notes}\n` : '') +
-      (ctx.instruction ? `\nREVISION INSTRUCTION: ${ctx.instruction}\nApply it; keep everything else consistent.\n` : '') +
       `Return JSON: {"pages":[{"type":"grammar|practice|listening|reading","text":"...",` +
       `"media":[{"kind":"audio|image|video","note":"what to show/play","transcript":"(listening audio only) full transcript"}],` +
       `"tasks":[<task>]}],"wordlist":[{"word":"...","translation":"..."}],"grammar":{"title":"...","meaning":"...","form":"..."}}\n` +
-      `2-4 pages, 1-4 tasks per page, 4-8 wordlist entries.\n` +
+      `By default: 2-4 pages, 1-4 tasks per page, 4-8 wordlist entries.\n` +
       `Media plan: a listening page MUST include one "audio" item with a full transcript. ` +
-      `For images/videos, describe them in "note" — do NOT invent URLs; the teacher uploads the file.`
+      `For images/videos, describe them in "note" — do NOT invent URLs; the teacher uploads the file.` +
+      // Last word, and explicitly above the default counts: a revision that asks
+      // for "at least 15 words" used to be overruled by the "4-8 wordlist
+      // entries" line that followed it, so the lesson came back unchanged.
+      (ctx.instruction
+        ? `\n\nREVISION INSTRUCTION — this OVERRIDES the defaults above, including every count: ${ctx.instruction}\n` +
+          `Follow it exactly, even where it contradicts the default numbers; keep everything it does not mention consistent with the current lesson.`
+        : '')
   };
 }
 

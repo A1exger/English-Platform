@@ -138,11 +138,17 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [create, setCreate] = useState<CreateTarget | null>(null);
   const [draft, setDraft] = useState({ title: '', optional: false });
-  const [renaming, setRenaming] = useState<string | null>(null);
+  // Which node is being renamed. Sections, units and lessons all rename the
+  // same way, so the kind rides along to pick the endpoint on commit.
+  const [renaming, setRenaming] = useState<{ kind: 'section' | 'unit' | 'lesson'; id: string } | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [drag, setDrag] = useState<{ kind: 'section' | 'unit' | 'lesson'; id: string; parentId: string } | null>(null);
   const [previewKey, setPreviewKey] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
+  // Bumped only when an AI job finishes, to tell the open lesson editor to
+  // re-pull. Ordinary edits must NOT bump it: the editor would then reload
+  // under the author mid-typing.
+  const [aiRevision, setAiRevision] = useState(0);
 
   const token = () => tokenStore.get();
 
@@ -266,19 +272,28 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
     }
   }
 
-  function startRename(lesson: LessonRow) {
-    setRenaming(lesson.id);
-    setRenameValue(lesson.title);
+  function startRename(kind: 'section' | 'unit' | 'lesson', node: { id: string; title: string }) {
+    setRenaming({ kind, id: node.id });
+    setRenameValue(node.title);
   }
+
+  const ENDPOINT = { section: 'sections', unit: 'units', lesson: 'lessons' } as const;
 
   async function commitRename() {
     if (!renaming) return;
-    const id = renaming;
+    const { kind, id } = renaming;
     const title = renameValue.trim();
     setRenaming(null);
-    const current = allLessons().find((l) => l.id === id);
-    if (!title || (current && current.title === title)) return;
-    await call(`/content/lessons/${id}`, 'PATCH', { title });
+    if (!title || currentTitle(kind, id) === title) return;
+    await call(`/content/${ENDPOINT[kind]}/${id}`, 'PATCH', { title });
+  }
+
+  /** The stored title, so an unchanged (or empty) edit costs no request. */
+  function currentTitle(kind: 'section' | 'unit' | 'lesson', id: string): string | undefined {
+    if (!tree) return undefined;
+    if (kind === 'section') return tree.sections.find((s) => s.id === id)?.title;
+    if (kind === 'unit') return tree.sections.flatMap((s) => s.units).find((u) => u.id === id)?.title;
+    return allLessons().find((l) => l.id === id)?.title;
   }
 
   const allLessons = () =>
@@ -398,7 +413,32 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
               onDragEnd={() => setDrag(null)}
             >
               {canAuthor && <span className="drag-handle" aria-hidden>⠿</span>}
-              <h3>{s.title}</h3>
+              {renaming?.kind === 'section' && renaming.id === s.id ? (
+                <input
+                  className="tree-rename"
+                  autoFocus
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitRename();
+                    else if (e.key === 'Escape') setRenaming(null);
+                  }}
+                />
+              ) : (
+                <h3 onDoubleClick={() => canAuthor && startRename('section', s)}>{s.title}</h3>
+              )}
+              {canAuthor && (
+                <button
+                  type="button"
+                  className="tree-edit"
+                  aria-label={t('rename')}
+                  title={t('rename')}
+                  onClick={() => startRename('section', s)}
+                >
+                  <Icon name="edit" />
+                </button>
+              )}
               {canAuthor && (
                 <button type="button" className="tree-add" aria-label={t('newUnit')} onClick={() => openCreate({ mode: 'unit', sectionId: s.id })}>
                   +
@@ -429,7 +469,32 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                   onDragEnd={() => setDrag(null)}
                 >
                   {canAuthor && <span className="drag-handle" aria-hidden>⠿</span>}
-                  <strong>{u.title}</strong>
+                  {renaming?.kind === 'unit' && renaming.id === u.id ? (
+                    <input
+                  className="tree-rename"
+                  autoFocus
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={commitRename}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitRename();
+                    else if (e.key === 'Escape') setRenaming(null);
+                  }}
+                />
+                  ) : (
+                    <strong onDoubleClick={() => canAuthor && startRename('unit', u)}>{u.title}</strong>
+                  )}
+                  {canAuthor && (
+                    <button
+                      type="button"
+                      className="tree-edit"
+                      aria-label={t('rename')}
+                      title={t('rename')}
+                      onClick={() => startRename('unit', u)}
+                    >
+                      <Icon name="edit" />
+                    </button>
+                  )}
                   {canAuthor && (
                     <button type="button" className="tree-add" aria-label={t('newLesson')} onClick={() => openCreate({ mode: 'lesson', unitId: u.id })}>
                       +
@@ -454,7 +519,7 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                 ) : (
                   <ul className="tree-lessons">
                     {u.lessons.map((l) => {
-                      const isRenaming = renaming === l.id;
+                      const isRenaming = renaming?.kind === 'lesson' && renaming.id === l.id;
                       return (
                         <li
                           key={l.id}
@@ -495,7 +560,7 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                               type="button"
                               className="tree-lesson-title"
                               onClick={() => setSelected(l.id)}
-                              onDoubleClick={() => startRename(l)}
+                              onDoubleClick={() => startRename('lesson', l)}
                             >
                               {l.title}
                               {l.optional && <span className="badge-opt">{t('optionalLesson')}</span>}
@@ -507,6 +572,17 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                             </Link>
                           )}
 
+                          {canAuthor && !isRenaming && (
+                            <button
+                              type="button"
+                              className="tree-edit"
+                              aria-label={t('rename')}
+                              title={t('rename')}
+                              onClick={() => startRename('lesson', l)}
+                            >
+                              <Icon name="edit" />
+                            </button>
+                          )}
                           {canAuthor && (
                             <button type="button" className="tree-del ghost" aria-label={t('del')} disabled={busy} onClick={() => removeLesson(l)}>
                               <Icon name="close" />
@@ -599,7 +675,15 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
       />
 
       {canAuthor && (
-        <CourseAiPanel courseId={courseId} courseStatus={tree.course.status} level={level} onChanged={refresh} />
+        <CourseAiPanel
+          courseId={courseId}
+          courseStatus={tree.course.status}
+          level={level}
+          onChanged={() => {
+            refresh();
+            setAiRevision((n) => n + 1);
+          }}
+        />
       )}
 
       {canAuthor ? (
@@ -614,7 +698,14 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                     <Icon name="eye" /> {t('preview')}
                   </button>
                 </div>
-                <LessonEditor lessonId={selected} onChanged={refresh} t={t} tEx={tEx} locale={locale} />
+                <LessonEditor
+                  lessonId={selected}
+                  reloadToken={aiRevision}
+                  onChanged={refresh}
+                  t={t}
+                  tEx={tEx}
+                  locale={locale}
+                />
               </>
             ) : (
               <div className="card empty-pane"><p className="note">{t('selectLesson')}</p></div>
@@ -702,12 +793,15 @@ const TRANSLATE_LOCALES = ['en', 'ru', 'de', 'fr', 'nl', 'ar'];
 
 function LessonEditor({
   lessonId,
+  reloadToken,
   onChanged,
   t,
   tEx,
   locale
 }: {
   lessonId: string;
+  /** Bumped by the parent when an AI job rewrote this lesson server-side. */
+  reloadToken: number;
   onChanged: () => void;
   t: ReturnType<typeof useTranslations<'courses'>>;
   tEx: ReturnType<typeof useTranslations<'exercises'>>;
@@ -743,7 +837,12 @@ function LessonEditor({
       meaning: d.grammarReference?.meaning ?? '',
       form: d.grammarReference?.form ?? ''
     });
-  }, [lessonId, locale]);
+    // `reloadToken` is not read here: it is the parent's signal that an AI
+    // revision replaced this lesson's content, which must rebuild this callback
+    // so the effect below re-runs. Without it the editor kept the pre-revision
+    // wordlist on screen — and autosave then wrote that stale text back over
+    // whatever the revision had just generated.
+  }, [lessonId, locale, reloadToken]);
 
   useEffect(() => {
     void load();
@@ -1136,11 +1235,10 @@ interface TaskFormState {
   prompt: string;
 }
 
-const defaultTaskForm = (): TaskFormState => ({
-  type: 'sentence_ordering',
-  gradingMode: 'AUTO',
-  aspect: 'Grammar',
-  minutes: '5',
+// The fields start EMPTY. They used to be pre-filled with these examples as real
+// values, so an author who did not notice saved a task about going to school.
+// The examples now live in `placeholder`, where they cannot be submitted.
+const TASK_EXAMPLES = {
   words: 'I go to school',
   pairs: 'dog = chien',
   fill: 'I [go] to [school].',
@@ -1149,8 +1247,48 @@ const defaultTaskForm = (): TaskFormState => ({
   question: 'He ___ up at 6.',
   options: 'wake, wakes',
   correct: 'wakes',
+  prompt: 'Describe your last holiday.'
+} as const;
+
+const defaultTaskForm = (): TaskFormState => ({
+  type: 'sentence_ordering',
+  gradingMode: 'AUTO',
+  aspect: 'Grammar',
+  minutes: '5',
+  words: '',
+  pairs: '',
+  fill: '',
+  categories: '',
+  items: '',
+  question: '',
+  options: '',
+  correct: '',
   prompt: ''
 });
+
+/**
+ * Whether the chosen type has everything it needs. With the examples gone the
+ * form can be submitted empty, which the API would reject with a 400 — so the
+ * button is held until the type's own fields are filled.
+ */
+function taskFormReady(f: TaskFormState): boolean {
+  switch (f.type) {
+    case 'sentence_ordering':
+      return f.words.trim().split(/\s+/).filter(Boolean).length >= 2;
+    case 'word_matching':
+      return parsePairs(f.pairs).length >= 1;
+    case 'gap_fill':
+      return parseFillAnswers(f.fill).length >= 1;
+    case 'categorization':
+      return f.categories.split(',').filter((c) => c.trim()).length >= 2 && parseItems(f.items).length >= 1;
+    case 'multiple_choice': {
+      const options = f.options.split(',').map((o) => o.trim()).filter(Boolean);
+      return !!f.question.trim() && options.length >= 2 && options.includes(f.correct.trim());
+    }
+    default:
+      return !!f.prompt.trim();
+  }
+}
 
 function buildTaskPayload(f: TaskFormState): { payload: Record<string, unknown>; answerKey?: Record<string, unknown> } {
   if (f.type === 'sentence_ordering') {
@@ -1235,31 +1373,31 @@ function TaskForm({
       </div>
 
       {form.type === 'sentence_ordering' && (
-        <label className="ed-field">{tEx('words')}<input value={form.words} onChange={(e) => set({ words: e.target.value })} /></label>
+        <label className="ed-field">{tEx('words')}<input value={form.words} placeholder={TASK_EXAMPLES.words} onChange={(e) => set({ words: e.target.value })} /></label>
       )}
       {form.type === 'word_matching' && (
-        <label className="ed-field">{tEx('pairs')}<textarea value={form.pairs} onChange={(e) => set({ pairs: e.target.value })} /></label>
+        <label className="ed-field">{tEx('pairs')}<textarea value={form.pairs} placeholder={TASK_EXAMPLES.pairs} onChange={(e) => set({ pairs: e.target.value })} /></label>
       )}
       {form.type === 'gap_fill' && (
-        <label className="ed-field">{tEx('fillText')}<textarea value={form.fill} onChange={(e) => set({ fill: e.target.value })} /></label>
+        <label className="ed-field">{tEx('fillText')}<textarea value={form.fill} placeholder={TASK_EXAMPLES.fill} onChange={(e) => set({ fill: e.target.value })} /></label>
       )}
       {form.type === 'categorization' && (
         <>
-          <label className="ed-field">{tEx('categories')}<input value={form.categories} onChange={(e) => set({ categories: e.target.value })} /></label>
-          <label className="ed-field">{tEx('items')}<textarea value={form.items} onChange={(e) => set({ items: e.target.value })} /></label>
+          <label className="ed-field">{tEx('categories')}<input value={form.categories} placeholder={TASK_EXAMPLES.categories} onChange={(e) => set({ categories: e.target.value })} /></label>
+          <label className="ed-field">{tEx('items')}<textarea value={form.items} placeholder={TASK_EXAMPLES.items} onChange={(e) => set({ items: e.target.value })} /></label>
         </>
       )}
       {form.type === 'multiple_choice' && (
         <>
-          <label className="ed-field">{t('question')}<input value={form.question} onChange={(e) => set({ question: e.target.value })} /></label>
-          <label className="ed-field">{t('options')}<input value={form.options} onChange={(e) => set({ options: e.target.value })} /></label>
-          <label className="ed-field">{t('correct')}<input value={form.correct} onChange={(e) => set({ correct: e.target.value })} /></label>
+          <label className="ed-field">{t('question')}<input value={form.question} placeholder={TASK_EXAMPLES.question} onChange={(e) => set({ question: e.target.value })} /></label>
+          <label className="ed-field">{t('options')}<input value={form.options} placeholder={TASK_EXAMPLES.options} onChange={(e) => set({ options: e.target.value })} /></label>
+          <label className="ed-field">{t('correct')}<input value={form.correct} placeholder={TASK_EXAMPLES.correct} onChange={(e) => set({ correct: e.target.value })} /></label>
         </>
       )}
       {(form.type === 'audio' || form.type === 'essay' || form.type === 'discussion') && (
-        <label className="ed-field">{tEx('prompt')}<input value={form.prompt} onChange={(e) => set({ prompt: e.target.value })} /></label>
+        <label className="ed-field">{tEx('prompt')}<input value={form.prompt} placeholder={TASK_EXAMPLES.prompt} onChange={(e) => set({ prompt: e.target.value })} /></label>
       )}
-      <button type="button" disabled={busy} onClick={onSubmit}>{t('addTask')}</button>
+      <button type="button" disabled={busy || !taskFormReady(form)} onClick={onSubmit}>{t('addTask')}</button>
     </div>
   );
 }

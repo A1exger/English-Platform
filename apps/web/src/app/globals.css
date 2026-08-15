@@ -5195,3 +5195,32 @@ input[type='radio']:focus-visible {
 .tree-unit-head .tree-del:hover {
   color: var(--low, #8c1b3d);
 }
+
+/* Rename affordance on a tree node — the pencil sits before the + / × so the
+   head reads title → edit → add → delete, and stays quiet until hover. */
+.tree-edit {
+  flex: none;
+  inline-size: 26px;
+  block-size: 26px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--mist);
+  cursor: pointer;
+}
+.tree-edit:hover {
+  color: var(--indigo);
+  background: transparent;
+}
+.tree-section-head .tree-edit,
+.tree-unit-head .tree-edit {
+  margin-inline-start: auto;
+}
+/* Only the first auto-margin should push; the + and × follow the pencil. */
+.tree-section-head .tree-edit ~ .tree-add,
+.tree-unit-head .tree-edit ~ .tree-add {
+  margin-inline-start: 0;
+}

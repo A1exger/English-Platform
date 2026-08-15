@@ -498,4 +498,27 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().delete(`/api/v1/content/sections/${s2.id}`).set(auth(student.accessToken)).expect(403);
     await api().delete(`/api/v1/content/units/does-not-exist`).set(auth2).expect(404);
   });
+
+  it('renames sections and units', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const s = (await api().post('/api/v1/content/sections').set(auth2)
+      .send({ courseId, level: 'UpperIntermediate', title: 'Old section' }).expect(201)).body;
+    const u = (await api().post('/api/v1/content/units').set(auth2)
+      .send({ sectionId: s.id, title: 'Old unit' }).expect(201)).body;
+
+    await api().patch(`/api/v1/content/sections/${s.id}`).set(auth2).send({ title: 'New section' }).expect(200);
+    await api().patch(`/api/v1/content/units/${u.id}`).set(auth2).send({ title: 'New unit' }).expect(200);
+
+    const tree = await api()
+      .get(`/api/v1/content/courses/${courseId}/tree?level=UpperIntermediate`)
+      .set(auth2)
+      .expect(200);
+    expect(tree.body.sections[0].title).toBe('New section');
+    expect(tree.body.sections[0].units[0].title).toBe('New unit');
+
+    // An empty title is rejected, and a student cannot rename at all.
+    await api().patch(`/api/v1/content/sections/${s.id}`).set(auth2).send({ title: '' }).expect(400);
+    await api().patch(`/api/v1/content/units/${u.id}`).set(auth(student.accessToken)).send({ title: 'x' }).expect(403);
+    await api().patch(`/api/v1/content/sections/nope`).set(auth2).send({ title: 'x' }).expect(404);
+  });
 });
