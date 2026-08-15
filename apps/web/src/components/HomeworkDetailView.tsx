@@ -5,6 +5,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { notifyHomeworkChanged } from '@/lib/homework-events';
 import { ExercisePlayer } from './ExercisePlayer';
 import { Skeleton } from './Skeleton';
 import { ScoreRing } from './ScoreRing';
@@ -83,6 +84,8 @@ export function HomeworkDetailView({ homeworkId }: { homeworkId: string }) {
         body: { content: answer }
       });
       await load();
+      // Handing the work in clears it from the rail's outstanding count.
+      notifyHomeworkChanged();
     } finally {
       setBusy(false);
     }

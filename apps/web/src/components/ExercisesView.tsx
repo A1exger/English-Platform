@@ -698,16 +698,24 @@ export function ExercisesView() {
                 {assignFor === ex.id && (
                   <div className="inline-form inline-form-col">
                     <span className="muted">{t('chooseStudents')}</span>
-                    {students.map((s) => (
-                      <label key={s.studentProfileId} className="check">
-                        <input
-                          type="checkbox"
-                          checked={!!picked[s.studentProfileId]}
-                          onChange={(e) => setPicked({ ...picked, [s.studentProfileId]: e.target.checked })}
-                        />
-                        {s.name}
-                      </label>
-                    ))}
+                    {/* A wrapping row of toggles rather than one checkbox per
+                        line: a tutor with a dozen students used to get a column
+                        taller than the exercise list itself. */}
+                    <div className="pick-chips">
+                      {students.map((s) => (
+                        <label
+                          key={s.studentProfileId}
+                          className={`pick-chip${picked[s.studentProfileId] ? ' on' : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!picked[s.studentProfileId]}
+                            onChange={(e) => setPicked({ ...picked, [s.studentProfileId]: e.target.checked })}
+                          />
+                          {s.name}
+                        </label>
+                      ))}
+                    </div>
                     <label>{t('due')}<input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></label>
                     <button
                       type="button"

@@ -10,6 +10,7 @@ import { ExerciseState } from './ExerciseRenderer';
 import { AssignmentResult, AssignmentResultView, NextLessonCard } from './AssignmentResultView';
 import { Skeleton } from './Skeleton';
 import { Stepper } from './Stepper';
+import { notifyHomeworkChanged } from '@/lib/homework-events';
 
 interface Card extends ContentTask {
   order: number;
@@ -88,8 +89,10 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
       `/assignments/cards/${cardId}/submit`,
       { method: 'POST', token, locale, body: { state } }
     );
-    // Refresh the live result panel + statuses after each answer.
+    // Refresh the live result panel + statuses after each answer, and let the
+    // rail recount — answering the last card clears this homework from the badge.
     void load();
+    notifyHomeworkChanged();
     return { completed: r.completed, score: r.score, correct: r.score === 10, solution: r.solution };
   };
 

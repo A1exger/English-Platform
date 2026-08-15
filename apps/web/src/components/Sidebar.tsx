@@ -8,9 +8,28 @@ import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { AccountMenu } from './AccountMenu';
 import { CommandPalette } from './CommandPalette';
 import { NotificationsBell } from './NotificationsBell';
+import { Icon, type IconName } from './Icon';
+import { HOMEWORK_CHANGED_EVENT } from '@/lib/homework-events';
 
 type Item = { key: string; href: string; badge?: 'homework' };
 type Group = { labelKey: string; items: Item[] };
+
+// One glyph per destination, so the rail is scannable by shape and not only by
+// label — which also keeps it readable once the labels are translated.
+const NAV_ICONS: Record<string, IconName> = {
+  overview: 'home',
+  schedule: 'calendar',
+  students: 'users',
+  assignments: 'clipboard',
+  homework: 'clipboard',
+  courses: 'book',
+  exercises: 'layers',
+  materials: 'folder',
+  analytics: 'chart',
+  users: 'shield',
+  progress: 'target',
+  dictionary: 'bookmark'
+};
 
 // Grouped, role-scoped navigation. Account actions live in the rail footer,
 // not in the nav list. Students get a single "homework" entry (assignments is a
@@ -77,6 +96,19 @@ export function Sidebar() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
 
+  // Count outstanding work from BOTH homework surfaces (Homework model +
+  // lesson-player ContentAssignments), which the tab now merges.
+  const loadHomeworkCount = useCallback(async () => {
+    const token = tokenStore.get();
+    if (!token) return;
+    const [hw, as] = await Promise.all([
+      apiFetch<{ status: string }[]>('/homework', { token, locale }).catch(() => []),
+      apiFetch<{ status: string }[]>('/assignments', { token, locale }).catch(() => [])
+    ]);
+    const open = (rows: { status: string }[]) => rows.filter((r) => r.status === 'assigned').length;
+    setHwCount(open(hw) + open(as));
+  }, [locale]);
+
   useEffect(() => {
     const token = tokenStore.get();
     if (!token) return;
@@ -84,28 +116,26 @@ export function Sidebar() {
     fetchMe(token, locale)
       .then((profile) => {
         if (!alive) return;
+        // The count is fetched by the effect below, which fires as soon as the
+        // role lands here — doing it again in this branch just doubles the call.
         setMe(profile);
-        if (profile.role === 'student') {
-          // Count outstanding work from BOTH homework surfaces (Homework model
-          // + lesson-player ContentAssignments), which the tab now merges.
-          Promise.all([
-            apiFetch<{ status: string }[]>('/homework', { token, locale }).catch(() => []),
-            apiFetch<{ status: string }[]>('/assignments', { token, locale }).catch(() => [])
-          ])
-            .then(([hw, as]) => {
-              if (!alive) return;
-              const open = (rows: { status: string }[]) =>
-                rows.filter((r) => r.status === 'assigned').length;
-              setHwCount(open(hw) + open(as));
-            })
-            .catch(() => undefined);
-        }
       })
       .catch(() => undefined);
     return () => {
       alive = false;
     };
   }, [locale]);
+
+  // Keep the badge honest without polling: recount when a student finishes a
+  // piece of work (the player fires this), and on every navigation, which also
+  // covers work done in another tab.
+  useEffect(() => {
+    if (me?.role !== 'student') return;
+    void loadHomeworkCount();
+    const onChanged = () => void loadHomeworkCount();
+    window.addEventListener(HOMEWORK_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(HOMEWORK_CHANGED_EVENT, onChanged);
+  }, [me?.role, pathname, loadHomeworkCount]);
 
   // Global ⌘K / Ctrl-K. Signed-out users never see this rail, so the palette
   // can never open on the sign-in screen.
@@ -159,7 +189,8 @@ export function Sidebar() {
                   href={it.href}
                   className={`nav-item${pathname === it.href ? ' active' : ''}`}
                 >
-                  {nav(it.key)}
+                  {NAV_ICONS[it.key] && <Icon name={NAV_ICONS[it.key]} size={16} />}
+                  <span className="nav-item-label">{nav(it.key)}</span>
                   {it.badge === 'homework' && hwCount > 0 && (
                     <span className="nav-badge">{hwCount}</span>
                   )}

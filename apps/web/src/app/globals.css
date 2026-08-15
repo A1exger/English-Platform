@@ -257,6 +257,7 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding: 8px 12px;
   border-radius: var(--r-md);
   color: var(--slate);
@@ -279,10 +280,34 @@ button:disabled {
   color: var(--indigo-700);
   font-weight: 600;
 }
-.nav-badge {
+/* Icon sits fixed at the start, label takes the slack, badge rides the end. */
+.nav-item > .icon {
+  flex: none;
   color: var(--mist);
-  font-size: 13px;
-  font-weight: 500;
+}
+.nav-item:hover > .icon,
+.nav-item.active > .icon {
+  color: currentColor;
+}
+.nav-item-label {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A count, so it reads as a badge rather than as trailing text. */
+.nav-badge {
+  flex: none;
+  min-inline-size: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--spark, #d6006c);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  font-weight: 600;
   font-family: var(--font-mono);
 }
 
@@ -2346,6 +2371,12 @@ button.link-button:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+/* The account block takes the slack and truncates its name; the bell keeps its
+   intrinsic width so a long name can never squeeze it out of the rail. */
+.rail-foot > .account {
+  flex: 1 1 auto;
+  min-inline-size: 0;
 }
 
 /* ——— in-app notifications (rail bell) ——— */
@@ -4769,7 +4800,10 @@ input[type='radio']:focus-visible {
   flex-wrap: wrap;
   margin-block: 12px;
 }
-.avatar {
+/* Scoped to the profile header on purpose: as a bare `.avatar` this rule sat
+   later in the file than the rail's 30px avatar and won the cascade, blowing the
+   account button up to 56px and pushing the notification bell off the rail. */
+.profile-head .avatar {
   inline-size: 56px;
   block-size: 56px;
   border-radius: var(--r-pill);
@@ -5098,3 +5132,48 @@ input[type='radio']:focus-visible {
 .task-mcq-opt.active { border-color: var(--indigo); background: var(--indigo-50); }
 .task-mcq-opt.ok { border-color: var(--high); background: var(--high-100); }
 .task-mcq-opt.bad { border-color: var(--low); background: var(--low-100); }
+
+/* ——— student picker: a wrapping line of toggles ——— */
+.pick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block: 2px;
+}
+.pick-chip {
+  position: relative; /* contains the visually-hidden checkbox below */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--slate);
+  cursor: pointer;
+  white-space: nowrap;
+  background: var(--card);
+}
+.pick-chip:hover {
+  border-color: var(--indigo);
+  color: var(--ink);
+}
+.pick-chip.on {
+  border-color: var(--indigo);
+  background: var(--indigo-50);
+  color: var(--indigo-700);
+  font-weight: 500;
+}
+/* The tick is the chip itself; keep the box for a11y but out of the layout. */
+.pick-chip input {
+  position: absolute;
+  opacity: 0;
+  inline-size: 1px;
+  block-size: 1px;
+  pointer-events: none;
+}
+.pick-chip:focus-within {
+  outline: 2px solid var(--indigo);
+  outline-offset: 1px;
+}
