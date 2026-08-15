@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 
-const LEVELS = ['Beginner', 'Elementary', 'PreIntermediate', 'Intermediate', 'UpperIntermediate', 'Advanced'];
 const ASPECTS = ['Grammar', 'Reading', 'Listening', 'Vocabulary', 'Speaking', 'Writing'];
 
 interface Job {
@@ -41,7 +40,6 @@ export function CourseAiPanel({
   const [refine, setRefine] = useState('');
   const [genOpen, setGenOpen] = useState(false);
   const [topic, setTopic] = useState('');
-  const [genLevel, setGenLevel] = useState(level);
   const [aspects, setAspects] = useState<string[]>(['Grammar']);
 
   const loadJobs = useCallback(async () => {
@@ -115,7 +113,7 @@ export function CourseAiPanel({
         locale,
         // `language` drives the gloss language of the generated wordlist and
         // vocabulary tasks. Omitting it left the model to pick one on its own.
-        body: { targetType: 'LESSON', courseId, topic: topic.trim(), level: genLevel, aspects, language: locale }
+        body: { targetType: 'LESSON', courseId, topic: topic.trim(), level, aspects, language: locale }
       });
       setTopic('');
       setGenOpen(false);
@@ -158,14 +156,9 @@ export function CourseAiPanel({
           {genOpen ? (
             <div className="form-grid">
               <label>{t('aiTopic')}<input autoFocus value={topic} onChange={(e) => setTopic(e.target.value)} /></label>
-              <label>
-                {t('level')}
-                <select value={genLevel} onChange={(e) => setGenLevel(e.target.value)}>
-                  {LEVELS.map((l) => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </select>
-              </label>
+              {/* No level picker here: the level tabs above the editor already
+                  choose one, and the lesson is generated into the level being
+                  edited. A second control could only disagree with them. */}
               <div className="field">
                 <span>{t('aiAspects')}</span>
                 <div className="tabs tabs-inline filter-chips">
