@@ -416,6 +416,7 @@
     "fill": "Fill the blanks",
     "categorize": "Categorize",
     "words": "Words (correct order)",
+    "statements": "Statements (one per line: text = true/false)",
     "wordsHint": "Separate words by spaces.",
     "prompt": "Prompt (optional)",
     "pairs": "Pairs",
@@ -611,7 +612,9 @@
     "essayPlaceholder": "Write your answer…",
     "back": "Back to course",
     "min": "min",
-    "saved": "Saved"
+    "saved": "Saved",
+    "true": "True",
+    "false": "False"
   },
   "assignments": {
     "title": "Assignments",

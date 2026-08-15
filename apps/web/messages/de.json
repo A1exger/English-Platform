@@ -416,6 +416,7 @@
     "fill": "Lücken füllen",
     "categorize": "Kategorisieren",
     "words": "Wörter (richtige Reihenfolge)",
+    "statements": "Aussagen (eine pro Zeile: Text = true/false)",
     "wordsHint": "Wörter mit Leerzeichen trennen.",
     "prompt": "Hinweis (optional)",
     "pairs": "Paare",
@@ -611,7 +612,9 @@
     "essayPlaceholder": "Schreibe deine Antwort…",
     "back": "Zum Kurs",
     "min": "Min",
-    "saved": "Gespeichert"
+    "saved": "Gespeichert",
+    "true": "Richtig",
+    "false": "Falsch"
   },
   "assignments": {
     "title": "Aufgaben",

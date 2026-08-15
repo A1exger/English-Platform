@@ -20,6 +20,21 @@ describe('generation pipeline (pure)', () => {
     // MCQ correct must be one of the options
     expect(normalizeTask({ type: 'multiple_choice', payload: { question: 'Q', options: ['a', 'b'] }, answerKey: { correct: 'z' } })).toBeNull();
     expect(normalizeTask({ type: 'multiple_choice', payload: { question: 'Q', options: ['a', 'b'] }, answerKey: { correct: 'a' } })).not.toBeNull();
+    // true_false: values[] must exist and match statements[] one-for-one, or the
+    // grader would score later statements against the wrong answer
+    expect(
+      normalizeTask({ type: 'true_false', payload: { statements: ['a', 'b'] }, answerKey: { values: [true] } }),
+    ).toBeNull();
+    expect(normalizeTask({ type: 'true_false', payload: { statements: ['a', 'b'] } })).toBeNull();
+    expect(normalizeTask({ type: 'true_false', payload: { statements: ['only'] }, answerKey: { values: [true] } })).toBeNull();
+    const tf = normalizeTask({
+      type: 'true_false',
+      payload: { statements: ['a', 'b'] },
+      answerKey: { values: [true, 'yes'] },
+    });
+    // anything not exactly `true` is coerced to false rather than kept as-is
+    expect(tf?.answerKey).toEqual({ values: [true, false] });
+
     // unknown type dropped; unknown aspect repaired to Grammar
     expect(normalizeTask({ type: 'bogus', payload: {} })).toBeNull();
     expect(

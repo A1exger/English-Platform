@@ -47,6 +47,13 @@ export function scoreContentTask(
   } else if (type === 'multiple_choice') {
     total = 1;
     if (norm(state.answer) === norm(answerKey.correct)) right = 1;
+  } else if (type === 'true_false') {
+    // One statement = one point, so a reading check scores like the other
+    // multi-part types rather than being all-or-nothing.
+    const key = (answerKey.values as boolean[]) ?? [];
+    const given = (state.values as (boolean | null)[]) ?? [];
+    total = key.length;
+    for (let i = 0; i < key.length; i++) if (given[i] === key[i]) right++;
   }
 
   const score = total ? round1((right / total) * 10) : 0;
@@ -66,6 +73,8 @@ export function toContentQuestion(
   if (type === 'word_matching') return toQuestion('match', '', payload);
   if (type === 'gap_fill') return toQuestion('fill', '', payload);
   if (type === 'categorization') return toQuestion('categorize', '', payload);
-  // multiple_choice / audio / essay / discussion
+  // multiple_choice / true_false / audio / essay / discussion.
+  // true_false is safe to pass through: the payload holds only the statements,
+  // the booleans live in the answerKey.
   return { type, ...payload };
 }

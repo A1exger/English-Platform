@@ -499,6 +499,55 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().delete(`/api/v1/content/units/does-not-exist`).set(auth2).expect(404);
   });
 
+  it('true_false: statements are gradable, per-statement, and hide their answers', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const s = (await api().post('/api/v1/content/sections').set(auth2)
+      .send({ courseId, level: 'Beginner', title: 'Reading' }).expect(201)).body;
+    const u = (await api().post('/api/v1/content/units').set(auth2).send({ sectionId: s.id, title: 'U' }).expect(201)).body;
+    const lesson = (await api().post('/api/v1/content/lessons').set(auth2).send({ unitId: u.id, title: 'Article' }).expect(201)).body;
+    // A reading page is an article page: text + tasks answerable from it.
+    const page = (await api().post('/api/v1/content/pages').set(auth2)
+      .send({ courseLessonId: lesson.id, type: 'reading', text: 'Peter lives in London. He is a teacher.' }).expect(201)).body;
+
+    const task = (await api().post('/api/v1/content/tasks').set(auth2).send({
+      pageId: page.id,
+      type: 'true_false',
+      gradingMode: 'AUTO',
+      aspect: 'Reading',
+      payload: { statements: ['Peter lives in London.', 'Peter is a doctor.'] },
+      answerKey: { values: [true, false] }
+    }).expect(201)).body;
+
+    // statements[] and values[] must line up.
+    await api().post('/api/v1/content/tasks').set(auth2).send({
+      pageId: page.id,
+      type: 'true_false',
+      gradingMode: 'AUTO',
+      aspect: 'Reading',
+      payload: { statements: ['One.', 'Two.'] },
+      answerKey: { values: [true] }
+    }).expect(400);
+
+    await api().patch(`/api/v1/content/courses/${courseId}`).set(auth2).send({ status: 'published' }).expect(200);
+
+    // The student gets the statements but never the booleans.
+    const detail = await api().get(`/api/v1/content/lessons/${lesson.id}`).set(auth(student.accessToken)).expect(200);
+    const served = detail.body.pages.find((p: { id: string }) => p.id === page.id).tasks[0];
+    expect(served.question.statements).toEqual(['Peter lives in London.', 'Peter is a doctor.']);
+    expect(JSON.stringify(served)).not.toContain('values');
+
+    // Scored per statement, not all-or-nothing.
+    const half = await api().post(`/api/v1/content/tasks/${task.id}/check`).set(auth(student.accessToken))
+      .send({ state: { values: [true, true] } }).expect(201);
+    expect(half.body.score).toBe(5);
+    expect(half.body.correct).toBe(false);
+
+    const full = await api().post(`/api/v1/content/tasks/${task.id}/check`).set(auth(student.accessToken))
+      .send({ state: { values: [true, false] } }).expect(201);
+    expect(full.body.score).toBe(10);
+    expect(full.body.correct).toBe(true);
+  });
+
   it('renames sections and units', async () => {
     const auth2 = auth(tutor.accessToken);
     const s = (await api().post('/api/v1/content/sections').set(auth2)

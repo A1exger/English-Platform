@@ -105,6 +105,7 @@ export type PageType = (typeof PAGE_TYPES)[number];
 
 export const TASK_TYPES = [
   'sentence_ordering',
+  'true_false',
   'word_matching',
   'gap_fill',
   'categorization',

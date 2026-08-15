@@ -416,6 +416,7 @@
     "fill": "Compléter",
     "categorize": "Catégoriser",
     "words": "Mots (ordre correct)",
+    "statements": "Affirmations (une par ligne : texte = true/false)",
     "wordsHint": "Séparez les mots par des espaces.",
     "prompt": "Consigne (optionnel)",
     "pairs": "Paires",
@@ -611,7 +612,9 @@
     "essayPlaceholder": "Écrivez votre réponse…",
     "back": "Retour au cours",
     "min": "min",
-    "saved": "Enregistré"
+    "saved": "Enregistré",
+    "true": "Vrai",
+    "false": "Faux"
   },
   "assignments": {
     "title": "Devoirs",

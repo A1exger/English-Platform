@@ -5224,3 +5224,33 @@ input[type='radio']:focus-visible {
 .tree-unit-head .tree-edit ~ .tree-add {
   margin-inline-start: 0;
 }
+
+/* ——— true/false: statement on the left, the two choices on the right ——— */
+.tf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tf-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--card);
+}
+.tf-text {
+  flex: 1;
+  min-inline-size: 180px;
+}
+.tf-choice {
+  display: inline-flex;
+  gap: 6px;
+  flex: none;
+}

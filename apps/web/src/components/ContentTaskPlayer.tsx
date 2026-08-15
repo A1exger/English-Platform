@@ -205,6 +205,54 @@ export function ContentTaskPlayer({
         </div>
       )}
 
+      {task.type === 'true_false' && (
+        <div className="ex">
+          <ul className="tf-list">
+            {((q.statements as string[]) ?? []).map((statement, i) => {
+              const values = (state.values as (boolean | null)[]) ?? [];
+              const sol = result?.solution as { values?: boolean[] } | undefined;
+              const pick = (v: boolean) => {
+                const next = [...values];
+                next[i] = v;
+                setState({ values: next });
+              };
+              return (
+                <li key={i} className="tf-row">
+                  <span className="tf-text">{statement}</span>
+                  <span className="tf-choice">
+                    {[true, false].map((v) => {
+                      const chosen = values[i] === v;
+                      // After checking, mark the right answer and, when it was
+                      // missed, the one that was picked instead.
+                      const cls = sol?.values
+                        ? sol.values[i] === v
+                          ? ' ok'
+                          : chosen
+                            ? ' err'
+                            : ''
+                        : chosen
+                          ? ' active-choice'
+                          : '';
+                      return (
+                        <button
+                          key={String(v)}
+                          type="button"
+                          className={`chip${cls}`}
+                          disabled={readOnly}
+                          onClick={() => pick(v)}
+                        >
+                          {v ? t('true') : t('false')}
+                        </button>
+                      );
+                    })}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       {task.type === 'audio' && (
         <div className="ex">
           {typeof q.mediaUrl === 'string' && q.mediaUrl && (

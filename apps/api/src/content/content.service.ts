@@ -1131,7 +1131,10 @@ export class ContentService {
   }
 
   private validateTaskPayload(type: string, payload: Record<string, unknown>, answerKey?: Record<string, unknown>) {
-    const fail = (m: string) => {
+    // Annotated on the variable, not the arrow: that is what makes TypeScript
+    // treat a fail() call as terminating, so the true_false branch below can
+    // read answerKey again after asserting it is present.
+    const fail: (m: string) => never = (m) => {
       throw new BadRequestException(`Invalid task: ${m}`);
     };
     if (type === 'sentence_ordering' && !Array.isArray(payload.words)) fail('words[] required');
@@ -1139,6 +1142,14 @@ export class ContentService {
     if (type === 'gap_fill' && typeof payload.text !== 'string') fail('text required');
     if (type === 'categorization' && (!Array.isArray(payload.categories) || !Array.isArray(payload.items)))
       fail('categories[] and items[] required');
+    if (type === 'true_false') {
+      if (!Array.isArray(payload.statements) || payload.statements.length === 0)
+        fail('statements[] required');
+      if (!answerKey || !Array.isArray(answerKey.values))
+        fail('answerKey.values[] required');
+      if ((answerKey.values as unknown[]).length !== (payload.statements as unknown[]).length)
+        fail('answerKey.values[] must match statements[]');
+    }
     if (type === 'multiple_choice') {
       if (!Array.isArray(payload.options) || typeof payload.question !== 'string') fail('question + options[] required');
       if (!answerKey || typeof answerKey.correct !== 'string') fail('answerKey.correct required');

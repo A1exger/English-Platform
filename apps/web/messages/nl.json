@@ -416,6 +416,7 @@
     "fill": "Vul in",
     "categorize": "Categoriseren",
     "words": "Woorden (juiste volgorde)",
+    "statements": "Stellingen (één per regel: tekst = true/false)",
     "wordsHint": "Scheid woorden met spaties.",
     "prompt": "Opdracht (optioneel)",
     "pairs": "Paren",
@@ -611,7 +612,9 @@
     "essayPlaceholder": "Schrijf je antwoord…",
     "back": "Terug naar cursus",
     "min": "min",
-    "saved": "Opgeslagen"
+    "saved": "Opgeslagen",
+    "true": "Waar",
+    "false": "Onwaar"
   },
   "assignments": {
     "title": "Opdrachten",

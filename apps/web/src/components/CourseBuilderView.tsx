@@ -37,6 +37,7 @@ const LEVELS = [
 const PAGE_TYPES = ['grammar', 'practice', 'listening', 'reading', 'discussion', 'essay'];
 const TASK_TYPES = [
   'sentence_ordering',
+  'true_false',
   'word_matching',
   'gap_fill',
   'categorization',
@@ -81,6 +82,21 @@ type CreateTarget =
 const parsePairs = (s: string) =>
   s.split('\n').map((l) => l.split('=')).filter((p) => p.length === 2 && p[0].trim() && p[1].trim())
     .map((p) => ({ left: p[0].trim(), right: p[1].trim() }));
+// "The text says X. = true" per line. Anything but a true/false marker is
+// dropped rather than guessed, so a typo cannot silently become an answer.
+const parseStatements = (s: string) =>
+  s
+    .split('\n')
+    .map((line) => {
+      const at = line.lastIndexOf('=');
+      if (at < 0) return null;
+      const text = line.slice(0, at).trim();
+      const flag = line.slice(at + 1).trim().toLowerCase();
+      if (!text || (flag !== 'true' && flag !== 'false')) return null;
+      return { text, value: flag === 'true' };
+    })
+    .filter((x): x is { text: string; value: boolean } => x !== null);
+
 const parseItems = (s: string) =>
   s.split('\n').map((l) => l.split('=')).filter((p) => p.length === 2 && p[0].trim() && p[1].trim())
     .map((p) => ({ text: p[0].trim(), category: p[1].trim() }));
@@ -1225,6 +1241,7 @@ interface TaskFormState {
   aspect: string;
   minutes: string;
   words: string;
+  statements: string;
   pairs: string;
   fill: string;
   categories: string;
@@ -1240,6 +1257,7 @@ interface TaskFormState {
 // The examples now live in `placeholder`, where they cannot be submitted.
 const TASK_EXAMPLES = {
   words: 'I go to school',
+  statements: 'Peter lives in London. = true\nPeter is a doctor. = false',
   pairs: 'dog = chien',
   fill: 'I [go] to [school].',
   categories: 'noun, verb',
@@ -1256,6 +1274,7 @@ const defaultTaskForm = (): TaskFormState => ({
   aspect: 'Grammar',
   minutes: '5',
   words: '',
+  statements: '',
   pairs: '',
   fill: '',
   categories: '',
@@ -1275,6 +1294,8 @@ function taskFormReady(f: TaskFormState): boolean {
   switch (f.type) {
     case 'sentence_ordering':
       return f.words.trim().split(/\s+/).filter(Boolean).length >= 2;
+    case 'true_false':
+      return parseStatements(f.statements).length >= 2;
     case 'word_matching':
       return parsePairs(f.pairs).length >= 1;
     case 'gap_fill':
@@ -1294,6 +1315,10 @@ function buildTaskPayload(f: TaskFormState): { payload: Record<string, unknown>;
   if (f.type === 'sentence_ordering') {
     const words = f.words.trim().split(/\s+/).filter(Boolean);
     return { payload: { words }, answerKey: { order: words } };
+  }
+  if (f.type === 'true_false') {
+    const rows = parseStatements(f.statements);
+    return { payload: { statements: rows.map((r) => r.text) }, answerKey: { values: rows.map((r) => r.value) } };
   }
   if (f.type === 'word_matching') {
     const pairs = parsePairs(f.pairs);
@@ -1374,6 +1399,16 @@ function TaskForm({
 
       {form.type === 'sentence_ordering' && (
         <label className="ed-field">{tEx('words')}<input value={form.words} placeholder={TASK_EXAMPLES.words} onChange={(e) => set({ words: e.target.value })} /></label>
+      )}
+      {form.type === 'true_false' && (
+        <label className="ed-field">
+          {tEx('statements')}
+          <textarea
+            value={form.statements}
+            placeholder={TASK_EXAMPLES.statements}
+            onChange={(e) => set({ statements: e.target.value })}
+          />
+        </label>
       )}
       {form.type === 'word_matching' && (
         <label className="ed-field">{tEx('pairs')}<textarea value={form.pairs} placeholder={TASK_EXAMPLES.pairs} onChange={(e) => set({ pairs: e.target.value })} /></label>

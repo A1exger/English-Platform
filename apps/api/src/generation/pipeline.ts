@@ -103,6 +103,7 @@ function taskFormats(brief: Brief): string {
   return `Task formats (use EXACTLY these shapes):
 - sentence_ordering: {"type":"sentence_ordering","aspect":"Grammar","payload":{"words":["I","have","never","been","to","London"]}}  (words in the CORRECT order, 2-30 tokens)
 - word_matching: {"type":"word_matching","aspect":"Vocabulary","payload":{"pairs":[{"left":"cat","right":"<the ${name} word for 'cat'>"}]}}  (2-12 pairs; "left" is always the English word, "right" is always its ${name} translation — write real ${name}, not the placeholder)
+- true_false: {"type":"true_false","aspect":"Reading","payload":{"statements":["Peter lives in London.","Peter is a doctor."]},"answerKey":{"values":[true,false]}}  (2-12 statements; values[] must be the same length and in the same order)
 - gap_fill: {"type":"gap_fill","aspect":"Grammar","payload":{"text":"I [go] to [school] every day."}}  (answers wrapped in [brackets], 1-12 gaps)
 - categorization: {"type":"categorization","aspect":"Vocabulary","payload":{"categories":["Verbs","Nouns"],"items":[{"text":"run","category":"Verbs"}]}}  (2-6 categories)
 - multiple_choice: {"type":"multiple_choice","aspect":"Reading","payload":{"question":"...","options":["a","b","c"]},"answerKey":{"correct":"a"}}  (correct MUST equal one option)
@@ -145,7 +146,11 @@ export function lessonPrompt(
       `"tasks":[<task>]}],"wordlist":[{"word":"...","translation":"..."}],"grammar":{"title":"...","meaning":"...","form":"..."}}\n` +
       `By default: 2-4 pages, 1-4 tasks per page, 4-8 wordlist entries.\n` +
       `Media plan: a listening page MUST include one "audio" item with a full transcript. ` +
-      `For images/videos, describe them in "note" — do NOT invent URLs; the teacher uploads the file.` +
+      `For images/videos, describe them in "note" — do NOT invent URLs; the teacher uploads the file.\n` +
+      `A "reading" page is an ARTICLE page: put a self-contained text of 150-300 words in "text" ` +
+      `(not a summary or instructions), add 1-2 "image" media items describing pictures that suit the ` +
+      `topic, and make EVERY task on that page answerable from the article alone — a true_false over ` +
+      `statements about it, and multiple_choice questions about what happens in it.` +
       // Last word, and explicitly above the default counts: a revision that asks
       // for "at least 15 words" used to be overruled by the "4-8 wordlist
       // entries" line that followed it, so the lesson came back unchanged.
@@ -218,6 +223,14 @@ export function normalizeTask(raw: unknown): GenTask | null {
         .slice(0, 12);
       if (pairs.length < 2) return null;
       return { ...base, payload: { pairs } };
+    }
+    case 'true_false': {
+      // statements[] and answerKey.values[] must line up 1:1 — a mismatched pair
+      // would score every later statement against the wrong answer.
+      const statements = arr(payload.statements).map(str).filter(Boolean).slice(0, 12);
+      const values = arr(answerKey?.values).map((v) => v === true).slice(0, 12);
+      if (statements.length < 2 || values.length !== statements.length) return null;
+      return { ...base, payload: { statements }, answerKey: { values } };
     }
     case 'gap_fill': {
       const text = str(payload.text);
