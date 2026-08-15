@@ -104,6 +104,20 @@ Requirements Telegram enforces here: the URL must be **HTTPS**, on a real
 domain, with a certificate it trusts. A `localhost` address or a self-signed
 certificate will be refused — which is why this step is production-only.
 
+If it answers
+
+```json
+{"ok":false,"error_code":400,"description":"Bad Request: bad webhook: Failed to resolve host: Name or service not known"}
+```
+
+then Telegram could not resolve the domain in `url` — in practice, a typo in it.
+Telegram never says which part it disliked, so check the spelling character by
+character before looking anywhere else:
+
+```bash
+getent hosts <your-domain>   # silence = that name does not exist in DNS
+```
+
 Check it any time:
 
 ```bash
