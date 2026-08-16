@@ -74,7 +74,8 @@ function groupsForRole(role: string | null): Group[] {
         { key: 'overview', href: '/dashboard' },
         { key: 'schedule', href: '/schedule' },
         { key: 'homework', href: '/homework', badge: 'homework' },
-        { key: 'courses', href: '/courses' }
+        // Same course library as the staff side, minus the teaching actions.
+        { key: 'courses', href: '/catalog' }
       ]
     },
     {

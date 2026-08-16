@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/routing';
+import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
-import { tokenStore } from '@/lib/auth';
+import { fetchMe, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
@@ -63,6 +63,7 @@ export function CourseCatalogView() {
   const router = useRouter();
 
   const [cats, setCats] = useState<CategoryRow[]>([]);
+  const [isStaff, setIsStaff] = useState(false);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [openCourse, setOpenCourse] = useState<CourseCard | null>(null);
   const [level, setLevel] = useState('Elementary');
@@ -85,6 +86,11 @@ export function CourseCatalogView() {
       return;
     }
     try {
+      const me = await fetchMe(token, locale);
+      setIsStaff(me.role === 'tutor' || me.role === 'admin');
+      // Students get the same screen, minus the teaching actions. The catalog
+      // endpoint already limits them to published courses shared with them, so
+      // the filter below is a no-op on their side.
       const data = await apiFetch<CategoryRow[]>('/content/catalog', { token, locale });
       // Published only: this library is "what is ready to teach", and a draft
       // course is by definition not.
@@ -259,12 +265,22 @@ export function CourseCatalogView() {
                     {l.optional && <span className="badge-opt">{t('optionalLesson')}</span>}
                   </span>
                   <span className="row-actions">
-                    <button type="button" className="ghost" onClick={() => setPreview(l)}>
-                      <Icon name="eye" /> {t('preview')}
-                    </button>
-                    <button type="button" onClick={() => void openHomework(l)}>
-                      {t('assignHomework')}
-                    </button>
+                    {isStaff ? (
+                      <>
+                        <button type="button" className="ghost" onClick={() => setPreview(l)}>
+                          <Icon name="eye" /> {t('preview')}
+                        </button>
+                        <button type="button" onClick={() => void openHomework(l)}>
+                          {t('assignHomework')}
+                        </button>
+                      </>
+                    ) : (
+                      // A student opens the lesson to work through it, not a
+                      // read-only preview of it.
+                      <Link className="cta-primary" href={`/learn/${l.id}`}>
+                        {t('open')}
+                      </Link>
+                    )}
                   </span>
                 </li>
               ))}

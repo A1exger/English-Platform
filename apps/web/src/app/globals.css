@@ -5287,6 +5287,9 @@ input[type='radio']:focus-visible {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
 }
+/* These cards are <button>s, and the base button rule paints them accent with
+   white text — which on a white card left the title invisible. Everything the
+   base rule sets has to be undone explicitly. */
 .catalog-card {
   display: flex;
   flex-direction: column;
@@ -5295,6 +5298,23 @@ input[type='radio']:focus-visible {
   text-align: start;
   cursor: pointer;
   border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+}
+.catalog-card:hover {
+  transform: none;
+}
+.catalog-card > strong {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--ink);
+}
+.catalog-card > .muted {
+  font-weight: 400;
+  font-size: 13px;
 }
 .catalog-card:hover {
   border-color: var(--indigo);
