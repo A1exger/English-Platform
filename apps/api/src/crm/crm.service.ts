@@ -180,7 +180,7 @@ export class CrmService {
     // Single-tutor platform: staff see the student's full lessons/homework/notes.
     const scope = {};
 
-    const [lessons, homework, notes] = await Promise.all([
+    const [lessons, homework, notes, assignments] = await Promise.all([
       this.prisma.lesson.findMany({
         where: { ...scope, participants: { some: { studentProfileId } } },
         orderBy: { startsAt: 'desc' },
@@ -194,9 +194,33 @@ export class CrmService {
         where: { ...scope, studentProfileId },
         orderBy: { createdAt: 'desc' },
       }),
+      // Course homework (ContentAssignment). The card used to show only the
+      // written-homework model, so the work students actually get handed —
+      // pages and tasks from a course — was invisible to every teacher.
+      this.prisma.contentAssignment.findMany({
+        where: { studentProfileId },
+        orderBy: { createdAt: 'desc' },
+        include: { cards: { select: { status: true } }, result: true },
+      }),
     ]);
 
-    return { profile, lessons, homework, notes };
+    return {
+      profile,
+      lessons,
+      homework,
+      notes,
+      assignments: assignments.map((a) => ({
+        id: a.id,
+        kind: a.kind,
+        topicTag: a.topicTag,
+        dueAt: a.dueAt,
+        status: a.status,
+        createdAt: a.createdAt,
+        cardCount: a.cards.length,
+        submittedCount: a.cards.filter((c) => c.status === 'submitted').length,
+        overall: a.result?.overall ?? null,
+      })),
+    };
   }
 
   /** Edit a student's profile + name (tutor for their students, admin for any). */

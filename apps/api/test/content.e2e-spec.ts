@@ -588,6 +588,45 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     expect(again.body.repaired).toBe(0);
   });
 
+  it('word bank: tutor imports, student copies into their own dictionary', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const authS = auth(student.accessToken);
+
+    // Duplicate line on purpose: the later one wins, and only one row is made.
+    await api().post('/api/v1/content/word-bank/import').set(auth2).send({
+      text: 'deadline = срок\ndeadline = крайний срок\nnegotiate = вести переговоры\nbandwidth\n   ',
+      topic: 'Business'
+    }).expect(201).expect((r) => expect(r.body.imported).toBe(3));
+
+    const all = await api().get('/api/v1/content/word-bank').set(authS).expect(200);
+    expect(all.body.map((w: { word: string }) => w.word).sort()).toEqual(['bandwidth', 'deadline', 'negotiate']);
+    const deadline = all.body.find((w: { word: string }) => w.word === 'deadline');
+    expect(deadline.translation).toBe('крайний срок');
+    // A word with no "=" still lands, just without a translation.
+    expect(all.body.find((w: { word: string }) => w.word === 'bandwidth').translation).toBeNull();
+
+    // Re-importing updates rather than duplicating.
+    await api().post('/api/v1/content/word-bank/import').set(auth2)
+      .send({ text: 'deadline = дедлайн', topic: 'Business' }).expect(201);
+    const after = await api().get('/api/v1/content/word-bank?q=deadline').set(authS).expect(200);
+    expect(after.body.length).toBe(1);
+    expect(after.body[0].translation).toBe('дедлайн');
+
+    expect(await api().get('/api/v1/content/word-bank/topics').set(authS).expect(200)
+      .then((r) => r.body)).toContain('Business');
+
+    // The student copies it into their own dictionary; twice is idempotent.
+    await api().post(`/api/v1/content/word-bank/${deadline.id}/add`).set(authS).expect(201);
+    await api().post(`/api/v1/content/word-bank/${deadline.id}/add`).set(authS).expect(201);
+    const mine = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
+    expect(mine.body.filter((e: { word: string }) => e.word === 'deadline').length).toBe(1);
+
+    // Students may read the bank but never curate it.
+    await api().post('/api/v1/content/word-bank/import').set(authS).send({ text: 'x' }).expect(403);
+    await api().delete(`/api/v1/content/word-bank/${deadline.id}`).set(authS).expect(403);
+    await api().delete(`/api/v1/content/word-bank/${deadline.id}`).set(auth2).expect(200);
+  });
+
   it('renames sections and units', async () => {
     const auth2 = auth(tutor.accessToken);
     const s = (await api().post('/api/v1/content/sections').set(auth2)

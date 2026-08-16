@@ -333,7 +333,8 @@
     "section_insights": "Analysen",
     "section_admin": "Admin",
     "courseBuilder": "Kurs-Builder",
-    "catalog": "Kurse"
+    "catalog": "Kurse",
+    "wordBank": "Wortschatz-Pool"
   },
   "dashboard": {
     "greeting": "Willkommen zurück, {name}!",
@@ -678,7 +679,23 @@
     "repsHint": "Wiederholungen",
     "wordPlaceholder": "Wort",
     "translationPlaceholder": "Übersetzung (optional)",
-    "add": "Hinzufügen"
+    "add": "Hinzufügen",
+    "bankTitle": "Wortschatz-Pool",
+    "bankHintStaff": "Ein gemeinsamer Pool, den du einmal füllst — jede/r Lernende kopiert Wörter daraus ins eigene Wörterbuch.",
+    "bankHintStudent": "Wörter, die deine Lehrkraft gesammelt hat. Füge sie deinem Wörterbuch hinzu und übe sie dort.",
+    "bankEmpty": "Der Pool ist leer.",
+    "import": "Wörter importieren",
+    "importWords": "Wörter",
+    "importHint": "Eins pro Zeile: Wort = Übersetzung. Die Übersetzung ist optional. Ein erneuter Import aktualisiert das Wort.",
+    "imported": "Importiert: {count}",
+    "topic": "Thema",
+    "topicHint": "z. B. Business, A2, Phrasal Verbs",
+    "allTopics": "Alle Themen",
+    "addToMine": "In mein Wörterbuch",
+    "addedToMine": "Hinzugefügt",
+    "lookup": "Wort nachschlagen",
+    "lookupBtn": "Nachschlagen",
+    "lookupNothing": "Zu diesem Wort wurde nichts gefunden."
   },
   "enum": {
     "role": {

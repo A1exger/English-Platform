@@ -333,7 +333,8 @@
     "section_insights": "Insights",
     "section_admin": "Admin",
     "courseBuilder": "Course builder",
-    "catalog": "Courses"
+    "catalog": "Courses",
+    "wordBank": "Word bank"
   },
   "dashboard": {
     "greeting": "Welcome back, {name}!",
@@ -678,7 +679,23 @@
     "repsHint": "Times reviewed",
     "wordPlaceholder": "Word",
     "translationPlaceholder": "Translation (optional)",
-    "add": "Add"
+    "add": "Add",
+    "bankTitle": "Word bank",
+    "bankHintStaff": "One shared pool you fill once — every student can copy words from it into their own dictionary.",
+    "bankHintStudent": "Words your tutor collected. Add any of them to your dictionary and train them there.",
+    "bankEmpty": "The bank is empty.",
+    "import": "Import words",
+    "importWords": "Words",
+    "importHint": "One per line: word = translation. The translation is optional. Importing the same word again updates it.",
+    "imported": "Imported: {count}",
+    "topic": "Topic",
+    "topicHint": "e.g. Business, A2, Phrasal verbs",
+    "allTopics": "All topics",
+    "addToMine": "Add to my dictionary",
+    "addedToMine": "Added",
+    "lookup": "Look a word up",
+    "lookupBtn": "Look up",
+    "lookupNothing": "Nothing found for that word."
   },
   "enum": {
     "role": {

@@ -645,6 +645,25 @@ model GrammarReference {
 }
 
 // Personal dictionary + spaced-repetition trainer state.
+// Shared word bank: a platform-wide pool a tutor curates once and every student
+// can pull from into their own DictionaryEntry. Separate from Wordlist, which is
+// tied 1:1 to a lesson — this one belongs to no lesson and outlives all of them.
+model WordBankEntry {
+  id          String   @id @default(cuid())
+  // Unique so importing the same list twice updates rather than duplicates.
+  word        String   @unique
+  translation String?
+  example     String?
+  // Free-form grouping ("Business", "A2", "Phrasal verbs"); null = ungrouped.
+  topic       String?
+  // "import" = typed/pasted by a tutor, "lookup" = fetched from the free
+  // dictionary API. Kept so curated rows are distinguishable from fetched ones.
+  source      String   @default("import")
+  createdAt   DateTime @default(now())
+
+  @@index([topic])
+}
+
 model DictionaryEntry {
   id               String    @id @default(cuid())
   studentProfileId String

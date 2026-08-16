@@ -241,6 +241,18 @@ export class CreateUnitDto {
   order?: number;
 }
 
+/** Bulk word-bank import: one "word = translation" per line. */
+export class ImportWordBankDto {
+  @IsString()
+  @Length(1, 100_000)
+  text!: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 60)
+  topic?: string;
+}
+
 /** Rename a section or a unit (title is the only editable field on both). */
 export class RenameNodeDto {
   @IsString()

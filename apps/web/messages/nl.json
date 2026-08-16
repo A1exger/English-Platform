@@ -333,7 +333,8 @@
     "section_insights": "Inzichten",
     "section_admin": "Beheer",
     "courseBuilder": "Cursusbouwer",
-    "catalog": "Cursussen"
+    "catalog": "Cursussen",
+    "wordBank": "Woordenbank"
   },
   "dashboard": {
     "greeting": "Welkom terug, {name}!",
@@ -678,7 +679,23 @@
     "repsHint": "Aantal herhalingen",
     "wordPlaceholder": "Woord",
     "translationPlaceholder": "Vertaling (optioneel)",
-    "add": "Toevoegen"
+    "add": "Toevoegen",
+    "bankTitle": "Woordenbank",
+    "bankHintStaff": "Eén gedeelde voorraad die je één keer vult — elke leerling kopieert er woorden uit naar het eigen woordenboek.",
+    "bankHintStudent": "Woorden die je docent heeft verzameld. Voeg ze toe aan je woordenboek en oefen ze daar.",
+    "bankEmpty": "De bank is leeg.",
+    "import": "Woorden importeren",
+    "importWords": "Woorden",
+    "importHint": "Eén per regel: woord = vertaling. De vertaling is optioneel. Opnieuw importeren werkt het woord bij.",
+    "imported": "Geïmporteerd: {count}",
+    "topic": "Onderwerp",
+    "topicHint": "bijv. Business, A2, Phrasal verbs",
+    "allTopics": "Alle onderwerpen",
+    "addToMine": "Naar mijn woordenboek",
+    "addedToMine": "Toegevoegd",
+    "lookup": "Woord opzoeken",
+    "lookupBtn": "Opzoeken",
+    "lookupNothing": "Niets gevonden voor dit woord."
   },
   "enum": {
     "role": {

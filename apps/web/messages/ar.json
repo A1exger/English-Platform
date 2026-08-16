@@ -333,7 +333,8 @@
     "section_insights": "التحليلات",
     "section_admin": "الإدارة",
     "courseBuilder": "منشئ الدورات",
-    "catalog": "الدورات"
+    "catalog": "الدورات",
+    "wordBank": "بنك الكلمات"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",
@@ -678,7 +679,23 @@
     "repsHint": "عدد المراجعات",
     "wordPlaceholder": "كلمة",
     "translationPlaceholder": "الترجمة (اختياري)",
-    "add": "إضافة"
+    "add": "إضافة",
+    "bankTitle": "بنك الكلمات",
+    "bankHintStaff": "مجموعة مشتركة تملؤها مرة واحدة — ينسخ منها كل طالب الكلمات إلى قاموسه.",
+    "bankHintStudent": "كلمات جمعها معلّمك. أضف أيًّا منها إلى قاموسك وتدرّب عليها هناك.",
+    "bankEmpty": "البنك فارغ.",
+    "import": "استيراد كلمات",
+    "importWords": "الكلمات",
+    "importHint": "واحدة في كل سطر: الكلمة = الترجمة. الترجمة اختيارية. إعادة الاستيراد تحدّث الكلمة.",
+    "imported": "تم الاستيراد: {count}",
+    "topic": "الموضوع",
+    "topicHint": "مثال: الأعمال، A2، الأفعال المركبة",
+    "allTopics": "كل المواضيع",
+    "addToMine": "إلى قاموسي",
+    "addedToMine": "تمت الإضافة",
+    "lookup": "ابحث عن كلمة",
+    "lookupBtn": "بحث",
+    "lookupNothing": "لم يُعثر على شيء لهذه الكلمة."
   },
   "enum": {
     "role": {

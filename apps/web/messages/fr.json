@@ -333,7 +333,8 @@
     "section_insights": "Analyses",
     "section_admin": "Admin",
     "courseBuilder": "Constructeur de cours",
-    "catalog": "Cours"
+    "catalog": "Cours",
+    "wordBank": "Banque de mots"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
@@ -678,7 +679,23 @@
     "repsHint": "Nombre de révisions",
     "wordPlaceholder": "Mot",
     "translationPlaceholder": "Traduction (facultatif)",
-    "add": "Ajouter"
+    "add": "Ajouter",
+    "bankTitle": "Banque de mots",
+    "bankHintStaff": "Une réserve commune que vous remplissez une fois — chaque élève y copie des mots dans son propre dictionnaire.",
+    "bankHintStudent": "Les mots réunis par votre professeur. Ajoutez-en à votre dictionnaire et entraînez-les là-bas.",
+    "bankEmpty": "La banque est vide.",
+    "import": "Importer des mots",
+    "importWords": "Mots",
+    "importHint": "Un par ligne : mot = traduction. La traduction est facultative. Réimporter un mot le met à jour.",
+    "imported": "Importés : {count}",
+    "topic": "Thème",
+    "topicHint": "ex. : Business, A2, Verbes à particule",
+    "allTopics": "Tous les thèmes",
+    "addToMine": "Dans mon dictionnaire",
+    "addedToMine": "Ajouté",
+    "lookup": "Chercher un mot",
+    "lookupBtn": "Chercher",
+    "lookupNothing": "Rien trouvé pour ce mot."
   },
   "enum": {
     "role": {

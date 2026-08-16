@@ -26,7 +26,24 @@ interface Profile {
 interface Note { id: string; body: string; createdAt: string }
 interface Lesson { id: string; title?: string | null; startsAt: string; status: string }
 interface Homework { id: string; title?: string | null; status: string; dueAt?: string | null; submissions: { grade?: string | null }[] }
-interface Card { profile: Profile; lessons: Lesson[]; homework: Homework[]; notes: Note[] }
+// Course homework handed out from a lesson/course (ContentAssignment).
+interface AssignmentRow {
+  id: string;
+  kind: string;
+  topicTag: string | null;
+  dueAt: string | null;
+  status: string;
+  cardCount: number;
+  submittedCount: number;
+  overall: number | null;
+}
+interface Card {
+  profile: Profile;
+  lessons: Lesson[];
+  homework: Homework[];
+  notes: Note[];
+  assignments?: AssignmentRow[];
+}
 
 function ageFrom(birthDate?: string | null): number | null {
   if (!birthDate) return null;
@@ -142,6 +159,7 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
   if (state === 'error' || !card) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const { profile, lessons, homework, notes } = card;
+  const assignments = card.assignments ?? [];
   const name = `${profile.user.firstName} ${profile.user.lastName}`.trim();
   const initials = `${profile.user.firstName?.[0] ?? ''}${profile.user.lastName?.[0] ?? ''}`.toUpperCase() || '?';
   const age = ageFrom(profile.birthDate);
@@ -209,7 +227,7 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
             </div>
             <div className="grammar-row">
               <span className="grammar-key">{t('homework')}</span>
-              <span className="mono-num">{homework.length}</span>
+              <span className="mono-num">{homework.length + assignments.length}</span>
             </div>
           </div>
         </div>
@@ -237,9 +255,37 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
 
       {tab === 'homework' && (
         <div className="card">
-          {homework.length === 0 ? (
+          {/* Course homework first — it is what students are handed nowadays.
+              Each row opens the assignment, where the teacher sees the answers
+              card by card and can leave feedback. */}
+          {assignments.length > 0 && (
+            <ul className="assign-list">
+              {assignments.map((a) => (
+                <li key={a.id}>
+                  <Link className="assign-row" href={`/assignments/${a.id}`}>
+                    <div className="assign-row-main">
+                      <strong>{a.topicTag || t('homework')}</strong>
+                      {a.dueAt && (
+                        <span className="mono-num muted">
+                          {th('due')} {format.dateTime(new Date(a.dueAt), { dateStyle: 'medium' })}
+                        </span>
+                      )}
+                    </div>
+                    <div className="assign-row-side">
+                      <span className="mono-num">
+                        {a.submittedCount}/{a.cardCount}
+                      </span>
+                      {a.overall != null && <span className="mono-num">{a.overall}/10</span>}
+                      <span className={`chip status-${a.status}`}>{hwStatus(a.status)}</span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {homework.length === 0 && assignments.length === 0 ? (
             <p className="note">{t('noHomework')}</p>
-          ) : (
+          ) : homework.length === 0 ? null : (
             <ul className="assign-list">
               {homework.map((h) => {
                 const grade = h.submissions[0]?.grade;

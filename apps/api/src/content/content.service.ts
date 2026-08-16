@@ -437,6 +437,108 @@ export class ContentService {
     return profile;
   }
 
+  // --- shared word bank -----------------------------------------------------
+
+  /**
+   * Browse the shared bank. Open to every signed-in role: tutors curate it,
+   * students read it to fill their own dictionary from it.
+   */
+  async listWordBank(query?: string, topic?: string) {
+    const q = query?.trim();
+    return this.prisma.wordBankEntry.findMany({
+      where: {
+        ...(topic ? { topic } : {}),
+        ...(q ? { OR: [{ word: { contains: q } }, { translation: { contains: q } }] } : {}),
+      },
+      orderBy: [{ topic: 'asc' }, { word: 'asc' }],
+      take: 500,
+    });
+  }
+
+  /** The distinct topics in the bank, for the filter. */
+  async wordBankTopics(): Promise<string[]> {
+    const rows = await this.prisma.wordBankEntry.findMany({
+      where: { topic: { not: null } },
+      select: { topic: true },
+      distinct: ['topic'],
+      orderBy: { topic: 'asc' },
+    });
+    return rows.map((r) => r.topic!).filter(Boolean);
+  }
+
+  /**
+   * Bulk import, one entry per line: "word = translation" (the translation is
+   * optional, so a bare list of words works too). Upserts on the word, which
+   * makes re-importing a corrected list update it instead of duplicating.
+   */
+  async importWordBank(text: string, topic?: string) {
+    // De-duplicate within the paste itself: upserting the same word twice in one
+    // batch would otherwise have the second silently overwrite the first.
+    const byWord = new Map<string, { word: string; translation?: string }>();
+    for (const line of text.split('\n')) {
+      const at = line.indexOf('=');
+      const word = (at < 0 ? line : line.slice(0, at)).trim();
+      if (!word) continue;
+      const translation = at < 0 ? '' : line.slice(at + 1).trim();
+      byWord.set(word.toLowerCase(), { word, translation: translation || undefined });
+    }
+
+    for (const r of byWord.values()) {
+      await this.prisma.wordBankEntry.upsert({
+        where: { word: r.word },
+        update: { translation: r.translation, ...(topic ? { topic } : {}) },
+        create: { word: r.word, translation: r.translation, topic: topic || null },
+      });
+    }
+    return { imported: byWord.size };
+  }
+
+  async deleteWordBankEntry(id: string) {
+    await this.prisma.wordBankEntry.delete({ where: { id } }).catch(() => undefined);
+    return { deleted: true };
+  }
+
+  /**
+   * Look a word up in the free Dictionary API (dictionaryapi.dev): no key, no
+   * quota, no cost. It is English-only — definitions, an example and the
+   * phonetic spelling — so it enriches an entry rather than translating it.
+   * Never throws: a lookup failure returns empty and the tutor types their own.
+   */
+  async lookupWord(word: string) {
+    const term = word.trim();
+    if (!term) return { word: term, definition: null, example: null, phonetic: null };
+    try {
+      const res = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`,
+      );
+      if (!res.ok) return { word: term, definition: null, example: null, phonetic: null };
+      const body = (await res.json()) as {
+        phonetic?: string;
+        meanings?: { definitions?: { definition?: string; example?: string }[] }[];
+      }[];
+      const first = body?.[0];
+      const def = first?.meanings?.[0]?.definitions?.[0];
+      return {
+        word: term,
+        definition: def?.definition ?? null,
+        example: def?.example ?? null,
+        phonetic: first?.phonetic ?? null,
+      };
+    } catch {
+      return { word: term, definition: null, example: null, phonetic: null };
+    }
+  }
+
+  /** Student: copy a bank entry into their own dictionary. */
+  async addFromWordBank(user: AuthenticatedUser, entryId: string) {
+    const entry = await this.prisma.wordBankEntry.findUnique({ where: { id: entryId } });
+    if (!entry) throw new NotFoundException('Word not found');
+    return this.addDictionaryEntry(user, {
+      word: entry.word,
+      translation: entry.translation ?? undefined,
+    });
+  }
+
   async addDictionaryEntry(
     user: AuthenticatedUser,
     dto: { word: string; translation?: string; sourceLessonId?: string },

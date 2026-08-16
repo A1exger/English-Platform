@@ -24,6 +24,7 @@ import {
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
+  ImportWordBankDto,
   RenameNodeDto,
   ReorderCategoriesDto,
   ReorderCoursesDto,
@@ -88,6 +89,44 @@ export class ContentController {
     @Body() dto: CheckTaskDto,
   ) {
     return this.content.checkTask(user, id, dto.state);
+  }
+
+  // --- shared word bank -----------------------------------------------------
+  // Tutors curate it; students read it and copy words into their own dictionary.
+
+  @Get('word-bank')
+  wordBank(@Query('q') q?: string, @Query('topic') topic?: string) {
+    return this.content.listWordBank(q, topic);
+  }
+
+  @Get('word-bank/topics')
+  wordBankTopics() {
+    return this.content.wordBankTopics();
+  }
+
+  @Roles('tutor', 'admin')
+  @Post('word-bank/import')
+  importWordBank(@Body() dto: ImportWordBankDto) {
+    return this.content.importWordBank(dto.text, dto.topic);
+  }
+
+  // Free Dictionary API enrichment (no key, no quota). English definitions only.
+  @Roles('tutor', 'admin')
+  @Get('word-bank/lookup')
+  lookupWord(@Query('word') word: string) {
+    return this.content.lookupWord(word ?? '');
+  }
+
+  @Roles('tutor', 'admin')
+  @Delete('word-bank/:id')
+  deleteWordBankEntry(@Param('id') id: string) {
+    return this.content.deleteWordBankEntry(id);
+  }
+
+  @Roles('student')
+  @Post('word-bank/:id/add')
+  addFromWordBank(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.content.addFromWordBank(user, id);
   }
 
   // Personal dictionary (Preparation -> "add to dictionary").

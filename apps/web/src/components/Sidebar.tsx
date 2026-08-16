@@ -30,7 +30,8 @@ const NAV_ICONS: Record<string, IconName> = {
   analytics: 'chart',
   users: 'shield',
   progress: 'target',
-  dictionary: 'bookmark'
+  dictionary: 'bookmark',
+  wordBank: 'book'
 };
 
 // Grouped, role-scoped navigation. Account actions live in the rail footer,
@@ -56,6 +57,7 @@ function groupsForRole(role: string | null): Group[] {
         items: [
           { key: 'courseBuilder', href: '/courses' },
           { key: 'exercises', href: '/exercises' },
+          { key: 'wordBank', href: '/word-bank' },
           { key: 'materials', href: '/materials' }
         ]
       },
@@ -83,6 +85,7 @@ function groupsForRole(role: string | null): Group[] {
       items: [
         { key: 'progress', href: '/progress' },
         { key: 'dictionary', href: '/dictionary' },
+        { key: 'wordBank', href: '/word-bank' },
         { key: 'materials', href: '/materials' }
       ]
     }
