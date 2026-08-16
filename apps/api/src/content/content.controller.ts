@@ -215,6 +215,14 @@ export class ContentController {
     return this.content.createSection(user, dto);
   }
 
+  // One-off repair for content generated before the AI pipeline emitted answer
+  // keys. Admin-only and idempotent — it only fills keys that are missing.
+  @Roles('admin')
+  @Post('tasks/backfill-answer-keys')
+  backfillAnswerKeys(@CurrentUser() user: AuthenticatedUser) {
+    return this.content.backfillAnswerKeys(user);
+  }
+
   @Roles('tutor', 'admin')
   @Patch('sections/:id')
   renameSection(

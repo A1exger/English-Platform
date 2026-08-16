@@ -548,6 +548,46 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     expect(full.body.correct).toBe(true);
   });
 
+  it('backfills answer keys the generator used to omit, and is idempotent', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const admin = await register('c.admin@test.com', 'admin');
+    const s = (await api().post('/api/v1/content/sections').set(auth2)
+      .send({ courseId, level: 'Advanced', title: 'Backfill' }).expect(201)).body;
+    const u = (await api().post('/api/v1/content/units').set(auth2).send({ sectionId: s.id, title: 'U' }).expect(201)).body;
+    const lesson = (await api().post('/api/v1/content/lessons').set(auth2).send({ unitId: u.id, title: 'BF' }).expect(201)).body;
+    const page = (await api().post('/api/v1/content/pages').set(auth2)
+      .send({ courseLessonId: lesson.id, type: 'practice' }).expect(201)).body;
+    const task = (await api().post('/api/v1/content/tasks').set(auth2).send({
+      pageId: page.id,
+      type: 'sentence_ordering',
+      gradingMode: 'AUTO',
+      aspect: 'Grammar',
+      payload: { words: ['I', 'will', 'go'] },
+      answerKey: { order: ['I', 'will', 'go'] }
+    }).expect(201)).body;
+
+    // Reproduce the old generator output: a task stored with no answer key at
+    // all, which scores 0/10 whatever the student answers.
+    await prisma.lessonTask.update({ where: { id: task.id }, data: { answerKey: null } });
+    await api().patch(`/api/v1/content/courses/${courseId}`).set(auth2).send({ status: 'published' }).expect(200);
+    const before = await api().post(`/api/v1/content/tasks/${task.id}/check`).set(auth(student.accessToken))
+      .send({ state: { order: ['I', 'will', 'go'] } }).expect(201);
+    expect(before.body.score).toBe(0);
+
+    // Only an admin may run it, and it repairs from the payload itself.
+    await api().post('/api/v1/content/tasks/backfill-answer-keys').set(auth2).expect(403);
+    const run = await api().post('/api/v1/content/tasks/backfill-answer-keys').set(auth(admin.accessToken)).expect(201);
+    expect(run.body.repaired).toBeGreaterThanOrEqual(1);
+
+    const after = await api().post(`/api/v1/content/tasks/${task.id}/check`).set(auth(student.accessToken))
+      .send({ state: { order: ['I', 'will', 'go'] } }).expect(201);
+    expect(after.body.score).toBe(10);
+
+    // Re-running touches nothing, so a hand-authored key is never overwritten.
+    const again = await api().post('/api/v1/content/tasks/backfill-answer-keys').set(auth(admin.accessToken)).expect(201);
+    expect(again.body.repaired).toBe(0);
+  });
+
   it('renames sections and units', async () => {
     const auth2 = auth(tutor.accessToken);
     const s = (await api().post('/api/v1/content/sections').set(auth2)

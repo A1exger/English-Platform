@@ -113,6 +113,43 @@ function localizeAnswerKey(
   return { ...answerKey, map: next };
 }
 
+/**
+ * Derive an AUTO task's answer key from its own payload. Mirrors what both the
+ * manual builder and the generator produce; returns null when the payload does
+ * not carry enough to reconstruct one.
+ */
+function rebuildAnswerKey(
+  type: string,
+  payload: Record<string, unknown>,
+): Record<string, unknown> | null {
+  if (type === 'sentence_ordering') {
+    const words = Array.isArray(payload.words) ? (payload.words as string[]) : [];
+    return words.length >= 2 ? { order: words } : null;
+  }
+  if (type === 'word_matching') {
+    const pairs = Array.isArray(payload.pairs)
+      ? (payload.pairs as { left?: string; right?: string }[])
+      : [];
+    const map: Record<string, string> = {};
+    for (const p of pairs) if (p?.left && p?.right) map[p.left] = p.right;
+    return Object.keys(map).length ? { map } : null;
+  }
+  if (type === 'gap_fill') {
+    const text = typeof payload.text === 'string' ? payload.text : '';
+    const answers = [...text.matchAll(/\[([^\]]+)\]/g)].map((m) => m[1].trim());
+    return answers.length ? { answers } : null;
+  }
+  if (type === 'categorization') {
+    const items = Array.isArray(payload.items)
+      ? (payload.items as { text?: string; category?: string }[])
+      : [];
+    const placement: Record<string, string> = {};
+    for (const it of items) if (it?.text && it?.category) placement[it.text] = it.category;
+    return Object.keys(placement).length ? { placement } : null;
+  }
+  return null;
+}
+
 @Injectable()
 export class ContentService {
   constructor(
@@ -735,6 +772,51 @@ export class ContentService {
         await db.courseLesson.update({ where: { id: row.id }, data: { order: i + 1 } });
       }
     }
+  }
+
+  /**
+   * Rebuild the answer keys the AI generator used to omit.
+   *
+   * Generated sentence_ordering / word_matching / gap_fill / categorization
+   * tasks were stored with no answerKey, so scoreContentTask had nothing to
+   * compare against: every attempt scored 0/10 and no solution could be shown.
+   * The generator now emits them, but content made before that is still
+   * unanswerable — and the key is fully recoverable from the payload, because
+   * that is exactly how the manual builder derives it:
+   *   sentence_ordering  words are stored in the correct order
+   *   word_matching      each pair carries its own left/right
+   *   gap_fill           answers are the [bracketed] spans of the text
+   *   categorization     each item carries its category
+   *
+   * Only tasks with a missing/empty key are touched, so this is safe to re-run
+   * and never overwrites a key an author set by hand.
+   */
+  async backfillAnswerKeys(user: AuthenticatedUser) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admins only');
+    const types = ['sentence_ordering', 'word_matching', 'gap_fill', 'categorization'];
+    const tasks = await this.prisma.lessonTask.findMany({
+      where: { type: { in: types }, gradingMode: 'AUTO' },
+      select: { id: true, type: true, payload: true, answerKey: true },
+    });
+
+    let repaired = 0;
+    let unrecoverable = 0;
+    for (const t of tasks) {
+      const existing = t.answerKey ? (JSON.parse(t.answerKey) as Record<string, unknown>) : null;
+      if (existing && Object.keys(existing).length > 0) continue;
+
+      const key = rebuildAnswerKey(t.type, JSON.parse(t.payload) as Record<string, unknown>);
+      if (!key) {
+        unrecoverable++;
+        continue;
+      }
+      await this.prisma.lessonTask.update({
+        where: { id: t.id },
+        data: { answerKey: JSON.stringify(key) },
+      });
+      repaired++;
+    }
+    return { scanned: tasks.length, repaired, unrecoverable };
   }
 
   async renameSection(user: AuthenticatedUser, id: string, title: string) {

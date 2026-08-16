@@ -214,7 +214,10 @@ export function normalizeTask(raw: unknown): GenTask | null {
     case 'sentence_ordering': {
       const words = arr(payload.words).map(str).filter(Boolean).slice(0, 30);
       if (words.length < 2) return null;
-      return { ...base, payload: { words } };
+      // The model returns the words already in the correct order (see the format
+      // block), so that IS the key. Without it scoreContentTask finds nothing to
+      // compare against, scores every attempt 0/10 and has no solution to reveal.
+      return { ...base, payload: { words }, answerKey: { order: words } };
     }
     case 'word_matching': {
       const pairs = arr(payload.pairs)
@@ -222,7 +225,9 @@ export function normalizeTask(raw: unknown): GenTask | null {
         .filter((p) => p.left && p.right)
         .slice(0, 12);
       if (pairs.length < 2) return null;
-      return { ...base, payload: { pairs } };
+      const map: Record<string, string> = {};
+      for (const p of pairs) map[p.left] = p.right;
+      return { ...base, payload: { pairs }, answerKey: { map } };
     }
     case 'true_false': {
       // statements[] and answerKey.values[] must line up 1:1 — a mismatched pair
@@ -235,7 +240,8 @@ export function normalizeTask(raw: unknown): GenTask | null {
     case 'gap_fill': {
       const text = str(payload.text);
       if (!/\[[^\]]+\]/.test(text)) return null; // at least one [answer]
-      return { ...base, payload: { text } };
+      const answers = [...text.matchAll(/\[([^\]]+)\]/g)].map((m) => m[1].trim());
+      return { ...base, payload: { text }, answerKey: { answers } };
     }
     case 'categorization': {
       const categories = arr(payload.categories).map(str).filter(Boolean).slice(0, 6);
@@ -244,7 +250,9 @@ export function normalizeTask(raw: unknown): GenTask | null {
         .filter((it) => it.text && categories.includes(it.category))
         .slice(0, 24);
       if (categories.length < 2 || items.length < 1) return null;
-      return { ...base, payload: { categories, items } };
+      const placement: Record<string, string> = {};
+      for (const it of items) placement[it.text] = it.category;
+      return { ...base, payload: { categories, items }, answerKey: { placement } };
     }
     case 'multiple_choice': {
       const question = str(payload.question);

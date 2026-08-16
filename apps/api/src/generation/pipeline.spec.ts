@@ -35,6 +35,25 @@ describe('generation pipeline (pure)', () => {
     // anything not exactly `true` is coerced to false rather than kept as-is
     expect(tf?.answerKey).toEqual({ values: [true, false] });
 
+    // Every AUTO type must carry an answerKey. Without one scoreContentTask has
+    // nothing to compare against: it scores 0/10 whatever the student does, and
+    // there is no solution to reveal — which is how generated sentence_ordering,
+    // word_matching, gap_fill and categorization were all unanswerable.
+    expect(normalizeTask({ type: 'sentence_ordering', payload: { words: ['I', 'go'] } })?.answerKey)
+      .toEqual({ order: ['I', 'go'] });
+    expect(
+      normalizeTask({ type: 'word_matching', payload: { pairs: [{ left: 'cat', right: 'chat' }, { left: 'dog', right: 'chien' }] } })
+        ?.answerKey,
+    ).toEqual({ map: { cat: 'chat', dog: 'chien' } });
+    expect(normalizeTask({ type: 'gap_fill', payload: { text: 'I [go] to [school].' } })?.answerKey)
+      .toEqual({ answers: ['go', 'school'] });
+    expect(
+      normalizeTask({
+        type: 'categorization',
+        payload: { categories: ['Verbs', 'Nouns'], items: [{ text: 'run', category: 'Verbs' }, { text: 'book', category: 'Nouns' }] },
+      })?.answerKey,
+    ).toEqual({ placement: { run: 'Verbs', book: 'Nouns' } });
+
     // unknown type dropped; unknown aspect repaired to Grammar
     expect(normalizeTask({ type: 'bogus', payload: {} })).toBeNull();
     expect(
