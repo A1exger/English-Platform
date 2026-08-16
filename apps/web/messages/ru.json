@@ -32,7 +32,8 @@
     "badgeNew": "New",
     "tab_new": "Новые",
     "tab_progress": "В процессе",
-    "tab_done": "Выполнено"
+    "tab_done": "Выполнено",
+    "courseHomeworkFailed": "Не удалось загрузить домашку из курсов ({code}). Всё, что назначено из курса, в этом списке отсутствует."
   },
   "materials": {
     "title": "Материалы",
@@ -330,7 +331,9 @@
     "section_teach": "Преподавание",
     "section_build": "Создание",
     "section_insights": "Аналитика",
-    "section_admin": "Админ"
+    "section_admin": "Админ",
+    "courseBuilder": "Конструктор курсов",
+    "catalog": "Курсы"
   },
   "dashboard": {
     "greeting": "С возвращением, {name}!",
@@ -598,7 +601,10 @@
     "due": "Срок",
     "assignBtn": "Назначить",
     "homeworkAssignedTo": "Назначено ученикам: {count}",
-    "homeworkAssignFailed": "Не удалось назначить — ничего не отправлено."
+    "homeworkAssignFailed": "Не удалось назначить — ничего не отправлено.",
+    "visibilityIndividual": "Индивидуальный курс — только для выбранных учеников",
+    "catalogTitle": "Курсы",
+    "catalogEmpty": "Пока нет опубликованных — завершите курс в конструкторе и опубликуйте."
   },
   "learn": {
     "title": "Урок",

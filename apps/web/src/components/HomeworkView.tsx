@@ -96,6 +96,8 @@ export function HomeworkView() {
   const [me, setMe] = useState<Me | null>(null);
   const [items, setItems] = useState<Homework[]>([]);
   const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+  // Set when the course-homework list could not be loaded (see load()).
+  const [assignError, setAssignError] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
@@ -116,9 +118,16 @@ export function HomeworkView() {
       setItems(await apiFetch<Homework[]>('/homework', { token, locale }));
       if (profile.role === 'student') {
         // Fold in the lesson-player homework so it isn't invisible to them.
-        setAssignments(
-          await apiFetch<AssignmentRow[]>('/assignments', { token, locale }).catch(() => [])
-        );
+        // Deliberately NOT swallowed: this used to fall back to an empty list on
+        // any error, so a failing request and "you have no homework" looked
+        // identical — the one failure mode nobody could diagnose from the UI.
+        try {
+          setAssignments(await apiFetch<AssignmentRow[]>('/assignments', { token, locale }));
+          setAssignError(null);
+        } catch (e) {
+          setAssignments([]);
+          setAssignError(e instanceof ApiError ? `${e.status}` : 'network');
+        }
       } else if (profile.role === 'tutor' || profile.role === 'admin') {
         setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }).catch(() => []));
       }
@@ -236,6 +245,8 @@ export function HomeworkView() {
         title={t('title')}
         primary={isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined}
       />
+
+      {assignError && <p className="error">{t('courseHomeworkFailed', { code: assignError })}</p>}
 
       <div className="tabs tabs-inline" role="tablist">
         {TABS.map((tb) => (

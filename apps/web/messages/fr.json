@@ -32,7 +32,8 @@
     "badgeNew": "Nouveau",
     "tab_new": "Nouveaux",
     "tab_progress": "En cours",
-    "tab_done": "Terminés"
+    "tab_done": "Terminés",
+    "courseHomeworkFailed": "Impossible de charger les devoirs issus des cours ({code}). Tout ce qui vient d’un cours manque dans cette liste."
   },
   "materials": {
     "title": "Supports",
@@ -330,7 +331,9 @@
     "section_teach": "Enseigner",
     "section_build": "Créer",
     "section_insights": "Analyses",
-    "section_admin": "Admin"
+    "section_admin": "Admin",
+    "courseBuilder": "Constructeur de cours",
+    "catalog": "Cours"
   },
   "dashboard": {
     "greeting": "Bon retour, {name} !",
@@ -598,7 +601,10 @@
     "due": "Échéance",
     "assignBtn": "Attribuer",
     "homeworkAssignedTo": "Attribué à {count} élève(s)",
-    "homeworkAssignFailed": "Attribution impossible — rien n’a été envoyé."
+    "homeworkAssignFailed": "Attribution impossible — rien n’a été envoyé.",
+    "visibilityIndividual": "Cours individuel — réservé aux élèves choisis",
+    "catalogTitle": "Cours",
+    "catalogEmpty": "Rien de publié — terminez un cours dans le constructeur et publiez-le."
   },
   "learn": {
     "title": "Leçon",

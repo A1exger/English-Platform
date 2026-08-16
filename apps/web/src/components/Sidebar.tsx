@@ -23,6 +23,8 @@ const NAV_ICONS: Record<string, IconName> = {
   assignments: 'clipboard',
   homework: 'clipboard',
   courses: 'book',
+  courseBuilder: 'layers',
+  catalog: 'book',
   exercises: 'layers',
   materials: 'folder',
   analytics: 'chart',
@@ -43,13 +45,16 @@ function groupsForRole(role: string | null): Group[] {
           { key: 'overview', href: '/dashboard' },
           { key: 'schedule', href: '/schedule' },
           { key: 'students', href: '/students' },
+          // Finished courses to teach from live with teaching; the builder that
+          // makes them lives under "build".
+          { key: 'catalog', href: '/catalog' },
           { key: 'assignments', href: '/assignments' }
         ]
       },
       {
         labelKey: 'section_build',
         items: [
-          { key: 'courses', href: '/courses' },
+          { key: 'courseBuilder', href: '/courses' },
           { key: 'exercises', href: '/exercises' },
           { key: 'materials', href: '/materials' }
         ]

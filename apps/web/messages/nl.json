@@ -32,7 +32,8 @@
     "badgeNew": "Nieuw",
     "tab_new": "Nieuw",
     "tab_progress": "Bezig",
-    "tab_done": "Klaar"
+    "tab_done": "Klaar",
+    "courseHomeworkFailed": "Huiswerk uit cursussen kon niet worden geladen ({code}). Alles vanuit een cursus ontbreekt in deze lijst."
   },
   "materials": {
     "title": "Materialen",
@@ -330,7 +331,9 @@
     "section_teach": "Lesgeven",
     "section_build": "Maken",
     "section_insights": "Inzichten",
-    "section_admin": "Beheer"
+    "section_admin": "Beheer",
+    "courseBuilder": "Cursusbouwer",
+    "catalog": "Cursussen"
   },
   "dashboard": {
     "greeting": "Welkom terug, {name}!",
@@ -598,7 +601,10 @@
     "due": "Deadline",
     "assignBtn": "Toewijzen",
     "homeworkAssignedTo": "Toegewezen aan {count} leerling(en)",
-    "homeworkAssignFailed": "Toewijzen mislukt — er is niets verstuurd."
+    "homeworkAssignFailed": "Toewijzen mislukt — er is niets verstuurd.",
+    "visibilityIndividual": "Individuele cursus — alleen voor gekozen leerlingen",
+    "catalogTitle": "Cursussen",
+    "catalogEmpty": "Nog niets gepubliceerd — maak een cursus af in de bouwer en publiceer die."
   },
   "learn": {
     "title": "Les",

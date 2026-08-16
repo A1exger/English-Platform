@@ -142,21 +142,23 @@ export function CourseCreateView() {
             {t('description')}
             <textarea value={course.description} onChange={(e) => setCourse({ ...course, description: e.target.value })} />
           </label>
-          <label>
-            {t('visibility')}
-            <select
-              value={course.visibility}
-              onChange={(e) =>
-                setCourse({ ...course, visibility: e.target.value as 'public' | 'private' })
-              }
-            >
-              <option value="public">{t('visibilityPublic')}</option>
-              <option value="private">{t('visibilityPrivate')}</option>
-            </select>
+          {/* A tick rather than a dropdown: there are only two states, and the
+              question is really "is this course for one student or for all?" */}
+          <div className="field">
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={course.visibility === 'private'}
+                onChange={(e) =>
+                  setCourse({ ...course, visibility: e.target.checked ? 'private' : 'public' })
+                }
+              />
+              {t('visibilityIndividual')}
+            </label>
             <small className="muted">
               {course.visibility === 'private' ? t('visibilityPrivateHint') : t('visibilityPublicHint')}
             </small>
-          </label>
+          </div>
           <label>
             {t('cover')}
             <input

@@ -5277,3 +5277,34 @@ input[type='radio']:focus-visible {
   flex-direction: column;
   gap: 4px;
 }
+
+/* ——— course catalogue (finished courses to teach from) ——— */
+.catalog-group + .catalog-group {
+  margin-block-start: 24px;
+}
+.catalog-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.catalog-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: start;
+  cursor: pointer;
+  border: 1px solid var(--line);
+}
+.catalog-card:hover {
+  border-color: var(--indigo);
+}
+.catalog-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.catalog-row .assign-row-main {
+  flex: 1;
+  min-inline-size: 0;
+}

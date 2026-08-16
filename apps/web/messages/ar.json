@@ -32,7 +32,8 @@
     "badgeNew": "جديد",
     "tab_new": "جديد",
     "tab_progress": "قيد التنفيذ",
-    "tab_done": "مكتمل"
+    "tab_done": "مكتمل",
+    "courseHomeworkFailed": "تعذّر تحميل واجبات الدورات ({code}). كل ما أُسند من دورة غير ظاهر في هذه القائمة."
   },
   "materials": {
     "title": "المواد",
@@ -330,7 +331,9 @@
     "section_teach": "التدريس",
     "section_build": "الإنشاء",
     "section_insights": "التحليلات",
-    "section_admin": "الإدارة"
+    "section_admin": "الإدارة",
+    "courseBuilder": "منشئ الدورات",
+    "catalog": "الدورات"
   },
   "dashboard": {
     "greeting": "مرحبًا بعودتك، {name}!",
@@ -598,7 +601,10 @@
     "due": "الموعد",
     "assignBtn": "إسناد",
     "homeworkAssignedTo": "تم الإسناد إلى {count} من الطلاب",
-    "homeworkAssignFailed": "تعذّر الإسناد — لم يُرسل شيء."
+    "homeworkAssignFailed": "تعذّر الإسناد — لم يُرسل شيء.",
+    "visibilityIndividual": "دورة فردية — للطلاب المحددين فقط",
+    "catalogTitle": "الدورات",
+    "catalogEmpty": "لا يوجد منشور بعد — أكمل دورة في المنشئ وانشرها."
   },
   "learn": {
     "title": "الدرس",
