@@ -251,7 +251,8 @@
     "planNoLessons": "Keine Lektionen auf diesem Niveau.",
     "planDraft": "Entwurf",
     "planPrivate": "individuell",
-    "planDraftHint": "Dieser Kurs ist ein Entwurf — veröffentliche ihn, sonst sieht die Lernende dieses Material nicht."
+    "planDraftHint": "Dieser Kurs ist ein Entwurf — veröffentliche ihn, sonst sieht die Lernende dieses Material nicht.",
+    "homeworkAssignFailed": "Zuweisen fehlgeschlagen — nichts wurde gesendet."
   },
   "board": {
     "title": "Whiteboard",
@@ -591,7 +592,13 @@
     "visibilityPrivateHint": "Nur die von dir gewählten Lernenden sehen ihn. Wähle sie im Kursmenü → Zugriff.",
     "manageAccess": "Zugriff",
     "manageAccessHint": "Wähle, wer diesen Kurs öffnen darf. Beim Speichern wird er zu einem individuellen Kurs.",
-    "noStudents": "Noch keine Lernenden."
+    "noStudents": "Noch keine Lernenden.",
+    "assignHomework": "Als Hausaufgabe geben",
+    "chooseStudents": "Für wen",
+    "due": "Frist",
+    "assignBtn": "Zuweisen",
+    "homeworkAssignedTo": "An {count} Lernende zugewiesen",
+    "homeworkAssignFailed": "Zuweisen fehlgeschlagen — nichts wurde gesendet."
   },
   "learn": {
     "title": "Lektion",

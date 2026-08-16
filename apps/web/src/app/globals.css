@@ -5254,3 +5254,26 @@ input[type='radio']:focus-visible {
   gap: 6px;
   flex: none;
 }
+
+/* Telegram connected: a tick beside the confirmation, so returning from the
+   bot chat visibly lands rather than just changing the wording. */
+.tg-connected {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--high, #1a7f5c);
+  font-weight: 500;
+}
+
+/* Assign-homework drawer: one field per row, full width. */
+.assign-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.assign-form > label,
+.assign-form > .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

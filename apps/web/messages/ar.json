@@ -251,7 +251,8 @@
     "planNoLessons": "لا دروس في هذا المستوى.",
     "planDraft": "مسودة",
     "planPrivate": "فردي",
-    "planDraftHint": "هذه الدورة مسودة — انشرها، وإلا لن يرى الطالب هذه المادة."
+    "planDraftHint": "هذه الدورة مسودة — انشرها، وإلا لن يرى الطالب هذه المادة.",
+    "homeworkAssignFailed": "تعذّر الإسناد — لم يُرسل شيء."
   },
   "board": {
     "title": "اللوحة",
@@ -591,7 +592,13 @@
     "visibilityPrivateHint": "لن يراها إلا الطلاب الذين تختارهم. اخترهم من قائمة الدورة ← الوصول.",
     "manageAccess": "الوصول",
     "manageAccessHint": "اختر من يمكنه فتح هذه الدورة. الحفظ يجعلها دورة فردية.",
-    "noStudents": "لا يوجد طلاب بعد."
+    "noStudents": "لا يوجد طلاب بعد.",
+    "assignHomework": "إسناد كواجب",
+    "chooseStudents": "لمن",
+    "due": "الموعد",
+    "assignBtn": "إسناد",
+    "homeworkAssignedTo": "تم الإسناد إلى {count} من الطلاب",
+    "homeworkAssignFailed": "تعذّر الإسناد — لم يُرسل شيء."
   },
   "learn": {
     "title": "الدرس",

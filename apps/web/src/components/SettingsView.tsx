@@ -1,12 +1,13 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { locales, type Locale } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
+import { Icon } from './Icon';
 import { useAppTimeZone } from './AppIntlProvider';
 
 // Curated IANA time zones offered as an explicit override. "Auto" (empty value)
@@ -98,12 +99,7 @@ export function SettingsView() {
           timezone: autoTz((profile as { timezone?: string }).timezone),
           locale: (profile.locale as Locale) ?? locale
         });
-        setTelegram(
-          await apiFetch<{ connected: boolean; url: string | null }>('/notifications/telegram', {
-            token,
-            locale
-          }).catch(() => null)
-        );
+        setTelegram(await fetchTelegram(token));
         setState('ready');
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -114,6 +110,35 @@ export function SettingsView() {
       }
     })();
   }, [locale, router]);
+
+  const fetchTelegram = useCallback(
+    (token: string) =>
+      apiFetch<{ connected: boolean; url: string | null }>('/notifications/telegram', {
+        token,
+        locale
+      }).catch(() => null),
+    [locale]
+  );
+
+  /**
+   * Connecting happens in Telegram, in another tab — this page is never told.
+   * Re-check whenever the user comes back to it, so the state flips to connected
+   * on its own instead of needing a manual reload.
+   */
+  useEffect(() => {
+    const recheck = () => {
+      if (document.visibilityState !== 'visible') return;
+      const token = tokenStore.get();
+      if (!token) return;
+      void fetchTelegram(token).then((tg) => tg && setTelegram(tg));
+    };
+    window.addEventListener('focus', recheck);
+    document.addEventListener('visibilitychange', recheck);
+    return () => {
+      window.removeEventListener('focus', recheck);
+      document.removeEventListener('visibilitychange', recheck);
+    };
+  }, [fetchTelegram]);
 
   async function save(e: FormEvent) {
     e.preventDefault();
@@ -236,7 +261,8 @@ export function SettingsView() {
         <p className="muted">{t('emailChannel', { email: form.email })}</p>
         {telegram?.url && (
           <div className="row-between tg-row">
-            <span className="muted">
+            <span className={telegram.connected ? 'tg-connected' : 'muted'}>
+              {telegram.connected && <Icon name="check-circle" />}
               {telegram.connected ? t('telegramOn') : t('telegramHint')}
             </span>
             {telegram.connected ? (

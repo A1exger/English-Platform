@@ -251,7 +251,8 @@
     "planNoLessons": "Geen lessen op dit niveau.",
     "planDraft": "concept",
     "planPrivate": "individueel",
-    "planDraftHint": "Deze cursus is een concept — publiceer hem, anders ziet de leerling dit materiaal niet."
+    "planDraftHint": "Deze cursus is een concept — publiceer hem, anders ziet de leerling dit materiaal niet.",
+    "homeworkAssignFailed": "Toewijzen mislukt — er is niets verstuurd."
   },
   "board": {
     "title": "Whiteboard",
@@ -591,7 +592,13 @@
     "visibilityPrivateHint": "Alleen de leerlingen die je kiest zien hem. Kies ze in het cursusmenu → Toegang.",
     "manageAccess": "Toegang",
     "manageAccessHint": "Kies wie deze cursus mag openen. Bij opslaan wordt het een individuele cursus.",
-    "noStudents": "Nog geen leerlingen."
+    "noStudents": "Nog geen leerlingen.",
+    "assignHomework": "Als huiswerk geven",
+    "chooseStudents": "Voor wie",
+    "due": "Deadline",
+    "assignBtn": "Toewijzen",
+    "homeworkAssignedTo": "Toegewezen aan {count} leerling(en)",
+    "homeworkAssignFailed": "Toewijzen mislukt — er is niets verstuurd."
   },
   "learn": {
     "title": "Les",

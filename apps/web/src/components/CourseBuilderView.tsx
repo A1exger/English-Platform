@@ -165,6 +165,14 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   // re-pull. Ordinary edits must NOT bump it: the editor would then reload
   // under the author mid-typing.
   const [aiRevision, setAiRevision] = useState(0);
+  // Assigning a course lesson as homework, straight from the tree. Until now the
+  // only way to do this was inside a live lesson room, and only when that
+  // calendar lesson already had a student booked on it.
+  const [hwFor, setHwFor] = useState<LessonRow | null>(null);
+  const [hwStudents, setHwStudents] = useState<{ studentProfileId: string; name: string }[]>([]);
+  const [hwPicked, setHwPicked] = useState<Record<string, boolean>>({});
+  const [hwDue, setHwDue] = useState('');
+  const [hwMsg, setHwMsg] = useState<string | null>(null);
 
   const token = () => tokenStore.get();
 
@@ -393,6 +401,61 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
     });
   }
 
+  async function openHomework(lesson: LessonRow) {
+    const tok = token();
+    if (!tok) return;
+    setHwFor(lesson);
+    setHwPicked({});
+    setHwDue('');
+    setHwMsg(null);
+    setHwStudents(
+      await apiFetch<{ studentProfileId: string; name: string }[]>('/crm/students', {
+        token: tok,
+        locale
+      }).catch(() => [])
+    );
+  }
+
+  async function assignHomework() {
+    const tok = token();
+    const ids = Object.entries(hwPicked).filter(([, v]) => v).map(([k]) => k);
+    if (!tok || !hwFor || ids.length === 0) return;
+    setBusy(true);
+    setHwMsg(null);
+    try {
+      // Count what actually landed instead of assuming: reporting success on a
+      // failed request is what makes "I assigned it and the student sees
+      // nothing" so hard to diagnose.
+      const results = await Promise.all(
+        ids.map((studentProfileId) =>
+          apiFetch('/assignments', {
+            method: 'POST',
+            token: tok,
+            locale,
+            body: {
+              studentProfileId,
+              kind: 'homework',
+              courseLessonId: hwFor.id,
+              topicTag: hwFor.title,
+              dueAt: hwDue ? new Date(hwDue).toISOString() : undefined
+            }
+          })
+            .then(() => true)
+            .catch(() => false)
+        )
+      );
+      const sent = results.filter(Boolean).length;
+      if (sent === 0) {
+        setHwMsg(t('homeworkAssignFailed'));
+        return;
+      }
+      setHwMsg(t('homeworkAssignedTo', { count: sent }));
+      setTimeout(() => setHwFor(null), 1200);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !tree) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
@@ -592,6 +655,17 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
                             <button
                               type="button"
                               className="tree-edit"
+                              aria-label={t('assignHomework')}
+                              title={t('assignHomework')}
+                              onClick={() => void openHomework(l)}
+                            >
+                              <Icon name="clipboard" />
+                            </button>
+                          )}
+                          {canAuthor && !isRenaming && (
+                            <button
+                              type="button"
+                              className="tree-edit"
                               aria-label={t('rename')}
                               title={t('rename')}
                               onClick={() => startRename('lesson', l)}
@@ -769,6 +843,54 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
             )}
             <button type="submit" disabled={busy}>{t('create')}</button>
           </form>
+        </Drawer>
+      )}
+
+      {canAuthor && (
+        <Drawer open={!!hwFor} onClose={() => setHwFor(null)} title={t('assignHomework')}>
+          {/* Stacked, not form-grid: that grid packs 170px columns, which put the
+              student chips beside the lesson name and Assign beside the date. */}
+          <div className="assign-form">
+            <p className="muted">{hwFor?.title}</p>
+            <div className="field">
+              <span>{t('chooseStudents')}</span>
+              {hwStudents.length === 0 ? (
+                <p className="note">{t('noStudents')}</p>
+              ) : (
+                <div className="pick-chips">
+                  {hwStudents.map((st) => (
+                    <label
+                      key={st.studentProfileId}
+                      className={`pick-chip${hwPicked[st.studentProfileId] ? ' on' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!!hwPicked[st.studentProfileId]}
+                        onChange={(e) =>
+                          setHwPicked({ ...hwPicked, [st.studentProfileId]: e.target.checked })
+                        }
+                      />
+                      {st.name}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            <label>
+              {t('due')}
+              <input type="date" value={hwDue} onChange={(e) => setHwDue(e.target.value)} />
+            </label>
+            {hwMsg && (
+              <p className={hwMsg === t('homeworkAssignFailed') ? 'error' : 'ex-ok'}>{hwMsg}</p>
+            )}
+            <button
+              type="button"
+              disabled={busy || !Object.values(hwPicked).some(Boolean)}
+              onClick={() => void assignHomework()}
+            >
+              {t('assignBtn')}
+            </button>
+          </div>
         </Drawer>
       )}
     </div>

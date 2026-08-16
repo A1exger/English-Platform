@@ -251,7 +251,8 @@
     "planNoLessons": "Aucune leçon à ce niveau.",
     "planDraft": "brouillon",
     "planPrivate": "individuel",
-    "planDraftHint": "Ce cours est un brouillon — publiez-le, sinon l'élève ne verra pas ce contenu."
+    "planDraftHint": "Ce cours est un brouillon — publiez-le, sinon l'élève ne verra pas ce contenu.",
+    "homeworkAssignFailed": "Attribution impossible — rien n’a été envoyé."
   },
   "board": {
     "title": "Tableau",
@@ -591,7 +592,13 @@
     "visibilityPrivateHint": "Seuls les élèves que vous choisissez le verront. Sélectionnez-les dans le menu du cours → Accès.",
     "manageAccess": "Accès",
     "manageAccessHint": "Choisissez qui peut ouvrir ce cours. L'enregistrement en fait un cours individuel.",
-    "noStudents": "Aucun élève pour le moment."
+    "noStudents": "Aucun élève pour le moment.",
+    "assignHomework": "Donner en devoir",
+    "chooseStudents": "À qui",
+    "due": "Échéance",
+    "assignBtn": "Attribuer",
+    "homeworkAssignedTo": "Attribué à {count} élève(s)",
+    "homeworkAssignFailed": "Attribution impossible — rien n’a été envoyé."
   },
   "learn": {
     "title": "Leçon",

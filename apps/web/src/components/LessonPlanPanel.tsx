@@ -52,6 +52,7 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
   const [pickedTasks, setPickedTasks] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const [assigned, setAssigned] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const { courses, studentIds } = live;
 
@@ -105,18 +106,30 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
     if (!token || !preview || studentIds.length === 0 || taskIds.length === 0) return;
     setBusy(true);
     try {
-      for (const studentProfileId of studentIds) {
-        await apiFetch('/assignments', {
-          method: 'POST',
-          token,
-          locale,
-          body: {
-            studentProfileId,
-            kind: 'homework',
-            taskIds,
-            topicTag: preview.title
-          }
-        }).catch(() => undefined);
+      // Count what landed. This used to swallow every error and then report
+      // success regardless, so a failed assignment looked identical to a
+      // successful one — and the student simply never got anything.
+      const results = await Promise.all(
+        studentIds.map((studentProfileId) =>
+          apiFetch('/assignments', {
+            method: 'POST',
+            token,
+            locale,
+            body: {
+              studentProfileId,
+              kind: 'homework',
+              taskIds,
+              topicTag: preview.title
+            }
+          })
+            .then(() => true)
+            .catch(() => false)
+        )
+      );
+      if (!results.some(Boolean)) {
+        setFailed(true);
+        setTimeout(() => setFailed(false), 4000);
+        return;
       }
       setAssigned(true);
       setPickedPages({});
@@ -307,7 +320,11 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
               disabled={busy || pickedCount === 0}
               onClick={assignHomework}
             >
-              {assigned ? t('homeworkAssigned') : `${t('assignHomework')} · ${pickedCount}`}
+              {failed
+                ? t('homeworkAssignFailed')
+                : assigned
+                  ? t('homeworkAssigned')
+                  : `${t('assignHomework')} · ${pickedCount}`}
             </button>
           )}
         </div>

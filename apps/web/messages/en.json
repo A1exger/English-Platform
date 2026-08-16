@@ -251,7 +251,8 @@
     "planNoLessons": "No lessons at this level.",
     "planDraft": "draft",
     "planPrivate": "individual",
-    "planDraftHint": "This course is a draft — publish it, or the student will not see this material."
+    "planDraftHint": "This course is a draft — publish it, or the student will not see this material.",
+    "homeworkAssignFailed": "Could not assign — nothing was sent."
   },
   "board": {
     "title": "Whiteboard",
@@ -591,7 +592,13 @@
     "visibilityPrivateHint": "Only the students you choose will see it. Pick them from the course menu → Access.",
     "manageAccess": "Access",
     "manageAccessHint": "Choose which students can open this course. Saving makes it an individual course.",
-    "noStudents": "No students yet."
+    "noStudents": "No students yet.",
+    "assignHomework": "Assign as homework",
+    "chooseStudents": "Who gets it",
+    "due": "Due",
+    "assignBtn": "Assign",
+    "homeworkAssignedTo": "Assigned to {count} student(s)",
+    "homeworkAssignFailed": "Could not assign — nothing was sent."
   },
   "learn": {
     "title": "Lesson",
