@@ -610,7 +610,8 @@
     "lessonHasNoTasks": "Deze les heeft nog geen opdrachten.",
     "taskCount": "{count} opdrachten",
     "levelEmpty": "leeg",
-    "levelEmptyBody": "Op dit niveau is er nog niets."
+    "levelEmptyBody": "Op dit niveau is er nog niets.",
+    "aiNeedsDraft": "AI-generatie werkt alleen zolang de cursus een concept is. Maak de publicatie ongedaan in de cursuslijst, voeg de les toe en publiceer opnieuw."
   },
   "learn": {
     "title": "Les",

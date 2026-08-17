@@ -610,7 +610,8 @@
     "lessonHasNoTasks": "This lesson has no tasks yet.",
     "taskCount": "{count} tasks",
     "levelEmpty": "empty",
-    "levelEmptyBody": "Nothing at this level yet."
+    "levelEmptyBody": "Nothing at this level yet.",
+    "aiNeedsDraft": "AI generation only works while the course is a draft. Unpublish it in the course list, add the lesson, then publish again."
   },
   "learn": {
     "title": "Lesson",

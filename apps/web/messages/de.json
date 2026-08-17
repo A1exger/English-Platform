@@ -610,7 +610,8 @@
     "lessonHasNoTasks": "Diese Stunde hat noch keine Aufgaben.",
     "taskCount": "{count} Aufgaben",
     "levelEmpty": "leer",
-    "levelEmptyBody": "Auf dieser Stufe gibt es noch nichts."
+    "levelEmptyBody": "Auf dieser Stufe gibt es noch nichts.",
+    "aiNeedsDraft": "Die KI-Generierung funktioniert nur, solange der Kurs ein Entwurf ist. Heben Sie die Veröffentlichung in der Kursliste auf, fügen Sie die Lektion hinzu und veröffentlichen Sie erneut."
   },
   "learn": {
     "title": "Lektion",

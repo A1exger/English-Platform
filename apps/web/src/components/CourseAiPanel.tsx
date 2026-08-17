@@ -152,9 +152,10 @@ export function CourseAiPanel({
   const toggleAspect = (a: string) =>
     setAspects((p) => (p.includes(a) ? p.filter((x) => x !== a) : [...p, a]));
 
-  // Nothing to show: no AI job on this course and the course is published.
-  if (!job && courseStatus !== 'draft') return null;
-
+  // A published course used to render nothing here, which is how "there is no
+  // Generate button" became indistinguishable from "the feature is broken".
+  // There is always something to say now: the generate form for a draft, and for
+  // a published course the reason it is not offered.
   return (
     <div className="ai-panel card">
       {job && <span className="ai-badge">{t('aiGenerated')}</span>}
@@ -180,6 +181,13 @@ export function CourseAiPanel({
             {tc('dismiss')}
           </button>
         </p>
+      )}
+
+      {/* Generation only runs into a draft, so a published course simply lost the
+          button — an empty strip and no reason given. Say what the rule is and
+          where the switch lives, rather than leaving a dead end. */}
+      {courseStatus !== 'draft' && !generating && (
+        <p className="note">{t('aiNeedsDraft')}</p>
       )}
 
       {courseStatus === 'draft' && !generating && (

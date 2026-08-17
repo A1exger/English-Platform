@@ -420,6 +420,12 @@ button:disabled {
   border-block-start: 1px solid var(--line);
   padding-block-start: 12px;
 }
+/* The rule separates the generate form from the job above it. On a course with
+   no job the form is all there is, and the rule reads as a stray line. */
+.ai-genlesson:first-child {
+  border-block-start: none;
+  padding-block-start: 0;
+}
 /* The failure line plus its dismiss button. The message can be long — a
    provider's error text — so the button keeps its own column and stays reachable
    instead of being pushed off the end. */

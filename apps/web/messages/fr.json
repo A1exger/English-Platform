@@ -610,7 +610,8 @@
     "lessonHasNoTasks": "Cette leçon n’a pas encore d’exercices.",
     "taskCount": "{count} exercices",
     "levelEmpty": "vide",
-    "levelEmptyBody": "Rien à ce niveau pour l’instant."
+    "levelEmptyBody": "Rien à ce niveau pour l’instant.",
+    "aiNeedsDraft": "La génération par IA ne fonctionne que tant que le cours est un brouillon. Dépubliez-le dans la liste des cours, ajoutez la leçon, puis republiez-le."
   },
   "learn": {
     "title": "Leçon",
