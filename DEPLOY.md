@@ -140,6 +140,47 @@ API — `https://englishsparkstudio.com/api/...`. Caddy маршрутизиру
 | Карты | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYPAL_WEBHOOK_SECRET` |
 | Telegram | `TELEGRAM_BOT_TOKEN` |
 | Email | подключить SMTP‑провайдера в воркере dispatch (Postmark/Resend) |
+| Генерация уроков (AI) | `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` — или `ANTHROPIC_API_KEY` |
+
+### 8.1. AI: какую модель ставить и что делать, когда она «пропала»
+
+Генерация ходит в любой провайдер с OpenAI‑совместимым API. Ключ и **имя
+модели** живут только в `.env.prod` — в коде их нет:
+
+```
+AI_BASE_URL=https://api.groq.com/openai/v1
+AI_API_KEY=gsk_...
+AI_MODEL=openai/gpt-oss-120b
+```
+
+**Важно:** контейнер читает `.env.prod` (тот файл, который передан в
+`--env-file`), а не `apps/api/.env`. Правка `apps/api/.env` на прод не влияет.
+
+Провайдеры снимают модели по своему графику — Groq убрал
+`llama-3.3-70b-versatile` в июне 2026. Ключ и кабинет при этом в полном порядке,
+а генерация падает с «model does not exist or you do not have access to it».
+
+Что проверить по шагам:
+
+```bash
+# 1. Что реально видит контейнер (а не что написано в файле):
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec api printenv AI_MODEL
+
+# 2. Какие модели доступны вашему ключу:
+curl -s -H "Authorization: Bearer $AI_API_KEY" "$AI_BASE_URL/models" | grep -o '"id":"[^"]*"'
+
+# 3. Поправить .env.prod и ПЕРЕСОЗДАТЬ контейнер (перезапуска мало —
+#    переменные окружения подставляются в момент создания):
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-recreate api
+```
+
+Если шаг 1 печатает старое имя — значит правка ушла не в тот файл или контейнер
+не пересоздан.
+
+Красная надпись «Generation failed …» в конструкторе курсов — это **последняя
+попытка**, а не текущее состояние: она хранится в записи задания и висит, пока не
+появится новая. Кнопка «Скрыть» рядом с ней убирает её, курс и уроки при этом не
+трогаются.
 
 ---
 

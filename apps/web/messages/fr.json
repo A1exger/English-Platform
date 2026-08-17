@@ -308,7 +308,8 @@
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "resetSubmit": "Enregistrer le mot de passe",
     "resetDone": "Mot de passe modifié. Redirection vers la connexion…",
-    "resetInvalid": "Ce lien est invalide ou expiré. Demandez-en un nouveau."
+    "resetInvalid": "Ce lien est invalide ou expiré. Demandez-en un nouveau.",
+    "dismiss": "Masquer"
   },
   "nav": {
     "overview": "Aperçu",

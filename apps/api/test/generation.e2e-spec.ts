@@ -143,6 +143,45 @@ describe('AI generation (e2e, mocked model)', () => {
     await api().get(`/api/v1/content/generate/${bad.body.id}`).set(auth(tutor.accessToken)).expect(404);
   });
 
+  it('dismissing a failed job clears the strip without touching the course', async () => {
+    // Generate a real course first, then fail a lesson job inside it: the course
+    // must survive being dismissed, which is what separates this from `remove`.
+    const g = await api()
+      .post('/api/v1/content/generate')
+      .set(auth(tutor.accessToken))
+      .send({ topic: 'Keeper', level: 'Intermediate', units: 1, lessonsPerUnit: 1 })
+      .expect(201);
+    const made = await settle(g.body.id);
+    const courseId = made.courseId as string;
+
+    const bad = await api()
+      .post('/api/v1/content/generate')
+      .set(auth(tutor.accessToken))
+      .send({ targetType: 'LESSON', courseId, topic: 'FAIL_TOPIC', level: 'Intermediate' })
+      .expect(201);
+    expect((await settle(bad.body.id)).status).toBe('failed');
+    // The course strip shows the newest job — the failure — until it is cleared.
+    const strip = async () =>
+      (await api().get(`/api/v1/content/generate?courseId=${courseId}`).set(auth(tutor.accessToken))
+        .expect(200)).body as { id: string; status: string }[];
+    expect((await strip())[0].status).toBe('failed');
+
+    await api().post(`/api/v1/content/generate/${bad.body.id}/dismiss`)
+      .set(auth(tutor.accessToken)).expect(201);
+    expect((await strip()).map((j) => j.id)).not.toContain(bad.body.id);
+    // The course and its generated lesson are untouched.
+    await api().get(`/api/v1/content/courses/${courseId}/tree?level=Intermediate`)
+      .set(auth(tutor.accessToken)).expect(200);
+
+    // A job still awaiting review cannot be dismissed — that would hide work
+    // rather than a failure, and `remove` is the action for dropping it.
+    await api().post(`/api/v1/content/generate/${g.body.id}/dismiss`)
+      .set(auth(tutor.accessToken)).expect(400);
+    // Nor can someone else's failure be cleared.
+    await api().post(`/api/v1/content/generate/${g.body.id}/dismiss`)
+      .set(auth(student.accessToken)).expect(403);
+  });
+
   it('deleting an unapproved job removes its draft course (ФТ-К409)', async () => {
     const g = await api()
       .post('/api/v1/content/generate')

@@ -308,7 +308,8 @@
     "passwordMismatch": "De wachtwoorden komen niet overeen.",
     "resetSubmit": "Wachtwoord opslaan",
     "resetDone": "Wachtwoord gewijzigd. Je gaat naar inloggen…",
-    "resetInvalid": "Deze link is ongeldig of verlopen. Vraag een nieuwe aan."
+    "resetInvalid": "Deze link is ongeldig of verlopen. Vraag een nieuwe aan.",
+    "dismiss": "Verbergen"
   },
   "nav": {
     "overview": "Overzicht",

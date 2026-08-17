@@ -373,6 +373,23 @@ export class GenerationService {
     return { deleted: true };
   }
 
+  /**
+   * Clear a failed attempt. The course strip shows the newest job, so a failure
+   * stays on screen every time the course is opened — long after the cause was
+   * fixed — and reads as "this is broken now" rather than "this is what happened
+   * last time". Deleting the row is all this does: unlike `remove`, it never
+   * touches the course or lesson, and it refuses anything but a failed job so it
+   * cannot be used to drop a review that is still waiting.
+   */
+  async dismiss(user: AuthenticatedUser, jobId: string) {
+    const job = await this.owned(user, jobId);
+    if (job.status !== 'failed') {
+      throw new BadRequestException('Only a failed generation can be dismissed');
+    }
+    await this.prisma.generationJob.delete({ where: { id: jobId } });
+    return { dismissed: true };
+  }
+
   private async owned(user: AuthenticatedUser, id: string): Promise<JobRow> {
     const job = await this.prisma.generationJob.findUnique({ where: { id } });
     if (!job) throw new NotFoundException('Generation job not found');

@@ -308,7 +308,8 @@
     "passwordMismatch": "Die Passwörter stimmen nicht überein.",
     "resetSubmit": "Passwort speichern",
     "resetDone": "Passwort geändert. Weiter zur Anmeldung…",
-    "resetInvalid": "Dieser Link ist ungültig oder abgelaufen. Fordere einen neuen an."
+    "resetInvalid": "Dieser Link ist ungültig oder abgelaufen. Fordere einen neuen an.",
+    "dismiss": "Ausblenden"
   },
   "nav": {
     "overview": "Übersicht",

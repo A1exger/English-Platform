@@ -53,6 +53,13 @@ export class GenerationController {
     return this.generation.approve(user, jobId);
   }
 
+  // Clear a failed attempt off the course strip. Content is left alone — see
+  // `remove` for the one that unwinds what was generated.
+  @Post(':jobId/dismiss')
+  dismiss(@CurrentUser() user: AuthenticatedUser, @Param('jobId') jobId: string) {
+    return this.generation.dismiss(user, jobId);
+  }
+
   @Delete(':jobId')
   remove(@CurrentUser() user: AuthenticatedUser, @Param('jobId') jobId: string) {
     return this.generation.remove(user, jobId);

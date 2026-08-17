@@ -68,6 +68,19 @@ export function CourseAiPanel({
     [locale, onChanged]
   );
 
+  async function dismiss() {
+    const token = tokenStore.get();
+    if (!token || !job) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/content/generate/${job.id}/dismiss`, { method: 'POST', token, locale });
+      setJob(null);
+      await loadJobs();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function approve() {
     const token = tokenStore.get();
     if (!token || !job) return;
@@ -158,7 +171,15 @@ export function CourseAiPanel({
       )}
       {job?.status === 'approved' && <p className="note">{t('aiApproved')}</p>}
       {job?.status === 'failed' && (
-        <p className="error">{t('aiFailed')}{job.error ? `: ${job.error}` : ''}</p>
+        // The strip shows the newest job, so without a way to clear it a failure
+        // greets you on every visit and looks like the current state rather than
+        // the last attempt.
+        <p className="error ai-failed">
+          <span>{t('aiFailed')}{job.error ? `: ${job.error}` : ''}</span>
+          <button type="button" className="ghost" disabled={busy} onClick={dismiss}>
+            {tc('dismiss')}
+          </button>
+        </p>
       )}
 
       {courseStatus === 'draft' && !generating && (

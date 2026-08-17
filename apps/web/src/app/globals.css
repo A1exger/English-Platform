@@ -420,6 +420,20 @@ button:disabled {
   border-block-start: 1px solid var(--line);
   padding-block-start: 12px;
 }
+/* The failure line plus its dismiss button. The message can be long — a
+   provider's error text — so the button keeps its own column and stays reachable
+   instead of being pushed off the end. */
+.ai-failed {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ai-failed > span {
+  flex: 1 1 320px;
+  min-inline-size: 0;
+}
 
 .lesson-list {
   list-style: none;
