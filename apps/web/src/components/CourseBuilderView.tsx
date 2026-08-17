@@ -421,10 +421,11 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
             aria-selected={level === l}
             // Dimmed, not hidden: an author still needs to open an empty level
             // to add the first section to it.
-            className={`${level === l ? 'active' : ''}${empty ? ' level-empty' : ''}`}
+            className={level === l ? 'active' : ''}
             onClick={() => setLevel(l)}
           >
             {l}
+            {empty && <span className="level-empty-note">{t('levelEmpty')}</span>}
           </button>
         );
       })}
@@ -434,7 +435,9 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
   const treePanel = (
     <div className="builder-tree card">
       {tree.sections.length === 0 ? (
-        <p className="note">{t('empty')}</p>
+        // Name the level, so switching to one with nothing in it reads as
+        // "this level is empty" rather than "the switch did not work".
+        <p className="note">{t('levelEmptyBody')}</p>
       ) : (
         tree.sections.map((s) => (
           <div key={s.id} className={`tree-section${drag?.id === s.id ? ' dragging' : ''}`}>

@@ -607,7 +607,9 @@
     "catalogTitle": "Курсы",
     "catalogEmpty": "Пока нет опубликованных — завершите курс в конструкторе и опубликуйте.",
     "lessonHasNoTasks": "В этом уроке пока нет заданий.",
-    "taskCount": "заданий: {count}"
+    "taskCount": "заданий: {count}",
+    "levelEmpty": "пусто",
+    "levelEmptyBody": "На этом уровне пока ничего нет."
   },
   "learn": {
     "title": "Урок",
@@ -698,7 +700,8 @@
     "lookup": "Посмотреть слово",
     "lookupBtn": "Найти",
     "lookupNothing": "По этому слову ничего не найдено.",
-    "loadStarter": "Загрузить стартовый набор"
+    "loadStarter": "Загрузить стартовый набор",
+    "showTranslation": "Показать перевод"
   },
   "enum": {
     "role": {

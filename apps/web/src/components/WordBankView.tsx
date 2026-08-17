@@ -13,6 +13,9 @@ import { Icon } from './Icon';
 interface BankEntry {
   id: string;
   word: string;
+  /** English definition — what the word MEANS, shown first. */
+  definition: string | null;
+  /** Gloss in the reader's own language, revealed on request. */
   translation: string | null;
   example: string | null;
   topic: string | null;
@@ -39,6 +42,10 @@ export function WordBankView() {
   const [topic, setTopic] = useState('');
   const [busy, setBusy] = useState(false);
   const [added, setAdded] = useState<Record<string, boolean>>({});
+  // Which rows have had their translation revealed. Meeting the English first
+  // and choosing to check the translation is the point — showing both at once
+  // makes the English decorative.
+  const [shown, setShown] = useState<Record<string, boolean>>({});
 
   // Import drawer
   const [importOpen, setImportOpen] = useState(false);
@@ -194,8 +201,20 @@ export function WordBankView() {
             <li key={r.id} className="assign-row catalog-row">
               <span className="assign-row-main">
                 <strong>{r.word}</strong>
-                {r.translation && <span className="muted"> — {r.translation}</span>}
+                {r.definition && <span className="muted">{r.definition}</span>}
                 {r.example && <span className="muted ex-hint">{r.example}</span>}
+                {r.translation &&
+                  (shown[r.id] ? (
+                    <span className="bank-translation">{r.translation}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() => setShown((p) => ({ ...p, [r.id]: true }))}
+                    >
+                      {t('showTranslation')}
+                    </button>
+                  ))}
               </span>
               <span className="row-actions">
                 {r.topic && <span className="chip">{r.topic}</span>}

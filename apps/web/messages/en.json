@@ -607,7 +607,9 @@
     "catalogTitle": "Courses",
     "catalogEmpty": "Nothing published yet — finish a course in the builder and publish it.",
     "lessonHasNoTasks": "This lesson has no tasks yet.",
-    "taskCount": "{count} tasks"
+    "taskCount": "{count} tasks",
+    "levelEmpty": "empty",
+    "levelEmptyBody": "Nothing at this level yet."
   },
   "learn": {
     "title": "Lesson",
@@ -698,7 +700,8 @@
     "lookup": "Look a word up",
     "lookupBtn": "Look up",
     "lookupNothing": "Nothing found for that word.",
-    "loadStarter": "Load the starter set"
+    "loadStarter": "Load the starter set",
+    "showTranslation": "Show translation"
   },
   "enum": {
     "role": {

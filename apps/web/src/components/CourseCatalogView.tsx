@@ -262,10 +262,11 @@ export function CourseCatalogView() {
                   type="button"
                   role="tab"
                   aria-selected={level === l}
-                  className={`${level === l ? 'active' : ''}${empty ? ' level-empty' : ''}`}
+                  className={level === l ? 'active' : ''}
                   onClick={() => setLevel(l)}
                 >
                   {l}
+                  {empty && <span className="level-empty-note">{t('levelEmpty')}</span>}
                 </button>
               );
             })}
@@ -274,7 +275,7 @@ export function CourseCatalogView() {
           {treeBusy ? (
             <Skeleton lines={4} />
           ) : lessons.length === 0 ? (
-            <p className="note">{t('empty')}</p>
+            <p className="note">{t('levelEmptyBody')}</p>
           ) : (
             <ul className="assign-list">
               {lessons.map((l) => (

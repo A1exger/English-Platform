@@ -492,11 +492,13 @@ export class ContentService {
       orderBy: [{ topic: 'asc' }, { word: 'asc' }],
       take: 1000,
     });
-    // Serve the reader's own language, falling back to the stored default — the
-    // same rule the lesson wordlist uses, so a partly translated row still works.
+    // Two glosses per row, because the UI shows them at different moments: the
+    // English definition is what a learner should meet first, and the
+    // translation in their own language is revealed on request.
     const lang = I18nContext.current()?.lang ?? 'en';
     return rows.map((r) => ({
       ...r,
+      definition: parseTranslations(r.translations).en ?? null,
       translation: resolveWordTranslation(r, lang),
     }));
   }

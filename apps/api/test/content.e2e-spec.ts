@@ -631,11 +631,17 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     expect(pick(ru)).toBe('вода');
     expect(pick(de)).toBe('Wasser');
     expect(pick(fr)).toBe('eau');
+    // The English definition rides along regardless of locale: the UI shows it
+    // first and reveals the translation only on request.
+    const def = (r: { body: { word: string; definition: string }[] }) =>
+      r.body.find((w) => w.word === 'water')?.definition;
+    expect(def(ru)).toBe('what you drink');
+    expect(def(de)).toBe('what you drink');
 
     // The bundled starter pack loads once and skips what is already there.
     const again2 = await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
     expect(again2.body.added).toBe(0);
-    expect(again2.body.total).toBeGreaterThan(200);
+    expect(again2.body.total).toBeGreaterThan(300);
 
     // Students may read the bank but never curate it.
     await api().post('/api/v1/content/word-bank/import').set(authS).send({ text: 'x' }).expect(403);

@@ -607,7 +607,9 @@
     "catalogTitle": "Cursussen",
     "catalogEmpty": "Nog niets gepubliceerd — maak een cursus af in de bouwer en publiceer die.",
     "lessonHasNoTasks": "Deze les heeft nog geen opdrachten.",
-    "taskCount": "{count} opdrachten"
+    "taskCount": "{count} opdrachten",
+    "levelEmpty": "leeg",
+    "levelEmptyBody": "Op dit niveau is er nog niets."
   },
   "learn": {
     "title": "Les",
@@ -698,7 +700,8 @@
     "lookup": "Woord opzoeken",
     "lookupBtn": "Opzoeken",
     "lookupNothing": "Niets gevonden voor dit woord.",
-    "loadStarter": "Startset laden"
+    "loadStarter": "Startset laden",
+    "showTranslation": "Vertaling tonen"
   },
   "enum": {
     "role": {

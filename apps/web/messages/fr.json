@@ -607,7 +607,9 @@
     "catalogTitle": "Cours",
     "catalogEmpty": "Rien de publié — terminez un cours dans le constructeur et publiez-le.",
     "lessonHasNoTasks": "Cette leçon n’a pas encore d’exercices.",
-    "taskCount": "{count} exercices"
+    "taskCount": "{count} exercices",
+    "levelEmpty": "vide",
+    "levelEmptyBody": "Rien à ce niveau pour l’instant."
   },
   "learn": {
     "title": "Leçon",
@@ -698,7 +700,8 @@
     "lookup": "Chercher un mot",
     "lookupBtn": "Chercher",
     "lookupNothing": "Rien trouvé pour ce mot.",
-    "loadStarter": "Charger le jeu de départ"
+    "loadStarter": "Charger le jeu de départ",
+    "showTranslation": "Afficher la traduction"
   },
   "enum": {
     "role": {

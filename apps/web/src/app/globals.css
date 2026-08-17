@@ -5329,8 +5329,24 @@ input[type='radio']:focus-visible {
   min-inline-size: 0;
 }
 
-/* A level with no sections yet: still clickable (you may want to add the first
-   section there), just visibly not where the content is. */
-.level-tabs .level-empty {
-  opacity: 0.45;
+/* A level with no sections carries a small "empty" note rather than being dimmed
+   — dimming read as disabled, and people stopped trying to switch level. */
+.level-tabs .level-empty-note {
+  margin-inline-start: 6px;
+  font-size: 11px;
+  color: var(--mist);
+  font-weight: 400;
+}
+
+/* Revealed word-bank translation: the reader's own language, so it should read
+   as the answer rather than as more grey supporting text. */
+.bank-translation {
+  color: var(--indigo-700);
+  font-weight: 500;
+}
+/* The reveal sits in a flex COLUMN, where a button stretches full width and
+   centres its label — pin it to the start so it lines up under the word. */
+.assign-row-main > .link-button {
+  align-self: flex-start;
+  text-align: start;
 }

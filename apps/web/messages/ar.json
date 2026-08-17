@@ -607,7 +607,9 @@
     "catalogTitle": "الدورات",
     "catalogEmpty": "لا يوجد منشور بعد — أكمل دورة في المنشئ وانشرها.",
     "lessonHasNoTasks": "لا توجد مهام في هذا الدرس بعد.",
-    "taskCount": "{count} مهام"
+    "taskCount": "{count} مهام",
+    "levelEmpty": "فارغ",
+    "levelEmptyBody": "لا يوجد شيء في هذا المستوى بعد."
   },
   "learn": {
     "title": "الدرس",
@@ -698,7 +700,8 @@
     "lookup": "ابحث عن كلمة",
     "lookupBtn": "بحث",
     "lookupNothing": "لم يُعثر على شيء لهذه الكلمة.",
-    "loadStarter": "تحميل المجموعة الأولية"
+    "loadStarter": "تحميل المجموعة الأولية",
+    "showTranslation": "إظهار الترجمة"
   },
   "enum": {
     "role": {

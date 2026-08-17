@@ -607,7 +607,9 @@
     "catalogTitle": "Kurse",
     "catalogEmpty": "Noch nichts veröffentlicht — schließe einen Kurs im Builder ab und veröffentliche ihn.",
     "lessonHasNoTasks": "Diese Stunde hat noch keine Aufgaben.",
-    "taskCount": "{count} Aufgaben"
+    "taskCount": "{count} Aufgaben",
+    "levelEmpty": "leer",
+    "levelEmptyBody": "Auf dieser Stufe gibt es noch nichts."
   },
   "learn": {
     "title": "Lektion",
@@ -698,7 +700,8 @@
     "lookup": "Wort nachschlagen",
     "lookupBtn": "Nachschlagen",
     "lookupNothing": "Zu diesem Wort wurde nichts gefunden.",
-    "loadStarter": "Startpaket laden"
+    "loadStarter": "Startpaket laden",
+    "showTranslation": "Übersetzung anzeigen"
   },
   "enum": {
     "role": {
