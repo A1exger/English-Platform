@@ -10,11 +10,13 @@ type Item = { id: string; label: string; href: string; hint?: string };
 
 export function CommandPalette({ role, onClose }: { role: string | null; onClose: () => void }) {
   const tCommon = useTranslations('common');
+  const tDict = useTranslations('dictionary');
   const locale = useLocale();
   const router = useRouter();
   const [q, setQ] = useState('');
   const [active, setActive] = useState(0);
   const [content, setContent] = useState<Item[]>([]);
+  const [bank, setBank] = useState<Item[]>([]);
 
   // The palette is a keyword search over CONTENT — dictionary words, lessons,
   // courses, materials, students — not a page list (pages already live in the
@@ -48,13 +50,53 @@ export function CommandPalette({ role, onClose }: { role: string | null; onClose
     };
   }, [role, locale, tCommon]);
 
+  // The shared word bank holds thousands of words, so it is asked as you type
+  // rather than pulled into the palette up front like the lists above. Without
+  // this a tutor searching for a word found nothing: their own dictionary is
+  // empty, and the bank was never part of the search.
+  useEffect(() => {
+    const needle = q.trim();
+    const token = tokenStore.get();
+    if (needle.length < 2 || !token) {
+      setBank([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void apiFetch<{ id: string; word: string }[]>(
+        `/content/word-bank?q=${encodeURIComponent(needle)}`,
+        { token, locale }
+      )
+        .catch(() => [])
+        .then((rows) => {
+          if (cancelled) return;
+          setBank(
+            rows.slice(0, 6).map((r) => ({
+              id: `wb:${r.id}`,
+              label: r.word,
+              href: '/word-bank',
+              hint: tDict('bankTitle')
+            }))
+          );
+        });
+    }, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [q, locale, tDict]);
+
   // Match content by word: a query hits every item whose label contains it, so a
   // dictionary word, a lesson title or a student name all surface the same way.
+  // Bank hits are already filtered by the server, and come last so they never
+  // push a lesson or a student the user was reaching for off the list.
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return [];
-    return content.filter((c) => c.label.toLowerCase().includes(needle)).slice(0, 12);
-  }, [q, content]);
+    const local = content.filter((c) => c.label.toLowerCase().includes(needle));
+    const seen = new Set(local.map((c) => c.label.toLowerCase()));
+    return [...local, ...bank.filter((b) => !seen.has(b.label.toLowerCase()))].slice(0, 12);
+  }, [q, content, bank]);
 
   useEffect(() => setActive(0), [q]);
 

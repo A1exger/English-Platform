@@ -111,12 +111,13 @@ export function WordBankView() {
     setBusy(true);
     setSeedMsg(null);
     try {
-      const r = await apiFetch<{ added: number; senses: number }>('/content/word-bank/seed', {
-        method: 'POST',
-        token,
-        locale
-      });
-      setSeedMsg(t('seeded', { count: r.added, senses: r.senses }));
+      const r = await apiFetch<{ added: number; senses: number; relanguaged: number }>(
+        '/content/word-bank/seed',
+        { method: 'POST', token, locale }
+      );
+      setSeedMsg(
+        t('seeded', { count: r.added, senses: r.senses, relanguaged: r.relanguaged })
+      );
       await load();
     } finally {
       setBusy(false);

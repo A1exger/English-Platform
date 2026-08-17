@@ -704,7 +704,7 @@
     "showTranslation": "Afficher la traduction",
     "meanings": "{count, plural, one {# sens} other {# sens}}",
     "addThisMeaning": "Ajouter ce sens",
-    "seeded": "{count} mots et {senses} sens ajoutés."
+    "seeded": "{count} mots et {senses} sens ajoutés ; {relanguaged} anciens mots ont maintenant toutes les langues."
   },
   "enum": {
     "role": {

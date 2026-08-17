@@ -704,7 +704,7 @@
     "showTranslation": "Vertaling tonen",
     "meanings": "{count, plural, one {# betekenis} other {# betekenissen}}",
     "addThisMeaning": "Deze betekenis toevoegen",
-    "seeded": "{count} woorden en {senses} betekenissen toegevoegd."
+    "seeded": "{count} woorden en {senses} betekenissen toegevoegd; {relanguaged} oudere woorden hebben nu alle talen."
   },
   "enum": {
     "role": {

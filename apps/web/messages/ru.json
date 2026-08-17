@@ -704,7 +704,7 @@
     "showTranslation": "Показать перевод",
     "meanings": "{count, plural, one {# значение} few {# значения} many {# значений} other {# значения}}",
     "addThisMeaning": "Добавить это значение",
-    "seeded": "Добавлено слов: {count}, значений: {senses}."
+    "seeded": "Добавлено слов: {count}, значений: {senses}; переведено на все языки: {relanguaged}."
   },
   "enum": {
     "role": {

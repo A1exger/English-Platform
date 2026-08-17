@@ -649,6 +649,57 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().delete(`/api/v1/content/word-bank/${deadline.id}`).set(auth2).expect(200);
   });
 
+  it('word bank: re-seeding re-languages words left with only a Russian gloss', async () => {
+    const auth2 = auth(tutor.accessToken);
+    await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
+
+    // Exactly the state the first version of the pack left behind: one Russian
+    // translation and no per-locale map, which reads as Russian in every
+    // language. One row also carries a gloss a tutor rewrote by hand.
+    await prisma.wordBankEntry.update({ where: { word: 'apple' }, data: { translations: null } });
+    await prisma.wordBankEntry.update({
+      where: { word: 'bread' },
+      data: { translations: null, translation: 'хлебушек' },
+    });
+    const before = await api().get('/api/v1/content/word-bank?q=apple').set(auth2)
+      .set('x-lang', 'de').expect(200);
+    expect(before.body[0].translation).toBe('яблоко');
+
+    const seeded = await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
+    expect(seeded.body.added).toBe(0);
+    expect(seeded.body.relanguaged).toBe(2);
+
+    const de = await api().get('/api/v1/content/word-bank?q=apple').set(auth2)
+      .set('x-lang', 'de').expect(200);
+    expect(de.body[0].translation).toBe('Apfel');
+    expect(de.body[0].definition).toBe('a round fruit');
+    // The tutor's own wording survives as the Russian gloss; the other locales
+    // are filled in around it.
+    const bread = await api().get('/api/v1/content/word-bank?q=bread').set(auth2)
+      .set('x-lang', 'ru').expect(200);
+    expect(bread.body[0].translation).toBe('хлебушек');
+    const breadFr = await api().get('/api/v1/content/word-bank?q=bread').set(auth2)
+      .set('x-lang', 'fr').expect(200);
+    expect(breadFr.body[0].translation).toBe('pain');
+  });
+
+  it('word bank: search finds a word by its name in the reader’s own language', async () => {
+    const auth2 = auth(tutor.accessToken);
+    await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
+    const words = async (q: string) =>
+      (await api().get(`/api/v1/content/word-bank?q=${encodeURIComponent(q)}`).set(auth2).expect(200))
+        .body.map((w: { word: string }) => w.word);
+
+    expect(await words('apple')).toContain('apple');
+    // Typed with a capital, as anyone starting a sentence would.
+    expect(await words('Apple')).toContain('apple');
+    // And by the German or French word for it — searching only the English
+    // headword and a Russian gloss left every other language with no way in.
+    expect(await words('Apfel')).toContain('apple');
+    expect(await words('pomme')).toContain('apple');
+    expect(await words('яблоко')).toContain('apple');
+  });
+
   it('word bank: a polysemous word carries its meanings, and the student picks one', async () => {
     const auth2 = auth(tutor.accessToken);
     const authS = auth(student.accessToken);

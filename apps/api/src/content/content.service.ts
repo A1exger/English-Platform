@@ -58,6 +58,27 @@ function resolveWordTranslation(
 }
 
 /**
+ * Where-clauses for a word-bank search. Two things make this more than one
+ * `contains`:
+ *
+ *   * A reader looks the word up by ITS OWN name for it — a German types
+ *     "Apfel", not "apple" — so the per-locale gloss map is searched too. It is
+ *     stored as JSON text, which a substring match reads happily.
+ *   * `contains` is case-sensitive on Postgres and not on SQLite, and `mode:
+ *     'insensitive'` only exists on the Postgres client. Rather than branch on
+ *     the provider, the needle is tried in the casings words are actually
+ *     written in: as typed, all lower ("apple"), and capitalised ("Apfel").
+ */
+function wordSearchTerms(q: string) {
+  const cased = [q, q.toLowerCase(), q.charAt(0).toUpperCase() + q.slice(1).toLowerCase()];
+  return [...new Set(cased)].flatMap((term) => [
+    { word: { contains: term } },
+    { translation: { contains: term } },
+    { translations: { contains: term } },
+  ]);
+}
+
+/**
  * word -> gloss in the request locale, built from the lesson's wordlist. Used to
  * re-language vocabulary exercises whose glosses were baked in at authoring time
  * (an AI-written lesson can carry e.g. Spanish rights regardless of the reader's
@@ -495,7 +516,7 @@ export class ContentService {
     const rows = await this.prisma.wordBankEntry.findMany({
       where: {
         ...(topic ? { topic } : {}),
-        ...(q ? { OR: [{ word: { contains: q } }, { translation: { contains: q } }] } : {}),
+        ...(q ? { OR: wordSearchTerms(q) } : {}),
       },
       orderBy: [{ topic: 'asc' }, { word: 'asc' }],
       // Only the COUNT of meanings here. With a few thousand words in the bank,
@@ -589,17 +610,38 @@ export class ContentService {
   async seedWordBank() {
     let added = 0;
     let senses = 0;
+    let relanguaged = 0;
     for (const group of STARTER_WORD_BANK) {
       for (const w of group.words) {
         const pack = STARTER_WORD_SENSES[w.word.toLowerCase()] ?? [];
         const existing = await this.prisma.wordBankEntry.findUnique({
           where: { word: w.word },
-          select: { id: true, _count: { select: { senses: true } } },
+          select: {
+            id: true,
+            translation: true,
+            translations: true,
+            _count: { select: { senses: true } },
+          },
         });
         if (existing) {
-          // A word already in the bank keeps its gloss — a tutor may have
-          // corrected it — but gains the meanings it was seeded without, so an
-          // installation from before the sense table catches up on re-seed.
+          // The first version of the pack stored one Russian gloss and no map,
+          // so those rows read as Russian in every language — and skipping
+          // words already present meant they could never catch up. Fill the map
+          // in, keeping a translation a tutor corrected by hand as the Russian
+          // one rather than overwriting their work with the bundled wording.
+          if (!parseTranslations(existing.translations).en) {
+            const filled = { ...w.translations };
+            if (existing.translation && existing.translation !== w.translations.ru) {
+              filled.ru = existing.translation;
+            }
+            await this.prisma.wordBankEntry.update({
+              where: { id: existing.id },
+              data: { translations: JSON.stringify(filled) },
+            });
+            relanguaged++;
+          }
+          // Likewise the meanings: an installation from before the sense table
+          // gains them on re-seed.
           if (existing._count.senses === 0 && pack.length) {
             senses += await this.createSenses(existing.id, pack);
           }
@@ -619,7 +661,7 @@ export class ContentService {
         senses += await this.createSenses(entry.id, pack);
       }
     }
-    return { added, senses, total: await this.prisma.wordBankEntry.count() };
+    return { added, senses, relanguaged, total: await this.prisma.wordBankEntry.count() };
   }
 
   private async createSenses(entryId: string, pack: StarterSense[]) {
