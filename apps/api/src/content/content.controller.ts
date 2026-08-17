@@ -124,16 +124,29 @@ export class ContentController {
     return this.content.lookupWord(word ?? '');
   }
 
+  // The meanings of one word, fetched when a row is opened rather than shipped
+  // with the whole list.
+  @Get('word-bank/:id/senses')
+  wordBankSenses(@Param('id') id: string) {
+    return this.content.wordBankSenses(id);
+  }
+
   @Roles('tutor', 'admin')
   @Delete('word-bank/:id')
   deleteWordBankEntry(@Param('id') id: string) {
     return this.content.deleteWordBankEntry(id);
   }
 
+  // `senseId` records WHICH meaning the student is learning; without it the
+  // word's default gloss is used, as before.
   @Roles('student')
   @Post('word-bank/:id/add')
-  addFromWordBank(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.content.addFromWordBank(user, id);
+  addFromWordBank(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Query('senseId') senseId?: string,
+  ) {
+    return this.content.addFromWordBank(user, id, senseId);
   }
 
   // Personal dictionary (Preparation -> "add to dictionary").

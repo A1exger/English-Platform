@@ -666,7 +666,30 @@ model WordBankEntry {
   source      String   @default("import")
   createdAt   DateTime @default(now())
 
+  senses      WordSense[]
+
   @@index([topic])
+}
+
+// One meaning of a bank word. Common words are polysemous — "bank" is a place
+// for money AND the side of a river — and a single translation column cannot
+// hold that. Each sense carries its own English definition, example and
+// per-locale glosses, which is also what makes machine translation correct:
+// translating a bare word guesses, translating word+sense does not.
+model WordSense {
+  id            String        @id @default(cuid())
+  entryId       String
+  entry         WordBankEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  // "noun" | "verb" | "adjective" | … (free text; the API never branches on it)
+  partOfSpeech  String?
+  definition    String
+  example       String?
+  // Per-locale glosses for THIS sense: { "ru": "берег", "de": "Ufer" }.
+  translations  String?
+  order         Int           @default(0)
+  createdAt     DateTime      @default(now())
+
+  @@index([entryId])
 }
 
 model DictionaryEntry {
@@ -674,6 +697,10 @@ model DictionaryEntry {
   studentProfileId String
   word             String
   translation      String?
+  // Which bank sense this was taken from, when it came from the bank. Without it
+  // "bank" in a student's list is ambiguous and drilling it is meaningless.
+  // Nullable: words added by hand or from a lesson wordlist have no sense.
+  senseId          String?
   sourceLessonId   String?
   repetitions      Int       @default(0)
   lastReviewedAt   DateTime?

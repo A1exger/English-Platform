@@ -19,6 +19,7 @@ import {
 } from './scoring';
 import { CONTENT_LEVELS } from '../common/constants/enums';
 import { STARTER_WORD_BANK } from './starter-word-bank';
+import { STARTER_WORD_SENSES, type StarterSense } from './starter-word-senses';
 import {
   CreateCategoryDto,
   CreateCourseDto,
@@ -150,6 +151,13 @@ function rebuildAnswerKey(
     return Object.keys(placement).length ? { placement } : null;
   }
   return null;
+}
+
+/** One meaning returned by the free dictionary lookup. */
+export interface LookupSense {
+  partOfSpeech: string | null;
+  definition: string;
+  example: string | null;
 }
 
 @Injectable()
@@ -490,16 +498,47 @@ export class ContentService {
         ...(q ? { OR: [{ word: { contains: q } }, { translation: { contains: q } }] } : {}),
       },
       orderBy: [{ topic: 'asc' }, { word: 'asc' }],
+      // Only the COUNT of meanings here. With a few thousand words in the bank,
+      // shipping every sense body would dominate the payload for something the
+      // UI keeps collapsed anyway — the list says "3 meanings", and opening the
+      // row fetches them.
+      include: { _count: { select: { senses: true } } },
       take: 1000,
     });
     // Two glosses per row, because the UI shows them at different moments: the
     // English definition is what a learner should meet first, and the
     // translation in their own language is revealed on request.
     const lang = I18nContext.current()?.lang ?? 'en';
-    return rows.map((r) => ({
+    // `translations` is storage, not API surface: it holds all six locales, and
+    // shipping it would roughly double a thousand-word payload to say again what
+    // `definition` and `translation` already answer for this reader.
+    return rows.map(({ _count, translations, ...r }) => ({
       ...r,
-      definition: parseTranslations(r.translations).en ?? null,
-      translation: resolveWordTranslation(r, lang),
+      definition: parseTranslations(translations).en ?? null,
+      translation: resolveWordTranslation({ translation: r.translation, translations }, lang),
+      senseCount: _count.senses,
+    }));
+  }
+
+  /**
+   * The meanings of one bank word, glossed in the request locale. Each sense
+   * carries its own translation, so a polysemous word shows the right word per
+   * meaning rather than one guess for all of them.
+   */
+  async wordBankSenses(entryId: string) {
+    const entry = await this.prisma.wordBankEntry.findUnique({
+      where: { id: entryId },
+      include: { senses: { orderBy: { order: 'asc' } } },
+    });
+    if (!entry) throw new NotFoundException('Word not found');
+    const lang = I18nContext.current()?.lang ?? 'en';
+    return entry.senses.map((sn) => ({
+      id: sn.id,
+      partOfSpeech: sn.partOfSpeech,
+      definition: sn.definition,
+      example: sn.example,
+      order: sn.order,
+      translation: parseTranslations(sn.translations)[lang] ?? null,
     }));
   }
 
@@ -549,11 +588,24 @@ export class ContentService {
    */
   async seedWordBank() {
     let added = 0;
+    let senses = 0;
     for (const group of STARTER_WORD_BANK) {
       for (const w of group.words) {
-        const existing = await this.prisma.wordBankEntry.findUnique({ where: { word: w.word } });
-        if (existing) continue;
-        await this.prisma.wordBankEntry.create({
+        const pack = STARTER_WORD_SENSES[w.word.toLowerCase()] ?? [];
+        const existing = await this.prisma.wordBankEntry.findUnique({
+          where: { word: w.word },
+          select: { id: true, _count: { select: { senses: true } } },
+        });
+        if (existing) {
+          // A word already in the bank keeps its gloss — a tutor may have
+          // corrected it — but gains the meanings it was seeded without, so an
+          // installation from before the sense table catches up on re-seed.
+          if (existing._count.senses === 0 && pack.length) {
+            senses += await this.createSenses(existing.id, pack);
+          }
+          continue;
+        }
+        const entry = await this.prisma.wordBankEntry.create({
           data: {
             word: w.word,
             // Russian is the stored default so an older client that reads only
@@ -564,9 +616,26 @@ export class ContentService {
           },
         });
         added++;
+        senses += await this.createSenses(entry.id, pack);
       }
     }
-    return { added, total: await this.prisma.wordBankEntry.count() };
+    return { added, senses, total: await this.prisma.wordBankEntry.count() };
+  }
+
+  private async createSenses(entryId: string, pack: StarterSense[]) {
+    for (const [i, s] of pack.entries()) {
+      await this.prisma.wordSense.create({
+        data: {
+          entryId,
+          partOfSpeech: s.partOfSpeech,
+          definition: s.definition,
+          example: s.example ?? null,
+          translations: JSON.stringify(s.translations),
+          order: i + 1,
+        },
+      });
+    }
+    return pack.length;
   }
 
   async deleteWordBankEntry(id: string) {
@@ -582,54 +651,89 @@ export class ContentService {
    */
   async lookupWord(word: string) {
     const term = word.trim();
-    if (!term) return { word: term, definition: null, example: null, phonetic: null };
+    if (!term) return { word: term, definition: null, example: null, phonetic: null, senses: [] };
     try {
       const res = await fetch(
         `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`,
       );
-      if (!res.ok) return { word: term, definition: null, example: null, phonetic: null };
+      if (!res.ok) return { word: term, definition: null, example: null, phonetic: null, senses: [] };
       const body = (await res.json()) as {
         phonetic?: string;
-        meanings?: { definitions?: { definition?: string; example?: string }[] }[];
+        meanings?: {
+          partOfSpeech?: string;
+          definitions?: { definition?: string; example?: string }[];
+        }[];
       }[];
       const first = body?.[0];
-      const def = first?.meanings?.[0]?.definitions?.[0];
+      // Every meaning, not just the first: the point of the picker is that the
+      // tutor chooses which senses of a polysemous word belong in the bank.
+      const senses: LookupSense[] = [];
+      for (const entry of body ?? []) {
+        for (const m of entry.meanings ?? []) {
+          for (const d of m.definitions ?? []) {
+            if (!d.definition) continue;
+            senses.push({
+              partOfSpeech: m.partOfSpeech ?? null,
+              definition: d.definition,
+              example: d.example ?? null,
+            });
+            if (senses.length >= 12) break;
+          }
+          if (senses.length >= 12) break;
+        }
+        if (senses.length >= 12) break;
+      }
       return {
         word: term,
-        definition: def?.definition ?? null,
-        example: def?.example ?? null,
+        definition: senses[0]?.definition ?? null,
+        example: senses[0]?.example ?? null,
         phonetic: first?.phonetic ?? null,
+        senses,
       };
     } catch {
-      return { word: term, definition: null, example: null, phonetic: null };
+      return { word: term, definition: null, example: null, phonetic: null, senses: [] };
     }
   }
 
-  /** Student: copy a bank entry into their own dictionary. */
-  async addFromWordBank(user: AuthenticatedUser, entryId: string) {
-    const entry = await this.prisma.wordBankEntry.findUnique({ where: { id: entryId } });
+  /**
+   * Student: copy a bank entry into their own dictionary. With a senseId the
+   * gloss and the recorded sense come from that meaning, so a polysemous word is
+   * unambiguous in their list; without one it falls back to the word's default.
+   */
+  async addFromWordBank(user: AuthenticatedUser, entryId: string, senseId?: string) {
+    const entry = await this.prisma.wordBankEntry.findUnique({
+      where: { id: entryId },
+      include: { senses: { orderBy: { order: 'asc' } } },
+    });
     if (!entry) throw new NotFoundException('Word not found');
     const lang = I18nContext.current()?.lang ?? 'en';
+    const sense = senseId ? entry.senses.find((sn) => sn.id === senseId) : undefined;
+    if (senseId && !sense) throw new NotFoundException('Sense not found');
     return this.addDictionaryEntry(user, {
       word: entry.word,
-      translation: resolveWordTranslation(entry, lang) ?? undefined,
+      translation:
+        (sense ? parseTranslations(sense.translations)[lang] : null) ??
+        resolveWordTranslation(entry, lang) ??
+        undefined,
+      senseId: sense?.id,
     });
   }
 
   async addDictionaryEntry(
     user: AuthenticatedUser,
-    dto: { word: string; translation?: string; sourceLessonId?: string },
+    dto: { word: string; translation?: string; sourceLessonId?: string; senseId?: string },
   ) {
     const student = await this.studentProfileForUser(user.id);
     return this.prisma.dictionaryEntry.upsert({
       where: {
         studentProfileId_word: { studentProfileId: student.id, word: dto.word },
       },
-      update: { translation: dto.translation },
+      update: { translation: dto.translation, ...(dto.senseId ? { senseId: dto.senseId } : {}) },
       create: {
         studentProfileId: student.id,
         word: dto.word,
         translation: dto.translation,
+        senseId: dto.senseId,
         sourceLessonId: dto.sourceLessonId,
       },
     });

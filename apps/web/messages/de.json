@@ -701,7 +701,9 @@
     "lookupBtn": "Nachschlagen",
     "lookupNothing": "Zu diesem Wort wurde nichts gefunden.",
     "loadStarter": "Startpaket laden",
-    "showTranslation": "Übersetzung anzeigen"
+    "showTranslation": "Übersetzung anzeigen",
+    "meanings": "{count, plural, one {# Bedeutung} other {# Bedeutungen}}",
+    "addThisMeaning": "Diese Bedeutung hinzufügen"
   },
   "enum": {
     "role": {

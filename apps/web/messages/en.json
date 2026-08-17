@@ -701,7 +701,9 @@
     "lookupBtn": "Look up",
     "lookupNothing": "Nothing found for that word.",
     "loadStarter": "Load the starter set",
-    "showTranslation": "Show translation"
+    "showTranslation": "Show translation",
+    "meanings": "{count, plural, one {# meaning} other {# meanings}}",
+    "addThisMeaning": "Add this meaning"
   },
   "enum": {
     "role": {

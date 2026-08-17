@@ -701,7 +701,9 @@
     "lookupBtn": "Opzoeken",
     "lookupNothing": "Niets gevonden voor dit woord.",
     "loadStarter": "Startset laden",
-    "showTranslation": "Vertaling tonen"
+    "showTranslation": "Vertaling tonen",
+    "meanings": "{count, plural, one {# betekenis} other {# betekenissen}}",
+    "addThisMeaning": "Deze betekenis toevoegen"
   },
   "enum": {
     "role": {

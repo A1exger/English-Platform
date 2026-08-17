@@ -20,6 +20,16 @@ interface BankEntry {
   example: string | null;
   topic: string | null;
   source: string;
+  /** How many separate meanings the word has. Bodies are fetched on demand. */
+  senseCount?: number;
+}
+
+interface Sense {
+  id: string;
+  partOfSpeech: string | null;
+  definition: string;
+  example: string | null;
+  translation: string | null;
 }
 
 /**
@@ -46,6 +56,9 @@ export function WordBankView() {
   // and choosing to check the translation is the point — showing both at once
   // makes the English decorative.
   const [shown, setShown] = useState<Record<string, boolean>>({});
+  // Meanings, loaded the first time a word is opened and kept after that.
+  const [senses, setSenses] = useState<Record<string, Sense[]>>({});
+  const [openWord, setOpenWord] = useState<string | null>(null);
 
   // Import drawer
   const [importOpen, setImportOpen] = useState(false);
@@ -59,6 +72,7 @@ export function WordBankView() {
     definition: string | null;
     example: string | null;
     phonetic: string | null;
+    senses?: { partOfSpeech: string | null; definition: string; example: string | null }[];
   } | null>(null);
 
   const load = useCallback(async () => {
@@ -149,15 +163,39 @@ export function WordBankView() {
     );
   }
 
-  async function addToMine(entry: BankEntry) {
+  async function addToMine(entry: BankEntry, senseId?: string) {
     const token = tokenStore.get();
     if (!token) return;
     // Optimistic tick: adding is idempotent server-side (upsert on the word), so
     // a double click cannot create a duplicate.
-    setAdded((prev) => ({ ...prev, [entry.id]: true }));
-    await apiFetch(`/content/word-bank/${entry.id}/add`, { method: 'POST', token, locale }).catch(
-      () => setAdded((prev) => ({ ...prev, [entry.id]: false }))
-    );
+    const key = senseId ?? entry.id;
+    setAdded((prev) => ({ ...prev, [key]: true }));
+    const suffix = senseId ? `?senseId=${encodeURIComponent(senseId)}` : '';
+    await apiFetch(`/content/word-bank/${entry.id}/add${suffix}`, {
+      method: 'POST',
+      token,
+      locale
+    }).catch(() => setAdded((prev) => ({ ...prev, [key]: false })));
+  }
+
+  /**
+   * Open a word's meanings, fetching them the first time. The list only carries
+   * the count, so this is where a polysemous word actually explains itself.
+   */
+  async function toggleSenses(entry: BankEntry) {
+    if (openWord === entry.id) {
+      setOpenWord(null);
+      return;
+    }
+    setOpenWord(entry.id);
+    if (senses[entry.id]) return;
+    const token = tokenStore.get();
+    if (!token) return;
+    const rows = await apiFetch<Sense[]>(`/content/word-bank/${entry.id}/senses`, {
+      token,
+      locale
+    }).catch(() => []);
+    setSenses((prev) => ({ ...prev, [entry.id]: rows }));
   }
 
   if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
@@ -198,40 +236,98 @@ export function WordBankView() {
       ) : (
         <ul className="assign-list">
           {rows.map((r) => (
-            <li key={r.id} className="assign-row catalog-row">
-              <span className="assign-row-main">
-                <strong>{r.word}</strong>
-                {r.definition && <span className="muted">{r.definition}</span>}
-                {r.example && <span className="muted ex-hint">{r.example}</span>}
-                {r.translation &&
-                  (shown[r.id] ? (
-                    <span className="bank-translation">{r.translation}</span>
-                  ) : (
+            <li key={r.id} className="assign-row catalog-row bank-row">
+              {/* The headword and its row actions share one line; the meanings
+                  open UNDER both, full width, so a sense's own button never
+                  lands beside the word-level one. */}
+              <div className="bank-row-top">
+                <span className="assign-row-main">
+                  <strong>{r.word}</strong>
+                  {r.definition && <span className="muted">{r.definition}</span>}
+                  {r.example && <span className="muted ex-hint">{r.example}</span>}
+                  {r.translation &&
+                    (shown[r.id] ? (
+                      <span className="bank-translation">{r.translation}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="link-button"
+                        onClick={() => setShown((p) => ({ ...p, [r.id]: true }))}
+                      >
+                        {t('showTranslation')}
+                      </button>
+                    ))}
+
+                  {/* A word with several meanings says so, and opens into them.
+                      One gloss per word would be wrong for exactly these words. */}
+                  {!!r.senseCount && r.senseCount > 0 && (
                     <button
                       type="button"
                       className="link-button"
-                      onClick={() => setShown((p) => ({ ...p, [r.id]: true }))}
+                      aria-expanded={openWord === r.id}
+                      onClick={() => void toggleSenses(r)}
                     >
-                      {t('showTranslation')}
+                      {t('meanings', { count: r.senseCount })}
                     </button>
+                  )}
+                </span>
+                <span className="row-actions">
+                  {r.topic && <span className="chip">{r.topic}</span>}
+                  {isStaff ? (
+                    <button type="button" className="tree-del ghost" aria-label={tc('delete')} onClick={() => void remove(r.id)}>
+                      <Icon name="close" />
+                    </button>
+                  ) : added[r.id] ? (
+                    <span className="ex-ok">
+                      <Icon name="check" /> {t('addedToMine')}
+                    </span>
+                  ) : (
+                    <button type="button" onClick={() => void addToMine(r)}>
+                      {t('addToMine')}
+                    </button>
+                  )}
+                </span>
+              </div>
+
+              {openWord === r.id && (
+                <ol className="sense-list">
+                  {(senses[r.id] ?? []).map((sn) => (
+                    <li key={sn.id} className="sense-row">
+                      <span className="sense-body">
+                        {sn.partOfSpeech && <em className="sense-pos">{sn.partOfSpeech}</em>}
+                        <span>{sn.definition}</span>
+                        {sn.example && <span className="muted ex-hint">{sn.example}</span>}
+                        {sn.translation &&
+                          (shown[sn.id] ? (
+                            <span className="bank-translation">{sn.translation}</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="link-button"
+                              onClick={() => setShown((p) => ({ ...p, [sn.id]: true }))}
+                            >
+                              {t('showTranslation')}
+                            </button>
+                          ))}
+                      </span>
+                      {!isStaff &&
+                        (added[sn.id] ? (
+                          <span className="ex-ok">
+                            <Icon name="check" /> {t('addedToMine')}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="ghost"
+                            onClick={() => void addToMine(r, sn.id)}
+                          >
+                            {t('addThisMeaning')}
+                          </button>
+                        ))}
+                    </li>
                   ))}
-              </span>
-              <span className="row-actions">
-                {r.topic && <span className="chip">{r.topic}</span>}
-                {isStaff ? (
-                  <button type="button" className="tree-del ghost" aria-label={tc('delete')} onClick={() => void remove(r.id)}>
-                    <Icon name="close" />
-                  </button>
-                ) : added[r.id] ? (
-                  <span className="ex-ok">
-                    <Icon name="check" /> {t('addedToMine')}
-                  </span>
-                ) : (
-                  <button type="button" onClick={() => void addToMine(r)}>
-                    {t('addToMine')}
-                  </button>
-                )}
-              </span>
+                </ol>
+              )}
             </li>
           ))}
         </ul>
@@ -279,8 +375,24 @@ export function WordBankView() {
           {lookup && (
             <div className="card">
               {lookup.phonetic && <p className="mono-num">{lookup.phonetic}</p>}
-              <p>{lookup.definition ?? t('lookupNothing')}</p>
-              {lookup.example && <p className="muted">“{lookup.example}”</p>}
+              {lookup.senses?.length ? (
+                // Every meaning the dictionary knows, not just the first — that
+                // is what tells a curator whether the word needs more than one
+                // entry in the bank.
+                <ol className="sense-list">
+                  {lookup.senses.map((sn, i) => (
+                    <li key={i} className="sense-row">
+                      <span className="sense-body">
+                        {sn.partOfSpeech && <em className="sense-pos">{sn.partOfSpeech}</em>}
+                        <span>{sn.definition}</span>
+                        {sn.example && <span className="muted ex-hint">“{sn.example}”</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p>{t('lookupNothing')}</p>
+              )}
             </div>
           )}
         </div>

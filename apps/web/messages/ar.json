@@ -701,7 +701,9 @@
     "lookupBtn": "بحث",
     "lookupNothing": "لم يُعثر على شيء لهذه الكلمة.",
     "loadStarter": "تحميل المجموعة الأولية",
-    "showTranslation": "إظهار الترجمة"
+    "showTranslation": "إظهار الترجمة",
+    "meanings": "{count, plural, zero {# معانٍ} one {معنى واحد} two {معنيان} few {# معانٍ} many {# معنى} other {# معنى}}",
+    "addThisMeaning": "أضف هذا المعنى"
   },
   "enum": {
     "role": {

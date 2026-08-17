@@ -701,7 +701,9 @@
     "lookupBtn": "Найти",
     "lookupNothing": "По этому слову ничего не найдено.",
     "loadStarter": "Загрузить стартовый набор",
-    "showTranslation": "Показать перевод"
+    "showTranslation": "Показать перевод",
+    "meanings": "{count, plural, one {# значение} few {# значения} many {# значений} other {# значения}}",
+    "addThisMeaning": "Добавить это значение"
   },
   "enum": {
     "role": {

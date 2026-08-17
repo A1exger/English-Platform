@@ -649,6 +649,63 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().delete(`/api/v1/content/word-bank/${deadline.id}`).set(auth2).expect(200);
   });
 
+  it('word bank: a polysemous word carries its meanings, and the student picks one', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const authS = auth(student.accessToken);
+    // The previous test already seeded; seeding is idempotent so this is safe
+    // to repeat and makes the test readable on its own.
+    await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
+
+    const found = await api().get('/api/v1/content/word-bank?q=book').set(authS).expect(200);
+    const book = found.body.find((w: { word: string }) => w.word === 'book');
+    // The list ships a count, never the sense bodies — with a thousand words
+    // those would dominate the payload for something the UI keeps collapsed.
+    expect(book.senseCount).toBeGreaterThan(1);
+    expect(book.senses).toBeUndefined();
+
+    const senses = await api()
+      .get(`/api/v1/content/word-bank/${book.id}/senses`)
+      .set(authS)
+      .set('x-lang', 'ru')
+      .expect(200);
+    expect(senses.body.length).toBeGreaterThan(1);
+    expect(senses.body[0].order).toBe(1);
+    // The point of the whole feature: one word, two different translations.
+    const glosses = senses.body.map((s: { translation: string }) => s.translation);
+    expect(glosses).toContain('книга');
+    expect(glosses).toContain('бронировать');
+    // Each meaning is spelled out in English, with its part of speech.
+    expect(senses.body[0].definition).toContain('pages');
+    expect(senses.body.map((s: { partOfSpeech: string }) => s.partOfSpeech)).toContain('verb');
+
+    // Adding a chosen meaning stores that meaning's gloss, not the word's default.
+    const verb = senses.body.find((s: { partOfSpeech: string }) => s.partOfSpeech === 'verb');
+    await api()
+      .post(`/api/v1/content/word-bank/${book.id}/add?senseId=${verb.id}`)
+      .set(authS)
+      .set('x-lang', 'ru')
+      .expect(201);
+    const mine = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
+    const entry = mine.body.find((e: { word: string }) => e.word === 'book');
+    expect(entry.translation).toBe('бронировать');
+    expect(entry.senseId).toBe(verb.id);
+
+    // German asks the same question and gets the German answer.
+    const de = await api()
+      .get(`/api/v1/content/word-bank/${book.id}/senses`)
+      .set(authS)
+      .set('x-lang', 'de')
+      .expect(200);
+    expect(de.body.map((s: { translation: string }) => s.translation)).toContain('buchen');
+
+    // A sense id that is not this word's is refused rather than silently ignored.
+    await api()
+      .post(`/api/v1/content/word-bank/${book.id}/add?senseId=nope`)
+      .set(authS)
+      .expect(404);
+    await api().get('/api/v1/content/word-bank/nope/senses').set(authS).expect(404);
+  });
+
   it('renames sections and units', async () => {
     const auth2 = auth(tutor.accessToken);
     const s = (await api().post('/api/v1/content/sections').set(auth2)

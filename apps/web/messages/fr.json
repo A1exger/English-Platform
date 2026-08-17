@@ -701,7 +701,9 @@
     "lookupBtn": "Chercher",
     "lookupNothing": "Rien trouvé pour ce mot.",
     "loadStarter": "Charger le jeu de départ",
-    "showTranslation": "Afficher la traduction"
+    "showTranslation": "Afficher la traduction",
+    "meanings": "{count, plural, one {# sens} other {# sens}}",
+    "addThisMeaning": "Ajouter ce sens"
   },
   "enum": {
     "role": {
