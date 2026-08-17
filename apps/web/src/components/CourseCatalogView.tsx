@@ -38,6 +38,8 @@ interface LessonRow {
   title: string;
   optional: boolean;
   order: number;
+  /** Tasks in the lesson. Zero means it cannot be handed out as homework. */
+  taskCount?: number;
 }
 interface Tree {
   course: { id: string; title: string; status: string };
@@ -178,13 +180,19 @@ export function CourseCatalogView() {
               dueAt: due ? new Date(due).toISOString() : undefined
             }
           })
-            .then(() => true)
-            .catch(() => false)
+            .then(() => ({ ok: true, reason: '' }))
+            .catch((e: unknown) => ({
+              ok: false,
+              reason: e instanceof ApiError ? e.message : ''
+            }))
         )
       );
-      const sent = results.filter(Boolean).length;
+      const sent = results.filter((r) => r.ok).length;
       if (sent === 0) {
-        setMsg(t('homeworkAssignFailed'));
+        // Say what the server objected to. The usual answer is "No tasks to
+        // assign" — impossible to guess from a bare "nothing was sent".
+        const reason = results.find((r) => !r.ok)?.reason;
+        setMsg([t('homeworkAssignFailed'), reason].filter(Boolean).join(' '));
         return;
       }
       setMsg(t('homeworkAssignedTo', { count: sent }));
@@ -263,6 +271,13 @@ export function CourseCatalogView() {
                   <span className="assign-row-main">
                     <strong>{l.title}</strong>
                     {l.optional && <span className="badge-opt">{t('optionalLesson')}</span>}
+                    {l.taskCount === 0 ? (
+                      <span className="muted">{t('lessonHasNoTasks')}</span>
+                    ) : (
+                      l.taskCount !== undefined && (
+                        <span className="muted mono-num">{t('taskCount', { count: l.taskCount })}</span>
+                      )
+                    )}
                   </span>
                   <span className="row-actions">
                     {isStaff ? (
@@ -270,7 +285,12 @@ export function CourseCatalogView() {
                         <button type="button" className="ghost" onClick={() => setPreview(l)}>
                           <Icon name="eye" /> {t('preview')}
                         </button>
-                        <button type="button" onClick={() => void openHomework(l)}>
+                        <button
+                          type="button"
+                          disabled={l.taskCount === 0}
+                          title={l.taskCount === 0 ? t('lessonHasNoTasks') : undefined}
+                          onClick={() => void openHomework(l)}
+                        >
                           {t('assignHomework')}
                         </button>
                       </>
@@ -281,6 +301,7 @@ export function CourseCatalogView() {
                         {t('open')}
                       </Link>
                     )}
+
                   </span>
                 </li>
               ))}

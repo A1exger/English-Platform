@@ -83,6 +83,18 @@ export function WordBankView() {
     void load();
   }, [load]);
 
+  async function seed() {
+    const token = tokenStore.get();
+    if (!token) return;
+    setBusy(true);
+    try {
+      await apiFetch('/content/word-bank/seed', { method: 'POST', token, locale });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runImport() {
     const token = tokenStore.get();
     if (!token || !text.trim()) return;
@@ -151,6 +163,14 @@ export function WordBankView() {
         primary={isStaff ? { label: t('import'), onClick: () => setImportOpen(true) } : undefined}
       />
       <p className="muted">{isStaff ? t('bankHintStaff') : t('bankHintStudent')}</p>
+
+      {/* One-click starter pack, so the bank is useful before anyone types a
+          word. Only offered while it is empty — after that, import is the way. */}
+      {isStaff && rows.length === 0 && !q && !topic && (
+        <button type="button" disabled={busy} onClick={() => void seed()}>
+          {t('loadStarter')}
+        </button>
+      )}
 
       <div className="inline-form">
         <input

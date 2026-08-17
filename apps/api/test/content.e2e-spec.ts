@@ -598,7 +598,7 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
       topic: 'Business'
     }).expect(201).expect((r) => expect(r.body.imported).toBe(3));
 
-    const all = await api().get('/api/v1/content/word-bank').set(authS).expect(200);
+    const all = await api().get('/api/v1/content/word-bank?topic=Business').set(authS).expect(200);
     expect(all.body.map((w: { word: string }) => w.word).sort()).toEqual(['bandwidth', 'deadline', 'negotiate']);
     const deadline = all.body.find((w: { word: string }) => w.word === 'deadline');
     expect(deadline.translation).toBe('крайний срок');
@@ -620,6 +620,12 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().post(`/api/v1/content/word-bank/${deadline.id}/add`).set(authS).expect(201);
     const mine = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
     expect(mine.body.filter((e: { word: string }) => e.word === 'deadline').length).toBe(1);
+
+    // The bundled starter pack loads once and skips what is already there.
+    const seeded = await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
+    expect(seeded.body.added).toBeGreaterThan(100);
+    const again2 = await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
+    expect(again2.body.added).toBe(0);
 
     // Students may read the bank but never curate it.
     await api().post('/api/v1/content/word-bank/import').set(authS).send({ text: 'x' }).expect(403);

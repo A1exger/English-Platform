@@ -110,6 +110,13 @@ export class ContentController {
     return this.content.importWordBank(dto.text, dto.topic);
   }
 
+  // Load the bundled starter pack (idempotent — skips words already present).
+  @Roles('tutor', 'admin')
+  @Post('word-bank/seed')
+  seedWordBank() {
+    return this.content.seedWordBank();
+  }
+
   // Free Dictionary API enrichment (no key, no quota). English definitions only.
   @Roles('tutor', 'admin')
   @Get('word-bank/lookup')

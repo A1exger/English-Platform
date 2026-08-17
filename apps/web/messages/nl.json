@@ -605,7 +605,9 @@
     "homeworkAssignFailed": "Toewijzen mislukt — er is niets verstuurd.",
     "visibilityIndividual": "Individuele cursus — alleen voor gekozen leerlingen",
     "catalogTitle": "Cursussen",
-    "catalogEmpty": "Nog niets gepubliceerd — maak een cursus af in de bouwer en publiceer die."
+    "catalogEmpty": "Nog niets gepubliceerd — maak een cursus af in de bouwer en publiceer die.",
+    "lessonHasNoTasks": "Deze les heeft nog geen opdrachten.",
+    "taskCount": "{count} opdrachten"
   },
   "learn": {
     "title": "Les",
@@ -695,7 +697,8 @@
     "addedToMine": "Toegevoegd",
     "lookup": "Woord opzoeken",
     "lookupBtn": "Opzoeken",
-    "lookupNothing": "Niets gevonden voor dit woord."
+    "lookupNothing": "Niets gevonden voor dit woord.",
+    "loadStarter": "Startset laden"
   },
   "enum": {
     "role": {

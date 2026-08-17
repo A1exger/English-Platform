@@ -605,7 +605,9 @@
     "homeworkAssignFailed": "Attribution impossible — rien n’a été envoyé.",
     "visibilityIndividual": "Cours individuel — réservé aux élèves choisis",
     "catalogTitle": "Cours",
-    "catalogEmpty": "Rien de publié — terminez un cours dans le constructeur et publiez-le."
+    "catalogEmpty": "Rien de publié — terminez un cours dans le constructeur et publiez-le.",
+    "lessonHasNoTasks": "Cette leçon n’a pas encore d’exercices.",
+    "taskCount": "{count} exercices"
   },
   "learn": {
     "title": "Leçon",
@@ -695,7 +697,8 @@
     "addedToMine": "Ajouté",
     "lookup": "Chercher un mot",
     "lookupBtn": "Chercher",
-    "lookupNothing": "Rien trouvé pour ce mot."
+    "lookupNothing": "Rien trouvé pour ce mot.",
+    "loadStarter": "Charger le jeu de départ"
   },
   "enum": {
     "role": {

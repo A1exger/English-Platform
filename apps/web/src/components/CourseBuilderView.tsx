@@ -440,13 +440,18 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
               dueAt: hwDue ? new Date(hwDue).toISOString() : undefined
             }
           })
-            .then(() => true)
-            .catch(() => false)
+            .then(() => ({ ok: true, reason: '' }))
+            .catch((e: unknown) => ({
+              ok: false,
+              reason: e instanceof ApiError ? e.message : ''
+            }))
         )
       );
-      const sent = results.filter(Boolean).length;
+      const sent = results.filter((r) => r.ok).length;
       if (sent === 0) {
-        setHwMsg(t('homeworkAssignFailed'));
+        // Say what the server objected to — usually "No tasks to assign".
+        const reason = results.find((r) => !r.ok)?.reason;
+        setHwMsg([t('homeworkAssignFailed'), reason].filter(Boolean).join(' '));
         return;
       }
       setHwMsg(t('homeworkAssignedTo', { count: sent }));

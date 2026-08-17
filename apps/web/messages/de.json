@@ -605,7 +605,9 @@
     "homeworkAssignFailed": "Zuweisen fehlgeschlagen — nichts wurde gesendet.",
     "visibilityIndividual": "Individueller Kurs — nur für ausgewählte Lernende",
     "catalogTitle": "Kurse",
-    "catalogEmpty": "Noch nichts veröffentlicht — schließe einen Kurs im Builder ab und veröffentliche ihn."
+    "catalogEmpty": "Noch nichts veröffentlicht — schließe einen Kurs im Builder ab und veröffentliche ihn.",
+    "lessonHasNoTasks": "Diese Stunde hat noch keine Aufgaben.",
+    "taskCount": "{count} Aufgaben"
   },
   "learn": {
     "title": "Lektion",
@@ -695,7 +697,8 @@
     "addedToMine": "Hinzugefügt",
     "lookup": "Wort nachschlagen",
     "lookupBtn": "Nachschlagen",
-    "lookupNothing": "Zu diesem Wort wurde nichts gefunden."
+    "lookupNothing": "Zu diesem Wort wurde nichts gefunden.",
+    "loadStarter": "Startpaket laden"
   },
   "enum": {
     "role": {

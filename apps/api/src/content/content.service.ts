@@ -17,6 +17,7 @@ import {
   computeGoalProgress,
   LessonProgressInput,
 } from './scoring';
+import { STARTER_WORD_BANK } from './starter-word-bank';
 import {
   CreateCategoryDto,
   CreateCourseDto,
@@ -253,11 +254,36 @@ export class ContentService {
         units: {
           orderBy: { order: 'asc' },
           include: {
-            lessons: { orderBy: { order: 'asc' }, select: { id: true, title: true, optional: true, order: true } },
+            lessons: {
+              orderBy: { order: 'asc' },
+              select: {
+                id: true,
+                title: true,
+                optional: true,
+                order: true,
+                // Task count per lesson: a lesson with none cannot be handed out
+                // as homework (createAssignment rejects an empty set), so the UI
+                // needs to know before offering the button.
+                pages: { select: { _count: { select: { tasks: true } } } },
+              },
+            },
           },
         },
       },
     });
+
+    // Collapse the per-page counts into one number per lesson, so the shape the
+    // client sees stays flat.
+    const withCounts = sections.map((sec) => ({
+      ...sec,
+      units: sec.units.map((u) => ({
+        ...u,
+        lessons: u.lessons.map(({ pages, ...l }) => ({
+          ...l,
+          taskCount: pages.reduce((n, pg) => n + pg._count.tasks, 0),
+        })),
+      })),
+    }));
 
     // Students get their per-lesson progress on the roadmap: a lesson is "done"
     // when they have a finished (status=done) assignment for it, and its score
@@ -281,7 +307,7 @@ export class ContentService {
           byLesson.set(a.courseLessonId, overall);
         }
       }
-      const withProgress = sections.map((s) => ({
+      const withProgress = withCounts.map((s) => ({
         ...s,
         units: s.units.map((u) => ({
           ...u,
@@ -295,7 +321,7 @@ export class ContentService {
       return { course, level, sections: withProgress };
     }
 
-    return { course, level, sections };
+    return { course, level, sections: withCounts };
   }
 
   /** One lesson with pages, tasks (sans answer keys for students), prep data.
@@ -491,6 +517,27 @@ export class ContentService {
       });
     }
     return { imported: byWord.size };
+  }
+
+  /**
+   * Load the bundled starter pack so the bank is useful before anyone types a
+   * word. Upserts like any import, so running it twice changes nothing and a
+   * translation a tutor corrected by hand survives — the topic is only set on
+   * rows this pack creates.
+   */
+  async seedWordBank() {
+    let added = 0;
+    for (const group of STARTER_WORD_BANK) {
+      for (const w of group.words) {
+        const existing = await this.prisma.wordBankEntry.findUnique({ where: { word: w.word } });
+        if (existing) continue;
+        await this.prisma.wordBankEntry.create({
+          data: { word: w.word, translation: w.translation, topic: group.topic },
+        });
+        added++;
+      }
+    }
+    return { added, total: await this.prisma.wordBankEntry.count() };
   }
 
   async deleteWordBankEntry(id: string) {

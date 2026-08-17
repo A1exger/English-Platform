@@ -30,6 +30,9 @@ export class PrismaService
       this.homeworkCard.deleteMany(),
       this.contentAssignment.deleteMany(),
       this.dictionaryEntry.deleteMany(),
+      // The shared bank is global (no owner row cascades it away), so it has to
+      // be cleared explicitly or its rows leak from one suite run into the next.
+      this.wordBankEntry.deleteMany(),
       this.wordlistEntry.deleteMany(),
       this.wordlist.deleteMany(),
       this.grammarReference.deleteMany(),

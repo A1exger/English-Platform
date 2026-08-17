@@ -605,7 +605,9 @@
     "homeworkAssignFailed": "Could not assign — nothing was sent.",
     "visibilityIndividual": "Individual course — only for the students I choose",
     "catalogTitle": "Courses",
-    "catalogEmpty": "Nothing published yet — finish a course in the builder and publish it."
+    "catalogEmpty": "Nothing published yet — finish a course in the builder and publish it.",
+    "lessonHasNoTasks": "This lesson has no tasks yet.",
+    "taskCount": "{count} tasks"
   },
   "learn": {
     "title": "Lesson",
@@ -695,7 +697,8 @@
     "addedToMine": "Added",
     "lookup": "Look a word up",
     "lookupBtn": "Look up",
-    "lookupNothing": "Nothing found for that word."
+    "lookupNothing": "Nothing found for that word.",
+    "loadStarter": "Load the starter set"
   },
   "enum": {
     "role": {

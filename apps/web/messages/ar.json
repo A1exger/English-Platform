@@ -605,7 +605,9 @@
     "homeworkAssignFailed": "تعذّر الإسناد — لم يُرسل شيء.",
     "visibilityIndividual": "دورة فردية — للطلاب المحددين فقط",
     "catalogTitle": "الدورات",
-    "catalogEmpty": "لا يوجد منشور بعد — أكمل دورة في المنشئ وانشرها."
+    "catalogEmpty": "لا يوجد منشور بعد — أكمل دورة في المنشئ وانشرها.",
+    "lessonHasNoTasks": "لا توجد مهام في هذا الدرس بعد.",
+    "taskCount": "{count} مهام"
   },
   "learn": {
     "title": "الدرس",
@@ -695,7 +697,8 @@
     "addedToMine": "تمت الإضافة",
     "lookup": "ابحث عن كلمة",
     "lookupBtn": "بحث",
-    "lookupNothing": "لم يُعثر على شيء لهذه الكلمة."
+    "lookupNothing": "لم يُعثر على شيء لهذه الكلمة.",
+    "loadStarter": "تحميل المجموعة الأولية"
   },
   "enum": {
     "role": {
