@@ -683,6 +683,35 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     expect(breadFr.body[0].translation).toBe('pain');
   });
 
+  it('word bank: an imported word records the language its gloss is in', async () => {
+    const auth2 = auth(tutor.accessToken);
+    // A word of the tutor's own, not one the bundled pack already covers.
+    await api().post('/api/v1/content/word-bank/import').set(auth2).set('x-lang', 'ru')
+      .send({ text: 'kickoff = стартовая встреча', topic: 'Lang' }).expect(201);
+    // A second tutor adds the German word for it; the Russian one must survive.
+    await api().post('/api/v1/content/word-bank/import').set(auth2).set('x-lang', 'de')
+      .send({ text: 'kickoff = Auftaktbesprechung', topic: 'Lang' }).expect(201);
+
+    const at = async (lang: string) =>
+      (await api().get('/api/v1/content/word-bank?q=kickoff').set(auth2).set('x-lang', lang)
+        .expect(200)).body[0].translation;
+    expect(await at('ru')).toBe('стартовая встреча');
+    expect(await at('de')).toBe('Auftaktbesprechung');
+    // A language nobody typed falls back to the last gloss written rather than
+    // inventing one — but it is no longer silently labelled as that language.
+    expect(await at('fr')).toBe('Auftaktbesprechung');
+
+    // Importing over a word the pack already covers adds that language and
+    // leaves the other five alone.
+    await api().post('/api/v1/content/word-bank/import').set(auth2).set('x-lang', 'ru')
+      .send({ text: 'invoice = инвойс' }).expect(201);
+    const invoice = async (lang: string) =>
+      (await api().get('/api/v1/content/word-bank?q=invoice').set(auth2).set('x-lang', lang)
+        .expect(200)).body[0].translation;
+    expect(await invoice('ru')).toBe('инвойс');
+    expect(await invoice('fr')).toBe('facture');
+  });
+
   it('word bank: search finds a word by its name in the reader’s own language', async () => {
     const auth2 = auth(tutor.accessToken);
     await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);

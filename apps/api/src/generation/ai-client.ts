@@ -149,8 +149,29 @@ export class AiClient {
     if (res.status === 429) {
       throw new Error('AI rate limit reached — please try again in a moment.');
     }
+    // A dead model id reads like a broken account: the provider answers 404
+    // "model does not exist or you do not have access", and the obvious guess is
+    // the key. It is almost always the id — providers retire models on their own
+    // schedule, and nothing here changes when they do. Say so, and name the
+    // setting to change, rather than relaying their wording.
+    if (this.isModelError(res.status, body)) {
+      const model = process.env.AI_MODEL || process.env.ANTHROPIC_MODEL || '(default)';
+      this.logger.warn(`${label} rejected model "${model}": ${body.slice(0, 300)}`);
+      throw new Error(
+        `The AI provider does not offer the model "${model}" (it may have been retired). ` +
+          'Set AI_MODEL to one the provider still lists and restart the API.',
+      );
+    }
     this.logger.warn(`${label} error ${res.status}: ${body.slice(0, 300)}`);
     throw new Error(`AI request failed (${label} ${res.status}): ${body.slice(0, 160)}`);
+  }
+
+  /** Does this failure point at the model id rather than the key or the request? */
+  private isModelError(status: number, body: string): boolean {
+    if (status !== 404 && status !== 400) return false;
+    return /model_not_found|model_decommissioned|does not exist|has been decommissioned|unknown model|no such model/i.test(
+      body,
+    );
   }
 }
 

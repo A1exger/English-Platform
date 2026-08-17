@@ -591,11 +591,24 @@ export class ContentService {
       byWord.set(word.toLowerCase(), { word, translation: translation || undefined });
     }
 
+    // Record WHICH language the tutor typed. Without it an imported gloss is a
+    // string of unknown language shown to every reader — which is how the
+    // starter pack's first version ended up reading as Russian in a German UI.
+    const lang = I18nContext.current()?.lang ?? 'en';
     for (const r of byWord.values()) {
+      const existing = await this.prisma.wordBankEntry.findUnique({
+        where: { word: r.word },
+        select: { translations: true },
+      });
+      // Merge rather than replace: a German tutor adding their gloss to a word
+      // that already has a Russian one should not drop the Russian.
+      const map = { ...parseTranslations(existing?.translations ?? null) };
+      if (r.translation) map[lang] = r.translation;
+      const translations = Object.keys(map).length ? JSON.stringify(map) : null;
       await this.prisma.wordBankEntry.upsert({
         where: { word: r.word },
-        update: { translation: r.translation, ...(topic ? { topic } : {}) },
-        create: { word: r.word, translation: r.translation, topic: topic || null },
+        update: { translation: r.translation, translations, ...(topic ? { topic } : {}) },
+        create: { word: r.word, translation: r.translation, translations, topic: topic || null },
       });
     }
     return { imported: byWord.size };
