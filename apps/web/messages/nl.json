@@ -703,7 +703,8 @@
     "loadStarter": "Startset laden",
     "showTranslation": "Vertaling tonen",
     "meanings": "{count, plural, one {# betekenis} other {# betekenissen}}",
-    "addThisMeaning": "Deze betekenis toevoegen"
+    "addThisMeaning": "Deze betekenis toevoegen",
+    "seeded": "{count} woorden en {senses} betekenissen toegevoegd."
   },
   "enum": {
     "role": {

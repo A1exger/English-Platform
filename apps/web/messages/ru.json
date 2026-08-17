@@ -703,7 +703,8 @@
     "loadStarter": "Загрузить стартовый набор",
     "showTranslation": "Показать перевод",
     "meanings": "{count, plural, one {# значение} few {# значения} many {# значений} other {# значения}}",
-    "addThisMeaning": "Добавить это значение"
+    "addThisMeaning": "Добавить это значение",
+    "seeded": "Добавлено слов: {count}, значений: {senses}."
   },
   "enum": {
     "role": {

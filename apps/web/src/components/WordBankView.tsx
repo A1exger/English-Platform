@@ -65,6 +65,7 @@ export function WordBankView() {
   const [text, setText] = useState('');
   const [importTopic, setImportTopic] = useState('');
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [seedMsg, setSeedMsg] = useState<string | null>(null);
 
   // Free-dictionary lookup
   const [lookupWord, setLookupWord] = useState('');
@@ -108,8 +109,14 @@ export function WordBankView() {
     const token = tokenStore.get();
     if (!token) return;
     setBusy(true);
+    setSeedMsg(null);
     try {
-      await apiFetch('/content/word-bank/seed', { method: 'POST', token, locale });
+      const r = await apiFetch<{ added: number; senses: number }>('/content/word-bank/seed', {
+        method: 'POST',
+        token,
+        locale
+      });
+      setSeedMsg(t('seeded', { count: r.added, senses: r.senses }));
       await load();
     } finally {
       setBusy(false);
@@ -210,11 +217,16 @@ export function WordBankView() {
       <p className="muted">{isStaff ? t('bankHintStaff') : t('bankHintStudent')}</p>
 
       {/* One-click starter pack, so the bank is useful before anyone types a
-          word. Only offered while it is empty — after that, import is the way. */}
-      {isStaff && rows.length === 0 && !q && !topic && (
-        <button type="button" disabled={busy} onClick={() => void seed()}>
-          {t('loadStarter')}
-        </button>
+          word. Offered even once the bank has words: seeding is idempotent, and
+          this is how an existing bank picks up new words and meanings from a
+          later release without touching glosses a tutor corrected. */}
+      {isStaff && (
+        <p className="row-actions">
+          <button type="button" className="ghost" disabled={busy} onClick={() => void seed()}>
+            {t('loadStarter')}
+          </button>
+          {seedMsg && <span className="ex-ok">{seedMsg}</span>}
+        </p>
       )}
 
       <div className="inline-form">

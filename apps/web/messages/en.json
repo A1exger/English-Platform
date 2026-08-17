@@ -703,7 +703,8 @@
     "loadStarter": "Load the starter set",
     "showTranslation": "Show translation",
     "meanings": "{count, plural, one {# meaning} other {# meanings}}",
-    "addThisMeaning": "Add this meaning"
+    "addThisMeaning": "Add this meaning",
+    "seeded": "Added {count} words and {senses} meanings."
   },
   "enum": {
     "role": {

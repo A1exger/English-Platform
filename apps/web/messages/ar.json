@@ -703,7 +703,8 @@
     "loadStarter": "تحميل المجموعة الأولية",
     "showTranslation": "إظهار الترجمة",
     "meanings": "{count, plural, zero {# معانٍ} one {معنى واحد} two {معنيان} few {# معانٍ} many {# معنى} other {# معنى}}",
-    "addThisMeaning": "أضف هذا المعنى"
+    "addThisMeaning": "أضف هذا المعنى",
+    "seeded": "تمت إضافة {count} كلمة و{senses} معنى."
   },
   "enum": {
     "role": {

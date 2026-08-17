@@ -700,10 +700,11 @@
     "lookup": "Chercher un mot",
     "lookupBtn": "Chercher",
     "lookupNothing": "Rien trouvé pour ce mot.",
-    "loadStarter": "Charger le jeu de départ",
+    "loadStarter": "Charger le lot de départ",
     "showTranslation": "Afficher la traduction",
     "meanings": "{count, plural, one {# sens} other {# sens}}",
-    "addThisMeaning": "Ajouter ce sens"
+    "addThisMeaning": "Ajouter ce sens",
+    "seeded": "{count} mots et {senses} sens ajoutés."
   },
   "enum": {
     "role": {
