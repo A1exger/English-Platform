@@ -621,11 +621,21 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     const mine = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
     expect(mine.body.filter((e: { word: string }) => e.word === 'deadline').length).toBe(1);
 
+    // Glosses come back in the reader's own language, not just Russian.
+    await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
+    const ru = await api().get('/api/v1/content/word-bank?q=water').set(auth2).set('x-lang', 'ru').expect(200);
+    const de = await api().get('/api/v1/content/word-bank?q=water').set(auth2).set('x-lang', 'de').expect(200);
+    const fr = await api().get('/api/v1/content/word-bank?q=water').set(auth2).set('x-lang', 'fr').expect(200);
+    const pick = (r: { body: { word: string; translation: string }[] }) =>
+      r.body.find((w) => w.word === 'water')?.translation;
+    expect(pick(ru)).toBe('вода');
+    expect(pick(de)).toBe('Wasser');
+    expect(pick(fr)).toBe('eau');
+
     // The bundled starter pack loads once and skips what is already there.
-    const seeded = await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
-    expect(seeded.body.added).toBeGreaterThan(100);
     const again2 = await api().post('/api/v1/content/word-bank/seed').set(auth2).expect(201);
     expect(again2.body.added).toBe(0);
+    expect(again2.body.total).toBeGreaterThan(200);
 
     // Students may read the bank but never curate it.
     await api().post('/api/v1/content/word-bank/import').set(authS).send({ text: 'x' }).expect(403);

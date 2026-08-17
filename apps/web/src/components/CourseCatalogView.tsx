@@ -43,6 +43,8 @@ interface LessonRow {
 }
 interface Tree {
   course: { id: string; title: string; status: string };
+  /** Levels this course actually has sections in, in CEFR order. */
+  levels?: string[];
   sections: { id: string; title: string; units: { id: string; title: string; lessons: LessonRow[] }[] }[];
 }
 interface StudentRow {
@@ -136,6 +138,13 @@ export function CourseCatalogView() {
   useEffect(() => {
     if (openCourse) void loadTree(openCourse.id, level);
   }, [openCourse, level, loadTree]);
+
+  // The catalogue card's `sections` is a hint; the tree is authoritative. If the
+  // level we guessed turns out to be empty, move to one that is not.
+  useEffect(() => {
+    if (!tree?.levels?.length || tree.levels.includes(level)) return;
+    setLevel(tree.levels[0]);
+  }, [tree, level]);
 
   function openCourseAt(course: CourseCard) {
     // Open on a level the course actually has, so it never lands on an empty one.
@@ -245,18 +254,21 @@ export function CourseCatalogView() {
           <PageHeader title={openCourse.title} />
 
           <div className="tabs tabs-inline filter-chips level-tabs" role="tablist">
-            {LEVELS.map((l) => (
-              <button
-                key={l}
-                type="button"
-                role="tab"
-                aria-selected={level === l}
-                className={level === l ? 'active' : ''}
-                onClick={() => setLevel(l)}
-              >
-                {l}
-              </button>
-            ))}
+            {LEVELS.map((l) => {
+              const empty = !!tree?.levels && !tree.levels.includes(l);
+              return (
+                <button
+                  key={l}
+                  type="button"
+                  role="tab"
+                  aria-selected={level === l}
+                  className={`${level === l ? 'active' : ''}${empty ? ' level-empty' : ''}`}
+                  onClick={() => setLevel(l)}
+                >
+                  {l}
+                </button>
+              );
+            })}
           </div>
 
           {treeBusy ? (

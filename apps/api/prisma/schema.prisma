@@ -652,7 +652,12 @@ model WordBankEntry {
   id          String   @id @default(cuid())
   // Unique so importing the same list twice updates rather than duplicates.
   word        String   @unique
+  // The default gloss (kept for back-compat and as the fallback).
   translation String?
+  // Per-locale glosses as a JSON map { "ru": "…", "de": "…" }, mirroring
+  // WordlistEntry.translations. The bank serves translations[reqLocale] and
+  // falls back to `translation`, so a partly translated row still works.
+  translations String?
   example     String?
   // Free-form grouping ("Business", "A2", "Phrasal verbs"); null = ungrouped.
   topic       String?

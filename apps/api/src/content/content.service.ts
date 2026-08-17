@@ -17,6 +17,7 @@ import {
   computeGoalProgress,
   LessonProgressInput,
 } from './scoring';
+import { CONTENT_LEVELS } from '../common/constants/enums';
 import { STARTER_WORD_BANK } from './starter-word-bank';
 import {
   CreateCategoryDto,
@@ -274,6 +275,18 @@ export class ContentService {
 
     // Collapse the per-page counts into one number per lesson, so the shape the
     // client sees stays flat.
+    // Which levels this course actually has content in. Both the builder and the
+    // library open on one of these instead of a hard-coded default, which is how
+    // a course whose only section is, say, Advanced used to look empty.
+    const present = await this.prisma.section.findMany({
+      where: { courseId },
+      select: { level: true },
+      distinct: ['level'],
+    });
+    const levels = (CONTENT_LEVELS as readonly string[]).filter((l) =>
+      present.some((p) => p.level === l),
+    );
+
     const withCounts = sections.map((sec) => ({
       ...sec,
       units: sec.units.map((u) => ({
@@ -318,10 +331,10 @@ export class ContentService {
           })),
         })),
       }));
-      return { course, level, sections: withProgress };
+      return { course, level, levels, sections: withProgress };
     }
 
-    return { course, level, sections: withCounts };
+    return { course, level, levels, sections: withCounts };
   }
 
   /** One lesson with pages, tasks (sans answer keys for students), prep data.
@@ -471,14 +484,21 @@ export class ContentService {
    */
   async listWordBank(query?: string, topic?: string) {
     const q = query?.trim();
-    return this.prisma.wordBankEntry.findMany({
+    const rows = await this.prisma.wordBankEntry.findMany({
       where: {
         ...(topic ? { topic } : {}),
         ...(q ? { OR: [{ word: { contains: q } }, { translation: { contains: q } }] } : {}),
       },
       orderBy: [{ topic: 'asc' }, { word: 'asc' }],
-      take: 500,
+      take: 1000,
     });
+    // Serve the reader's own language, falling back to the stored default — the
+    // same rule the lesson wordlist uses, so a partly translated row still works.
+    const lang = I18nContext.current()?.lang ?? 'en';
+    return rows.map((r) => ({
+      ...r,
+      translation: resolveWordTranslation(r, lang),
+    }));
   }
 
   /** The distinct topics in the bank, for the filter. */
@@ -532,7 +552,14 @@ export class ContentService {
         const existing = await this.prisma.wordBankEntry.findUnique({ where: { word: w.word } });
         if (existing) continue;
         await this.prisma.wordBankEntry.create({
-          data: { word: w.word, translation: w.translation, topic: group.topic },
+          data: {
+            word: w.word,
+            // Russian is the stored default so an older client that reads only
+            // `translation` still shows something sensible.
+            translation: w.translations.ru,
+            translations: JSON.stringify(w.translations),
+            topic: group.topic,
+          },
         });
         added++;
       }
@@ -580,9 +607,10 @@ export class ContentService {
   async addFromWordBank(user: AuthenticatedUser, entryId: string) {
     const entry = await this.prisma.wordBankEntry.findUnique({ where: { id: entryId } });
     if (!entry) throw new NotFoundException('Word not found');
+    const lang = I18nContext.current()?.lang ?? 'en';
     return this.addDictionaryEntry(user, {
       word: entry.word,
-      translation: entry.translation ?? undefined,
+      translation: resolveWordTranslation(entry, lang) ?? undefined,
     });
   }
 

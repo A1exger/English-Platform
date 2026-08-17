@@ -5328,3 +5328,9 @@ input[type='radio']:focus-visible {
   flex: 1;
   min-inline-size: 0;
 }
+
+/* A level with no sections yet: still clickable (you may want to add the first
+   section there), just visibly not where the content is. */
+.level-tabs .level-empty {
+  opacity: 0.45;
+}
