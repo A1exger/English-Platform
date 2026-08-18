@@ -4,11 +4,24 @@
     "reminder": "Herinnering: je Engelse les \"{title}\" begint om {time}."
   },
   "notification": {
-    "homework_assigned": "Nieuw huiswerk: \"{title}\".",
-    "lesson_booked": "Les geboekt: \"{title}\".",
-    "lesson_reminder": "Herinnering: \"{title}\" begint om {time}."
+    "subject": "English Spark Studio",
+    "homework_assigned": "Hallo! Je docent heeft je nieuw huiswerk gegeven: \"{title}\". Je kunt het openen en maken in het onderdeel \"Huiswerk\".",
+    "homework_feedback": "Hallo! Je docent heeft je werk \"{title}\" nagekeken en feedback achtergelaten. Je kunt die lezen in het onderdeel \"Huiswerk\".",
+    "homework_submitted": "{student} heeft het huiswerk \"{title}\" ingeleverd. Het wacht op je in het onderdeel \"Huiswerk\".",
+    "lesson_booked": "Hallo! De les \"{title}\" is aan je rooster toegevoegd. De details vind je in het onderdeel \"Rooster\".",
+    "lesson_reminder": "Herinnering: je les \"{title}\" begint om {time}. Je kunt deelnemen vanuit het onderdeel \"Rooster\".",
+    "transfer_pending": "{student} heeft een betaling gemeld en wacht op je bevestiging. Je kunt die bevestigen in het onderdeel \"Facturatie\".",
+    "payment_confirmed": "Hallo! Je betaling is bevestigd en de lessen zijn aan je saldo toegevoegd. Je kunt het controleren in het onderdeel \"Betaling\".",
+    "subject_homework_assigned": "Nieuw huiswerk voor je",
+    "subject_homework_feedback": "Feedback op je huiswerk",
+    "subject_homework_submitted": "Een leerling heeft huiswerk ingeleverd",
+    "subject_lesson_booked": "Je les is geboekt",
+    "subject_lesson_reminder": "Je les begint binnenkort",
+    "subject_transfer_pending": "Een betaling wacht op je bevestiging",
+    "subject_payment_confirmed": "Betaling bevestigd"
   },
   "auth": {
-    "invalid_credentials": "Ongeldig e-mailadres of wachtwoord."
+    "invalid_credentials": "Ongeldig e-mailadres of wachtwoord.",
+    "reset_email": "Stel je wachtwoord voor English Spark Studio opnieuw in: {link}\n\nDe link is een uur geldig. Heb je hier niet om gevraagd? Negeer deze e-mail."
   }
 }

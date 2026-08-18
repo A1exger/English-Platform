@@ -92,6 +92,7 @@ model StudentProfile {
   participants    LessonParticipant[]
   ledgerEntries   LedgerEntry[]
   studentPackages StudentPackage[]
+  courseAccess    CourseAccess[]
 }
 
 model TutorStudent {
@@ -123,6 +124,10 @@ model Lesson {
   currency         String   @default("EUR")
   meetingUrl       String?
   boardId          String?
+  // The course lesson (content) a tutor teaches in this slot. A loose id like
+  // boardId — the room loads it and tolerates a dangling ref — so the material
+  // survives a device change and the student reliably opens onto it.
+  materialLessonId String?
   recurrenceRuleId String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -325,20 +330,29 @@ model TutorNote {
 }
 
 // Reusable interactive exercise template built by a tutor/admin.
-// type: "order" | "match" | "fill" | "categorize"
-// payload: JSON string with the content AND the solution (never sent to students).
+// Legacy types: "order" | "match" | "fill" | "categorize" — payload holds the
+//   content AND the solution; graded by exercise.logic (never sent to students).
+// Canonical types (SPEC §4): "sentence_ordering" | "word_matching" | "gap_fill" |
+//   "categorization" | "multiple_choice" — payload is the student-facing content
+//   (App. A); the answer lives in `answerKey` and never reaches students (ДИ-3).
 model Exercise {
   id          String   @id @default(cuid())
   ownerUserId String
   type        String
   title       String
+  prompt      String?
   payload     String
+  answerKey   String? // JSON, server-only; null when the payload encodes the answer
+  gradingMode String   @default("AUTO") // "AUTO" | "MANUAL" | "COMPLETION"
+  aspect      String   @default("Grammar")
+  isPublic    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   instances ExerciseInstance[]
 
   @@index([ownerUserId])
+  @@index([ownerUserId, type])
 }
 
 // A handed-out copy of an exercise: live on a lesson board, or in homework
@@ -353,6 +367,7 @@ model ExerciseInstance {
   homeworkId       String?
   studentProfileId String?
   state            String?
+  result           String? // JSON ExerciseResult for canonical tasks (§Прил. В); revealed to both sides
   status           String   @default("open")
   score            Int?
   createdAt        DateTime @default(now())
@@ -361,6 +376,40 @@ model ExerciseInstance {
   @@index([lessonId])
   @@index([homeworkId])
   @@index([studentProfileId])
+}
+
+// AI course/lesson generation (SPEC §7/§10). Enum-like fields are String for
+// SQLite portability. targetType: "COURSE" | "LESSON"; status: "generating" |
+// "ready_for_review" | "approved" | "failed". The materialised content is a
+// normal draft Course; the job records provenance + review state.
+model GenerationJob {
+  id                String   @id @default(cuid())
+  targetType        String
+  courseId          String?
+  courseLessonId    String?
+  requestedByUserId String
+  brief             String // JSON (Прил. Г)
+  level             String?
+  status            String   @default("generating")
+  error             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  revisions GenerationRevision[]
+
+  @@index([requestedByUserId])
+}
+
+model GenerationRevision {
+  id          String        @id @default(cuid())
+  jobId       String
+  job         GenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  // scope: "course" | "unit:ID" | "lesson:ID" | "page:ID" | "tasks:ID"
+  scope       String
+  instruction String
+  createdAt   DateTime      @default(now())
+
+  @@index([jobId])
 }
 
 // Links a user to their Telegram chat so notifications can be delivered there.
@@ -415,22 +464,43 @@ model Category {
 }
 
 model Course {
-  id         String   @id @default(cuid())
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  title      String
-  selfStudy  Boolean  @default(false)
-  isNew      Boolean  @default(false)
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  coverUrl    String?
+  order       Int      @default(0)
+  selfStudy   Boolean  @default(false)
+  isNew       Boolean  @default(false)
   // status: "draft" | "published"
-  status     String   @default("draft")
+  status      String   @default("draft")
+  // visibility: "public"  -> every student sees it once published (shared course)
+  //             "private" -> only students granted access (individual course)
+  visibility  String   @default("public")
   ownerUserId String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   sections Section[]
   lessons  CourseLesson[]
+  access   CourseAccess[]
 
   @@index([categoryId])
+}
+
+// Per-student grant for a "private" course, so a tutor can build individual
+// material for one learner without publishing it to everyone.
+model CourseAccess {
+  id               String   @id @default(cuid())
+  courseId         String
+  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+
+  @@unique([courseId, studentProfileId])
+  @@index([studentProfileId])
 }
 
 // level: "Beginner" | "Elementary" | "PreIntermediate" | "Intermediate" |
@@ -490,13 +560,33 @@ model LessonPage {
   courseLessonId     String
   courseLesson       CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
   type               String
+  // Optional stage name shown in the «План урока» (falls back to the type).
+  title              String?
   order              Int          @default(0)
   includedInHomework Boolean      @default(false)
+  // Legacy single media (kept for compatibility); new content uses PageMedia.
   mediaUrl           String?
   text               String?
   tasks              LessonTask[]
+  media              PageMedia[]
 
   @@index([courseLessonId])
+}
+
+// Several attachments per page (SPEC §7): image/video/audio, with a caption and
+// an optional transcript for listening audio. Only a URL lives in the content;
+// files are uploaded via POST /materials/upload or reused from Materials.
+model PageMedia {
+  id         String     @id @default(cuid())
+  pageId     String
+  page       LessonPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  kind       String // "image" | "video" | "audio"
+  url        String
+  caption    String?
+  transcript String? // for kind="audio" (listening)
+  order      Int        @default(0)
+
+  @@index([pageId])
 }
 
 // type: "sentence_ordering" | "word_matching" | "gap_fill" | "categorization" |
@@ -532,7 +622,12 @@ model WordlistEntry {
   wordlistId  String
   wordlist    Wordlist @relation(fields: [wordlistId], references: [id], onDelete: Cascade)
   word        String
+  // The authored default translation (the tutor's own language).
   translation String?
+  // Per-locale translations as a JSON map { "fr": "…", "de": "…" }, filled by
+  // the AI translate step (V2). The lesson serves translations[reqLocale] and
+  // falls back to `translation`. Additive + nullable.
+  translations String?
   example     String?
   order       Int      @default(0)
 
@@ -550,11 +645,62 @@ model GrammarReference {
 }
 
 // Personal dictionary + spaced-repetition trainer state.
+// Shared word bank: a platform-wide pool a tutor curates once and every student
+// can pull from into their own DictionaryEntry. Separate from Wordlist, which is
+// tied 1:1 to a lesson — this one belongs to no lesson and outlives all of them.
+model WordBankEntry {
+  id          String   @id @default(cuid())
+  // Unique so importing the same list twice updates rather than duplicates.
+  word        String   @unique
+  // The default gloss (kept for back-compat and as the fallback).
+  translation String?
+  // Per-locale glosses as a JSON map { "ru": "…", "de": "…" }, mirroring
+  // WordlistEntry.translations. The bank serves translations[reqLocale] and
+  // falls back to `translation`, so a partly translated row still works.
+  translations String?
+  example     String?
+  // Free-form grouping ("Business", "A2", "Phrasal verbs"); null = ungrouped.
+  topic       String?
+  // "import" = typed/pasted by a tutor, "lookup" = fetched from the free
+  // dictionary API. Kept so curated rows are distinguishable from fetched ones.
+  source      String   @default("import")
+  createdAt   DateTime @default(now())
+
+  senses      WordSense[]
+
+  @@index([topic])
+}
+
+// One meaning of a bank word. Common words are polysemous — "bank" is a place
+// for money AND the side of a river — and a single translation column cannot
+// hold that. Each sense carries its own English definition, example and
+// per-locale glosses, which is also what makes machine translation correct:
+// translating a bare word guesses, translating word+sense does not.
+model WordSense {
+  id            String        @id @default(cuid())
+  entryId       String
+  entry         WordBankEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  // "noun" | "verb" | "adjective" | … (free text; the API never branches on it)
+  partOfSpeech  String?
+  definition    String
+  example       String?
+  // Per-locale glosses for THIS sense: { "ru": "берег", "de": "Ufer" }.
+  translations  String?
+  order         Int           @default(0)
+  createdAt     DateTime      @default(now())
+
+  @@index([entryId])
+}
+
 model DictionaryEntry {
   id               String    @id @default(cuid())
   studentProfileId String
   word             String
   translation      String?
+  // Which bank sense this was taken from, when it came from the bank. Without it
+  // "bank" in a student's list is ambiguous and drilling it is meaningless.
+  // Nullable: words added by hand or from a lesson wordlist have no sense.
+  senseId          String?
   sourceLessonId   String?
   repetitions      Int       @default(0)
   lastReviewedAt   DateTime?

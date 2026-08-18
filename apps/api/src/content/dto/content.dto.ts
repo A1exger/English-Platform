@@ -43,12 +43,28 @@ export class CreateCourseDto {
   title!: string;
 
   @IsOptional()
+  @IsString()
+  @Length(0, 2000)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 500)
+  coverUrl?: string;
+
+  @IsOptional()
   @IsBoolean()
   selfStudy?: boolean;
 
   @IsOptional()
   @IsBoolean()
   isNew?: boolean;
+
+  // "public" = shared with every student once published; "private" = only the
+  // students listed in CourseAccess (an individual course).
+  @IsOptional()
+  @IsIn(['public', 'private'])
+  visibility?: 'public' | 'private';
 }
 
 export class UpdateCourseDto {
@@ -58,6 +74,21 @@ export class UpdateCourseDto {
   title?: string;
 
   @IsOptional()
+  @IsString()
+  @Length(0, 2000)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 500)
+  coverUrl?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  order?: number;
+
+  @IsOptional()
   @IsBoolean()
   selfStudy?: boolean;
 
@@ -65,9 +96,120 @@ export class UpdateCourseDto {
   @IsBoolean()
   isNew?: boolean;
 
+  // "public" = shared with every student once published; "private" = only the
+  // students listed in CourseAccess (an individual course).
+  @IsOptional()
+  @IsIn(['public', 'private'])
+  visibility?: 'public' | 'private';
+
   @IsOptional()
   @IsIn(['draft', 'published'])
   status?: 'draft' | 'published';
+}
+
+// Media attachments (SPEC §7). kind is restricted so only image/video/audio
+// reach the content (ФТ-К305); the file itself is uploaded separately.
+const MEDIA_KINDS = ['image', 'video', 'audio'] as const;
+
+export class CreatePageMediaDto {
+  @IsIn(MEDIA_KINDS as unknown as string[])
+  kind!: string;
+
+  @IsString()
+  @Length(1, 500)
+  url!: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 300)
+  caption?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 10000)
+  transcript?: string;
+}
+
+export class UpdatePageMediaDto {
+  @IsOptional()
+  @IsString()
+  @Length(1, 500)
+  url?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 300)
+  caption?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 10000)
+  transcript?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  order?: number;
+}
+
+export class ReorderMediaDto {
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+// Drag-reorder: the client sends the full ordered id list (order = index).
+export class ReorderCategoriesDto {
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class ReorderCoursesDto {
+  @IsString()
+  categoryId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+// Editor drag-reorder within a parent (order = index). Lessons keep their own
+// level-wide endpoint (INV-1); these cover the remaining tree levels.
+export class ReorderSectionsDto {
+  @IsString()
+  courseId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class ReorderUnitsDto {
+  @IsString()
+  sectionId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class ReorderPagesDto {
+  @IsString()
+  courseLessonId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
+}
+
+export class ReorderTasksDto {
+  @IsString()
+  pageId!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  ids!: string[];
 }
 
 export class CreateSectionDto {
@@ -97,6 +239,25 @@ export class CreateUnitDto {
   @IsOptional()
   @IsInt()
   order?: number;
+}
+
+/** Bulk word-bank import: one "word = translation" per line. */
+export class ImportWordBankDto {
+  @IsString()
+  @Length(1, 100_000)
+  text!: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 60)
+  topic?: string;
+}
+
+/** Rename a section or a unit (title is the only editable field on both). */
+export class RenameNodeDto {
+  @IsString()
+  @Length(1, 200)
+  title!: string;
 }
 
 export class CreateCourseLessonDto {
@@ -165,6 +326,12 @@ export class AddDictionaryDto {
   sourceLessonId?: string;
 }
 
+export class ReviewDictionaryDto {
+  // true = remembered (promote), false = missed (reset the streak).
+  @IsBoolean()
+  remembered!: boolean;
+}
+
 export class WordlistEntryDto {
   @IsString()
   @Length(1, 120)
@@ -184,6 +351,30 @@ export class SetWordlistDto {
   @ValidateNested({ each: true })
   @Type(() => WordlistEntryDto)
   entries!: WordlistEntryDto[];
+}
+
+export class WordlistTranslationEntryDto {
+  @IsString()
+  @Length(1, 120)
+  word!: string;
+
+  // { "fr": "…", "de": "…" } — validated loosely; unknown locales are dropped.
+  @IsObject()
+  translations!: Record<string, string>;
+}
+
+export class SetWordlistTranslationsDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WordlistTranslationEntryDto)
+  entries!: WordlistTranslationEntryDto[];
+}
+
+/** Full replacement of an individual course's student list. */
+export class SetCourseAccessDto {
+  @IsArray()
+  @IsString({ each: true })
+  studentProfileIds!: string[];
 }
 
 export class SetGrammarDto {
@@ -206,6 +397,11 @@ export class CreatePageDto {
   type!: PageType;
 
   @IsOptional()
+  @IsString()
+  @Length(0, 200)
+  title?: string;
+
+  @IsOptional()
   @IsInt()
   order?: number;
 
@@ -220,6 +416,30 @@ export class CreatePageDto {
   @IsOptional()
   @IsString()
   text?: string;
+}
+
+export class UpdatePageDto {
+  @IsOptional()
+  @IsIn(PAGE_TYPES as unknown as string[])
+  type?: PageType;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 200)
+  title?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  includedInHomework?: boolean;
+
+  @IsOptional()
+  @IsString()
+  text?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  order?: number;
 }
 
 export class CreateTaskDto {

@@ -1,0 +1,26 @@
+# Docker build context is the repo root (docker-compose sets context: .), so THIS
+# file — at the context root — is the one Docker actually reads. A .dockerignore
+# living inside apps/web/ is ignored by the build. Without these excludes a stale
+# apps/web/.next leaks into the image via `COPY apps/web/ ./`, and `next build`
+# then compiles incrementally on top of old output and serves stale chunks.
+**/node_modules
+**/.next
+**/dist
+**/build
+**/coverage
+**/.turbo
+
+# Never bake secrets or local env into an image (keep examples).
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local dev database + logs + OS cruft.
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+**/*.log
+**/.DS_Store
+
+# VCS / CI metadata isn't needed in the build.
+.git
+.github

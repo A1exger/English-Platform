@@ -36,6 +36,12 @@ export class CreateLessonDto {
   @IsString()
   meetingUrl?: string;
 
+  // Optional: the course lesson (content) to teach in this slot, so the room
+  // opens ready. A loose id, like boardId.
+  @IsOptional()
+  @IsString()
+  materialLessonId?: string;
+
   // Optional: studentProfileIds to enroll immediately (e.g. an individual lesson)
   @IsOptional()
   @IsString({ each: true })

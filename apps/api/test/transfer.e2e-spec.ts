@@ -70,7 +70,7 @@ describe('Money transfers — Western Union / MoneyGram (e2e)', () => {
     expect(bal.body.balanceCents).toBe(0);
   });
 
-  it('student cannot confirm their own transfer (admin only)', async () => {
+  it('student cannot confirm their own transfer (staff only)', async () => {
     await api()
       .post(`/api/v1/billing/transfer/${transferId}/confirm`)
       .set('Authorization', `Bearer ${student.accessToken}`)
@@ -138,5 +138,51 @@ describe('Money transfers — Western Union / MoneyGram (e2e)', () => {
       .expect(200);
     expect(bal.body.lessonsRemaining).toBe(5);
     expect(bal.body.balanceCents).toBe(5000); // cash unchanged by a package buy
+  });
+
+  it('the tutor confirms their own student, and only their own', async () => {
+    // The money is received by the tutor, so the tutor settles it.
+    const mine = await register('wu.tutor2@test.com', 'tutor');
+    const other = await register('wu.tutor3@test.com', 'tutor');
+    await api()
+      .post('/api/v1/crm/students')
+      .set('Authorization', `Bearer ${mine.accessToken}`)
+      .send({ email: 'wu.student@test.com' })
+      .expect(201);
+
+    const transfer = await api()
+      .post('/api/v1/billing/transfer')
+      .set('Authorization', `Bearer ${student.accessToken}`)
+      .send({ method: 'westernunion', amountCents: 3000 })
+      .expect(201);
+    const txId = transfer.body.transactionId as string;
+
+    // A tutor the student is not assigned to sees nothing and cannot confirm.
+    const otherPending = await api()
+      .get('/api/v1/billing/transfers/pending')
+      .set('Authorization', `Bearer ${other.accessToken}`)
+      .expect(200);
+    expect(otherPending.body.some((t: { id: string }) => t.id === txId)).toBe(false);
+    await api()
+      .post(`/api/v1/billing/transfer/${txId}/confirm`)
+      .set('Authorization', `Bearer ${other.accessToken}`)
+      .expect(403);
+
+    // Their own tutor sees it and confirms — the balance is credited.
+    const pending = await api()
+      .get('/api/v1/billing/transfers/pending')
+      .set('Authorization', `Bearer ${mine.accessToken}`)
+      .expect(200);
+    expect(pending.body.some((t: { id: string }) => t.id === txId)).toBe(true);
+    await api()
+      .post(`/api/v1/billing/transfer/${txId}/confirm`)
+      .set('Authorization', `Bearer ${mine.accessToken}`)
+      .expect(201);
+
+    const bal = await api()
+      .get('/api/v1/billing/balance')
+      .set('Authorization', `Bearer ${student.accessToken}`)
+      .expect(200);
+    expect(bal.body.balanceCents).toBe(8000); // 5000 + 3000
   });
 });

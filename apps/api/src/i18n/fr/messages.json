@@ -4,11 +4,24 @@
     "reminder": "Rappel : votre cours d'anglais \"{title}\" commence à {time}."
   },
   "notification": {
-    "homework_assigned": "Nouveau devoir : \"{title}\".",
-    "lesson_booked": "Cours réservé : \"{title}\".",
-    "lesson_reminder": "Rappel : \"{title}\" commence à {time}."
+    "subject": "English Spark Studio",
+    "homework_assigned": "Bonjour ! Votre professeur vous a attribué un nouveau devoir : « {title} ». Vous pouvez l’ouvrir et le faire dans la rubrique « Devoirs ».",
+    "homework_feedback": "Bonjour ! Votre professeur a corrigé votre travail « {title} » et a laissé un commentaire. Vous pouvez le lire dans la rubrique « Devoirs ».",
+    "homework_submitted": "{student} a rendu le devoir « {title} ». Il vous attend dans la rubrique « Devoirs ».",
+    "lesson_booked": "Bonjour ! Le cours « {title} » a été ajouté à votre planning. Vous en trouverez les détails dans la rubrique « Planning ».",
+    "lesson_reminder": "Rappel : votre cours « {title} » commence à {time}. Vous pouvez le rejoindre depuis la rubrique « Planning ».",
+    "transfer_pending": "{student} a signalé un paiement et attend votre confirmation. Vous pouvez le confirmer dans la rubrique « Facturation ».",
+    "payment_confirmed": "Bonjour ! Votre paiement a été confirmé et les cours ont été ajoutés à votre solde. Vous pouvez le vérifier dans la rubrique « Paiement ».",
+    "subject_homework_assigned": "Un nouveau devoir pour vous",
+    "subject_homework_feedback": "Commentaire sur votre devoir",
+    "subject_homework_submitted": "Un élève a rendu un devoir",
+    "subject_lesson_booked": "Votre cours est réservé",
+    "subject_lesson_reminder": "Votre cours commence bientôt",
+    "subject_transfer_pending": "Un paiement attend votre confirmation",
+    "subject_payment_confirmed": "Paiement confirmé"
   },
   "auth": {
-    "invalid_credentials": "E-mail ou mot de passe invalide."
+    "invalid_credentials": "E-mail ou mot de passe invalide.",
+    "reset_email": "Réinitialisez votre mot de passe English Spark Studio : {link}\n\nLe lien est valable une heure. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail."
   }
 }
