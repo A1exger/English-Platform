@@ -19,7 +19,7 @@ import {
 } from './scoring';
 import { CONTENT_LEVELS } from '../common/constants/enums';
 import { STARTER_WORD_BANK } from './starter-word-bank';
-import { STARTER_WORD_SENSES, type StarterSense } from './starter-word-senses';
+import { STARTER_WORD_SENSES } from './starter-word-senses';
 import {
   CreateCategoryDto,
   CreateCourseDto,
@@ -172,6 +172,17 @@ function rebuildAnswerKey(
     return Object.keys(placement).length ? { placement } : null;
   }
   return null;
+}
+
+/**
+ * Split a list into batches. `createMany` sends one statement per call, and a
+ * thousand rows at once is a statement with thousands of bound parameters —
+ * over SQLite's variable limit on older builds.
+ */
+function chunk<T>(rows: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
 }
 
 /** One meaning returned by the free dictionary lookup. */
@@ -621,76 +632,88 @@ export class ContentService {
    * rows this pack creates.
    */
   async seedWordBank() {
-    let added = 0;
-    let senses = 0;
-    let relanguaged = 0;
-    for (const group of STARTER_WORD_BANK) {
-      for (const w of group.words) {
-        const pack = STARTER_WORD_SENSES[w.word.toLowerCase()] ?? [];
-        const existing = await this.prisma.wordBankEntry.findUnique({
-          where: { word: w.word },
-          select: {
-            id: true,
-            translation: true,
-            translations: true,
-            _count: { select: { senses: true } },
-          },
-        });
-        if (existing) {
-          // The first version of the pack stored one Russian gloss and no map,
-          // so those rows read as Russian in every language — and skipping
-          // words already present meant they could never catch up. Fill the map
-          // in, keeping a translation a tutor corrected by hand as the Russian
-          // one rather than overwriting their work with the bundled wording.
-          if (!parseTranslations(existing.translations).en) {
-            const filled = { ...w.translations };
-            if (existing.translation && existing.translation !== w.translations.ru) {
-              filled.ru = existing.translation;
-            }
-            await this.prisma.wordBankEntry.update({
-              where: { id: existing.id },
-              data: { translations: JSON.stringify(filled) },
-            });
-            relanguaged++;
-          }
-          // Likewise the meanings: an installation from before the sense table
-          // gains them on re-seed.
-          if (existing._count.senses === 0 && pack.length) {
-            senses += await this.createSenses(existing.id, pack);
-          }
-          continue;
-        }
-        const entry = await this.prisma.wordBankEntry.create({
-          data: {
-            word: w.word,
-            // Russian is the stored default so an older client that reads only
-            // `translation` still shows something sensible.
-            translation: w.translations.ru,
-            translations: JSON.stringify(w.translations),
-            topic: group.topic,
-          },
-        });
-        added++;
-        senses += await this.createSenses(entry.id, pack);
-      }
-    }
-    return { added, senses, relanguaged, total: await this.prisma.wordBankEntry.count() };
-  }
+    // The pack is a thousand words. Asking about each one in turn — one lookup,
+    // then one insert, then one insert per meaning — meant ~1400 round trips and
+    // several seconds even when there was nothing at all to do. Everything below
+    // reads once and writes in batches.
+    const pack = STARTER_WORD_BANK.flatMap((g) =>
+      g.words.map((w) => ({ ...w, topic: g.topic })),
+    );
+    const existing = await this.prisma.wordBankEntry.findMany({
+      where: { word: { in: pack.map((w) => w.word) } },
+      select: { id: true, word: true, translation: true, translations: true },
+    });
+    const known = new Map(existing.map((e) => [e.word, e]));
 
-  private async createSenses(entryId: string, pack: StarterSense[]) {
-    for (const [i, s] of pack.entries()) {
-      await this.prisma.wordSense.create({
-        data: {
-          entryId,
+    const fresh = pack.filter((w) => !known.has(w.word));
+    for (const batch of chunk(fresh, 200)) {
+      await this.prisma.wordBankEntry.createMany({
+        data: batch.map((w) => ({
+          word: w.word,
+          // Russian is the stored default so an older client that reads only
+          // `translation` still shows something sensible.
+          translation: w.translations.ru,
+          translations: JSON.stringify(w.translations),
+          topic: w.topic,
+        })),
+      });
+    }
+
+    // The first version of the pack stored one Russian gloss and no map, so
+    // those rows read as Russian in every language — and skipping words already
+    // present meant they could never catch up. Fill the map in, keeping a
+    // translation a tutor corrected by hand as the Russian one rather than
+    // overwriting their work with the bundled wording.
+    const stale = pack.filter((w) => {
+      const row = known.get(w.word);
+      return !!row && !parseTranslations(row.translations).en;
+    });
+    for (const batch of chunk(stale, 100)) {
+      await this.prisma.$transaction(
+        batch.map((w) => {
+          const row = known.get(w.word)!;
+          const filled = { ...w.translations };
+          if (row.translation && row.translation !== w.translations.ru) {
+            filled.ru = row.translation;
+          }
+          return this.prisma.wordBankEntry.update({
+            where: { id: row.id },
+            data: { translations: JSON.stringify(filled) },
+          });
+        }),
+      );
+    }
+
+    // Meanings, for words that have none — whether just created above or seeded
+    // by an installation that predates the sense table. `createMany` gives back
+    // no ids, so the rows are read once here rather than tracked through it.
+    const polysemous = Object.keys(STARTER_WORD_SENSES);
+    const withSenses = await this.prisma.wordBankEntry.findMany({
+      where: { word: { in: polysemous } },
+      select: { id: true, word: true, _count: { select: { senses: true } } },
+    });
+    const senseRows = withSenses
+      .filter((r) => r._count.senses === 0)
+      .flatMap((r) =>
+        (STARTER_WORD_SENSES[r.word.toLowerCase()] ?? []).map((s, i) => ({
+          entryId: r.id,
           partOfSpeech: s.partOfSpeech,
           definition: s.definition,
           example: s.example ?? null,
           translations: JSON.stringify(s.translations),
           order: i + 1,
-        },
-      });
+        })),
+      );
+    for (const batch of chunk(senseRows, 200)) {
+      await this.prisma.wordSense.createMany({ data: batch });
     }
-    return pack.length;
+
+    return {
+      added: fresh.length,
+      senses: senseRows.length,
+      relanguaged: stale.length,
+      total: await this.prisma.wordBankEntry.count(),
+    };
   }
 
   async deleteWordBankEntry(id: string) {
