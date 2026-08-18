@@ -706,7 +706,10 @@
     "showTranslation": "Vertaling tonen",
     "meanings": "{count, plural, one {# betekenis} other {# betekenissen}}",
     "addThisMeaning": "Deze betekenis toevoegen",
-    "seeded": "{count} woorden en {senses} betekenissen toegevoegd; {relanguaged} oudere woorden hebben nu alle talen."
+    "seeded": "{count} woorden en {senses} betekenissen toegevoegd; {relanguaged} oudere woorden hebben nu alle talen.",
+    "translateMissing": "De {count} ontbrekende vertalen",
+    "translated": "{count} vertaald; {remaining} ontbreken nog.",
+    "translatingNow": "Ontbrekende vertalingen worden aangevuld — herlaad zo meteen."
   },
   "enum": {
     "role": {

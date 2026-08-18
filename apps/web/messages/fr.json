@@ -706,7 +706,10 @@
     "showTranslation": "Afficher la traduction",
     "meanings": "{count, plural, one {# sens} other {# sens}}",
     "addThisMeaning": "Ajouter ce sens",
-    "seeded": "{count} mots et {senses} sens ajoutés ; {relanguaged} anciens mots ont maintenant toutes les langues."
+    "seeded": "{count} mots et {senses} sens ajoutés ; {relanguaged} anciens mots ont maintenant toutes les langues.",
+    "translateMissing": "Traduire les {count} manquants",
+    "translated": "{count} traduits ; {remaining} manquent encore.",
+    "translatingNow": "Les traductions manquantes sont en cours — rechargez dans un instant."
   },
   "enum": {
     "role": {

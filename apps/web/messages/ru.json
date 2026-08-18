@@ -706,7 +706,10 @@
     "showTranslation": "Показать перевод",
     "meanings": "{count, plural, one {# значение} few {# значения} many {# значений} other {# значения}}",
     "addThisMeaning": "Добавить это значение",
-    "seeded": "Добавлено слов: {count}, значений: {senses}; переведено на все языки: {relanguaged}."
+    "seeded": "Добавлено слов: {count}, значений: {senses}; переведено на все языки: {relanguaged}.",
+    "translateMissing": "Перевести недостающие ({count})",
+    "translated": "Переведено: {count}; осталось: {remaining}.",
+    "translatingNow": "Недостающие переводы заполняются — обновите страницу через минуту."
   },
   "enum": {
     "role": {

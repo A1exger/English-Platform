@@ -66,6 +66,9 @@ export function WordBankView() {
   const [importTopic, setImportTopic] = useState('');
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [seedMsg, setSeedMsg] = useState<string | null>(null);
+  // Words still missing a language, and the result of filling them.
+  const [missing, setMissing] = useState(0);
+  const [translateMsg, setTranslateMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   // Free-dictionary lookup
   const [lookupWord, setLookupWord] = useState('');
@@ -84,7 +87,15 @@ export function WordBankView() {
     }
     try {
       const me = await fetchMe(token, locale);
-      setIsStaff(me.role === 'tutor' || me.role === 'admin');
+      const staff = me.role === 'tutor' || me.role === 'admin';
+      setIsStaff(staff);
+      if (staff) {
+        setMissing(
+          await apiFetch<{ missing: number }>('/content/word-bank/untranslated', { token, locale })
+            .then((r) => r.missing)
+            .catch(() => 0)
+        );
+      }
       const params = new URLSearchParams();
       if (q.trim()) params.set('q', q.trim());
       if (topic) params.set('topic', topic);
@@ -124,19 +135,48 @@ export function WordBankView() {
     }
   }
 
+  /** Fill the missing glosses with the AI. Long-running: 40 words per request. */
+  async function translateMissing() {
+    const token = tokenStore.get();
+    if (!token) return;
+    setBusy(true);
+    setTranslateMsg(null);
+    try {
+      const r = await apiFetch<{ translated: number; remaining: number; failed: number }>(
+        '/content/word-bank/translate',
+        { method: 'POST', token, locale }
+      );
+      setTranslateMsg({
+        text: t('translated', { count: r.translated, remaining: r.remaining }),
+        ok: true
+      });
+      await load();
+    } catch (e) {
+      // Usually "AI is not configured" — the reason belongs on screen, and in
+      // the colour of a failure rather than of a job well done.
+      setTranslateMsg({ text: e instanceof ApiError ? e.message : tApp('loadError'), ok: false });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runImport() {
     const token = tokenStore.get();
     if (!token || !text.trim()) return;
     setBusy(true);
     setImportMsg(null);
     try {
-      const r = await apiFetch<{ imported: number }>('/content/word-bank/import', {
-        method: 'POST',
-        token,
-        locale,
-        body: { text, topic: importTopic.trim() || undefined }
-      });
-      setImportMsg(t('imported', { count: r.imported }));
+      const r = await apiFetch<{ imported: number; translating?: boolean }>(
+        '/content/word-bank/import',
+        { method: 'POST', token, locale, body: { text, topic: importTopic.trim() || undefined } }
+      );
+      // Translation runs in the background, so say it is happening — otherwise
+      // the words appear blank and look broken until it finishes.
+      setImportMsg(
+        [t('imported', { count: r.imported }), r.translating ? t('translatingNow') : '']
+          .filter(Boolean)
+          .join(' ')
+      );
       setText('');
       await load();
     } catch {
@@ -226,7 +266,18 @@ export function WordBankView() {
           <button type="button" className="ghost" disabled={busy} onClick={() => void seed()}>
             {t('loadStarter')}
           </button>
+          {/* Words added by hand carry only the language they were typed in, so
+              they are blank for every other reader. Say how many, and offer to
+              fill them rather than leaving them to be stumbled on. */}
+          {missing > 0 && (
+            <button type="button" className="ghost" disabled={busy} onClick={() => void translateMissing()}>
+              {t('translateMissing', { count: missing })}
+            </button>
+          )}
           {seedMsg && <span className="ex-ok">{seedMsg}</span>}
+          {translateMsg && (
+            <span className={translateMsg.ok ? 'ex-ok' : 'error'}>{translateMsg.text}</span>
+          )}
         </p>
       )}
 

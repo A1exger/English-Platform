@@ -2,12 +2,13 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../prisma/prisma.service';
-import { AiClient } from '../generation/ai-client';
+import { AiClient, AiUnavailableError } from '../generation/ai-client';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { scoreContentTask, toContentQuestion } from './task-check';
 import { applyReview, isDue, nextReviewAt } from './spaced-repetition';
@@ -198,6 +199,8 @@ export class ContentService {
     private readonly prisma: PrismaService,
     private readonly ai: AiClient,
   ) {}
+
+  private readonly logger = new Logger(ContentService.name);
 
   // Locales the AI translate step fills for the wordlist (matches the web i18n).
   private static readonly TRANSLATE_LOCALES = ['en', 'ru', 'de', 'fr', 'nl', 'ar'];
@@ -622,7 +625,18 @@ export class ContentService {
         create: { word: r.word, translation: r.translation, translations, topic: topic || null },
       });
     }
-    return { imported: byWord.size };
+
+    // Words pasted without a translation, or with one in a single language, are
+    // blank for everyone else. Fill them in on the way — but not while the
+    // request is waiting: a model call per 40 words would turn a paste into a
+    // minute of spinner. Fire and forget, and the bank fills in shortly after.
+    const missing = await this.untranslatedBankEntries(1);
+    if (this.ai.enabled && missing.length > 0) {
+      void this.translateWordBank().catch((e: unknown) => {
+        this.logger.warn(`Auto-translation after import failed: ${(e as Error)?.message}`);
+      });
+    }
+    return { imported: byWord.size, translating: this.ai.enabled && missing.length > 0 };
   }
 
   /**
@@ -714,6 +728,115 @@ export class ContentService {
       relanguaged: stale.length,
       total: await this.prisma.wordBankEntry.count(),
     };
+  }
+
+  /**
+   * Bank entries still missing a gloss in some UI language. A word typed without
+   * a translation, or imported with one in a single language, shows nothing at
+   * all to readers of the others — which is what "take up" with a blank line
+   * under it looks like.
+   */
+  private async untranslatedBankEntries(take: number) {
+    // `translations` is JSON text, so completeness cannot be asked of the
+    // database. Read the candidates — rows with no map, plus the rest — and let
+    // the check happen here.
+    const rows = await this.prisma.wordBankEntry.findMany({
+      orderBy: { word: 'asc' },
+      select: { id: true, word: true, translation: true, translations: true, example: true },
+    });
+    const locales = ContentService.TRANSLATE_LOCALES;
+    return rows
+      .filter((r) => {
+        const map = parseTranslations(r.translations);
+        return locales.some((l) => !map[l]?.trim());
+      })
+      .slice(0, take);
+  }
+
+  /** How many bank words are still missing a language, for the UI to offer. */
+  async countUntranslatedWordBank() {
+    return { missing: (await this.untranslatedBankEntries(100000)).length };
+  }
+
+  /**
+   * Fill the missing glosses with the AI, in the same shape the lesson wordlist
+   * already uses. Batched: one request per 40 words keeps each reply small
+   * enough to come back as valid JSON, and a failed batch costs only itself.
+   *
+   * Existing glosses are never overwritten — a tutor's own wording for the
+   * language they typed it in outranks anything generated.
+   */
+  async translateWordBank(limit = 200) {
+    // Same signal the wordlist translator gives, so the controller maps it to
+    // 503 rather than inventing a second way to say "no model configured".
+    if (!this.ai.enabled) throw new AiUnavailableError();
+    const pending = await this.untranslatedBankEntries(limit);
+    if (pending.length === 0) return { translated: 0, remaining: 0, failed: 0 };
+
+    const locales = ContentService.TRANSLATE_LOCALES;
+    const system =
+      'You translate vocabulary glosses for an English-learning app. For each ' +
+      'English word or phrase, give a SHORT translation of its meaning (1–3 words, ' +
+      'never a sentence) in every requested language. For "en" give a SHORT ' +
+      'definition of the word rather than the word itself. Use the provided ' +
+      'meaning/example to pick the right sense. Return ONLY minified JSON of the ' +
+      'form {"items":[{"t":{"en":"…","ru":"…","de":"…","fr":"…","nl":"…","ar":"…"}}]} ' +
+      'with exactly one item per input word, in the same order.';
+
+    let translated = 0;
+    let failed = 0;
+    for (const batch of chunk(pending, 40)) {
+      let items: { t?: Record<string, string> }[] = [];
+      try {
+        const out = await this.ai.json<{ items?: { t?: Record<string, string> }[] }>(
+          system,
+          JSON.stringify({
+            targetLanguages: locales,
+            words: batch.map((e) => ({
+              word: e.word,
+              meaning: parseTranslations(e.translations).en ?? e.translation ?? undefined,
+              example: e.example ?? undefined,
+            })),
+          }),
+        );
+        items = out.items ?? [];
+      } catch (e) {
+        // One bad batch must not lose the batches that worked. The caller sees
+        // what is left and can run it again.
+        this.logger.warn(`Word-bank translation batch failed: ${(e as Error)?.message}`);
+        failed += batch.length;
+        continue;
+      }
+
+      const writes = batch.flatMap((entry, i) => {
+        const raw = items[i]?.t ?? {};
+        const map = { ...parseTranslations(entry.translations) };
+        let changed = false;
+        for (const loc of locales) {
+          const v = raw[loc];
+          if (!map[loc]?.trim() && typeof v === 'string' && v.trim()) {
+            map[loc] = v.trim();
+            changed = true;
+          }
+        }
+        if (!changed) return [];
+        translated++;
+        return [
+          this.prisma.wordBankEntry.update({
+            where: { id: entry.id },
+            data: {
+              translations: JSON.stringify(map),
+              // Keep the legacy single column pointing at something real.
+              translation: entry.translation ?? map.ru ?? null,
+            },
+          }),
+        ];
+      });
+      if (writes.length) await this.prisma.$transaction(writes);
+    }
+
+    const remaining = (await this.untranslatedBankEntries(100000)).length;
+    return { translated, remaining, failed };
   }
 
   async deleteWordBankEntry(id: string) {

@@ -117,6 +117,29 @@ export class ContentController {
     return this.content.seedWordBank();
   }
 
+  // How many bank words are still missing a language, so the screen can offer
+  // to fill them rather than leaving blank rows to be discovered.
+  @Roles('tutor', 'admin')
+  @Get('word-bank/untranslated')
+  countUntranslatedWordBank() {
+    return this.content.countUntranslatedWordBank();
+  }
+
+  // Fill the missing glosses with the AI. Runs automatically after an import;
+  // this is the manual trigger for words that were already in the bank.
+  @Roles('tutor', 'admin')
+  @Post('word-bank/translate')
+  async translateWordBank() {
+    try {
+      return await this.content.translateWordBank();
+    } catch (e) {
+      if (e instanceof AiUnavailableError) {
+        throw new ServiceUnavailableException(e.message);
+      }
+      throw e;
+    }
+  }
+
   // Free Dictionary API enrichment (no key, no quota). English definitions only.
   @Roles('tutor', 'admin')
   @Get('word-bank/lookup')
