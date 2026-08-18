@@ -63,6 +63,7 @@ interface StudentRow {
 export function CourseCatalogView() {
   const t = useTranslations('courses');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
 
@@ -323,18 +324,31 @@ export function CourseCatalogView() {
         </>
       )}
 
-      {/* Read the lesson exactly as the student will — the same player. */}
+      {/* Read the lesson exactly as the student will — the same player, in the
+          same popup the builder uses. `preview-modal-body` had no styles at all,
+          which is why this one came out transparent and unbounded. */}
       {preview && (
-        <div className="preview-modal" role="dialog" aria-modal="true" onClick={() => setPreview(null)}>
-          <div className="preview-modal-body" onClick={(e) => e.stopPropagation()}>
-            <div className="row-between">
+        <div
+          className="preview-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('preview')}
+          onMouseDown={() => setPreview(null)}
+        >
+          <div className="preview-modal-card" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="preview-modal-head">
               <strong>{preview.title}</strong>
-              <button type="button" className="ghost" onClick={() => setPreview(null)}>
+              <button
+                type="button"
+                className="ghost"
+                aria-label={tc('close')}
+                onClick={() => setPreview(null)}
+              >
                 <Icon name="close" />
               </button>
             </div>
             <div className="preview-modal-scroll">
-              <LessonPlayerView lessonId={preview.id} />
+              <LessonPlayerView lessonId={preview.id} onBack={() => setPreview(null)} />
             </div>
           </div>
         </div>

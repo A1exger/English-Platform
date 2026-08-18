@@ -765,7 +765,11 @@ export function CourseBuilderView({ courseId }: { courseId: string }) {
               </button>
             </div>
             <div className="preview-modal-scroll">
-              <LessonPlayerView key={previewKey} lessonId={selected} />
+              <LessonPlayerView
+                key={previewKey}
+                lessonId={selected}
+                onBack={() => setPreviewOpen(false)}
+              />
             </div>
           </div>
         </div>

@@ -70,7 +70,21 @@ function PageBody({ text, media }: { text?: string | null; media?: PageMediaItem
 // The single lesson player used by every runtime context. Page 0 is the
 // Preparation view (objectives + wordlist -> dictionary + grammar reference),
 // followed by the lesson pages with their tasks.
-export function LessonPlayerView({ lessonId }: { lessonId: string }) {
+/**
+ * `onBack` is passed when the player is embedded in a preview popup. Without it
+ * the back control is a link to the course, which is right on the lesson's own
+ * page and wrong inside a preview: from the catalogue it navigates to the
+ * builder, and from the builder it links to the page already open, so nothing
+ * happens. Given the callback it closes the preview, which is what the control
+ * means there.
+ */
+export function LessonPlayerView({
+  lessonId,
+  onBack
+}: {
+  lessonId: string;
+  onBack?: () => void;
+}) {
   const t = useTranslations('learn');
   const tAssign = useTranslations('assignments');
   const tApp = useTranslations('app');
@@ -129,7 +143,13 @@ export function LessonPlayerView({ lessonId }: { lessonId: string }) {
 
   return (
     <div className="content learn">
-      <Link className="link" href={`/courses/${lesson.courseId}`}>← {t('back')}</Link>
+      {onBack ? (
+        <button type="button" className="link-button" onClick={onBack}>
+          ← {t('back')}
+        </button>
+      ) : (
+        <Link className="link" href={`/courses/${lesson.courseId}`}>← {t('back')}</Link>
+      )}
       <div className="row-between">
         <h2>{lesson.title}</h2>
         {!isStudent && allTasks.length > 0 && (
