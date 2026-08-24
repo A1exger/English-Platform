@@ -148,7 +148,10 @@ export function LessonPlayerView({
           ← {t('back')}
         </button>
       ) : (
-        <Link className="link" href={`/courses/${lesson.courseId}`}>← {t('back')}</Link>
+        // Back to the course as it is READ — the library page — not to the
+        // builder. A student has no business in the builder, and a tutor who
+        // opened the lesson from the library expects to land where they were.
+        <Link className="link" href={`/catalog/${lesson.courseId}`}>← {t('back')}</Link>
       )}
       <div className="row-between">
         <h2>{lesson.title}</h2>

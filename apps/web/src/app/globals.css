@@ -5307,10 +5307,12 @@ input[type='radio']:focus-visible {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
 }
-/* These cards are <button>s, and the base button rule paints them accent with
-   white text — which on a white card left the title invisible. Everything the
-   base rule sets has to be undone explicitly. */
+/* These cards are links to the course's own page. They were <button>s, and the
+   base button rule painted them accent with white text — which on a white card
+   left the title invisible — so everything it set is still undone here, and the
+   link decoration an <a> brings with it as well. */
 .catalog-card {
+  text-decoration: none;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
