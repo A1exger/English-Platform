@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsIn,
@@ -387,6 +388,15 @@ export class SetGrammarDto {
 
   @IsString()
   form!: string;
+
+  // Sentences that show the rule in use. Optional so an older client can still
+  // save a note, capped so a wall of text cannot arrive as "examples".
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsString({ each: true })
+  @Length(1, 300, { each: true })
+  examples?: string[];
 }
 
 export class CreatePageDto {

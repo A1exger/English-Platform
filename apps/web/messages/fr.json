@@ -611,7 +611,9 @@
     "taskCount": "{count} exercices",
     "levelEmpty": "vide",
     "levelEmptyBody": "Rien à ce niveau pour l’instant.",
-    "aiNeedsDraft": "La génération par IA ne fonctionne que tant que le cours est un brouillon. Dépubliez-le dans la liste des cours, ajoutez la leçon, puis republiez-le."
+    "aiNeedsDraft": "La génération par IA ne fonctionne que tant que le cours est un brouillon. Dépubliez-le dans la liste des cours, ajoutez la leçon, puis republiez-le.",
+    "grammarExamples": "Exemples (un par ligne)",
+    "grammarExamplesHint": "She will call you tomorrow."
   },
   "learn": {
     "title": "Leçon",
@@ -636,7 +638,8 @@
     "min": "min",
     "saved": "Enregistré",
     "true": "Vrai",
-    "false": "Faux"
+    "false": "Faux",
+    "examples": "Exemples"
   },
   "assignments": {
     "title": "Devoirs",

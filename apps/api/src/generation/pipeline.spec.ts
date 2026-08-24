@@ -91,11 +91,22 @@ describe('generation pipeline (pure)', () => {
         }
       ],
       wordlist: [{ word: 'run', translation: 'бежать' }, { word: '' }],
-      grammar: { title: 'T', meaning: 'M', form: 'F' }
+      grammar: { title: 'T', meaning: 'M', form: 'F', examples: ['She works here.', '', 42] }
     });
     expect(plan.pages[0].tasks).toHaveLength(1);
     expect(plan.wordlist).toHaveLength(1);
     expect(plan.grammar?.title).toBe('T');
+    // Examples survive; blanks and non-strings from a sloppy reply do not.
+    expect(plan.grammar?.examples).toEqual(['She works here.']);
+  });
+
+  it('a grammar note without examples is still usable, with an empty list', () => {
+    const plan = normalizeLessonPlan({
+      pages: [{ type: 'grammar', text: 'x', tasks: [] }],
+      wordlist: [],
+      grammar: { title: 'T', meaning: 'M', form: 'F' }
+    });
+    expect(plan.grammar?.examples).toEqual([]);
   });
 
   it('normalizeMedia keeps valid slots; transcript only on audio (ФТ-К407)', () => {

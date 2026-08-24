@@ -611,7 +611,9 @@
     "taskCount": "{count} Aufgaben",
     "levelEmpty": "leer",
     "levelEmptyBody": "Auf dieser Stufe gibt es noch nichts.",
-    "aiNeedsDraft": "Die KI-Generierung funktioniert nur, solange der Kurs ein Entwurf ist. Heben Sie die Veröffentlichung in der Kursliste auf, fügen Sie die Lektion hinzu und veröffentlichen Sie erneut."
+    "aiNeedsDraft": "Die KI-Generierung funktioniert nur, solange der Kurs ein Entwurf ist. Heben Sie die Veröffentlichung in der Kursliste auf, fügen Sie die Lektion hinzu und veröffentlichen Sie erneut.",
+    "grammarExamples": "Beispiele (eines pro Zeile)",
+    "grammarExamplesHint": "She will call you tomorrow."
   },
   "learn": {
     "title": "Lektion",
@@ -636,7 +638,8 @@
     "min": "Min",
     "saved": "Gespeichert",
     "true": "Richtig",
-    "false": "Falsch"
+    "false": "Falsch",
+    "examples": "Beispiele"
   },
   "assignments": {
     "title": "Aufgaben",

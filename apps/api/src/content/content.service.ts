@@ -431,6 +431,16 @@ export class ContentService {
     return {
       ...lesson,
       wordlist,
+      // The examples are stored as JSON text like objectives; readers get an
+      // array, so no caller has to know that.
+      grammarReference: lesson.grammarReference
+        ? {
+            ...lesson.grammarReference,
+            examples: lesson.grammarReference.examples
+              ? (JSON.parse(lesson.grammarReference.examples) as string[])
+              : [],
+          }
+        : lesson.grammarReference,
       objectives: lesson.objectives ? JSON.parse(lesson.objectives) : [],
       pages: lesson.pages.map((p) => ({
         ...p,
@@ -1598,15 +1608,23 @@ export class ContentService {
   async setGrammarReference(
     user: AuthenticatedUser,
     lessonId: string,
-    dto: { title: string; meaning: string; form: string },
+    dto: { title: string; meaning: string; form: string; examples?: string[] },
   ) {
     const lesson = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
     if (!lesson) throw new NotFoundException('Lesson not found');
     await this.assertCourseEditable(user, lesson.courseId);
+    // Blank lines are what a textarea produces, not what an author meant.
+    const examples = (dto.examples ?? []).map((e) => e.trim()).filter(Boolean);
+    const data = {
+      title: dto.title,
+      meaning: dto.meaning,
+      form: dto.form,
+      examples: examples.length ? JSON.stringify(examples) : null,
+    };
     return this.prisma.grammarReference.upsert({
       where: { courseLessonId: lessonId },
-      update: dto,
-      create: { courseLessonId: lessonId, ...dto },
+      update: data,
+      create: { courseLessonId: lessonId, ...data },
     });
   }
 

@@ -84,7 +84,7 @@ export interface GenPage {
 export interface LessonPlan {
   pages: GenPage[];
   wordlist: { word: string; translation?: string }[];
-  grammar?: { title: string; meaning: string; form: string };
+  grammar?: { title: string; meaning: string; form: string; examples: string[] };
 }
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
@@ -143,7 +143,11 @@ export function lessonPrompt(
       (brief.notes ? `Notes: ${brief.notes}\n` : '') +
       `Return JSON: {"pages":[{"type":"grammar|practice|listening|reading","text":"...",` +
       `"media":[{"kind":"audio|image|video","note":"what to show/play","transcript":"(listening audio only) full transcript"}],` +
-      `"tasks":[<task>]}],"wordlist":[{"word":"...","translation":"..."}],"grammar":{"title":"...","meaning":"...","form":"..."}}\n` +
+      `"tasks":[<task>]}],"wordlist":[{"word":"...","translation":"..."}],` +
+      `"grammar":{"title":"...","meaning":"...","form":"...","examples":["...","..."]}}\n` +
+      `The grammar note MUST carry 2-4 example sentences showing the rule in use — a rule ` +
+      `stated without a sentence using it is the hardest kind of note to learn from. Write them ` +
+      `in ENGLISH whatever the gloss language is, and keep them at the lesson's level.\n` +
       `By default: 2-4 pages, 1-4 tasks per page, 4-8 wordlist entries.\n` +
       `Media plan: a listening page MUST include one "audio" item with a full transcript. ` +
       `For images/videos, describe them in "note" — do NOT invent URLs; the teacher uploads the file.\n` +
@@ -314,10 +318,21 @@ export function normalizeLessonPlan(raw: unknown): LessonPlan {
     })
     .filter((w) => w.word)
     .slice(0, 24);
-  const g = (root.grammar ?? {}) as { title?: unknown; meaning?: unknown; form?: unknown };
+  const g = (root.grammar ?? {}) as {
+    title?: unknown;
+    meaning?: unknown;
+    form?: unknown;
+    examples?: unknown;
+  };
+  // A model that ignores the instruction leaves an empty list rather than
+  // failing the lesson — the note is still usable, just poorer.
+  const examples = (Array.isArray(g.examples) ? g.examples : [])
+    .map((e) => str(e))
+    .filter(Boolean)
+    .slice(0, 6);
   const grammar =
     str(g.title) && str(g.meaning) && str(g.form)
-      ? { title: str(g.title), meaning: str(g.meaning), form: str(g.form) }
+      ? { title: str(g.title), meaning: str(g.meaning), form: str(g.form), examples }
       : undefined;
   return { pages, wordlist, grammar };
 }

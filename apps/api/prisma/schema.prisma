@@ -642,6 +642,10 @@ model GrammarReference {
   title          String
   meaning        String
   form           String
+  // examples: JSON string array. A rule stated without a sentence using it is
+  // the hardest kind of grammar note to learn from, so a reference carries the
+  // sentences that show it in use. Nullable: notes written before this existed.
+  examples       String?
 }
 
 // Personal dictionary + spaced-repetition trainer state.

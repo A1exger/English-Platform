@@ -35,7 +35,12 @@ const LESSON = {
     }
   ],
   wordlist: [{ word: 'arrive', translation: 'прибыть' }],
-  grammar: { title: 'Present Perfect', meaning: 'Past action with present relevance.', form: 'have/has + V3' }
+  grammar: {
+    title: 'Present Perfect',
+    meaning: 'Past action with present relevance.',
+    form: 'have/has + V3',
+    examples: ['I have finished the report.', 'She has just arrived.']
+  }
 };
 const REVISED_LESSON = { ...LESSON, wordlist: [{ word: 'revised', translation: 'изменено' }] };
 
@@ -118,6 +123,11 @@ describe('AI generation (e2e, mocked model)', () => {
     expect(detail.body.pages[0].tasks.length).toBe(2);
     expect(detail.body.wordlist.entries.length).toBe(1);
     expect(detail.body.grammarReference.title).toBe('Present Perfect');
+    // A generated grammar note explains the rule AND shows it in use.
+    expect(detail.body.grammarReference.examples).toEqual([
+      'I have finished the report.',
+      'She has just arrived.',
+    ]);
     // Media plan: an audio slot with a transcript + an image slot (ФТ-К407).
     expect(detail.body.pages[0].media.length).toBe(2);
     const audio = detail.body.pages[0].media.find((m: { kind: string }) => m.kind === 'audio');

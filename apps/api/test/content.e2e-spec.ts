@@ -227,12 +227,34 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api()
       .put(`/api/v1/content/lessons/${lesson1}/grammar`)
       .set(auth(tutor.accessToken))
-      .send({ title: 'Present Simple', meaning: 'Habits.', form: 'V / V+s' })
+      .send({
+        title: 'Present Simple',
+        meaning: 'Habits.',
+        form: 'V / V+s',
+        // Blank lines are what a textarea produces; they must not survive.
+        examples: ['She works on Mondays.', '   ', 'They live in Berlin.'],
+      })
       .expect(200);
 
     const detail = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth(student.accessToken)).expect(200);
     expect(detail.body.wordlist.entries.map((e: { word: string }) => e.word)).toEqual(['wake up', 'commute']);
     expect(detail.body.grammarReference.title).toBe('Present Simple');
+    // The rule is shown in use, and reaches the reader as an array rather than
+    // the JSON text it is stored as.
+    expect(detail.body.grammarReference.examples).toEqual([
+      'She works on Mondays.',
+      'They live in Berlin.',
+    ]);
+
+    // A note saved without examples still works, and reads as an empty list
+    // rather than null — grammar written before this existed is not broken.
+    await api()
+      .put(`/api/v1/content/lessons/${lesson1}/grammar`)
+      .set(auth(tutor.accessToken))
+      .send({ title: 'Present Simple', meaning: 'Habits.', form: 'V / V+s' })
+      .expect(200);
+    const bare = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth(student.accessToken)).expect(200);
+    expect(bare.body.grammarReference.examples).toEqual([]);
 
     // Replacing overwrites, not appends.
     await api()

@@ -827,7 +827,12 @@ interface LessonDetail {
   wordlist?: {
     entries: { word: string; translation?: string | null; translations?: Record<string, string> }[];
   } | null;
-  grammarReference?: { title: string; meaning: string; form: string } | null;
+  grammarReference?: {
+    title: string;
+    meaning: string;
+    form: string;
+    examples?: string[];
+  } | null;
 }
 
 // Locales the wordlist can carry a manual translation for (matches the API).
@@ -858,7 +863,8 @@ function LessonEditor({
   const pageTextRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [objectives, setObjectives] = useState('');
   const [wordlist, setWordlist] = useState('');
-  const [grammar, setGrammar] = useState({ title: '', meaning: '', form: '' });
+  // `examples` is edited as text — one sentence per line — and split on save.
+  const [grammar, setGrammar] = useState({ title: '', meaning: '', form: '', examples: '' });
   const [pageForm, setPageForm] = useState({ type: 'practice', inHw: true });
   const [taskForms, setTaskForms] = useState<Record<string, TaskFormState>>({});
   const [translating, setTranslating] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
@@ -877,7 +883,8 @@ function LessonEditor({
     setGrammar({
       title: d.grammarReference?.title ?? '',
       meaning: d.grammarReference?.meaning ?? '',
-      form: d.grammarReference?.form ?? ''
+      form: d.grammarReference?.form ?? '',
+      examples: (d.grammarReference?.examples ?? []).join('\n')
     });
     // `reloadToken` is not read here: it is the parent's signal that an AI
     // revision replaced this lesson's content, which must rebuild this callback
@@ -933,7 +940,17 @@ function LessonEditor({
         .filter((x): x is { word: string; translation: string | undefined } => x !== null);
       await apiPut(`/content/lessons/${lessonId}/wordlist`, { entries }, tok, locale);
       if (grammar.title && grammar.meaning && grammar.form) {
-        await apiPut(`/content/lessons/${lessonId}/grammar`, grammar, tok, locale);
+        await apiPut(
+          `/content/lessons/${lessonId}/grammar`,
+          {
+            title: grammar.title,
+            meaning: grammar.meaning,
+            form: grammar.form,
+            examples: grammar.examples.split('\n').map((x) => x.trim()).filter(Boolean)
+          },
+          tok,
+          locale
+        );
       }
       setSaved(true);
       onChanged();
@@ -1152,6 +1169,9 @@ function LessonEditor({
         <label className="ed-field">{t('grammarTitle')}<input value={grammar.title} onChange={(e) => { setGrammar({ ...grammar, title: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
         <label className="ed-field">{t('meaning')}<textarea value={grammar.meaning} onChange={(e) => { setGrammar({ ...grammar, meaning: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
         <label className="ed-field">{t('form')}<textarea value={grammar.form} onChange={(e) => { setGrammar({ ...grammar, form: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
+        {/* Sentences using the rule, one per line — the part of a grammar note a
+            learner actually reads. */}
+        <label className="ed-field">{t('grammarExamples')}<textarea rows={4} placeholder={t('grammarExamplesHint')} value={grammar.examples} onChange={(e) => { setGrammar({ ...grammar, examples: e.target.value }); setSaved(false); }} onBlur={() => void saveLesson()} /></label>
       </div>
 
       <div className="ed-pages">

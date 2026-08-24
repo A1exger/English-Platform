@@ -611,7 +611,9 @@
     "taskCount": "{count} tasks",
     "levelEmpty": "empty",
     "levelEmptyBody": "Nothing at this level yet.",
-    "aiNeedsDraft": "AI generation only works while the course is a draft. Unpublish it in the course list, add the lesson, then publish again."
+    "aiNeedsDraft": "AI generation only works while the course is a draft. Unpublish it in the course list, add the lesson, then publish again.",
+    "grammarExamples": "Examples (one per line)",
+    "grammarExamplesHint": "She will call you tomorrow."
   },
   "learn": {
     "title": "Lesson",
@@ -636,7 +638,8 @@
     "min": "min",
     "saved": "Saved",
     "true": "True",
-    "false": "False"
+    "false": "False",
+    "examples": "Examples"
   },
   "assignments": {
     "title": "Assignments",

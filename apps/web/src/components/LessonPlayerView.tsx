@@ -28,7 +28,12 @@ interface LessonDetail {
   objectives: string[];
   pages: PageRow[];
   wordlist?: { entries: { word: string; translation?: string | null; translations?: Record<string, string> | null }[] } | null;
-  grammarReference?: { title: string; meaning: string; form: string } | null;
+  grammarReference?: {
+    title: string;
+    meaning: string;
+    form: string;
+    examples?: string[];
+  } | null;
 }
 
 const MEDIA_MARKER = /!\[\[media:([^\]]+)\]\]/g;
@@ -232,6 +237,18 @@ export function LessonPlayerView({
                   <span className="grammar-key">{t('form')}</span>
                   <span>{lesson.grammarReference.form}</span>
                 </div>
+                {/* The sentences that show the rule working. A rule stated on
+                    its own is the hardest kind of note to learn from. */}
+                {!!lesson.grammarReference.examples?.length && (
+                  <div className="grammar-row">
+                    <span className="grammar-key">{t('examples')}</span>
+                    <ul className="grammar-examples">
+                      {lesson.grammarReference.examples.map((ex, i) => (
+                        <li key={i}>{ex}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           )}

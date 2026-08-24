@@ -1415,6 +1415,20 @@ select.err {
   text-transform: uppercase;
   color: var(--indigo);
 }
+/* Example sentences sit in the value column of the same table. They are the
+   rule in use, so they read as sentences — not as a bulleted list of settings. */
+.grammar-examples {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grammar-examples > li {
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--indigo-100);
+}
 
 /* aspect chips (design-direction skill tags) */
 .chip .dot {
