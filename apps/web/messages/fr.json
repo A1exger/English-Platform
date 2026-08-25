@@ -750,12 +750,12 @@
     "empty": "Rien de nouveau pour l’instant.",
     "markAll": "Tout marquer comme lu",
     "generic": "Il y a du nouveau.",
-    "homework_assigned": "Votre professeur vous a attribué un nouveau devoir : « {title} ». Ouvrez-le pour commencer.",
-    "homework_feedback": "Votre professeur a corrigé « {title} » et vous a laissé un commentaire.",
-    "homework_submitted": "{student} a rendu le devoir « {title} » — il attend votre correction.",
-    "lesson_booked": "Le cours « {title} » a été ajouté à votre planning.",
-    "lesson_reminder": "Votre cours « {title} » commence bientôt.",
-    "transfer_pending": "{student} a signalé un paiement et attend votre confirmation.",
-    "payment_confirmed": "Paiement confirmé — les cours ont été ajoutés à votre solde."
+    "homework_assigned": "Votre professeur vous a attribué un nouveau devoir : « {title} ». Vous pouvez l’ouvrir et le faire dans la rubrique « Devoirs ».",
+    "homework_feedback": "Votre professeur a corrigé votre travail « {title} » et a laissé un commentaire. Vous pouvez le lire dans la rubrique « Devoirs ».",
+    "homework_submitted": "{student} a rendu le devoir « {title} ». Il vous attend dans la rubrique « Devoirs ».",
+    "lesson_booked": "Le cours « {title} » a été ajouté à votre planning. Vous en trouverez les détails dans la rubrique « Planning ».",
+    "lesson_reminder": "Rappel : votre cours « {title} » commence bientôt. Vous pouvez le rejoindre depuis la rubrique « Planning ».",
+    "transfer_pending": "{student} a signalé un paiement et attend votre confirmation. Vous pouvez le confirmer dans la rubrique « Facturation ».",
+    "payment_confirmed": "Votre paiement a été confirmé et les cours ont été ajoutés à votre solde. Vous pouvez le vérifier dans la rubrique « Paiement »."
   }
 }

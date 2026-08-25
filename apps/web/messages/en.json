@@ -750,12 +750,12 @@
     "empty": "Nothing new yet.",
     "markAll": "Mark all as read",
     "generic": "There is an update.",
-    "homework_assigned": "Your tutor assigned you new homework: \"{title}\". Open it to get started.",
-    "homework_feedback": "Your tutor checked \"{title}\" and left feedback for you.",
-    "homework_submitted": "{student} handed in the homework \"{title}\" — it is waiting for review.",
-    "lesson_booked": "The lesson \"{title}\" has been added to your schedule.",
-    "lesson_reminder": "Your lesson \"{title}\" is starting soon.",
-    "transfer_pending": "{student} reported a payment and is waiting for your confirmation.",
-    "payment_confirmed": "Payment confirmed — the lessons have been added to your balance."
+    "homework_assigned": "Your tutor has assigned you new homework: \"{title}\". You can open and complete it in the Homework section.",
+    "homework_feedback": "Your tutor has checked your work \"{title}\" and left feedback. You can read it in the Homework section.",
+    "homework_submitted": "{student} has handed in the homework \"{title}\". It is waiting for you in the Homework section.",
+    "lesson_booked": "The lesson \"{title}\" has been added to your schedule. You can see the details in the Schedule section.",
+    "lesson_reminder": "A reminder: your lesson \"{title}\" is starting soon. You can join it from the Schedule section.",
+    "transfer_pending": "{student} has reported a payment and is waiting for your confirmation. You can confirm it in the Billing section.",
+    "payment_confirmed": "Your payment has been confirmed and the lessons have been added to your balance. You can check it in the Payment section."
   }
 }
