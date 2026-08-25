@@ -40,6 +40,15 @@ export class StripeProvider implements PaymentProvider {
 
   parseWebhook(rawBody: string, signature: string): NormalizedWebhookEvent {
     const secret = this.config.get<string>('STRIPE_WEBHOOK_SECRET') ?? '';
+    // Fail closed. An HMAC keyed with the empty string is still a perfectly
+    // valid HMAC, so an unset secret does not disable verification — it makes
+    // the key public knowledge, and anyone could sign "this transaction is
+    // paid". A webhook with no secret configured is refused instead.
+    if (!secret) {
+      throw new UnauthorizedException(
+        'STRIPE_WEBHOOK_SECRET is not configured — refusing to trust the webhook',
+      );
+    }
     const expected = createHmac('sha256', secret).update(rawBody).digest('hex');
 
     const provided = signature ?? '';

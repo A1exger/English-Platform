@@ -1,6 +1,16 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Ip,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { AuthService } from './auth.service';
+import { LoginThrottleService } from './login-throttle.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
@@ -16,6 +26,7 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly prisma: PrismaService,
     private readonly i18n: I18nService,
+    private readonly throttle: LoginThrottleService,
   ) {}
 
   @Post('register')
@@ -23,10 +34,32 @@ export class AuthController {
     return this.auth.register(dto);
   }
 
+  /**
+   * Sign in. Repeated FAILURES against one account from one client are slowed
+   * down; getting it right clears the count, so a real person is never locked
+   * out of their own account by using it.
+   */
   @Post('login')
-  login(@Body() dto: LoginDto) {
+  async login(@Body() dto: LoginDto, @Ip() ip: string) {
     const lang = I18nContext.current()?.lang;
-    return this.auth.login(dto, lang);
+    if (this.throttle.isLocked(ip, dto.email)) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.TOO_MANY_REQUESTS,
+          message: 'Too many sign-in attempts. Please try again later.',
+          retryAfter: this.throttle.retryAfterSeconds(ip, dto.email),
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    try {
+      const tokens = await this.auth.login(dto, lang);
+      this.throttle.recordSuccess(ip, dto.email);
+      return tokens;
+    } catch (e) {
+      this.throttle.recordFailure(ip, dto.email);
+      throw e;
+    }
   }
 
   // Both are public: the caller has no session yet by definition.

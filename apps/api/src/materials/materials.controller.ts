@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -20,7 +21,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
-import { UPLOADS_DIR } from '../common/constants/uploads';
+import { UPLOADS_DIR, isExecutableUpload } from '../common/constants/uploads';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('materials')
@@ -43,9 +44,20 @@ export class MaterialsController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: UPLOADS_DIR,
+        // The name is ours (a UUID); only the extension comes from the client,
+        // and it decides the Content-Type this file is later served with — so
+        // it is lowercased, length-capped and checked below.
         filename: (_req, file, cb) =>
-          cb(null, `${randomUUID()}${extname(file.originalname)}`),
+          cb(null, `${randomUUID()}${extname(file.originalname).toLowerCase().slice(0, 10)}`),
       }),
+      // Uploads are served from the app's own origin, so a file the browser
+      // runs as a document could read the tokens in localStorage. Refuse those
+      // outright; everything a lesson actually uses — pictures, audio, video,
+      // PDFs, documents — is unaffected.
+      fileFilter: (_req, file, cb) =>
+        isExecutableUpload(file.originalname, file.mimetype)
+          ? cb(new BadRequestException('This file type cannot be uploaded'), false)
+          : cb(null, true),
       limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
     }),
   )

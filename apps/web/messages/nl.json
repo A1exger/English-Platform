@@ -309,7 +309,8 @@
     "resetSubmit": "Wachtwoord opslaan",
     "resetDone": "Wachtwoord gewijzigd. Je gaat naar inloggen…",
     "resetInvalid": "Deze link is ongeldig of verlopen. Vraag een nieuwe aan.",
-    "dismiss": "Verbergen"
+    "dismiss": "Verbergen",
+    "delete": "Verwijderen"
   },
   "nav": {
     "overview": "Overzicht",

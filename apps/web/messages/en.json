@@ -309,7 +309,8 @@
     "resetSubmit": "Save the password",
     "resetDone": "Password changed. Taking you to sign in…",
     "resetInvalid": "This link is invalid or has expired. Request a new one.",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "delete": "Delete"
   },
   "nav": {
     "overview": "Overview",

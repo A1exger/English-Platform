@@ -309,7 +309,8 @@
     "resetSubmit": "Enregistrer le mot de passe",
     "resetDone": "Mot de passe modifié. Redirection vers la connexion…",
     "resetInvalid": "Ce lien est invalide ou expiré. Demandez-en un nouveau.",
-    "dismiss": "Masquer"
+    "dismiss": "Masquer",
+    "delete": "Supprimer"
   },
   "nav": {
     "overview": "Aperçu",

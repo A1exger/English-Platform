@@ -107,6 +107,41 @@ describe('Admin CRM / student profile / progress / uploads / notes (e2e)', () =>
     expect(res.body.type).toBe('pdf');
   });
 
+  it('refuses a file the browser would run as a page', async () => {
+    // Uploads are served from the app's own origin, so an .html or .svg here
+    // would run JavaScript with access to the tokens in localStorage — a tutor
+    // account turned into anyone's account.
+    for (const [name, mime] of [
+      ['takeover.html', 'text/html'],
+      ['logo.svg', 'image/svg+xml'],
+      ['script.js', 'text/javascript'],
+      // A dressed-up name is refused on its declared type instead.
+      ['innocent.png', 'text/html'],
+    ] as const) {
+      await api()
+        .post('/api/v1/materials/upload')
+        .set('Authorization', `Bearer ${tutor.accessToken}`)
+        .attach('file', Buffer.from('<script>alert(1)</script>'), { filename: name, contentType: mime })
+        .expect(400);
+    }
+  });
+
+  it('still accepts the material a lesson is made of', async () => {
+    for (const [name, mime, type] of [
+      ['photo.png', 'image/png', 'image'],
+      ['dialogue.mp3', 'audio/mpeg', 'audio'],
+      ['clip.mp4', 'video/mp4', 'video'],
+      ['handout.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'link'],
+    ] as const) {
+      const res = await api()
+        .post('/api/v1/materials/upload')
+        .set('Authorization', `Bearer ${tutor.accessToken}`)
+        .attach('file', Buffer.from('binary'), { filename: name, contentType: mime })
+        .expect(201);
+      expect(res.body.type).toBe(type);
+    }
+  });
+
   it('tutor saves shared board notes', async () => {
     const lesson = await api()
       .post('/api/v1/lessons')
