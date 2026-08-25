@@ -172,6 +172,11 @@ certificate, or a firewall. A `secret_token` that does not match what the API
 has in `TELEGRAM_WEBHOOK_SECRET` makes the endpoint reject the call — re-run
 `setWebhook` with the exact value from `.env.prod`.
 
+The secret is not optional. The webhook URL is public, so the endpoint refuses
+(403) any call that does not carry the matching header — including every call, if
+`TELEGRAM_WEBHOOK_SECRET` is left empty. Registering the webhook without
+`secret_token` therefore looks exactly like the bot being ignored.
+
 **Connected, but nothing ever arrives.** The token is wrong or was revoked.
 Sends fail softly by design — a bad token never breaks the action that triggered
 the notification, so the failure only shows up as silence. Test the token

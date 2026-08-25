@@ -5,6 +5,8 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { NotificationsService } from '../src/notifications/notifications.service';
 
+const WEBHOOK_SECRET = 'test-telegram-webhook-secret';
+
 describe('Telegram notifications (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -94,6 +96,7 @@ describe('Telegram notifications (e2e)', () => {
     // …and pressing Start hands that code to the bot, which links the chat.
     await api()
       .post('/api/v1/notifications/telegram/webhook')
+      .set('x-telegram-bot-api-secret-token', WEBHOOK_SECRET)
       .send({ message: { text: `/start ${code}`, chat: { id: 987654 } } })
       .expect(201)
       .expect((r) => expect(r.body.linked).toBe(true));
@@ -107,9 +110,22 @@ describe('Telegram notifications (e2e)', () => {
     // A forged payload cannot link somebody else's account.
     await api()
       .post('/api/v1/notifications/telegram/webhook')
+      .set('x-telegram-bot-api-secret-token', WEBHOOK_SECRET)
       .send({ message: { text: '/start someoneelse_0000000000000000', chat: { id: 5 } } })
       .expect(201)
       .expect((r) => expect(r.body.linked).toBe(false));
+
+    // The endpoint is public, so the secret is the only thing separating
+    // Telegram from anyone else who knows the URL.
+    await api()
+      .post('/api/v1/notifications/telegram/webhook')
+      .send({ message: { text: `/start ${code}`, chat: { id: 111 } } })
+      .expect(403);
+    await api()
+      .post('/api/v1/notifications/telegram/webhook')
+      .set('x-telegram-bot-api-secret-token', 'wrong-secret-of-the-same-len')
+      .send({ message: { text: `/start ${code}`, chat: { id: 111 } } })
+      .expect(403);
 
     // Disconnecting is one call and stops Telegram delivery.
     await api()

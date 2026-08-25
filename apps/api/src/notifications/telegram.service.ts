@@ -89,12 +89,17 @@ export class TelegramService {
     };
   }
 
-  /** True when the webhook call carries Telegram's configured secret header. */
+  /**
+   * The header Telegram sends back, set when the webhook was registered with
+   * `secret_token`. Fail closed: this endpoint is public, and an unset secret
+   * would leave it open to anyone rather than merely unverified. Registering the
+   * webhook without a secret means it stops working, which is the noisy failure
+   * — not the quiet one.
+   */
   verifyWebhookSecret(header: string | undefined): boolean {
-    const expected = this.config.get<string>('TELEGRAM_WEBHOOK_SECRET');
-    // Unset secret = accept (dev). In production always set it: the endpoint is
-    // public, and the payload is what links a chat to an account.
-    return !expected || header === expected;
+    const expected = this.config.get<string>('TELEGRAM_WEBHOOK_SECRET') ?? '';
+    if (!expected || !header || header.length !== expected.length) return false;
+    return timingSafeEqual(Buffer.from(header), Buffer.from(expected));
   }
 
   /**
