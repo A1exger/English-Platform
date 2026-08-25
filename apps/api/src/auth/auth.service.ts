@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { I18nService } from 'nestjs-i18n';
@@ -15,6 +15,21 @@ import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './types/jwt-payload';
 import { UserRole } from '../common/constants/enums';
 import { MailService } from '../notifications/mail.service';
+
+/**
+ * Token lifetimes come from the environment as plain strings, while `expiresIn`
+ * is typed as a duration literal ("15m", "7d", …). Rather than cast blindly,
+ * check the value looks like a duration — a typo in JWT_ACCESS_TTL should fail
+ * at startup with a clear message, not silently mint tokens with a lifetime
+ * nobody intended.
+ */
+function tokenTtl(value: string | undefined, fallback: string): JwtSignOptions['expiresIn'] {
+  const ttl = (value ?? '').trim() || fallback;
+  if (!/^\d+(\.\d+)?\s*(ms|s|m|h|d|w|y)?$/i.test(ttl)) {
+    throw new Error(`Invalid token TTL "${ttl}" — expected a duration such as "15m" or "7d"`);
+  }
+  return ttl as JwtSignOptions['expiresIn'];
+}
 
 export interface TokenPair {
   accessToken: string;
@@ -134,11 +149,11 @@ export class AuthService {
 
     const accessToken = await this.jwt.signAsync(payload, {
       secret: this.config.get<string>('JWT_ACCESS_SECRET'),
-      expiresIn: this.config.get<string>('JWT_ACCESS_TTL') ?? '15m',
+      expiresIn: tokenTtl(this.config.get<string>('JWT_ACCESS_TTL'), '15m'),
     });
     const refreshToken = await this.jwt.signAsync(payload, {
       secret: this.config.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.config.get<string>('JWT_REFRESH_TTL') ?? '7d',
+      expiresIn: tokenTtl(this.config.get<string>('JWT_REFRESH_TTL'), '7d'),
     });
 
     const decoded = this.jwt.decode(refreshToken) as { exp: number };

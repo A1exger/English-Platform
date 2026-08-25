@@ -11,6 +11,13 @@
 {$DOMAIN} {
 	encode gzip
 
+	# Tell browsers to reach this site over HTTPS only, for a year. Caddy already
+	# redirects HTTP, but a redirect still lets the first request go out in the
+	# clear — where a session can be stolen before the redirect is ever seen.
+	# No `preload`: that is a one-way submission to a browser-vendor list and
+	# hard to undo, so it should be a deliberate decision, not a side effect.
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
 	@api path /api/* /uploads/* /socket.io/*
 	handle @api {
 		reverse_proxy api:3001
