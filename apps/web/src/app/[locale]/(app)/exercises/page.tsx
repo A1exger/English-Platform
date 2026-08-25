@@ -1,11 +1,10 @@
 import { setRequestLocale } from 'next-intl/server';
 import { ExercisesView } from '@/components/ExercisesView';
 
-export default function ExercisesPage({
-  params: { locale }
-}: {
-  params: { locale: string };
+export default async function ExercisesPage(props: {
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await props.params;
   setRequestLocale(locale);
   return <ExercisesView />;
 }

@@ -1,17 +1,15 @@
 import { Suspense } from 'react';
-import { useTranslations } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { ResetPasswordForm } from '@/components/ResetPasswordForm';
 
 // Landing page for the link emailed by "forgot password". The token rides in
 // the query string; the form posts it back with the new password.
-export default function ResetPasswordPage({
-  params: { locale }
-}: {
-  params: { locale: string };
+export default async function ResetPasswordPage(props: {
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await props.params;
   setRequestLocale(locale);
-  const t = useTranslations('common');
+  const t = await getTranslations('common');
 
   return (
     <section className="hero">

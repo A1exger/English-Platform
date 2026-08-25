@@ -6,11 +6,10 @@ import { ScheduleView } from '@/components/ScheduleView';
 // week-start), so we keep the HTML — and its chunk references — always fresh.
 export const dynamic = 'force-dynamic';
 
-export default function SchedulePage({
-  params: { locale }
-}: {
-  params: { locale: string };
+export default async function SchedulePage(props: {
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await props.params;
   setRequestLocale(locale);
   return <ScheduleView />;
 }

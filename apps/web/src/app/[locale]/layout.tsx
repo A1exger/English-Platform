@@ -23,13 +23,12 @@ export const metadata: Metadata = {
 // shell — (app) = left rail + centred content, (auth) = bare centred card,
 // (room) = immersive lesson. This is what makes the shell persist across
 // navigation instead of remounting on every page.
-export default async function LocaleLayout({
-  children,
-  params: { locale }
-}: {
+export default async function LocaleLayout(props: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
+  const { children } = props;
+  const { locale } = await props.params;
   if (!routing.locales.includes(locale as Locale)) {
     notFound();
   }

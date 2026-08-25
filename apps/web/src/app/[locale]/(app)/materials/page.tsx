@@ -1,11 +1,10 @@
 import { setRequestLocale } from 'next-intl/server';
 import { MaterialsView } from '@/components/MaterialsView';
 
-export default function MaterialsPage({
-  params: { locale }
-}: {
-  params: { locale: string };
+export default async function MaterialsPage(props: {
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await props.params;
   setRequestLocale(locale);
   return <MaterialsView />;
 }

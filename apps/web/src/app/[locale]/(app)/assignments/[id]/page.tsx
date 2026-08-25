@@ -1,11 +1,10 @@
 import { setRequestLocale } from 'next-intl/server';
 import { AssignmentPlayerView } from '@/components/AssignmentPlayerView';
 
-export default function AssignmentPage({
-  params: { locale, id }
-}: {
-  params: { locale: string; id: string };
+export default async function AssignmentPage(props: {
+  params: Promise<{ locale: string; id: string }>;
 }) {
+  const { locale, id } = await props.params;
   setRequestLocale(locale);
   return <AssignmentPlayerView assignmentId={id} />;
 }

@@ -1,11 +1,10 @@
 import { setRequestLocale } from 'next-intl/server';
 import { StudentProfileView } from '@/components/StudentProfileView';
 
-export default function StudentProfilePage({
-  params: { locale, id }
-}: {
-  params: { locale: string; id: string };
+export default async function StudentProfilePage(props: {
+  params: Promise<{ locale: string; id: string }>;
 }) {
+  const { locale, id } = await props.params;
   setRequestLocale(locale);
   return <StudentProfileView studentProfileId={id} />;
 }

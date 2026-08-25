@@ -1,11 +1,10 @@
 import { setRequestLocale } from 'next-intl/server';
 import { BoardCanvas } from '@/components/BoardCanvas';
 
-export default function BoardPage({
-  params: { locale, id }
-}: {
-  params: { locale: string; id: string };
+export default async function BoardPage(props: {
+  params: Promise<{ locale: string; id: string }>;
 }) {
+  const { locale, id } = await props.params;
   setRequestLocale(locale);
   return <BoardCanvas lessonId={id} />;
 }

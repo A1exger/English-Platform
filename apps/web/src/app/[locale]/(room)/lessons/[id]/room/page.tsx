@@ -1,11 +1,10 @@
 import { setRequestLocale } from 'next-intl/server';
 import { LessonRoom } from '@/components/LessonRoom';
 
-export default function LessonRoomPage({
-  params: { locale, id }
-}: {
-  params: { locale: string; id: string };
+export default async function LessonRoomPage(props: {
+  params: Promise<{ locale: string; id: string }>;
 }) {
+  const { locale, id } = await props.params;
   setRequestLocale(locale);
   return <LessonRoom lessonId={id} />;
 }
