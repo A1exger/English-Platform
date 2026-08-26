@@ -139,6 +139,48 @@ describe('Telegram notifications (e2e)', () => {
     expect(off.body.connected).toBe(false);
   });
 
+  it('records what actually happened to a delivery, not just that it was tried', async () => {
+    // Every row used to be marked "sent" whatever the mail server did, so a
+    // message that never arrived was indistinguishable from one that did — the
+    // exact reason "the student never got the email" could not be answered.
+    await notifications.enqueue({
+      userId: studentUserId,
+      templateKey: 'homework_assigned',
+      channel: 'email',
+      payload: { title: 'Delivery check' },
+    });
+    await api()
+      .post('/api/v1/notifications/dispatch')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(201);
+
+    const row = await prisma.notification.findFirst({
+      where: { userId: studentUserId, channel: 'email' },
+      orderBy: { createdAt: 'desc' },
+    });
+    // No SMTP in tests: honestly "skipped", with the reason, rather than "sent".
+    expect(row?.status).toBe('skipped');
+    expect(row?.error).toBe('no_smtp');
+
+    // The in-app copy has nothing to deliver, so it is simply sent.
+    await notifications.enqueue({
+      userId: studentUserId,
+      templateKey: 'homework_assigned',
+      channel: 'in_app',
+      payload: { title: 'Delivery check' },
+    });
+    await api()
+      .post('/api/v1/notifications/dispatch')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(201);
+    const inApp = await prisma.notification.findFirst({
+      where: { userId: studentUserId, channel: 'in_app' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(inApp?.status).toBe('sent');
+    expect(inApp?.error).toBeNull();
+  });
+
   it('an event fans out to in-app, email and the linked Telegram chat', async () => {
     await notifications.enqueue({
       userId: studentUserId,

@@ -175,12 +175,14 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       // adapters no-op cleanly when unconfigured, so an install without a mail
       // server or bot keeps working.
       let delivered = 'sent';
+      let reason: string | undefined;
       if (n.channel === 'telegram') {
         const chatId = await this.telegram.chatIdFor(n.userId);
         const result = chatId
           ? await this.telegram.sendMessage(chatId, text)
           : { delivered: 'skipped' as const, reason: 'no_link' };
         delivered = result.delivered;
+        reason = result.reason;
       } else if (n.channel === 'email') {
         const user = await this.prisma.user.findUnique({
           where: { id: n.userId },
@@ -191,11 +193,22 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
           ? await this.mail.sendMail(user.email, subject, text)
           : { delivered: 'skipped' as const, reason: 'no_address' };
         delivered = result.delivered;
+        reason = result.reason;
       }
 
+      // Record what actually happened. Every row used to be marked "sent" even
+      // when the mail server refused it or none was configured, so "the student
+      // never got the email" could not be answered from the data — and the
+      // silence looked the same as success.
+      const status = delivered === 'sent' ? 'sent' : reason === 'error' ? 'failed' : 'skipped';
+      if (status !== 'sent') {
+        this.logger.warn(
+          `Notification ${n.templateKey} to ${n.channel} not delivered (${reason ?? status})`,
+        );
+      }
       await this.prisma.notification.update({
         where: { id: n.id },
-        data: { status: 'sent', sentAt: new Date() },
+        data: { status, error: reason ?? null, sentAt: new Date() },
       });
       out.push({ id: n.id, channel: n.channel, locale: n.locale, text, delivered });
     }

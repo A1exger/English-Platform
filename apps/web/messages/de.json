@@ -752,7 +752,7 @@
     "generic": "Es gibt eine Neuigkeit.",
     "homework_assigned": "Deine Lehrkraft hat dir eine neue Hausaufgabe gegeben: „{title}“. Du kannst sie im Bereich „Hausaufgaben“ öffnen und bearbeiten.",
     "homework_feedback": "Deine Lehrkraft hat deine Arbeit „{title}“ korrigiert und ein Feedback hinterlassen. Du findest es im Bereich „Hausaufgaben“.",
-    "homework_submitted": "{student} hat die Hausaufgabe „{title}“ abgegeben. Sie wartet im Bereich „Hausaufgaben“ auf dich.",
+    "homework_submitted": "{student} hat die Hausaufgabe „{title}“ abgegeben. Sie wartet im Bereich „Aufgaben“ auf dich.",
     "lesson_booked": "Die Stunde „{title}“ wurde in deinen Zeitplan eingetragen. Die Details findest du im Bereich „Zeitplan“.",
     "lesson_reminder": "Erinnerung: Deine Stunde „{title}“ beginnt bald. Du kannst über den Bereich „Zeitplan“ beitreten.",
     "transfer_pending": "{student} hat eine Zahlung gemeldet und wartet auf deine Bestätigung. Du kannst sie im Bereich „Abrechnung“ bestätigen.",

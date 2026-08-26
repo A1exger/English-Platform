@@ -7,7 +7,7 @@
     "subject": "English Spark Studio",
     "homework_assigned": "Hallo! Je docent heeft je nieuw huiswerk gegeven: \"{title}\". Je kunt het openen en maken in het onderdeel \"Huiswerk\".",
     "homework_feedback": "Hallo! Je docent heeft je werk \"{title}\" nagekeken en feedback achtergelaten. Je kunt die lezen in het onderdeel \"Huiswerk\".",
-    "homework_submitted": "{student} heeft het huiswerk \"{title}\" ingeleverd. Het wacht op je in het onderdeel \"Huiswerk\".",
+    "homework_submitted": "{student} heeft het huiswerk \"{title}\" ingeleverd. Het wacht op je in het onderdeel \"Opdrachten\".",
     "lesson_booked": "Hallo! De les \"{title}\" is aan je rooster toegevoegd. De details vind je in het onderdeel \"Rooster\".",
     "lesson_reminder": "Herinnering: je les \"{title}\" begint om {time}. Je kunt deelnemen vanuit het onderdeel \"Rooster\".",
     "transfer_pending": "{student} heeft een betaling gemeld en wacht op je bevestiging. Je kunt die bevestigen in het onderdeel \"Facturatie\".",

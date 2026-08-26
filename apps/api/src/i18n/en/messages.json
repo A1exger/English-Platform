@@ -7,7 +7,7 @@
     "subject": "English Spark Studio",
     "homework_assigned": "Hello! Your tutor has assigned you new homework: \"{title}\". You can open and complete it in the Homework section.",
     "homework_feedback": "Hello! Your tutor has checked your work \"{title}\" and left feedback. You can read it in the Homework section.",
-    "homework_submitted": "{student} has handed in the homework \"{title}\". It is waiting for you in the Homework section.",
+    "homework_submitted": "{student} has handed in the homework \"{title}\". It is waiting for you in the Assignments section.",
     "lesson_booked": "Hello! The lesson \"{title}\" has been added to your schedule. You can see the details in the Schedule section.",
     "lesson_reminder": "A reminder: your lesson \"{title}\" starts at {time}. You can join it from the Schedule section.",
     "transfer_pending": "{student} has reported a payment and is waiting for your confirmation. You can confirm it in the Billing section.",

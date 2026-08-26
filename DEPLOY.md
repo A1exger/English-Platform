@@ -139,10 +139,47 @@ API — `https://englishsparkstudio.com/api/...`. Caddy маршрутизиру
 | Видео (LiveKit Cloud) | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` |
 | Карты | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYPAL_WEBHOOK_SECRET` |
 | Telegram | `TELEGRAM_BOT_TOKEN` |
-| Email | подключить SMTP‑провайдера в воркере dispatch (Postmark/Resend) |
+| Email | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (см. 8.1) |
 | Генерация уроков (AI) | `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` — или `ANTHROPIC_API_KEY` |
 
-### 8.1. AI: какую модель ставить и что делать, когда она «пропала»
+### 8.1. Почта: письмо не пришло — что проверить
+
+Уведомления не отправляются в момент события: они складываются в очередь, а
+фоновый диспетчер разбирает её **раз в 30 секунд**. Минуту подождать — нормально.
+
+Начиная с этой версии результат доставки записывается честно: `sent` — провайдер
+принял письмо, `skipped` — отправлять было некуда (SMTP не настроен, нет адреса,
+Telegram не привязан), `failed` — попытка была и сорвалась. Причина лежит в
+колонке `error`. Раньше всё помечалось `sent`, и «письмо не дошло» нельзя было
+отличить от «письмо ушло».
+
+```bash
+# 1. Что произошло с последними уведомлениями:
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec postgres \
+  psql -U postgres -d english_platform -c \
+  "select channel, \"templateKey\", status, error, \"createdAt\" \
+   from \"Notification\" order by \"createdAt\" desc limit 10;"
+
+# 2. Что сказал почтовый сервер:
+docker compose -f docker-compose.prod.yml --env-file .env.prod logs api | grep -i "Email send failed"
+
+# 3. Работает ли диспетчер вообще (пусто = выключен):
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec api printenv NOTIFY_DISPATCH
+```
+
+`NOTIFY_DISPATCH=off` полностью выключает рассылку — в проде эта переменная
+должна быть **пустой**.
+
+**Если статус `failed`, а в логах `535-5.7.8 Username and Password not accepted`** —
+это Gmail. Ему нужен не пароль от аккаунта, а *пароль приложения*: включите
+двухфакторную аутентификацию и создайте его в настройках Google. Google
+показывает такой пароль группами по четыре символа — **пробелы надо убрать**,
+в `.env.prod` он пишется одной строкой из 16 знаков.
+
+`SMTP_PORT=587` идёт с `SMTP_SECURE=` (пусто, STARTTLS), `465` — с
+`SMTP_SECURE=true`. Перепутанная пара выглядит как зависание при отправке.
+
+### 8.2. AI: какую модель ставить и что делать, когда она «пропала»
 
 Генерация ходит в любой провайдер с OpenAI‑совместимым API. Ключ и **имя
 модели** живут только в `.env.prod` — в коде их нет:

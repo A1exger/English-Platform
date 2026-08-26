@@ -310,8 +310,15 @@ model Notification {
   locale      String
   // payload: JSON-serialized string, e.g. '{"lessonId":"..."}'
   payload     String?
-  // status: "queued" | "sent" | "failed"
+  // status: "queued" | "sent" | "skipped" | "failed" (in-app rows also use "read")
+  //   sent    — the provider accepted it
+  //   skipped — there was no route: SMTP unconfigured, no Telegram link, no address
+  //   failed  — delivery was attempted and errored
+  // Every row used to be marked "sent" regardless, which made "the email never
+  // arrived" impossible to answer from the data.
   status      String    @default("queued")
+  // Why a delivery did not happen, for the status above.
+  error       String?
   sentAt      DateTime?
   createdAt   DateTime  @default(now())
 
