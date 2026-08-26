@@ -153,6 +153,32 @@ Telegram не привязан), `failed` — попытка была и сор�
 колонке `error`. Раньше всё помечалось `sent`, и «письмо не дошло» нельзя было
 отличить от «письмо ушло».
 
+Быстрее всего спросить сам почтовый сервер — команда логинится в него прямо
+из контейнера и печатает его собственный ответ:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec api node -e "
+const nm=require('nodemailer');
+nm.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+}).verify()
+ .then(() => console.log('SMTP OK'))
+ .catch(e => console.log('SMTP FAILED:', e.message));
+"
+```
+
+Что означает ответ:
+
+| Ответ | Что это значит |
+|---|---|
+| `SMTP OK` | Логин проходит — дело не в почтовом сервере, смотрите очередь ниже |
+| `535-5.7.8 Username and Password not accepted` | Нужен *пароль приложения* Google (при включённой двухфакторке), и записывать его надо **без пробелов**, которыми Google его показывает |
+| `Connection timeout` / `ETIMEDOUT` | Закрыт исходящий порт. Многие хостинги (Hetzner, DigitalOcean, Oracle) блокируют исходящий SMTP по умолчанию или включают блокировку позже — это самая частая причина, когда почта работала и перестала без единой правки в коде. Решается обращением в поддержку хостинга либо переходом на HTTP‑API рассылки (Resend, Postmark) |
+| `self-signed certificate` или другая TLS‑ошибка | Перепутана пара порт/шифрование — см. конец раздела |
+
 ```bash
 # 1. Что произошло с последними уведомлениями:
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec postgres \
@@ -169,12 +195,6 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec api printenv
 
 `NOTIFY_DISPATCH=off` полностью выключает рассылку — в проде эта переменная
 должна быть **пустой**.
-
-**Если статус `failed`, а в логах `535-5.7.8 Username and Password not accepted`** —
-это Gmail. Ему нужен не пароль от аккаунта, а *пароль приложения*: включите
-двухфакторную аутентификацию и создайте его в настройках Google. Google
-показывает такой пароль группами по четыре символа — **пробелы надо убрать**,
-в `.env.prod` он пишется одной строкой из 16 знаков.
 
 `SMTP_PORT=587` идёт с `SMTP_SECURE=` (пусто, STARTTLS), `465` — с
 `SMTP_SECURE=true`. Перепутанная пара выглядит как зависание при отправке.
