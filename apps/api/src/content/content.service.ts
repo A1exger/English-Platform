@@ -2,28 +2,208 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../prisma/prisma.service';
+import { AiClient, AiUnavailableError } from '../generation/ai-client';
 import { AuthenticatedUser } from '../auth/types/jwt-payload';
 import { scoreContentTask, toContentQuestion } from './task-check';
+import { applyReview, isDue, nextReviewAt } from './spaced-repetition';
+import {
+  computeCourseCompletion,
+  computeGoalForecast,
+  computeGoalProgress,
+  LessonProgressInput,
+} from './scoring';
+import { CONTENT_LEVELS } from '../common/constants/enums';
+import { STARTER_WORD_BANK } from './starter-word-bank';
+import { STARTER_WORD_SENSES } from './starter-word-senses';
 import {
   CreateCategoryDto,
   CreateCourseDto,
   CreateCourseLessonDto,
   CreatePageDto,
+  CreatePageMediaDto,
   CreateSectionDto,
   CreateTaskDto,
   CreateUnitDto,
   ReorderLessonDto,
   UpdateCourseDto,
   UpdateCourseLessonDto,
+  UpdatePageDto,
+  UpdatePageMediaDto,
   UpdateTaskDto,
 } from './dto/content.dto';
 
+// Pick a wordlist entry's translation for the request locale, falling back to
+// the authored default. `translations` is a JSON map { locale: text } (V1).
+function parseTranslations(raw: string | null): Record<string, string> {
+  if (!raw) return {};
+  try {
+    const map = JSON.parse(raw) as Record<string, string>;
+    return map && typeof map === 'object' ? map : {};
+  } catch {
+    return {};
+  }
+}
+
+function resolveWordTranslation(
+  entry: { translation: string | null; translations: string | null },
+  lang: string,
+): string | null {
+  const map = parseTranslations(entry.translations);
+  return map[lang] || entry.translation;
+}
+
+/**
+ * Where-clauses for a word-bank search. Two things make this more than one
+ * `contains`:
+ *
+ *   * A reader looks the word up by ITS OWN name for it — a German types
+ *     "Apfel", not "apple" — so the per-locale gloss map is searched too. It is
+ *     stored as JSON text, which a substring match reads happily.
+ *   * `contains` is case-sensitive on Postgres and not on SQLite, and `mode:
+ *     'insensitive'` only exists on the Postgres client. Rather than branch on
+ *     the provider, the needle is tried in the casings words are actually
+ *     written in: as typed, all lower ("apple"), and capitalised ("Apfel").
+ */
+function wordSearchTerms(q: string) {
+  const cased = [q, q.toLowerCase(), q.charAt(0).toUpperCase() + q.slice(1).toLowerCase()];
+  return [...new Set(cased)].flatMap((term) => [
+    { word: { contains: term } },
+    { translation: { contains: term } },
+    { translations: { contains: term } },
+  ]);
+}
+
+/**
+ * word -> gloss in the request locale, built from the lesson's wordlist. Used to
+ * re-language vocabulary exercises whose glosses were baked in at authoring time
+ * (an AI-written lesson can carry e.g. Spanish rights regardless of the reader's
+ * language). Keys are lowercased for a forgiving match.
+ */
+function glossaryFor(
+  wordlist: { entries: { word: string; translation: string | null; translations: string | null }[] } | null,
+  lang: string,
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const e of wordlist?.entries ?? []) {
+    const t = resolveWordTranslation(e, lang);
+    if (t) out.set(e.word.trim().toLowerCase(), t);
+  }
+  return out;
+}
+
+/**
+ * Swap a word_matching task's right-hand column to the reader's language when
+ * the left-hand word is in the lesson wordlist. Any word missing a translation
+ * keeps its authored gloss, so a partially translated list still works. Other
+ * task types pass through untouched.
+ */
+function localizeTaskPayload(
+  type: string,
+  payload: Record<string, unknown>,
+  glossary: Map<string, string>,
+): Record<string, unknown> {
+  if (type !== 'word_matching' || glossary.size === 0) return payload;
+  const pairs = payload.pairs;
+  if (!Array.isArray(pairs)) return payload;
+  return {
+    ...payload,
+    pairs: pairs.map((p) => {
+      const pair = p as { left?: unknown; right?: unknown };
+      const left = String(pair.left ?? '').trim().toLowerCase();
+      const gloss = glossary.get(left);
+      return gloss ? { ...pair, right: gloss } : pair;
+    }),
+  };
+}
+
+/** The same swap for a word_matching answer key ({ map: { left: right } }). */
+function localizeAnswerKey(
+  type: string,
+  answerKey: Record<string, unknown>,
+  glossary: Map<string, string>,
+): Record<string, unknown> {
+  if (type !== 'word_matching' || glossary.size === 0) return answerKey;
+  const map = answerKey.map;
+  if (!map || typeof map !== 'object') return answerKey;
+  const next: Record<string, string> = {};
+  for (const [left, right] of Object.entries(map as Record<string, string>)) {
+    next[left] = glossary.get(left.trim().toLowerCase()) ?? right;
+  }
+  return { ...answerKey, map: next };
+}
+
+/**
+ * Derive an AUTO task's answer key from its own payload. Mirrors what both the
+ * manual builder and the generator produce; returns null when the payload does
+ * not carry enough to reconstruct one.
+ */
+function rebuildAnswerKey(
+  type: string,
+  payload: Record<string, unknown>,
+): Record<string, unknown> | null {
+  if (type === 'sentence_ordering') {
+    const words = Array.isArray(payload.words) ? (payload.words as string[]) : [];
+    return words.length >= 2 ? { order: words } : null;
+  }
+  if (type === 'word_matching') {
+    const pairs = Array.isArray(payload.pairs)
+      ? (payload.pairs as { left?: string; right?: string }[])
+      : [];
+    const map: Record<string, string> = {};
+    for (const p of pairs) if (p?.left && p?.right) map[p.left] = p.right;
+    return Object.keys(map).length ? { map } : null;
+  }
+  if (type === 'gap_fill') {
+    const text = typeof payload.text === 'string' ? payload.text : '';
+    const answers = [...text.matchAll(/\[([^\]]+)\]/g)].map((m) => m[1].trim());
+    return answers.length ? { answers } : null;
+  }
+  if (type === 'categorization') {
+    const items = Array.isArray(payload.items)
+      ? (payload.items as { text?: string; category?: string }[])
+      : [];
+    const placement: Record<string, string> = {};
+    for (const it of items) if (it?.text && it?.category) placement[it.text] = it.category;
+    return Object.keys(placement).length ? { placement } : null;
+  }
+  return null;
+}
+
+/**
+ * Split a list into batches. `createMany` sends one statement per call, and a
+ * thousand rows at once is a statement with thousands of bound parameters —
+ * over SQLite's variable limit on older builds.
+ */
+function chunk<T>(rows: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
+}
+
+/** One meaning returned by the free dictionary lookup. */
+export interface LookupSense {
+  partOfSpeech: string | null;
+  definition: string;
+  example: string | null;
+}
+
 @Injectable()
 export class ContentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ai: AiClient,
+  ) {}
+
+  private readonly logger = new Logger(ContentService.name);
+
+  // Locales the AI translate step fills for the wordlist (matches the web i18n).
+  private static readonly TRANSLATE_LOCALES = ['en', 'ru', 'de', 'fr', 'nl', 'ar'];
 
   /** Course owner or admin may edit; other tutors read-only. */
   private async assertCourseEditable(user: AuthenticatedUser, courseId: string) {
@@ -35,18 +215,72 @@ export class ContentService {
     return course;
   }
 
+  // --- course audience ------------------------------------------------------
+
+  /**
+   * What a student is allowed to open: any published course that is either
+   * shared with everyone (visibility "public") or individually granted to them
+   * (visibility "private" + a CourseAccess row). Used as the Prisma filter for
+   * list reads and mirrored by assertCourseVisible for single-course reads.
+   */
+  private async studentCourseFilter(userId: string) {
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    return {
+      status: 'published',
+      OR: [
+        { visibility: 'public' },
+        ...(student
+          ? [{ access: { some: { studentProfileId: student.id } } }]
+          : []),
+      ],
+    };
+  }
+
+  /** Single-course gate for students; tutors/admins always pass. */
+  private async assertCourseVisible(
+    user: AuthenticatedUser,
+    course: { id: string; status: string; visibility: string },
+  ) {
+    if (user.role !== 'student') return;
+    if (course.status !== 'published') {
+      throw new ForbiddenException('Course is not published');
+    }
+    if (course.visibility === 'public') return;
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+    const granted = student
+      ? await this.prisma.courseAccess.findUnique({
+          where: {
+            courseId_studentProfileId: {
+              courseId: course.id,
+              studentProfileId: student.id,
+            },
+          },
+        })
+      : null;
+    if (!granted) throw new ForbiddenException('Course is not shared with you');
+  }
+
   // --- catalog reads --------------------------------------------------------
 
-  /** Catalog: students see published courses; tutors/admins see everything. */
-  listCatalog(user: AuthenticatedUser) {
-    const where = user.role === 'student' ? { courses: { some: { status: 'published' } } } : {};
+  /** Catalog: students see the courses shared with them; staff see everything. */
+  async listCatalog(user: AuthenticatedUser) {
+    const courseWhere =
+      user.role === 'student' ? await this.studentCourseFilter(user.id) : null;
     return this.prisma.category.findMany({
-      where,
+      where: courseWhere ? { courses: { some: courseWhere } } : {},
       orderBy: { order: 'asc' },
       include: {
         courses: {
-          ...(user.role === 'student' ? { where: { status: 'published' } } : {}),
-          orderBy: { createdAt: 'asc' },
+          ...(courseWhere ? { where: courseWhere } : {}),
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+          // Section levels drive the level chips/filter on the catalog cards.
+          include: { sections: { select: { level: true }, orderBy: { order: 'asc' } } },
         },
       },
     });
@@ -56,9 +290,7 @@ export class ContentService {
   async courseTree(user: AuthenticatedUser, courseId: string, level: string) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
-    if (user.role === 'student' && course.status !== 'published') {
-      throw new ForbiddenException('Course is not published');
-    }
+    await this.assertCourseVisible(user, course);
     const sections = await this.prisma.section.findMany({
       where: { courseId, level },
       orderBy: { order: 'asc' },
@@ -66,22 +298,101 @@ export class ContentService {
         units: {
           orderBy: { order: 'asc' },
           include: {
-            lessons: { orderBy: { order: 'asc' }, select: { id: true, title: true, optional: true, order: true } },
+            lessons: {
+              orderBy: { order: 'asc' },
+              select: {
+                id: true,
+                title: true,
+                optional: true,
+                order: true,
+                // Task count per lesson: a lesson with none cannot be handed out
+                // as homework (createAssignment rejects an empty set), so the UI
+                // needs to know before offering the button.
+                pages: { select: { _count: { select: { tasks: true } } } },
+              },
+            },
           },
         },
       },
     });
-    return { course, level, sections };
+
+    // Collapse the per-page counts into one number per lesson, so the shape the
+    // client sees stays flat.
+    // Which levels this course actually has content in. Both the builder and the
+    // library open on one of these instead of a hard-coded default, which is how
+    // a course whose only section is, say, Advanced used to look empty.
+    const present = await this.prisma.section.findMany({
+      where: { courseId },
+      select: { level: true },
+      distinct: ['level'],
+    });
+    const levels = (CONTENT_LEVELS as readonly string[]).filter((l) =>
+      present.some((p) => p.level === l),
+    );
+
+    const withCounts = sections.map((sec) => ({
+      ...sec,
+      units: sec.units.map((u) => ({
+        ...u,
+        lessons: u.lessons.map(({ pages, ...l }) => ({
+          ...l,
+          taskCount: pages.reduce((n, pg) => n + pg._count.tasks, 0),
+        })),
+      })),
+    }));
+
+    // Students get their per-lesson progress on the roadmap: a lesson is "done"
+    // when they have a finished (status=done) assignment for it, and its score
+    // is that assignment's overall — the same rule as the progress cabinet
+    // (INV-3). Additive: the author path keeps the plain shape.
+    const student =
+      user.role === 'student'
+        ? await this.prisma.studentProfile.findUnique({ where: { userId: user.id } })
+        : null;
+    if (student) {
+      const finished = await this.prisma.contentAssignment.findMany({
+        where: { studentProfileId: student.id, status: 'done', courseLessonId: { not: null } },
+        include: { result: { select: { overall: true } } },
+      });
+      const byLesson = new Map<string, number | null>();
+      for (const a of finished) {
+        if (!a.courseLessonId) continue;
+        const overall = a.result?.overall ?? null;
+        const prev = byLesson.get(a.courseLessonId);
+        if (prev === undefined || (overall ?? -1) > (prev ?? -1)) {
+          byLesson.set(a.courseLessonId, overall);
+        }
+      }
+      const withProgress = withCounts.map((s) => ({
+        ...s,
+        units: s.units.map((u) => ({
+          ...u,
+          lessons: u.lessons.map((l) => ({
+            ...l,
+            done: byLesson.has(l.id),
+            score: byLesson.get(l.id) ?? null,
+          })),
+        })),
+      }));
+      return { course, level, levels, sections: withProgress };
+    }
+
+    return { course, level, levels, sections: withCounts };
   }
 
-  /** One lesson with pages, tasks (sans answer keys for students), prep data. */
-  async lessonDetail(user: AuthenticatedUser, lessonId: string) {
+  /** One lesson with pages, tasks (sans answer keys for students), prep data.
+   *  `edit=true` (authors only) returns the raw wordlist + per-locale map for the
+   *  builder; otherwise the wordlist is resolved to the request locale. */
+  async lessonDetail(user: AuthenticatedUser, lessonId: string, edit = false) {
     const lesson = await this.prisma.courseLesson.findUnique({
       where: { id: lessonId },
       include: {
         pages: {
           orderBy: { order: 'asc' },
-          include: { tasks: { orderBy: { order: 'asc' } } },
+          include: {
+            tasks: { orderBy: { order: 'asc' } },
+            media: { orderBy: { order: 'asc' } },
+          },
         },
         wordlist: { include: { entries: { orderBy: { order: 'asc' } } } },
         grammarReference: true,
@@ -89,17 +400,52 @@ export class ContentService {
       },
     });
     if (!lesson) throw new NotFoundException('Lesson not found');
-    if (user.role === 'student' && lesson.course.status !== 'published') {
-      throw new ForbiddenException('Course is not published');
-    }
+    await this.assertCourseVisible(user, lesson.course);
     const hideKeys = user.role === 'student';
+    // Serve each wordlist entry's translation in the request locale, falling
+    // back to the authored default (V1: per-locale wordlist translations).
+    const lang = I18nContext.current()?.lang ?? 'en';
+    // The builder (edit=true, authors only) needs the raw base + full per-locale
+    // map. Every *playing* view — student, or teacher in the live room — gets the
+    // one translation resolved to the request locale, so switching the interface
+    // language actually changes the glosses.
+    const forEditor = user.role !== 'student' && edit;
+    const wordlist = lesson.wordlist
+      ? {
+          ...lesson.wordlist,
+          entries: lesson.wordlist.entries.map(({ translations, ...e }) =>
+            forEditor
+              ? { ...e, translations: parseTranslations(translations) }
+              : {
+                  ...e,
+                  translation: resolveWordTranslation({ translation: e.translation, translations }, lang),
+                },
+          ),
+        }
+      : lesson.wordlist;
+    // Vocabulary exercises carry their glosses inside the task payload, so they
+    // need the same per-locale treatment as the wordlist — otherwise a lesson
+    // authored with e.g. Spanish rights shows Spanish to every reader. The
+    // editor keeps the authored payload untouched.
+    const glossary = forEditor ? new Map<string, string>() : glossaryFor(lesson.wordlist, lang);
     return {
       ...lesson,
+      wordlist,
+      // The examples are stored as JSON text like objectives; readers get an
+      // array, so no caller has to know that.
+      grammarReference: lesson.grammarReference
+        ? {
+            ...lesson.grammarReference,
+            examples: lesson.grammarReference.examples
+              ? (JSON.parse(lesson.grammarReference.examples) as string[])
+              : [],
+          }
+        : lesson.grammarReference,
       objectives: lesson.objectives ? JSON.parse(lesson.objectives) : [],
       pages: lesson.pages.map((p) => ({
         ...p,
         tasks: p.tasks.map((t) => {
-          const payload = JSON.parse(t.payload);
+          const payload = localizeTaskPayload(t.type, JSON.parse(t.payload), glossary);
           if (hideKeys) {
             // Students get a sanitized question only: no payload (which can
             // reveal the solution, e.g. word order) and no answer key.
@@ -116,7 +462,9 @@ export class ContentService {
           return {
             ...t,
             payload,
-            answerKey: t.answerKey ? JSON.parse(t.answerKey) : null,
+            answerKey: t.answerKey
+              ? localizeAnswerKey(t.type, JSON.parse(t.answerKey), glossary)
+              : null,
             question: toContentQuestion(t.type, payload),
           };
         }),
@@ -132,18 +480,34 @@ export class ContentService {
   ) {
     const task = await this.prisma.lessonTask.findUnique({
       where: { id: taskId },
-      include: { page: { include: { courseLesson: { include: { course: true } } } } },
+      include: {
+        page: {
+          include: {
+            courseLesson: {
+              include: {
+                course: true,
+                wordlist: { include: { entries: true } },
+              },
+            },
+          },
+        },
+      },
     });
     if (!task) throw new NotFoundException('Task not found');
-    if (user.role === 'student' && task.page.courseLesson.course.status !== 'published') {
-      throw new ForbiddenException('Course is not published');
-    }
+    await this.assertCourseVisible(user, task.page.courseLesson.course);
 
     if (task.gradingMode !== 'AUTO') {
       // INV-5: MANUAL/COMPLETION never produce a number, only completion.
       return { completed: true, gradingMode: task.gradingMode };
     }
-    const answerKey = task.answerKey ? JSON.parse(task.answerKey) : {};
+    // Score against the key in the SAME language the student was shown, or every
+    // vocabulary answer would read as wrong once the glosses are localized.
+    const lang = I18nContext.current()?.lang ?? 'en';
+    const answerKey = localizeAnswerKey(
+      task.type,
+      task.answerKey ? JSON.parse(task.answerKey) : {},
+      glossaryFor(task.page.courseLesson.wordlist, lang),
+    );
     const result = scoreContentTask(task.type, answerKey, state);
     return {
       completed: true,
@@ -165,20 +529,422 @@ export class ContentService {
     return profile;
   }
 
+  // --- shared word bank -----------------------------------------------------
+
+  /**
+   * Browse the shared bank. Open to every signed-in role: tutors curate it,
+   * students read it to fill their own dictionary from it.
+   */
+  async listWordBank(query?: string, topic?: string) {
+    const q = query?.trim();
+    const rows = await this.prisma.wordBankEntry.findMany({
+      where: {
+        ...(topic ? { topic } : {}),
+        ...(q ? { OR: wordSearchTerms(q) } : {}),
+      },
+      orderBy: [{ topic: 'asc' }, { word: 'asc' }],
+      // Only the COUNT of meanings here. With a few thousand words in the bank,
+      // shipping every sense body would dominate the payload for something the
+      // UI keeps collapsed anyway — the list says "3 meanings", and opening the
+      // row fetches them.
+      include: { _count: { select: { senses: true } } },
+      take: 1000,
+    });
+    // Two glosses per row, because the UI shows them at different moments: the
+    // English definition is what a learner should meet first, and the
+    // translation in their own language is revealed on request.
+    const lang = I18nContext.current()?.lang ?? 'en';
+    // `translations` is storage, not API surface: it holds all six locales, and
+    // shipping it would roughly double a thousand-word payload to say again what
+    // `definition` and `translation` already answer for this reader.
+    return rows.map(({ _count, translations, ...r }) => ({
+      ...r,
+      definition: parseTranslations(translations).en ?? null,
+      translation: resolveWordTranslation({ translation: r.translation, translations }, lang),
+      senseCount: _count.senses,
+    }));
+  }
+
+  /**
+   * The meanings of one bank word, glossed in the request locale. Each sense
+   * carries its own translation, so a polysemous word shows the right word per
+   * meaning rather than one guess for all of them.
+   */
+  async wordBankSenses(entryId: string) {
+    const entry = await this.prisma.wordBankEntry.findUnique({
+      where: { id: entryId },
+      include: { senses: { orderBy: { order: 'asc' } } },
+    });
+    if (!entry) throw new NotFoundException('Word not found');
+    const lang = I18nContext.current()?.lang ?? 'en';
+    return entry.senses.map((sn) => ({
+      id: sn.id,
+      partOfSpeech: sn.partOfSpeech,
+      definition: sn.definition,
+      example: sn.example,
+      order: sn.order,
+      translation: parseTranslations(sn.translations)[lang] ?? null,
+    }));
+  }
+
+  /** The distinct topics in the bank, for the filter. */
+  async wordBankTopics(): Promise<string[]> {
+    const rows = await this.prisma.wordBankEntry.findMany({
+      where: { topic: { not: null } },
+      select: { topic: true },
+      distinct: ['topic'],
+      orderBy: { topic: 'asc' },
+    });
+    return rows.map((r) => r.topic!).filter(Boolean);
+  }
+
+  /**
+   * Bulk import, one entry per line: "word = translation" (the translation is
+   * optional, so a bare list of words works too). Upserts on the word, which
+   * makes re-importing a corrected list update it instead of duplicating.
+   */
+  async importWordBank(text: string, topic?: string) {
+    // De-duplicate within the paste itself: upserting the same word twice in one
+    // batch would otherwise have the second silently overwrite the first.
+    const byWord = new Map<string, { word: string; translation?: string }>();
+    for (const line of text.split('\n')) {
+      const at = line.indexOf('=');
+      const word = (at < 0 ? line : line.slice(0, at)).trim();
+      if (!word) continue;
+      const translation = at < 0 ? '' : line.slice(at + 1).trim();
+      byWord.set(word.toLowerCase(), { word, translation: translation || undefined });
+    }
+
+    // Record WHICH language the tutor typed. Without it an imported gloss is a
+    // string of unknown language shown to every reader — which is how the
+    // starter pack's first version ended up reading as Russian in a German UI.
+    const lang = I18nContext.current()?.lang ?? 'en';
+    for (const r of byWord.values()) {
+      const existing = await this.prisma.wordBankEntry.findUnique({
+        where: { word: r.word },
+        select: { translations: true },
+      });
+      // Merge rather than replace: a German tutor adding their gloss to a word
+      // that already has a Russian one should not drop the Russian.
+      const map = { ...parseTranslations(existing?.translations ?? null) };
+      if (r.translation) map[lang] = r.translation;
+      const translations = Object.keys(map).length ? JSON.stringify(map) : null;
+      await this.prisma.wordBankEntry.upsert({
+        where: { word: r.word },
+        update: { translation: r.translation, translations, ...(topic ? { topic } : {}) },
+        create: { word: r.word, translation: r.translation, translations, topic: topic || null },
+      });
+    }
+
+    // Words pasted without a translation, or with one in a single language, are
+    // blank for everyone else. Fill them in on the way — but not while the
+    // request is waiting: a model call per 40 words would turn a paste into a
+    // minute of spinner. Fire and forget, and the bank fills in shortly after.
+    const missing = await this.untranslatedBankEntries(1);
+    if (this.ai.enabled && missing.length > 0) {
+      void this.translateWordBank().catch((e: unknown) => {
+        this.logger.warn(`Auto-translation after import failed: ${(e as Error)?.message}`);
+      });
+    }
+    return { imported: byWord.size, translating: this.ai.enabled && missing.length > 0 };
+  }
+
+  /**
+   * Load the bundled starter pack so the bank is useful before anyone types a
+   * word. Upserts like any import, so running it twice changes nothing and a
+   * translation a tutor corrected by hand survives — the topic is only set on
+   * rows this pack creates.
+   */
+  async seedWordBank() {
+    // The pack is a thousand words. Asking about each one in turn — one lookup,
+    // then one insert, then one insert per meaning — meant ~1400 round trips and
+    // several seconds even when there was nothing at all to do. Everything below
+    // reads once and writes in batches.
+    const pack = STARTER_WORD_BANK.flatMap((g) =>
+      g.words.map((w) => ({ ...w, topic: g.topic })),
+    );
+    const existing = await this.prisma.wordBankEntry.findMany({
+      where: { word: { in: pack.map((w) => w.word) } },
+      select: { id: true, word: true, translation: true, translations: true },
+    });
+    const known = new Map(existing.map((e) => [e.word, e]));
+
+    const fresh = pack.filter((w) => !known.has(w.word));
+    for (const batch of chunk(fresh, 200)) {
+      await this.prisma.wordBankEntry.createMany({
+        data: batch.map((w) => ({
+          word: w.word,
+          // Russian is the stored default so an older client that reads only
+          // `translation` still shows something sensible.
+          translation: w.translations.ru,
+          translations: JSON.stringify(w.translations),
+          topic: w.topic,
+        })),
+      });
+    }
+
+    // The first version of the pack stored one Russian gloss and no map, so
+    // those rows read as Russian in every language — and skipping words already
+    // present meant they could never catch up. Fill the map in, keeping a
+    // translation a tutor corrected by hand as the Russian one rather than
+    // overwriting their work with the bundled wording.
+    const stale = pack.filter((w) => {
+      const row = known.get(w.word);
+      return !!row && !parseTranslations(row.translations).en;
+    });
+    for (const batch of chunk(stale, 100)) {
+      await this.prisma.$transaction(
+        batch.map((w) => {
+          const row = known.get(w.word)!;
+          const filled = { ...w.translations };
+          if (row.translation && row.translation !== w.translations.ru) {
+            filled.ru = row.translation;
+          }
+          return this.prisma.wordBankEntry.update({
+            where: { id: row.id },
+            data: { translations: JSON.stringify(filled) },
+          });
+        }),
+      );
+    }
+
+    // Meanings, for words that have none — whether just created above or seeded
+    // by an installation that predates the sense table. `createMany` gives back
+    // no ids, so the rows are read once here rather than tracked through it.
+    const polysemous = Object.keys(STARTER_WORD_SENSES);
+    const withSenses = await this.prisma.wordBankEntry.findMany({
+      where: { word: { in: polysemous } },
+      select: { id: true, word: true, _count: { select: { senses: true } } },
+    });
+    const senseRows = withSenses
+      .filter((r) => r._count.senses === 0)
+      .flatMap((r) =>
+        (STARTER_WORD_SENSES[r.word.toLowerCase()] ?? []).map((s, i) => ({
+          entryId: r.id,
+          partOfSpeech: s.partOfSpeech,
+          definition: s.definition,
+          example: s.example ?? null,
+          translations: JSON.stringify(s.translations),
+          order: i + 1,
+        })),
+      );
+    for (const batch of chunk(senseRows, 200)) {
+      await this.prisma.wordSense.createMany({ data: batch });
+    }
+
+    return {
+      added: fresh.length,
+      senses: senseRows.length,
+      relanguaged: stale.length,
+      total: await this.prisma.wordBankEntry.count(),
+    };
+  }
+
+  /**
+   * Bank entries still missing a gloss in some UI language. A word typed without
+   * a translation, or imported with one in a single language, shows nothing at
+   * all to readers of the others — which is what "take up" with a blank line
+   * under it looks like.
+   */
+  private async untranslatedBankEntries(take: number) {
+    // `translations` is JSON text, so completeness cannot be asked of the
+    // database. Read the candidates — rows with no map, plus the rest — and let
+    // the check happen here.
+    const rows = await this.prisma.wordBankEntry.findMany({
+      orderBy: { word: 'asc' },
+      select: { id: true, word: true, translation: true, translations: true, example: true },
+    });
+    const locales = ContentService.TRANSLATE_LOCALES;
+    return rows
+      .filter((r) => {
+        const map = parseTranslations(r.translations);
+        return locales.some((l) => !map[l]?.trim());
+      })
+      .slice(0, take);
+  }
+
+  /** How many bank words are still missing a language, for the UI to offer. */
+  async countUntranslatedWordBank() {
+    return { missing: (await this.untranslatedBankEntries(100000)).length };
+  }
+
+  /**
+   * Fill the missing glosses with the AI, in the same shape the lesson wordlist
+   * already uses. Batched: one request per 40 words keeps each reply small
+   * enough to come back as valid JSON, and a failed batch costs only itself.
+   *
+   * Existing glosses are never overwritten — a tutor's own wording for the
+   * language they typed it in outranks anything generated.
+   */
+  async translateWordBank(limit = 200) {
+    // Same signal the wordlist translator gives, so the controller maps it to
+    // 503 rather than inventing a second way to say "no model configured".
+    if (!this.ai.enabled) throw new AiUnavailableError();
+    const pending = await this.untranslatedBankEntries(limit);
+    if (pending.length === 0) return { translated: 0, remaining: 0, failed: 0 };
+
+    const locales = ContentService.TRANSLATE_LOCALES;
+    const system =
+      'You translate vocabulary glosses for an English-learning app. For each ' +
+      'English word or phrase, give a SHORT translation of its meaning (1–3 words, ' +
+      'never a sentence) in every requested language. For "en" give a SHORT ' +
+      'definition of the word rather than the word itself. Use the provided ' +
+      'meaning/example to pick the right sense. Return ONLY minified JSON of the ' +
+      'form {"items":[{"t":{"en":"…","ru":"…","de":"…","fr":"…","nl":"…","ar":"…"}}]} ' +
+      'with exactly one item per input word, in the same order.';
+
+    let translated = 0;
+    let failed = 0;
+    for (const batch of chunk(pending, 40)) {
+      let items: { t?: Record<string, string> }[] = [];
+      try {
+        const out = await this.ai.json<{ items?: { t?: Record<string, string> }[] }>(
+          system,
+          JSON.stringify({
+            targetLanguages: locales,
+            words: batch.map((e) => ({
+              word: e.word,
+              meaning: parseTranslations(e.translations).en ?? e.translation ?? undefined,
+              example: e.example ?? undefined,
+            })),
+          }),
+        );
+        items = out.items ?? [];
+      } catch (e) {
+        // One bad batch must not lose the batches that worked. The caller sees
+        // what is left and can run it again.
+        this.logger.warn(`Word-bank translation batch failed: ${(e as Error)?.message}`);
+        failed += batch.length;
+        continue;
+      }
+
+      const writes = batch.flatMap((entry, i) => {
+        const raw = items[i]?.t ?? {};
+        const map = { ...parseTranslations(entry.translations) };
+        let changed = false;
+        for (const loc of locales) {
+          const v = raw[loc];
+          if (!map[loc]?.trim() && typeof v === 'string' && v.trim()) {
+            map[loc] = v.trim();
+            changed = true;
+          }
+        }
+        if (!changed) return [];
+        translated++;
+        return [
+          this.prisma.wordBankEntry.update({
+            where: { id: entry.id },
+            data: {
+              translations: JSON.stringify(map),
+              // Keep the legacy single column pointing at something real.
+              translation: entry.translation ?? map.ru ?? null,
+            },
+          }),
+        ];
+      });
+      if (writes.length) await this.prisma.$transaction(writes);
+    }
+
+    const remaining = (await this.untranslatedBankEntries(100000)).length;
+    return { translated, remaining, failed };
+  }
+
+  async deleteWordBankEntry(id: string) {
+    await this.prisma.wordBankEntry.delete({ where: { id } }).catch(() => undefined);
+    return { deleted: true };
+  }
+
+  /**
+   * Look a word up in the free Dictionary API (dictionaryapi.dev): no key, no
+   * quota, no cost. It is English-only — definitions, an example and the
+   * phonetic spelling — so it enriches an entry rather than translating it.
+   * Never throws: a lookup failure returns empty and the tutor types their own.
+   */
+  async lookupWord(word: string) {
+    const term = word.trim();
+    if (!term) return { word: term, definition: null, example: null, phonetic: null, senses: [] };
+    try {
+      const res = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(term)}`,
+      );
+      if (!res.ok) return { word: term, definition: null, example: null, phonetic: null, senses: [] };
+      const body = (await res.json()) as {
+        phonetic?: string;
+        meanings?: {
+          partOfSpeech?: string;
+          definitions?: { definition?: string; example?: string }[];
+        }[];
+      }[];
+      const first = body?.[0];
+      // Every meaning, not just the first: the point of the picker is that the
+      // tutor chooses which senses of a polysemous word belong in the bank.
+      const senses: LookupSense[] = [];
+      for (const entry of body ?? []) {
+        for (const m of entry.meanings ?? []) {
+          for (const d of m.definitions ?? []) {
+            if (!d.definition) continue;
+            senses.push({
+              partOfSpeech: m.partOfSpeech ?? null,
+              definition: d.definition,
+              example: d.example ?? null,
+            });
+            if (senses.length >= 12) break;
+          }
+          if (senses.length >= 12) break;
+        }
+        if (senses.length >= 12) break;
+      }
+      return {
+        word: term,
+        definition: senses[0]?.definition ?? null,
+        example: senses[0]?.example ?? null,
+        phonetic: first?.phonetic ?? null,
+        senses,
+      };
+    } catch {
+      return { word: term, definition: null, example: null, phonetic: null, senses: [] };
+    }
+  }
+
+  /**
+   * Student: copy a bank entry into their own dictionary. With a senseId the
+   * gloss and the recorded sense come from that meaning, so a polysemous word is
+   * unambiguous in their list; without one it falls back to the word's default.
+   */
+  async addFromWordBank(user: AuthenticatedUser, entryId: string, senseId?: string) {
+    const entry = await this.prisma.wordBankEntry.findUnique({
+      where: { id: entryId },
+      include: { senses: { orderBy: { order: 'asc' } } },
+    });
+    if (!entry) throw new NotFoundException('Word not found');
+    const lang = I18nContext.current()?.lang ?? 'en';
+    const sense = senseId ? entry.senses.find((sn) => sn.id === senseId) : undefined;
+    if (senseId && !sense) throw new NotFoundException('Sense not found');
+    return this.addDictionaryEntry(user, {
+      word: entry.word,
+      translation:
+        (sense ? parseTranslations(sense.translations)[lang] : null) ??
+        resolveWordTranslation(entry, lang) ??
+        undefined,
+      senseId: sense?.id,
+    });
+  }
+
   async addDictionaryEntry(
     user: AuthenticatedUser,
-    dto: { word: string; translation?: string; sourceLessonId?: string },
+    dto: { word: string; translation?: string; sourceLessonId?: string; senseId?: string },
   ) {
     const student = await this.studentProfileForUser(user.id);
     return this.prisma.dictionaryEntry.upsert({
       where: {
         studentProfileId_word: { studentProfileId: student.id, word: dto.word },
       },
-      update: { translation: dto.translation },
+      update: { translation: dto.translation, ...(dto.senseId ? { senseId: dto.senseId } : {}) },
       create: {
         studentProfileId: student.id,
         word: dto.word,
         translation: dto.translation,
+        senseId: dto.senseId,
         sourceLessonId: dto.sourceLessonId,
       },
     });
@@ -186,10 +952,126 @@ export class ContentService {
 
   async listDictionary(user: AuthenticatedUser) {
     const student = await this.studentProfileForUser(user.id);
-    return this.prisma.dictionaryEntry.findMany({
+    const entries = await this.prisma.dictionaryEntry.findMany({
       where: { studentProfileId: student.id },
       orderBy: { createdAt: 'desc' },
     });
+    const now = new Date();
+    // Enrich with spaced-repetition scheduling for the trainer (Phase 6).
+    return entries.map((e) => ({
+      ...e,
+      due: isDue(e.repetitions, e.lastReviewedAt, now),
+      nextReviewAt: nextReviewAt(e.repetitions, e.lastReviewedAt),
+    }));
+  }
+
+  /** Trainer review: promote on remember, reset the streak on a miss. */
+  async reviewDictionaryEntry(
+    user: AuthenticatedUser,
+    entryId: string,
+    remembered: boolean,
+  ) {
+    const student = await this.studentProfileForUser(user.id);
+    const entry = await this.prisma.dictionaryEntry.findUnique({ where: { id: entryId } });
+    if (!entry || entry.studentProfileId !== student.id) {
+      throw new NotFoundException('Dictionary entry not found');
+    }
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { id: entryId },
+      data: {
+        repetitions: applyReview(entry.repetitions, remembered),
+        lastReviewedAt: new Date(),
+      },
+    });
+    return {
+      ...updated,
+      due: isDue(updated.repetitions, updated.lastReviewedAt),
+      nextReviewAt: nextReviewAt(updated.repetitions, updated.lastReviewedAt),
+    };
+  }
+
+  /**
+   * Both progress counters + goal forecast for the cabinet (INV-3), grouped by
+   * the courses the student has been assigned lessons in. A lesson counts as
+   * completed when the student has a finished (status=done) assignment for it;
+   * its grade comes from that assignment's LessonResult.
+   */
+  async studentProgress(user: AuthenticatedUser) {
+    const student = await this.studentProfileForUser(user.id);
+    const assignments = await this.prisma.contentAssignment.findMany({
+      where: { studentProfileId: student.id, courseLessonId: { not: null } },
+      include: { result: true },
+    });
+
+    // Best (highest overall) finished assignment per course lesson.
+    const doneByLesson = new Map<string, number | null>();
+    for (const a of assignments) {
+      if (a.status !== 'done' || !a.courseLessonId) continue;
+      const overall = a.result?.overall ?? null;
+      const prev = doneByLesson.get(a.courseLessonId);
+      if (prev === undefined || (overall ?? -1) > (prev ?? -1)) {
+        doneByLesson.set(a.courseLessonId, overall);
+      }
+    }
+
+    // Which (course, level) pairs the student is working in.
+    const lessonIds = Array.from(
+      new Set(assignments.map((a) => a.courseLessonId).filter((x): x is string => !!x)),
+    );
+    const assignedLessons = await this.prisma.courseLesson.findMany({
+      where: { id: { in: lessonIds } },
+      include: { course: { select: { id: true, title: true } } },
+    });
+    const pairs = new Map<string, { courseId: string; title: string; level: string }>();
+    for (const l of assignedLessons) {
+      pairs.set(`${l.courseId}:${l.level}`, {
+        courseId: l.courseId,
+        title: l.course.title,
+        level: l.level,
+      });
+    }
+
+    const courses: {
+      courseId: string;
+      title: string;
+      level: string;
+      courseCompletion: number;
+      goalProgress: number | null;
+      forecast: ReturnType<typeof computeGoalForecast>;
+      lessonsRequired: number;
+      lessonsDone: number;
+    }[] = [];
+    const allScored: LessonProgressInput[] = [];
+    for (const { courseId, title, level } of pairs.values()) {
+      const lessons = await this.prisma.courseLesson.findMany({
+        where: { courseId, level },
+        select: { id: true, optional: true },
+      });
+      const inputs: LessonProgressInput[] = lessons.map((l) => ({
+        optional: l.optional,
+        completed: doneByLesson.has(l.id),
+        overall: doneByLesson.get(l.id) ?? null,
+      }));
+      allScored.push(...inputs);
+      courses.push({
+        courseId,
+        title,
+        level,
+        courseCompletion: computeCourseCompletion(inputs),
+        goalProgress: computeGoalProgress(inputs),
+        forecast: computeGoalForecast(inputs),
+        lessonsRequired: inputs.filter((i) => !i.optional).length,
+        lessonsDone: inputs.filter((i) => i.completed).length,
+      });
+    }
+
+    return {
+      courses,
+      overall: {
+        goalProgress: computeGoalProgress(allScored),
+        forecast: computeGoalForecast(allScored),
+      },
+    };
   }
 
   // --- authoring (tutor/admin) ----------------------------------------------
@@ -198,21 +1080,151 @@ export class ContentService {
     return this.prisma.category.create({ data: { title: dto.title, order: dto.order ?? 0 } });
   }
 
-  createCourse(user: AuthenticatedUser, dto: CreateCourseDto) {
+  async createCourse(user: AuthenticatedUser, dto: CreateCourseDto) {
+    // Append to the end of its category's manual order (ФТ-К104).
+    const order = await this.prisma.course.count({ where: { categoryId: dto.categoryId } });
     return this.prisma.course.create({
       data: {
         categoryId: dto.categoryId,
         title: dto.title,
+        description: dto.description ?? null,
+        coverUrl: dto.coverUrl ?? null,
+        order,
         selfStudy: dto.selfStudy ?? false,
         isNew: dto.isNew ?? false,
+        visibility: dto.visibility ?? 'public',
         ownerUserId: user.id,
       },
     });
   }
 
+  // --- individual-course access (visibility = "private") --------------------
+
+  /** Students a private course is shared with (course owner / admin only). */
+  async listCourseAccess(user: AuthenticatedUser, courseId: string) {
+    await this.assertCourseEditable(user, courseId);
+    const rows = await this.prisma.courseAccess.findMany({
+      where: { courseId },
+      include: {
+        studentProfile: {
+          include: { user: { select: { firstName: true, lastName: true, email: true } } },
+        },
+      },
+    });
+    return rows.map((r) => ({
+      studentProfileId: r.studentProfileId,
+      name: `${r.studentProfile.user.firstName} ${r.studentProfile.user.lastName}`.trim(),
+      email: r.studentProfile.user.email,
+    }));
+  }
+
+  /**
+   * Replace the whole access list in one call, so the editor can just send the
+   * checked students. Unknown ids are ignored rather than failing the batch.
+   */
+  async setCourseAccess(
+    user: AuthenticatedUser,
+    courseId: string,
+    studentProfileIds: string[],
+  ) {
+    await this.assertCourseEditable(user, courseId);
+    const valid = await this.prisma.studentProfile.findMany({
+      where: { id: { in: studentProfileIds } },
+      select: { id: true },
+    });
+    await this.prisma.$transaction([
+      this.prisma.courseAccess.deleteMany({ where: { courseId } }),
+      ...valid.map((s) =>
+        this.prisma.courseAccess.create({
+          data: { courseId, studentProfileId: s.id },
+        }),
+      ),
+    ]);
+    return { granted: valid.length };
+  }
+
+  async reorderCategories(_user: AuthenticatedUser, ids: string[]) {
+    await this.prisma.$transaction(
+      ids.map((id, i) => this.prisma.category.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ids.length };
+  }
+
+  async reorderCourses(_user: AuthenticatedUser, categoryId: string, ids: string[]) {
+    // Only touch courses that really belong to this category.
+    const courses = await this.prisma.course.findMany({
+      where: { id: { in: ids }, categoryId },
+      select: { id: true },
+    });
+    const valid = new Set(courses.map((c) => c.id));
+    const ordered = ids.filter((id) => valid.has(id));
+    await this.prisma.$transaction(
+      ordered.map((id, i) => this.prisma.course.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ordered.length };
+  }
+
+  // --- editor tree reorder (sections/units/pages/tasks) ---------------------
+  // Lessons keep their level-wide endpoint (reorderLesson / INV-1); these order
+  // a set of siblings by the position of their id in the submitted list.
+
+  async reorderSections(user: AuthenticatedUser, courseId: string, ids: string[]) {
+    await this.assertCourseEditable(user, courseId);
+    const rows = await this.prisma.section.findMany({ where: { id: { in: ids }, courseId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.section.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderUnits(user: AuthenticatedUser, sectionId: string, ids: string[]) {
+    const section = await this.prisma.section.findUnique({ where: { id: sectionId } });
+    if (!section) throw new NotFoundException('Section not found');
+    await this.assertCourseEditable(user, section.courseId);
+    const rows = await this.prisma.unit.findMany({ where: { id: { in: ids }, sectionId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.unit.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderPages(user: AuthenticatedUser, courseLessonId: string, ids: string[]) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: courseLessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+    const rows = await this.prisma.lessonPage.findMany({ where: { id: { in: ids }, courseLessonId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.lessonPage.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  async reorderTasks(user: AuthenticatedUser, pageId: string, ids: string[]) {
+    await this.assertPageEditable(user, pageId);
+    const rows = await this.prisma.lessonTask.findMany({ where: { id: { in: ids }, pageId }, select: { id: true } });
+    return this.applyOrder(rows.map((r) => r.id), ids, (id, order) =>
+      this.prisma.lessonTask.update({ where: { id }, data: { order } }),
+    );
+  }
+
+  private async applyOrder(
+    valid: string[],
+    ids: string[],
+    update: (id: string, order: number) => Prisma.PrismaPromise<unknown>,
+  ) {
+    const allowed = new Set(valid);
+    const ordered = ids.filter((id) => allowed.has(id));
+    await this.prisma.$transaction(ordered.map((id, i) => update(id, i)));
+    return { reordered: ordered.length };
+  }
+
   async updateCourse(user: AuthenticatedUser, id: string, dto: UpdateCourseDto) {
     await this.assertCourseEditable(user, id);
     return this.prisma.course.update({ where: { id }, data: { ...dto } });
+  }
+
+  /** Delete a course and its whole tree (sections → units → lessons cascade). */
+  async deleteCourse(user: AuthenticatedUser, id: string) {
+    await this.assertCourseEditable(user, id);
+    await this.prisma.course.delete({ where: { id } });
+    return { deleted: true };
   }
 
   async createSection(user: AuthenticatedUser, dto: CreateSectionDto) {
@@ -229,6 +1241,117 @@ export class ContentService {
     return this.prisma.unit.create({
       data: { sectionId: dto.sectionId, title: dto.title, order: dto.order ?? 0 },
     });
+  }
+
+  /**
+   * Renumber a level's lessons to a dense 1..n (createLesson starts at 1).
+   * Lesson order is level-wide and unique (INV-1, @@unique([courseId, level,
+   * order])), so removing a whole unit or section leaves holes that the ±1
+   * shifts in createLesson/reorderLesson would then misread. Safe against the
+   * unique index: rows are walked in ascending order and only ever move down,
+   * so the slot being written to has already been vacated.
+   */
+  private async repackLessonOrder(
+    db: Prisma.TransactionClient,
+    courseId: string,
+    level: string,
+  ) {
+    const rows = await db.courseLesson.findMany({
+      where: { courseId, level },
+      orderBy: { order: 'asc' },
+      select: { id: true, order: true },
+    });
+    for (const [i, row] of rows.entries()) {
+      if (row.order !== i + 1) {
+        await db.courseLesson.update({ where: { id: row.id }, data: { order: i + 1 } });
+      }
+    }
+  }
+
+  /**
+   * Rebuild the answer keys the AI generator used to omit.
+   *
+   * Generated sentence_ordering / word_matching / gap_fill / categorization
+   * tasks were stored with no answerKey, so scoreContentTask had nothing to
+   * compare against: every attempt scored 0/10 and no solution could be shown.
+   * The generator now emits them, but content made before that is still
+   * unanswerable — and the key is fully recoverable from the payload, because
+   * that is exactly how the manual builder derives it:
+   *   sentence_ordering  words are stored in the correct order
+   *   word_matching      each pair carries its own left/right
+   *   gap_fill           answers are the [bracketed] spans of the text
+   *   categorization     each item carries its category
+   *
+   * Only tasks with a missing/empty key are touched, so this is safe to re-run
+   * and never overwrites a key an author set by hand.
+   */
+  async backfillAnswerKeys(user: AuthenticatedUser) {
+    if (user.role !== 'admin') throw new ForbiddenException('Admins only');
+    const types = ['sentence_ordering', 'word_matching', 'gap_fill', 'categorization'];
+    const tasks = await this.prisma.lessonTask.findMany({
+      where: { type: { in: types }, gradingMode: 'AUTO' },
+      select: { id: true, type: true, payload: true, answerKey: true },
+    });
+
+    let repaired = 0;
+    let unrecoverable = 0;
+    for (const t of tasks) {
+      const existing = t.answerKey ? (JSON.parse(t.answerKey) as Record<string, unknown>) : null;
+      if (existing && Object.keys(existing).length > 0) continue;
+
+      const key = rebuildAnswerKey(t.type, JSON.parse(t.payload) as Record<string, unknown>);
+      if (!key) {
+        unrecoverable++;
+        continue;
+      }
+      await this.prisma.lessonTask.update({
+        where: { id: t.id },
+        data: { answerKey: JSON.stringify(key) },
+      });
+      repaired++;
+    }
+    return { scanned: tasks.length, repaired, unrecoverable };
+  }
+
+  async renameSection(user: AuthenticatedUser, id: string, title: string) {
+    const section = await this.prisma.section.findUnique({ where: { id } });
+    if (!section) throw new NotFoundException('Section not found');
+    await this.assertCourseEditable(user, section.courseId);
+    return this.prisma.section.update({ where: { id }, data: { title } });
+  }
+
+  async renameUnit(user: AuthenticatedUser, id: string, title: string) {
+    const unit = await this.prisma.unit.findUnique({ where: { id }, include: { section: true } });
+    if (!unit) throw new NotFoundException('Unit not found');
+    await this.assertCourseEditable(user, unit.section.courseId);
+    return this.prisma.unit.update({ where: { id }, data: { title } });
+  }
+
+  /** Delete a unit with its lessons (DB cascade), then close the order gaps. */
+  async deleteUnit(user: AuthenticatedUser, id: string) {
+    const unit = await this.prisma.unit.findUnique({
+      where: { id },
+      include: { section: true },
+    });
+    if (!unit) throw new NotFoundException('Unit not found');
+    await this.assertCourseEditable(user, unit.section.courseId);
+    await this.prisma.$transaction(async (db) => {
+      await db.unit.delete({ where: { id } });
+      await this.repackLessonOrder(db, unit.section.courseId, unit.section.level);
+    });
+    return { deleted: true };
+  }
+
+  /** Delete a section with its units and lessons, then close the order gaps. */
+  async deleteSection(user: AuthenticatedUser, id: string) {
+    const section = await this.prisma.section.findUnique({ where: { id } });
+    if (!section) throw new NotFoundException('Section not found');
+    await this.assertCourseEditable(user, section.courseId);
+    await this.prisma.$transaction(async (db) => {
+      await db.section.delete({ where: { id } });
+      await this.repackLessonOrder(db, section.courseId, section.level);
+    });
+    return { deleted: true };
   }
 
   /**
@@ -361,6 +1484,15 @@ export class ContentService {
       update: {},
       create: { courseLessonId: lessonId },
     });
+    // Keep any AI-filled per-locale translations for words that stay in the list,
+    // so editing one entry doesn't wipe the rest (V2).
+    const previous = await this.prisma.wordlistEntry.findMany({
+      where: { wordlistId: wl.id },
+      select: { word: true, translations: true },
+    });
+    const keepByWord = new Map(
+      previous.filter((p) => p.translations).map((p) => [p.word, p.translations as string]),
+    );
     await this.prisma.wordlistEntry.deleteMany({ where: { wordlistId: wl.id } });
     if (entries.length) {
       await this.prisma.wordlistEntry.createMany({
@@ -368,6 +1500,7 @@ export class ContentService {
           wordlistId: wl.id,
           word: e.word,
           translation: e.translation,
+          translations: keepByWord.get(e.word) ?? null,
           example: e.example,
           order: i,
         })),
@@ -379,19 +1512,119 @@ export class ContentService {
     });
   }
 
-  /** Create or update the lesson grammar reference (Meaning / Form). */
-  async setGrammarReference(
+  /**
+   * AI translate step (V2): fill each wordlist entry's per-locale translations
+   * so the lesson can serve the word's meaning in the viewer's language. Throws
+   * AiUnavailableError when no API key is configured (handled by the controller).
+   */
+  async translateWordlist(user: AuthenticatedUser, lessonId: string) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+
+    const wl = await this.prisma.wordlist.findUnique({
+      where: { courseLessonId: lessonId },
+      include: { entries: { orderBy: { order: 'asc' } } },
+    });
+    if (!wl || wl.entries.length === 0) {
+      throw new BadRequestException('No wordlist to translate');
+    }
+
+    const locales = ContentService.TRANSLATE_LOCALES;
+    const system =
+      'You translate vocabulary glosses for an English-learning app. For each ' +
+      'English word or phrase, give a SHORT translation of its meaning (1–3 words, ' +
+      'never a sentence) in every requested language, using the provided meaning/' +
+      'example to pick the right sense. Return ONLY minified JSON of the form ' +
+      '{"items":[{"t":{"en":"…","ru":"…","de":"…","fr":"…","nl":"…","ar":"…"}}]} ' +
+      'with exactly one item per input word, in the same order.';
+    const userMsg = JSON.stringify({
+      targetLanguages: locales,
+      words: wl.entries.map((e) => ({
+        word: e.word,
+        meaning: e.translation ?? undefined,
+        example: e.example ?? undefined,
+      })),
+    });
+
+    const out = await this.ai.json<{ items?: { t?: Record<string, string> }[] }>(system, userMsg);
+    const items = out.items ?? [];
+
+    await this.prisma.$transaction(
+      wl.entries.map((e, i) => {
+        const raw = items[i]?.t ?? {};
+        const clean: Record<string, string> = {};
+        for (const loc of locales) {
+          const v = raw[loc];
+          if (typeof v === 'string' && v.trim()) clean[loc] = v.trim();
+        }
+        return this.prisma.wordlistEntry.update({
+          where: { id: e.id },
+          data: { translations: Object.keys(clean).length ? JSON.stringify(clean) : null },
+        });
+      }),
+    );
+
+    return { translated: wl.entries.length, locales };
+  }
+
+  /** Manually set per-locale wordlist translations, matched by word (V3). */
+  async setWordlistTranslations(
     user: AuthenticatedUser,
     lessonId: string,
-    dto: { title: string; meaning: string; form: string },
+    entries: { word: string; translations: Record<string, string> }[],
   ) {
     const lesson = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
     if (!lesson) throw new NotFoundException('Lesson not found');
     await this.assertCourseEditable(user, lesson.courseId);
+    const wl = await this.prisma.wordlist.findUnique({
+      where: { courseLessonId: lessonId },
+      include: { entries: true },
+    });
+    if (!wl) throw new BadRequestException('No wordlist');
+
+    const byWord = new Map(entries.map((e) => [e.word, e.translations]));
+    const locales = ContentService.TRANSLATE_LOCALES;
+    await this.prisma.$transaction(
+      wl.entries
+        .filter((e) => byWord.has(e.word))
+        .map((e) => {
+          const map = byWord.get(e.word) ?? {};
+          const clean: Record<string, string> = {};
+          for (const loc of locales) {
+            const v = map[loc];
+            if (typeof v === 'string' && v.trim()) clean[loc] = v.trim();
+          }
+          return this.prisma.wordlistEntry.update({
+            where: { id: e.id },
+            data: { translations: Object.keys(clean).length ? JSON.stringify(clean) : null },
+          });
+        }),
+    );
+    return { updated: true };
+  }
+
+  /** Create or update the lesson grammar reference (Meaning / Form). */
+  async setGrammarReference(
+    user: AuthenticatedUser,
+    lessonId: string,
+    dto: { title: string; meaning: string; form: string; examples?: string[] },
+  ) {
+    const lesson = await this.prisma.courseLesson.findUnique({ where: { id: lessonId } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+    await this.assertCourseEditable(user, lesson.courseId);
+    // Blank lines are what a textarea produces, not what an author meant.
+    const examples = (dto.examples ?? []).map((e) => e.trim()).filter(Boolean);
+    const data = {
+      title: dto.title,
+      meaning: dto.meaning,
+      form: dto.form,
+      examples: examples.length ? JSON.stringify(examples) : null,
+    };
     return this.prisma.grammarReference.upsert({
       where: { courseLessonId: lessonId },
-      update: dto,
-      create: { courseLessonId: lessonId, ...dto },
+      update: data,
+      create: { courseLessonId: lessonId, ...data },
     });
   }
 
@@ -405,6 +1638,7 @@ export class ContentService {
       data: {
         courseLessonId: dto.courseLessonId,
         type: dto.type,
+        title: dto.title ?? null,
         order: dto.order ?? 0,
         includedInHomework: dto.includedInHomework ?? false,
         mediaUrl: dto.mediaUrl,
@@ -413,8 +1647,78 @@ export class ContentService {
     });
   }
 
+  async updatePage(user: AuthenticatedUser, id: string, dto: UpdatePageDto) {
+    await this.assertPageEditable(user, id);
+    return this.prisma.lessonPage.update({ where: { id }, data: { ...dto } });
+  }
+
+  // --- page media (§7): image/video/audio attachments -----------------------
+
+  private async assertPageEditable(user: AuthenticatedUser, pageId: string) {
+    const page = await this.prisma.lessonPage.findUnique({
+      where: { id: pageId },
+      include: { courseLesson: true },
+    });
+    if (!page) throw new NotFoundException('Page not found');
+    await this.assertCourseEditable(user, page.courseLesson.courseId);
+    return page;
+  }
+
+  private async assertMediaEditable(user: AuthenticatedUser, mediaId: string) {
+    const media = await this.prisma.pageMedia.findUnique({
+      where: { id: mediaId },
+      include: { page: { include: { courseLesson: true } } },
+    });
+    if (!media) throw new NotFoundException('Media not found');
+    await this.assertCourseEditable(user, media.page.courseLesson.courseId);
+    return media;
+  }
+
+  async addPageMedia(user: AuthenticatedUser, pageId: string, dto: CreatePageMediaDto) {
+    await this.assertPageEditable(user, pageId);
+    const order = await this.prisma.pageMedia.count({ where: { pageId } });
+    return this.prisma.pageMedia.create({
+      data: {
+        pageId,
+        kind: dto.kind,
+        url: dto.url,
+        caption: dto.caption ?? null,
+        transcript: dto.transcript ?? null,
+        order,
+      },
+    });
+  }
+
+  async updatePageMedia(user: AuthenticatedUser, id: string, dto: UpdatePageMediaDto) {
+    await this.assertMediaEditable(user, id);
+    return this.prisma.pageMedia.update({ where: { id }, data: { ...dto } });
+  }
+
+  async deletePageMedia(user: AuthenticatedUser, id: string) {
+    await this.assertMediaEditable(user, id);
+    await this.prisma.pageMedia.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  async reorderPageMedia(user: AuthenticatedUser, pageId: string, ids: string[]) {
+    await this.assertPageEditable(user, pageId);
+    const media = await this.prisma.pageMedia.findMany({
+      where: { id: { in: ids }, pageId },
+      select: { id: true },
+    });
+    const valid = new Set(media.map((m) => m.id));
+    const ordered = ids.filter((id) => valid.has(id));
+    await this.prisma.$transaction(
+      ordered.map((id, i) => this.prisma.pageMedia.update({ where: { id }, data: { order: i } })),
+    );
+    return { reordered: ordered.length };
+  }
+
   private validateTaskPayload(type: string, payload: Record<string, unknown>, answerKey?: Record<string, unknown>) {
-    const fail = (m: string) => {
+    // Annotated on the variable, not the arrow: that is what makes TypeScript
+    // treat a fail() call as terminating, so the true_false branch below can
+    // read answerKey again after asserting it is present.
+    const fail: (m: string) => never = (m) => {
       throw new BadRequestException(`Invalid task: ${m}`);
     };
     if (type === 'sentence_ordering' && !Array.isArray(payload.words)) fail('words[] required');
@@ -422,6 +1726,14 @@ export class ContentService {
     if (type === 'gap_fill' && typeof payload.text !== 'string') fail('text required');
     if (type === 'categorization' && (!Array.isArray(payload.categories) || !Array.isArray(payload.items)))
       fail('categories[] and items[] required');
+    if (type === 'true_false') {
+      if (!Array.isArray(payload.statements) || payload.statements.length === 0)
+        fail('statements[] required');
+      if (!answerKey || !Array.isArray(answerKey.values))
+        fail('answerKey.values[] required');
+      if ((answerKey.values as unknown[]).length !== (payload.statements as unknown[]).length)
+        fail('answerKey.values[] must match statements[]');
+    }
     if (type === 'multiple_choice') {
       if (!Array.isArray(payload.options) || typeof payload.question !== 'string') fail('question + options[] required');
       if (!answerKey || typeof answerKey.correct !== 'string') fail('answerKey.correct required');

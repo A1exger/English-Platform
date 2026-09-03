@@ -38,10 +38,20 @@ export class LessonsService {
     const room = this.livekit.roomNameForLesson(lesson.id);
     // Parents (if added later) would join subscribe-only; tutors/students publish.
     const canPublish = user.role !== 'parent';
+    // Label the video tile with the participant's display name (falls back to
+    // email) so tutors/students see each other by name, not raw address.
+    const profile = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { firstName: true, lastName: true, email: true },
+    });
+    const name =
+      [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim() ||
+      profile?.email ||
+      user.email;
     const token = this.livekit.createToken({
       room,
       identity: user.id,
-      name: user.email,
+      name,
       canPublish,
     });
     return { roomName: room, url: this.livekit.url, token };
@@ -84,6 +94,7 @@ export class LessonsService {
         priceCents: dto.priceCents ?? 0,
         currency: dto.currency ?? 'EUR',
         meetingUrl: dto.meetingUrl,
+        materialLessonId: dto.materialLessonId || null,
         ...(dto.studentProfileIds && dto.studentProfileIds.length > 0
           ? {
               participants: {
@@ -175,6 +186,9 @@ export class LessonsService {
         ...(dto.endsAt !== undefined ? { endsAt } : {}),
         ...(dto.status !== undefined ? { status: dto.status } : {}),
         ...(dto.meetingUrl !== undefined ? { meetingUrl: dto.meetingUrl } : {}),
+        ...(dto.materialLessonId !== undefined
+          ? { materialLessonId: dto.materialLessonId || null }
+          : {}),
       },
       include: LESSON_INCLUDE,
     });

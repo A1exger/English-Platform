@@ -26,6 +26,14 @@ export class AnalyticsService {
     const tutor = isAdmin ? null : await this.tutorProfileForUser(user.id);
     const scope = tutor ? { tutorProfileId: tutor.id } : {};
     const attendanceScope = tutor ? { lesson: { tutorProfileId: tutor.id } } : {};
+    const homeworkScope = tutor ? { tutorProfileId: tutor.id } : {};
+
+    // Current calendar week [Monday 00:00 .. next Monday) for the "this week" stat.
+    const weekStart = new Date(now);
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
 
     const [
       completedLessons,
@@ -33,6 +41,8 @@ export class AnalyticsService {
       activeStudents,
       attendance,
       trialLessons,
+      lessonsThisWeek,
+      homeworks,
     ] = await Promise.all([
       this.prisma.lesson.findMany({
         where: { ...scope, status: 'completed' },
@@ -54,9 +64,31 @@ export class AnalyticsService {
         where: { ...scope, type: 'trial' },
         select: { participants: { select: { studentProfileId: true } } },
       }),
+      // Teaching hours booked this week (excludes cancelled / no-show).
+      this.prisma.lesson.findMany({
+        where: {
+          ...scope,
+          status: { in: ['scheduled', 'completed'] },
+          startsAt: { gte: weekStart, lt: weekEnd },
+        },
+        select: { startsAt: true, endsAt: true },
+      }),
+      this.prisma.homework.findMany({
+        where: homeworkScope,
+        select: { status: true },
+      }),
     ]);
 
     const revenueCents = completedLessons.reduce((s, l) => s + l.priceCents, 0);
+    const weekMs = lessonsThisWeek.reduce(
+      (s, l) => s + (l.endsAt.getTime() - l.startsAt.getTime()),
+      0,
+    );
+    const hoursThisWeek = Math.round((weekMs / 3_600_000) * 10) / 10;
+    const gradedHw = homeworks.filter((h) => h.status === 'graded').length;
+    const assignmentsGradedPct = homeworks.length
+      ? Math.round((gradedHw / homeworks.length) * 100)
+      : null;
     const present = attendance.filter((a) => a.status === 'present').length;
     const attendanceRate = attendance.length
       ? Math.round((present / attendance.length) * 100)
@@ -84,6 +116,8 @@ export class AnalyticsService {
       lessonsCompleted: completedLessons.length,
       lessonsUpcoming: upcomingLessons,
       activeStudents,
+      hoursThisWeek,
+      assignmentsGradedPct,
       attendanceRate,
       trialConversionRate,
     };

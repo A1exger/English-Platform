@@ -4,11 +4,24 @@
     "reminder": "تذكير: درس اللغة الإنجليزية \"{title}\" يبدأ الساعة {time}."
   },
   "notification": {
-    "homework_assigned": "واجب جديد: \"{title}\".",
-    "lesson_booked": "تم حجز الدرس: \"{title}\".",
-    "lesson_reminder": "تذكير: \"{title}\" يبدأ الساعة {time}."
+    "subject": "English Spark Studio",
+    "homework_assigned": "مرحبًا! أسند إليك معلّمك واجبًا جديدًا: \"{title}\". يمكنك فتحه وحلّه في قسم «الواجبات المنزلية».",
+    "homework_feedback": "مرحبًا! راجع معلّمك عملك \"{title}\" وترك لك ملاحظات. يمكنك قراءتها في قسم «الواجبات المنزلية».",
+    "homework_submitted": "سلّم {student} الواجب \"{title}\". وهو بانتظارك في قسم «الواجبات».",
+    "lesson_booked": "مرحبًا! تمت إضافة الدرس \"{title}\" إلى جدولك. يمكنك الاطلاع على التفاصيل في قسم «الجدول».",
+    "lesson_reminder": "تذكير: يبدأ درسك \"{title}\" الساعة {time}. يمكنك الانضمام من قسم «الجدول».",
+    "transfer_pending": "أبلغ {student} عن دفعة وينتظر تأكيدك. يمكنك تأكيدها في قسم «الفواتير».",
+    "payment_confirmed": "مرحبًا! تم تأكيد دفعتك وأُضيفت الدروس إلى رصيدك. يمكنك التحقق منه في قسم «الدفع».",
+    "subject_homework_assigned": "واجب جديد لك",
+    "subject_homework_feedback": "ملاحظات على واجبك",
+    "subject_homework_submitted": "سلّم أحد الطلاب واجبًا",
+    "subject_lesson_booked": "تم حجز درسك",
+    "subject_lesson_reminder": "سيبدأ درسك قريبًا",
+    "subject_transfer_pending": "دفعة بانتظار تأكيدك",
+    "subject_payment_confirmed": "تم تأكيد الدفع"
   },
   "auth": {
-    "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+    "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "reset_email": "إعادة تعيين كلمة مرور English Spark Studio: {link}\n\nالرابط صالح لمدة ساعة. إذا لم تطلب ذلك، تجاهل هذه الرسالة."
   }
 }
