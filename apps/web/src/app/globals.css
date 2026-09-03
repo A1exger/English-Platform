@@ -51,12 +51,17 @@
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-ar: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
 
-  /* radius — near-square throughout */
+  /* radius — near-square for surfaces (cards, panels, tables) */
   --r-sm: 1px;
   --r-md: 2px;
   --r-lg: 4px;
   --r-xl: 6px;
   --r-pill: 999px;
+  /* …and rounded for things you click and type into. Controls read as controls
+     when their corners differ from the panels they sit on, and one token keeps
+     a button and the field above it agreeing — which is what you notice in a
+     sign-in form, where they sit directly on top of each other. */
+  --r-control: 8px;
 
   /* elevation */
   --sh-xs: none;
@@ -177,7 +182,7 @@ input,
 select,
 textarea {
   padding: 10px 14px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 1px solid var(--line-strong);
   background: var(--card);
   color: var(--ink);
@@ -203,7 +208,7 @@ input:disabled {
 
 button {
   padding: 10px 18px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: none;
   background: var(--indigo);
   color: #fff;
@@ -536,7 +541,7 @@ textarea {
   align-items: center;
   padding: 9px 12px;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   background: var(--card);
   cursor: pointer;
   font-size: 14px;
@@ -1098,7 +1103,7 @@ textarea {
   min-height: 42px;
   padding: 8px;
   border: 1px dashed var(--line-strong);
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   background: var(--cloud);
 }
 .ex-hint {
@@ -2232,7 +2237,7 @@ button.link-button:focus-visible {
 .cta-primary {
   background: var(--indigo);
   color: #fff;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   padding: 10px 18px;
   font-family: var(--font-display);
   font-weight: 600;
@@ -2422,7 +2427,7 @@ button.link-button:focus-visible {
   position: relative;
   background: none;
   border: 1px solid var(--line);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   color: var(--slate);
   padding: 6px 8px;
   line-height: 0;
@@ -2730,6 +2735,8 @@ button.link-button:focus-visible {
   border-block-end: 1px solid var(--line);
   flex-wrap: wrap;
 }
+/* Square on purpose: these are underline tabs, not buttons — the marker is the
+   2px edge below, and a rounded box around it would read as a second control. */
 .tabs button {
   background: transparent;
   border: none;
@@ -3259,7 +3266,7 @@ button.link-button:focus-visible {
   list-style: none;
   cursor: pointer;
   padding: 6px 10px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--ink);
@@ -3320,7 +3327,7 @@ button.link-button:focus-visible {
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 1px solid var(--line);
   color: var(--ink);
   text-decoration: none;
@@ -3645,9 +3652,11 @@ button.link-button:focus-visible {
 .segmented {
   display: inline-flex;
   border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   overflow: hidden;
 }
+/* The halves stay square and the wrapper's `overflow: hidden` clips the two
+   outer corners — that is what makes the pair read as one control. */
 .segmented button {
   background: transparent;
   color: var(--slate);
@@ -4091,7 +4100,7 @@ button.link-button:focus-visible {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   background: var(--indigo);
   color: #fff;
   font-family: var(--font-display);
@@ -4187,7 +4196,7 @@ button.link-button:focus-visible {
   list-style: none;
   cursor: pointer;
   padding: 6px 12px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   color: var(--slate);
   border: 1px solid var(--line-strong);
   background: var(--card);
@@ -4276,7 +4285,7 @@ button.link-button:focus-visible {
   padding: 0;
   inline-size: 26px;
   block-size: 26px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   font-size: 16px;
   line-height: 1;
   display: inline-flex;
@@ -5027,7 +5036,7 @@ input[type='radio']:focus-visible {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   border: 1px solid var(--line-strong);
   background: var(--card);
   color: var(--ink);
@@ -5098,7 +5107,7 @@ input[type='radio']:focus-visible {
   min-block-size: 40px;
   padding: 4px 8px;
   border: 1px dashed var(--line-strong);
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   display: flex;
   align-items: center;
 }
@@ -5160,7 +5169,7 @@ input[type='radio']:focus-visible {
   gap: 8px;
   padding: 8px 12px;
   border: 1px solid var(--line-strong);
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   cursor: pointer;
 }
 .task-mcq-opt.active { border-color: var(--indigo); background: var(--indigo-50); }
