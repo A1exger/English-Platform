@@ -461,6 +461,7 @@
     "gap_fill": "Пропуски",
     "categorization": "Категоризация",
     "multiple_choice": "Выбор ответа",
+    "true_false": "Верно или неверно",
     "distractors": "Дистракторы (необязательно)",
     "distractorsHint": "Лишние слова для банка, через запятую.",
     "mcqQuestion": "Вопрос",

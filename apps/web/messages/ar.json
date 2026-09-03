@@ -461,6 +461,7 @@
     "gap_fill": "ملء الفراغات",
     "categorization": "التصنيف",
     "multiple_choice": "اختيار من متعدد",
+    "true_false": "صواب أم خطأ",
     "distractors": "مشتتات (اختياري)",
     "distractorsHint": "كلمات إضافية للبنك، مفصولة بفواصل.",
     "mcqQuestion": "السؤال",

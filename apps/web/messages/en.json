@@ -461,6 +461,7 @@
     "gap_fill": "Gap fill",
     "categorization": "Categorization",
     "multiple_choice": "Multiple choice",
+    "true_false": "True or false",
     "distractors": "Distractors (optional)",
     "distractorsHint": "Comma-separated extra words for the bank.",
     "mcqQuestion": "Question",

@@ -461,6 +461,7 @@
     "gap_fill": "Textes à trous",
     "categorization": "Catégorisation",
     "multiple_choice": "Choix multiple",
+    "true_false": "Vrai ou faux",
     "distractors": "Distracteurs (facultatif)",
     "distractorsHint": "Mots supplémentaires pour la banque, séparés par des virgules.",
     "mcqQuestion": "Question",

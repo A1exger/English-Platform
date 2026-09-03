@@ -461,6 +461,7 @@
     "gap_fill": "Invuloefening",
     "categorization": "Categoriseren",
     "multiple_choice": "Meerkeuze",
+    "true_false": "Waar of niet waar",
     "distractors": "Afleiders (optioneel)",
     "distractorsHint": "Extra woorden voor de bak, gescheiden door komma's.",
     "mcqQuestion": "Vraag",

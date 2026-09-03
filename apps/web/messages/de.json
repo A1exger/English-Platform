@@ -461,6 +461,7 @@
     "gap_fill": "Lückentext",
     "categorization": "Kategorisierung",
     "multiple_choice": "Multiple Choice",
+    "true_false": "Richtig oder falsch",
     "distractors": "Ablenker (optional)",
     "distractorsHint": "Zusätzliche Wörter für den Pool, durch Kommas getrennt.",
     "mcqQuestion": "Frage",
