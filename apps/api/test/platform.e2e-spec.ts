@@ -144,8 +144,8 @@ describe('Materials + Notifications + Analytics (e2e)', () => {
       .set('Authorization', `Bearer ${admin.accessToken}`)
       .expect(201);
     const texts = res.body.map((n: { text: string }) => n.text).join(' | ');
-    expect(texts).toContain('Nouveau devoir'); // fr homework_assigned
-    expect(texts).toContain('Cours réservé'); // fr lesson_booked
+    expect(texts).toContain('vous a attribué un nouveau devoir'); // fr homework_assigned
+    expect(texts).toContain('a été ajouté à votre planning'); // fr lesson_booked
 
     const after = await api()
       .get('/api/v1/notifications')

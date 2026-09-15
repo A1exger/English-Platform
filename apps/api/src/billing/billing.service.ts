@@ -13,6 +13,7 @@ import { CreateTransferDto } from './dto/create-transfer.dto';
 import { SubmitReferenceDto } from './dto/submit-reference.dto';
 import { CheckoutProvider, OFFLINE_PROVIDERS } from '../common/constants/enums';
 import { PaymentProviderRegistry } from './providers/payment-provider.registry';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface LessonForCharge {
   id: string;
@@ -27,7 +28,30 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly providers: PaymentProviderRegistry,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
+
+  /** Display name for notification copy, falling back to the address. */
+  private async displayName(userId: string): Promise<string> {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { firstName: true, lastName: true, email: true },
+    });
+    return [u?.firstName, u?.lastName].filter(Boolean).join(' ').trim() || u?.email || '';
+  }
+
+  /** The tutors a student is assigned to (transfer confirmations go to them). */
+  private async tutorUserIdsForStudent(userId: string): Promise<string[]> {
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { userId },
+    });
+    if (!student) return [];
+    const links = await this.prisma.tutorStudent.findMany({
+      where: { studentProfileId: student.id },
+      include: { tutorProfile: { select: { userId: true } } },
+    });
+    return links.map((l) => l.tutorProfile.userId);
+  }
 
   // --- profiles -------------------------------------------------------------
 
@@ -237,14 +261,14 @@ export class BillingService {
     return (
       `Send the amount via ${label} to "${receiver}" (${country}). ` +
       `Use reference "${reference}" and submit the tracking number (MTCN) here. ` +
-      `Your balance is credited once an admin confirms receipt.`
+      `Your balance is credited once your tutor confirms receipt.`
     );
   }
 
   /**
    * Start a manual money transfer. Creates a pending transaction with a unique
-   * reference and returns sending instructions. No funds move until an admin
-   * confirms (see confirmTransfer).
+   * reference and returns sending instructions. No funds move until the tutor
+   * (or an admin) confirms receipt (see confirmTransfer).
    */
   async createTransfer(user: AuthenticatedUser, dto: CreateTransferDto) {
     const student = await this.studentProfileForUser(user.id);
@@ -322,35 +346,80 @@ export class BillingService {
     }
     const metadata = tx.metadata ? JSON.parse(tx.metadata) : {};
     metadata.mtcn = dto.reference;
-    return this.prisma.transaction.update({
+    const updated = await this.prisma.transaction.update({
       where: { id: tx.id },
       data: { metadata: JSON.stringify(metadata) },
     });
+
+    // The tracking number is the signal that the money is on its way — ask the
+    // student's tutor(s) to confirm receipt.
+    const student = await this.displayName(user.id);
+    for (const tutorUserId of await this.tutorUserIdsForStudent(user.id)) {
+      await this.notifications.enqueue({
+        userId: tutorUserId,
+        templateKey: 'transfer_pending',
+        payload: { student },
+      });
+    }
+    return updated;
   }
 
-  /** Admin: list money transfers awaiting confirmation. */
-  listPendingTransfers() {
+  /**
+   * The users a tutor may act on financially: the students assigned to them.
+   * The money is received by the tutor, so they confirm it — but only for their
+   * own students, never anyone else's.
+   */
+  private async studentUserIdsForTutor(userId: string): Promise<string[]> {
+    const tutor = await this.prisma.tutorProfile.findUnique({
+      where: { userId },
+    });
+    if (!tutor) return [];
+    const links = await this.prisma.tutorStudent.findMany({
+      where: { tutorProfileId: tutor.id },
+      include: { studentProfile: { select: { userId: true } } },
+    });
+    return links.map((l) => l.studentProfile.userId);
+  }
+
+  /** Money transfers awaiting confirmation (tutor: their students'; admin: all). */
+  async listPendingTransfers(user: AuthenticatedUser) {
+    const scope =
+      user.role === 'admin'
+        ? {}
+        : { userId: { in: await this.studentUserIdsForTutor(user.id) } };
     return this.prisma.transaction.findMany({
       where: {
         provider: { in: OFFLINE_PROVIDERS as unknown as string[] },
         status: 'pending',
+        ...scope,
       },
       orderBy: { createdAt: 'asc' },
     });
   }
 
-  /** Admin: confirm receipt of a money transfer and credit the student. */
-  async confirmTransfer(transactionId: string) {
+  /** Confirm receipt of a money transfer and credit the student. */
+  async confirmTransfer(user: AuthenticatedUser, transactionId: string) {
     const tx = await this.prisma.transaction.findUnique({
       where: { id: transactionId },
     });
     if (!tx || !OFFLINE_PROVIDERS.includes(tx.provider as never)) {
       throw new NotFoundException('Transfer not found');
     }
+    if (user.role !== 'admin') {
+      const own = await this.studentUserIdsForTutor(user.id);
+      if (!own.includes(tx.userId)) {
+        throw new ForbiddenException('Not your student');
+      }
+    }
     if (tx.status !== 'pending') {
       throw new BadRequestException('Transfer already processed');
     }
     await this.creditTransaction(tx.id);
+    // Close the loop for the student: their balance (or lessons) is now live.
+    await this.notifications.enqueue({
+      userId: tx.userId,
+      templateKey: 'payment_confirmed',
+    });
     return { confirmed: true, transactionId: tx.id };
   }
 

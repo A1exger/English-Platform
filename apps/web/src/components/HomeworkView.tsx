@@ -1,50 +1,110 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/routing';
+import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
-import { ExercisePlayer } from './ExercisePlayer';
+import { Skeleton } from './Skeleton';
+import { Drawer } from './Drawer';
+import { AnswerGauge } from './AnswerGauge';
+import { PageHeader } from './PageHeader';
+import { DataList } from './DataList';
 
 interface Submission {
   id: string;
-  content?: string | null;
   grade?: string | null;
-  feedback?: string | null;
-}
-interface ExerciseRef {
-  id: string;
-  status: string;
-  score: number | null;
 }
 interface Homework {
   id: string;
   title: string;
   status: string;
+  dueAt?: string | null;
   submissions: Submission[];
-  exercises?: ExerciseRef[];
+  // Per-exercise instances; `score` is 0–100 (see task-contract).
+  exercises?: { id: string; status: string; score?: number | null }[];
+}
+// The Skyeng-style content homework (ContentAssignment) handed out from the
+// lesson player / room. Students have no separate "Assignments" tab, so these
+// are folded into the Homework list below (see UnifiedRow).
+interface AssignmentRow {
+  id: string;
+  kind: string;
+  topicTag: string | null;
+  dueAt: string | null;
+  status: string;
+  cardCount: number;
+  submittedCount: number;
+  // `overall` is the 0–10 average of the auto-graded cards.
+  result: { overall: number | null } | null;
 }
 interface StudentRow {
   studentProfileId: string;
   name: string;
 }
 
+/**
+ * One normalized row, whichever backend model it came from. Three states only:
+ * nothing started (new), part-way (progress), finished (done). Progress is
+ * `done/total` tasks and `pct` the average score over the finished ones, so the
+ * ring shows how much is left AND how it is going.
+ */
+interface UnifiedRow {
+  id: string;
+  href: string;
+  title: string;
+  status: 'new' | 'progress' | 'done';
+  dueAt?: string | null;
+  done: number;
+  total: number;
+  pct: number | null;
+}
+
+const TABS = ['all', 'new', 'progress', 'done'] as const;
+type Tab = (typeof TABS)[number];
+
+/** Homework a student has never opened, so it can be badged "new". */
+const SEEN_KEY = 'homework-seen';
+function readSeen(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function stateOf(done: number, total: number, finished: boolean): UnifiedRow['status'] {
+  if (finished || (total > 0 && done >= total)) return 'done';
+  return done > 0 ? 'progress' : 'new';
+}
+
+// Sprint 2.1: the list is only a list. One scannable row per homework — title,
+// due date (mono, marked overdue), status chip, a score ring when graded — that
+// links to the work screen (/homework/[id] or /assignments/[id]). No inline
+// exercise players (they were an N+1 inside a list). Assigning happens in a
+// drawer. Staff = tutor OR admin (the old form was gated on tutor only, so
+// admins saw nothing). Students see BOTH the Homework model and their
+// ContentAssignments merged into one place (they have no Assignments tab).
 export function HomeworkView() {
   const t = useTranslations('homework');
+  const tAssign = useTranslations('assignments');
   const tApp = useTranslations('app');
   const locale = useLocale();
+  const format = useFormatter();
   const router = useRouter();
 
   const [me, setMe] = useState<Me | null>(null);
   const [items, setItems] = useState<Homework[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentRow[]>([]);
+  // Set when the course-homework list could not be loaded (see load()).
+  const [assignError, setAssignError] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<Tab>('all');
+  const [seen, setSeen] = useState<Set<string>>(new Set());
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({ studentProfileId: '', title: '', due: '' });
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [grades, setGrades] = useState<Record<string, { grade: string; feedback: string }>>({});
-  const [openAnswers, setOpenAnswers] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -55,10 +115,21 @@ export function HomeworkView() {
     try {
       const profile = await fetchMe(token, locale);
       setMe(profile);
-      const hw = await apiFetch<Homework[]>('/homework', { token, locale });
-      setItems(hw);
-      if (profile.role === 'tutor') {
-        setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }));
+      setItems(await apiFetch<Homework[]>('/homework', { token, locale }));
+      if (profile.role === 'student') {
+        // Fold in the lesson-player homework so it isn't invisible to them.
+        // Deliberately NOT swallowed: this used to fall back to an empty list on
+        // any error, so a failing request and "you have no homework" looked
+        // identical — the one failure mode nobody could diagnose from the UI.
+        try {
+          setAssignments(await apiFetch<AssignmentRow[]>('/assignments', { token, locale }));
+          setAssignError(null);
+        } catch (e) {
+          setAssignments([]);
+          setAssignError(e instanceof ApiError ? `${e.status}` : 'network');
+        }
+      } else if (profile.role === 'tutor' || profile.role === 'admin') {
+        setStudents(await apiFetch<StudentRow[]>('/crm/students', { token, locale }).catch(() => []));
       }
       setState('ready');
     } catch (e) {
@@ -73,6 +144,23 @@ export function HomeworkView() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // localStorage, not the server: "new" is a per-person reading cue, and this
+  // keeps opening a homework from needing a write round-trip.
+  useEffect(() => setSeen(readSeen()), []);
+
+  function markSeen(id: string) {
+    setSeen((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev).add(id);
+      try {
+        localStorage.setItem(SEEN_KEY, JSON.stringify([...next]));
+      } catch {
+        /* storage unavailable — the badge just shows again next time */
+      }
+      return next;
+    });
+  }
 
   async function assign(e: FormEvent) {
     e.preventDefault();
@@ -91,61 +179,133 @@ export function HomeworkView() {
         }
       });
       setForm({ studentProfileId: '', title: '', due: '' });
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
     }
   }
 
-  async function submit(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/homework/${id}/submit`, {
-        method: 'POST',
-        token,
-        locale,
-        body: { content: answers[id] || '' }
-      });
-      await load();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function grade(id: string) {
-    const token = tokenStore.get();
-    const g = grades[id];
-    if (!token || !g?.grade) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/homework/${id}/grade`, {
-        method: 'POST',
-        token,
-        locale,
-        body: { grade: g.grade, feedback: g.feedback || undefined }
-      });
-      await load();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
-  const isTutor = me?.role === 'tutor';
-  const statusLabel = (s: string) =>
-    s === 'assigned' ? t('statusAssigned') : s === 'submitted' ? t('statusSubmitted') : t('statusGraded');
+  const isStaff = me?.role === 'tutor' || me?.role === 'admin';
+  const statusLabel = (s: UnifiedRow['status']) =>
+    s === 'new' ? t('statusNew') : s === 'progress' ? t('statusProgress') : t('statusDone');
+
+  const homeworkRows: UnifiedRow[] = items.map((h) => {
+    const exercises = h.exercises ?? [];
+    const finishedEx = exercises.filter((e) => e.status !== 'open');
+    const scores = finishedEx
+      .map((e) => e.score)
+      .filter((s): s is number => typeof s === 'number');
+    const grade = h.submissions[0]?.grade;
+    const hasGrade = grade != null && grade !== '';
+    // Exercise homework is measured by its instances; a written one by its
+    // single submission (graded 0–10 by the tutor).
+    const total = exercises.length || 1;
+    const done = exercises.length ? finishedEx.length : hasGrade || h.status !== 'assigned' ? 1 : 0;
+    const pct = exercises.length
+      ? scores.length
+        ? scores.reduce((s, v) => s + v, 0) / scores.length
+        : null
+      : hasGrade
+        ? Number(grade) * 10
+        : null;
+    return {
+      id: `hw-${h.id}`,
+      href: `/homework/${h.id}`,
+      title: h.title,
+      status: stateOf(done, total, h.status === 'graded'),
+      dueAt: h.dueAt,
+      done,
+      total,
+      pct
+    };
+  });
+  const assignmentRows: UnifiedRow[] = assignments.map((a) => ({
+    id: `as-${a.id}`,
+    href: `/assignments/${a.id}`,
+    title: a.topicTag || tAssign(a.kind === 'homework' ? 'homework' : 'lesson'),
+    status: stateOf(a.submittedCount, a.cardCount, a.status === 'done'),
+    dueAt: a.dueAt,
+    done: a.submittedCount,
+    total: a.cardCount,
+    // `overall` is already the average across the auto-graded cards.
+    pct: a.result?.overall != null ? a.result.overall * 10 : null
+  }));
+  const rows = [...homeworkRows, ...assignmentRows];
+
+  const filtered = rows.filter((h) => tab === 'all' || h.status === tab);
+  const now = Date.now();
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader
+        title={t('title')}
+        primary={isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined}
+      />
 
-      {isTutor && (
-        <form className="card form-grid" onSubmit={assign}>
-          <strong>{t('assign')}</strong>
+      {assignError && <p className="error">{t('courseHomeworkFailed', { code: assignError })}</p>}
+
+      <div className="tabs tabs-inline" role="tablist">
+        {TABS.map((tb) => (
+          <button
+            key={tb}
+            type="button"
+            role="tab"
+            aria-selected={tab === tb}
+            className={tab === tb ? 'active' : ''}
+            onClick={() => setTab(tb)}
+          >
+            {t(`tab_${tb}`)}
+          </button>
+        ))}
+      </div>
+
+      <DataList
+        items={filtered}
+        getKey={(h) => h.id}
+        listClassName="assign-list"
+        searchText={(h) => h.title}
+        sorts={[
+          { key: 'due', label: t('due'), value: (h) => h.dueAt ?? '9999-12-31' },
+          { key: 'title', label: t('titleField'), value: (h) => h.title.toLowerCase() }
+        ]}
+        empty={{
+          title: t('empty'),
+          action: isStaff ? { label: t('assign'), onClick: () => setDrawerOpen(true) } : undefined
+        }}
+        renderRow={(h) => {
+          const overdue = !!h.dueAt && h.status !== 'done' && new Date(h.dueAt).getTime() < now;
+          // "New" until it is opened once — the badge is the student's cue that
+          // something arrived, so it goes away on the first visit.
+          const isNew = h.status === 'new' && !seen.has(h.id);
+          return (
+            <Link className="assign-row" href={h.href} onClick={() => markSeen(h.id)}>
+              <div className="assign-row-main">
+                <strong>
+                  {h.title}
+                  {isNew && <span className="badge-new-gold">{t('badgeNew')}</span>}
+                </strong>
+                {h.dueAt && (
+                  <span className={`mono-num${overdue ? ' overdue' : ' muted'}`}>
+                    {t('due')} {format.dateTime(new Date(h.dueAt), { dateStyle: 'medium' })}
+                    {overdue ? ` · ${t('overdue')}` : ''}
+                  </span>
+                )}
+              </div>
+              <div className="assign-row-side">
+                <AnswerGauge done={h.done} total={h.total} pct={h.pct} label={t('title')} />
+                <span className={`chip hw-${h.status}`}>{statusLabel(h.status)}</span>
+              </div>
+            </Link>
+          );
+        }}
+      />
+
+      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('assign')}>
+        <form className="form-grid" onSubmit={assign}>
           <label>
             {t('student')}
             <select
@@ -173,94 +333,7 @@ export function HomeworkView() {
             {busy ? t('creating') : t('create')}
           </button>
         </form>
-      )}
-
-      <div className="card">
-        {items.length === 0 ? (
-          <p className="note">{t('empty')}</p>
-        ) : (
-          <ul className="lesson-list">
-            {items.map((h) => {
-              const sub = h.submissions[0];
-              return (
-                <li key={h.id} className="stacked">
-                  <div className="row-between">
-                    <span>{h.title}</span>
-                    <span className="muted">{statusLabel(h.status)}</span>
-                  </div>
-                  {sub?.grade && (
-                    <p className="muted">
-                      {t('grade')}: {sub.grade}
-                      {sub.feedback ? ` — ${sub.feedback}` : ''}
-                    </p>
-                  )}
-                  {h.exercises && h.exercises.length > 0 &&
-                    (isTutor ? (
-                      <>
-                        <div className="row-between">
-                          <span className="muted">
-                            {h.exercises.length} ·{' '}
-                            {h.exercises.map((e) => (e.score == null ? '–' : `${e.score}%`)).join(', ')}
-                          </span>
-                          <button type="button" onClick={() => setOpenAnswers({ ...openAnswers, [h.id]: !openAnswers[h.id] })}>
-                            {t('viewAnswers')}
-                          </button>
-                        </div>
-                        {openAnswers[h.id] && (
-                          <div className="ex-list">
-                            {h.exercises.map((e) => (
-                              <ExercisePlayer key={e.id} instanceId={e.id} reviewOnly />
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="ex-list">
-                        {h.exercises.map((e) => (
-                          <ExercisePlayer key={e.id} instanceId={e.id} />
-                        ))}
-                      </div>
-                    ))}
-                  {!isTutor && h.status === 'assigned' && (!h.exercises || h.exercises.length === 0) && (
-                    <div className="inline-form">
-                      <textarea
-                        placeholder={t('content')}
-                        value={answers[h.id] || ''}
-                        onChange={(e) => setAnswers({ ...answers, [h.id]: e.target.value })}
-                      />
-                      <button type="button" disabled={busy} onClick={() => submit(h.id)}>
-                        {t('submit')}
-                      </button>
-                    </div>
-                  )}
-                  {isTutor && h.status === 'submitted' && (
-                    <div className="inline-form">
-                      {sub?.content && <p className="muted">{sub.content}</p>}
-                      <input
-                        placeholder={t('grade')}
-                        value={grades[h.id]?.grade || ''}
-                        onChange={(e) =>
-                          setGrades({ ...grades, [h.id]: { grade: e.target.value, feedback: grades[h.id]?.feedback || '' } })
-                        }
-                      />
-                      <input
-                        placeholder={t('feedback')}
-                        value={grades[h.id]?.feedback || ''}
-                        onChange={(e) =>
-                          setGrades({ ...grades, [h.id]: { grade: grades[h.id]?.grade || '', feedback: e.target.value } })
-                        }
-                      />
-                      <button type="button" disabled={busy} onClick={() => grade(h.id)}>
-                        {t('gradeAction')}
-                      </button>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+      </Drawer>
     </div>
   );
 }

@@ -94,3 +94,21 @@ export function computeGoalProgress(lessons: LessonProgressInput[]): number | nu
   if (scored.length === 0) return null;
   return round1(mean(scored.map((l) => l.overall as number)));
 }
+
+export interface GoalForecast {
+  /** Projected final course grade: the current mean of completed lessons. */
+  projected: number | null;
+  /** Required lessons still to do (optional lessons never block completion). */
+  remaining: number;
+}
+
+/**
+ * Goal forecast for the cabinet (INV-3): projects the current goal average as
+ * the expected final grade and reports how many required lessons remain.
+ */
+export function computeGoalForecast(lessons: LessonProgressInput[]): GoalForecast {
+  return {
+    projected: computeGoalProgress(lessons),
+    remaining: lessons.filter((l) => !l.optional && !l.completed).length,
+  };
+}

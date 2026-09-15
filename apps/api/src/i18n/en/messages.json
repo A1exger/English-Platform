@@ -4,11 +4,24 @@
     "reminder": "Reminder: your English lesson \"{title}\" starts at {time}."
   },
   "notification": {
-    "homework_assigned": "New homework: \"{title}\".",
-    "lesson_booked": "Lesson booked: \"{title}\".",
-    "lesson_reminder": "Reminder: \"{title}\" starts at {time}."
+    "subject": "English Spark Studio",
+    "homework_assigned": "Hello! Your tutor has assigned you new homework: \"{title}\". You can open and complete it in the Homework section.",
+    "homework_feedback": "Hello! Your tutor has checked your work \"{title}\" and left feedback. You can read it in the Homework section.",
+    "homework_submitted": "{student} has handed in the homework \"{title}\". It is waiting for you in the Assignments section.",
+    "lesson_booked": "Hello! The lesson \"{title}\" has been added to your schedule. You can see the details in the Schedule section.",
+    "lesson_reminder": "A reminder: your lesson \"{title}\" starts at {time}. You can join it from the Schedule section.",
+    "transfer_pending": "{student} has reported a payment and is waiting for your confirmation. You can confirm it in the Billing section.",
+    "payment_confirmed": "Hello! Your payment has been confirmed and the lessons have been added to your balance. You can check it in the Payment section.",
+    "subject_homework_assigned": "New homework for you",
+    "subject_homework_feedback": "Feedback on your homework",
+    "subject_homework_submitted": "A student handed in homework",
+    "subject_lesson_booked": "Your lesson is booked",
+    "subject_lesson_reminder": "Your lesson starts soon",
+    "subject_transfer_pending": "A payment is waiting for your confirmation",
+    "subject_payment_confirmed": "Payment confirmed"
   },
   "auth": {
-    "invalid_credentials": "Invalid email or password."
+    "invalid_credentials": "Invalid email or password.",
+    "reset_email": "Reset your English Spark Studio password: {link}\n\nThe link works for one hour. If you did not ask for this, ignore this email."
   }
 }

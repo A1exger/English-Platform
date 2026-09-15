@@ -230,6 +230,29 @@ describe('English-Platform API (e2e)', () => {
     expect(res.body.status).toBe('present');
   });
 
+  it('PATCH /lessons/:id attaches course material and GET returns it', async () => {
+    const patched = await api()
+      .patch(`/api/v1/lessons/${groupLessonId}`)
+      .set('Authorization', `Bearer ${tutorTokens.accessToken}`)
+      .send({ materialLessonId: 'course-lesson-1' })
+      .expect(200);
+    expect(patched.body.materialLessonId).toBe('course-lesson-1');
+
+    const got = await api()
+      .get(`/api/v1/lessons/${groupLessonId}`)
+      .set('Authorization', `Bearer ${tutorTokens.accessToken}`)
+      .expect(200);
+    expect(got.body.materialLessonId).toBe('course-lesson-1');
+
+    // An empty string detaches the material.
+    const detached = await api()
+      .patch(`/api/v1/lessons/${groupLessonId}`)
+      .set('Authorization', `Bearer ${tutorTokens.accessToken}`)
+      .send({ materialLessonId: '' })
+      .expect(200);
+    expect(detached.body.materialLessonId).toBeNull();
+  });
+
   it('PATCH /lessons/:id as tutor cancels the lesson', async () => {
     const res = await api()
       .patch(`/api/v1/lessons/${groupLessonId}`)

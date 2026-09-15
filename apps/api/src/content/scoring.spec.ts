@@ -1,5 +1,6 @@
 import {
   computeCourseCompletion,
+  computeGoalForecast,
   computeGoalProgress,
   computeLessonResult,
   GradedTask,
@@ -84,5 +85,12 @@ describe('progress counters (INV-3)', () => {
   it('empty inputs are safe', () => {
     expect(computeCourseCompletion([])).toBe(0);
     expect(computeGoalProgress([])).toBeNull();
+  });
+
+  it('goal forecast projects the current average and counts required remaining', () => {
+    const f = computeGoalForecast(lessons);
+    // projected = goalProgress (8.1); required not done = 2 (optional excluded)
+    expect(f.projected).toBe(8.1);
+    expect(f.remaining).toBe(2);
   });
 });
