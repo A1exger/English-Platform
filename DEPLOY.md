@@ -182,9 +182,7 @@ nm.createTransport({
 ```bash
 # 1. Что произошло с последними уведомлениями:
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec postgres \
-  psql -U postgres -d english_platform -c \
-  "select channel, \"templateKey\", status, error, \"createdAt\" \
-   from \"Notification\" order by \"createdAt\" desc limit 10;"
+  sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select channel, \"templateKey\", status, error, \"createdAt\" from \"Notification\" order by \"createdAt\" desc limit 10;"'
 
 # 2. Что сказал почтовый сервер:
 docker compose -f docker-compose.prod.yml --env-file .env.prod logs api | grep -i "Email send failed"
@@ -192,6 +190,10 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod logs api | grep -
 # 3. Работает ли диспетчер вообще (пусто = выключен):
 docker compose -f docker-compose.prod.yml --env-file .env.prod exec api printenv NOTIFY_DISPATCH
 ```
+
+Имя пользователя и базы подставляются **внутри контейнера** из его же
+переменных (`sh -c '…"$POSTGRES_USER"…'`) — так команда работает и при
+значениях по умолчанию (`linguadesk`), и если вы задали свои в `.env.prod`.
 
 `NOTIFY_DISPATCH=off` полностью выключает рассылку — в проде эта переменная
 должна быть **пустой**.
@@ -238,6 +240,49 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --force-rec
 попытка**, а не текущее состояние: она хранится в записи задания и висит, пока не
 появится новая. Кнопка «Скрыть» рядом с ней убирает её, курс и уроки при этом не
 трогаются.
+
+### 8.3. Разовая чистка: упражнения с названием вида `exercises.*`
+
+Название типа упражнения берётся из файлов локалей тем же ключом, что и сам тип
+(`t(type)`), и этот же вызов подставляется как заголовок, если репетитор оставил
+поле пустым. Ключа `exercises.true_false` не было ни в одном из шести языков, и
+упражнение «верно/неверно», созданное без заголовка, сохранялось в базу строкой
+`exercises.true_false` — её видел и ученик. Ключ добавлен, тест держит остальные
+типы, но **старые записи задним числом не переименовываются**.
+
+Посмотреть, есть ли такие (пустой ответ — всё чисто):
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T postgres \
+  sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+select id, type, title, "createdAt"
+  from "Exercise"
+ where title like 'exercises.%'
+ order by "createdAt";
+SQL
+```
+
+Переименовать найденные (`(copy)` у дубликатов сохраняется):
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T postgres \
+  sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+update "Exercise"
+   set title = replace(title, 'exercises.true_false', 'Верно или неверно')
+ where title like 'exercises.true_false%';
+SQL
+```
+
+Ответ `UPDATE 0` означает, что чинить нечего. Если проверка показала другой
+префикс, а не `exercises.true_false`, — это **второй** потерянный ключ, и менять
+его этим запросом не надо: лучше найти отсутствующий ключ в `messages/*.json`.
+
+Выданные домашки править не нужно: `ExerciseInstance` заголовок не хранит, а
+читает из `Exercise`, так что одна правка исправляет и уже выданные задания.
+Перед `update` имеет смысл снять бэкап (см. ниже).
+
+Имя пользователя и базы подставляются внутри контейнера из его же переменных,
+`-T` нужен, чтобы SQL прошёл через stdin.
 
 ---
 
