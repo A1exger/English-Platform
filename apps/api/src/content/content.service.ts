@@ -456,6 +456,9 @@ export class ContentService {
               aspect: t.aspect,
               estimatedMinutes: t.estimatedMinutes,
               order: t.order,
+              // The student branch is a whitelist: a field left out here never
+              // reaches the page, however well it is stored.
+              instruction: t.instruction,
               question: toContentQuestion(t.type, payload),
             };
           }
@@ -1643,6 +1646,7 @@ export class ContentService {
         includedInHomework: dto.includedInHomework ?? false,
         mediaUrl: dto.mediaUrl,
         text: dto.text,
+        sources: dto.sources ?? null,
       },
     });
   }
@@ -1756,6 +1760,7 @@ export class ContentService {
         aspect: dto.aspect,
         estimatedMinutes: dto.estimatedMinutes ?? 5,
         order: dto.order ?? 0,
+        instruction: dto.instruction?.trim() || null,
         payload: JSON.stringify(dto.payload),
         answerKey: dto.answerKey ? JSON.stringify(dto.answerKey) : null,
       },
@@ -1776,6 +1781,7 @@ export class ContentService {
         ...(dto.gradingMode !== undefined ? { gradingMode: dto.gradingMode } : {}),
         ...(dto.aspect !== undefined ? { aspect: dto.aspect } : {}),
         ...(dto.estimatedMinutes !== undefined ? { estimatedMinutes: dto.estimatedMinutes } : {}),
+        ...(dto.instruction !== undefined ? { instruction: dto.instruction.trim() || null } : {}),
         ...(dto.payload !== undefined ? { payload: JSON.stringify(dto.payload) } : {}),
         ...(dto.answerKey !== undefined ? { answerKey: JSON.stringify(dto.answerKey) } : {}),
       },

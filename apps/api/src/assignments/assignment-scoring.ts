@@ -17,6 +17,7 @@ export interface TaskLike {
   gradingMode: string;
   aspect: string;
   estimatedMinutes: number;
+  instruction?: string | null;
   payload: string;
   answerKey: string | null;
 }
@@ -28,6 +29,8 @@ export interface CardSnapshot {
   gradingMode: GradingMode;
   aspect: string;
   estimatedMinutes: number;
+  /** Absent on cards snapshotted before instructions existed. */
+  instruction?: string | null;
   /** Full payload (may reveal the solution): SERVER-ONLY, never sent as-is. */
   payload: Record<string, unknown>;
   answerKey: Record<string, unknown> | null;
@@ -45,6 +48,7 @@ export function snapshotTask(task: TaskLike): CardSnapshot {
     gradingMode: task.gradingMode as GradingMode,
     aspect: task.aspect,
     estimatedMinutes: task.estimatedMinutes,
+    instruction: task.instruction ?? null,
     payload: JSON.parse(task.payload) as Record<string, unknown>,
     answerKey: task.answerKey
       ? (JSON.parse(task.answerKey) as Record<string, unknown>)
@@ -61,6 +65,7 @@ export function cardQuestion(cardId: string, snapshot: CardSnapshot) {
     gradingMode: snapshot.gradingMode,
     aspect: snapshot.aspect,
     estimatedMinutes: snapshot.estimatedMinutes,
+    instruction: snapshot.instruction ?? null,
     question: toContentQuestion(snapshot.type, snapshot.payload),
   };
 }

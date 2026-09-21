@@ -426,6 +426,11 @@ export class CreatePageDto {
   @IsOptional()
   @IsString()
   text?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 500)
+  sources?: string;
 }
 
 export class UpdatePageDto {
@@ -445,6 +450,11 @@ export class UpdatePageDto {
   @IsOptional()
   @IsString()
   text?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 500)
+  sources?: string;
 
   @IsOptional()
   @IsInt()
@@ -474,6 +484,11 @@ export class CreateTaskDto {
   @IsInt()
   order?: number;
 
+  @IsOptional()
+  @IsString()
+  @Length(0, 300)
+  instruction?: string;
+
   @IsObject()
   payload!: Record<string, unknown>;
 
@@ -495,6 +510,11 @@ export class UpdateTaskDto {
   @IsInt()
   @Min(1)
   estimatedMinutes?: number;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 300)
+  instruction?: string;
 
   @IsOptional()
   @IsObject()

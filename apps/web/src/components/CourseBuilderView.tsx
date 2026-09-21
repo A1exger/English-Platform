@@ -809,6 +809,7 @@ interface TaskRow {
   gradingMode: string;
   aspect: string;
   estimatedMinutes: number;
+  instruction?: string | null;
 }
 interface PageRow {
   id: string;
@@ -816,6 +817,7 @@ interface PageRow {
   title?: string | null;
   includedInHomework: boolean;
   text?: string | null;
+  sources?: string | null;
   tasks: TaskRow[];
   media?: PageMediaItem[];
 }
@@ -994,6 +996,13 @@ function LessonEditor({
     await reloadPages();
   }
 
+  async function patchTask(id: string, body: Record<string, unknown>) {
+    const tok = token();
+    if (!tok) return;
+    await apiFetch(`/content/tasks/${id}`, { method: 'PATCH', token: tok, locale, body }).catch(() => undefined);
+    await reloadPages();
+  }
+
   // Insert an inline ![[media:ID]] marker into a page's text at the caret and
   // persist it. The textarea is uncontrolled (defaultValue), so we write through
   // its live value and save (ФТ-К304).
@@ -1068,6 +1077,7 @@ function LessonEditor({
           gradingMode: f.gradingMode,
           aspect: f.aspect,
           estimatedMinutes: Number(f.minutes) || 5,
+          instruction: f.instruction.trim() || undefined,
           payload,
           answerKey
         }
@@ -1210,6 +1220,13 @@ function LessonEditor({
                         onBlur={(e) => e.target.value !== (p.text ?? '') && patchPage(p.id, { text: e.target.value })}
                       />
                     </label>
+                    <label className="ed-field">
+                      {t('pageSources')}
+                      <input
+                        defaultValue={p.sources ?? ''}
+                        onBlur={(e) => e.target.value !== (p.sources ?? '') && patchPage(p.id, { sources: e.target.value })}
+                      />
+                    </label>
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onTaskDragEnd(p.id, e)}>
                       <SortableContext items={p.tasks.map((tk) => tk.id)} strategy={verticalListSortingStrategy}>
                         <div className="lesson-list">
@@ -1221,6 +1238,15 @@ function LessonEditor({
                                   <span className="ed-task-label">
                                     {tEx(taskLabelKey(task.type))}{' '}
                                     <span className="muted">· {task.gradingMode} · {task.aspect} · {task.estimatedMinutes}′</span>
+                                    <input
+                                      className="ed-task-instruction"
+                                      placeholder={t('taskInstruction')}
+                                      defaultValue={task.instruction ?? ''}
+                                      onBlur={(e) =>
+                                        e.target.value !== (task.instruction ?? '') &&
+                                        patchTask(task.id, { instruction: e.target.value })
+                                      }
+                                    />
                                   </span>
                                   <button type="button" className="ghost" disabled={busy} aria-label={t('del')} onClick={() => deleteTask(task.id)}>
                                     <Icon name="close" />
@@ -1286,6 +1312,7 @@ interface TaskFormState {
   gradingMode: string;
   aspect: string;
   minutes: string;
+  instruction: string;
   words: string;
   statements: string;
   pairs: string;
@@ -1311,7 +1338,8 @@ const TASK_EXAMPLES = {
   question: 'He ___ up at 6.',
   options: 'wake, wakes',
   correct: 'wakes',
-  prompt: 'Describe your last holiday.'
+  prompt: 'Describe your last holiday.',
+  instruction: 'Read and match the title and the paragraph'
 } as const;
 
 const defaultTaskForm = (): TaskFormState => ({
@@ -1319,6 +1347,7 @@ const defaultTaskForm = (): TaskFormState => ({
   gradingMode: 'AUTO',
   aspect: 'Grammar',
   minutes: '5',
+  instruction: '',
   words: '',
   statements: '',
   pairs: '',
@@ -1442,6 +1471,17 @@ function TaskForm({
           <input type="number" min={1} value={form.minutes} onChange={(e) => set({ minutes: e.target.value })} />
         </label>
       </div>
+
+      {/* What the student is told to do. Optional: the payload alone is still a
+          valid task, it just arrives on the page without a heading. */}
+      <label className="ed-field">
+        {t('taskInstruction')}
+        <input
+          value={form.instruction}
+          placeholder={TASK_EXAMPLES.instruction}
+          onChange={(e) => set({ instruction: e.target.value })}
+        />
+      </label>
 
       {form.type === 'sentence_ordering' && (
         <label className="ed-field">{tEx('words')}<input value={form.words} placeholder={TASK_EXAMPLES.words} onChange={(e) => set({ words: e.target.value })} /></label>

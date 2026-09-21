@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { CONTENT_LEVELS, LiveLessonApi } from './useLiveLesson';
+import { plainText } from './RichText';
 
 interface TreeLessonRow {
   id: string;
@@ -280,7 +281,10 @@ export function LessonPlanPanel({ live }: { live: LiveLessonApi }) {
                   </span>
                   <span className="muted mono-num">{p.tasks.length}</span>
                 </label>
-                {p.text && <p className="plan-page-text muted">{p.text}</p>}
+                {/* A one-line teaser, so the marks are stripped rather than
+                    rendered — a heading or a bold run inside a preview line
+                    reads as clutter. */}
+                {p.text && <p className="plan-page-text muted">{plainText(p.text)}</p>}
                 {p.tasks.length > 0 && (
                   <ul className="plan-tasks">
                     {p.tasks.map((tk) => (

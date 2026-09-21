@@ -211,6 +211,7 @@ export class GenerationService {
             aspect: t.aspect as Aspect,
             estimatedMinutes: t.estimatedMinutes,
             order: taskOrder++,
+            instruction: t.instruction || undefined,
             payload: t.payload,
             answerKey: t.answerKey,
           });

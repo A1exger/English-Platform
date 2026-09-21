@@ -615,7 +615,9 @@
     "levelEmptyBody": "لا يوجد شيء في هذا المستوى بعد.",
     "aiNeedsDraft": "يعمل التوليد بالذكاء الاصطناعي فقط ما دام المقرر مسودة. ألغِ نشره من قائمة المقررات، وأضف الدرس، ثم انشره مجددًا.",
     "grammarExamples": "أمثلة (مثال في كل سطر)",
-    "grammarExamplesHint": "She will call you tomorrow."
+    "grammarExamplesHint": "She will call you tomorrow.",
+    "taskInstruction": "التعليمات",
+    "pageSources": "المصادر (الإسناد)"
   },
   "learn": {
     "title": "الدرس",
@@ -641,7 +643,8 @@
     "saved": "تم الحفظ",
     "true": "صحيح",
     "false": "خطأ",
-    "examples": "أمثلة"
+    "examples": "أمثلة",
+    "sources": "المصادر"
   },
   "assignments": {
     "title": "الواجبات",

@@ -615,7 +615,9 @@
     "levelEmptyBody": "Op dit niveau is er nog niets.",
     "aiNeedsDraft": "AI-generatie werkt alleen zolang de cursus een concept is. Maak de publicatie ongedaan in de cursuslijst, voeg de les toe en publiceer opnieuw.",
     "grammarExamples": "Voorbeelden (één per regel)",
-    "grammarExamplesHint": "She will call you tomorrow."
+    "grammarExamplesHint": "She will call you tomorrow.",
+    "taskInstruction": "Opdrachttekst",
+    "pageSources": "Bronnen (naamsvermelding)"
   },
   "learn": {
     "title": "Les",
@@ -641,7 +643,8 @@
     "saved": "Opgeslagen",
     "true": "Waar",
     "false": "Onwaar",
-    "examples": "Voorbeelden"
+    "examples": "Voorbeelden",
+    "sources": "Bronnen"
   },
   "assignments": {
     "title": "Opdrachten",

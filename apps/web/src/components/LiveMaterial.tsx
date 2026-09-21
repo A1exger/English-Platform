@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { ContentTaskPlayer } from './ContentTaskPlayer';
 import { PageMediaBlock } from './PageMediaBlock';
+import { RichText } from './RichText';
 import { LiveLessonApi } from './useLiveLesson';
 
 // The current stage's body — the Preparation summary, or the current page's text
@@ -70,8 +71,8 @@ export function StageBody({ live }: { live: LiveLessonApi }) {
   return (
     <div className="learn-page">
       {page.text && (
-        <div className="card">
-          <p>{page.text}</p>
+        <div className="card lesson-article">
+          <RichText text={page.text} />
         </div>
       )}
       {page.media && page.media.length > 0 && <PageMediaBlock media={page.media} />}

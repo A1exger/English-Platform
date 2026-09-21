@@ -574,6 +574,10 @@ model LessonPage {
   // Legacy single media (kept for compatibility); new content uses PageMedia.
   mediaUrl           String?
   text               String?
+  // Credits for the page's text and pictures, shown small under the content.
+  // Free text, because an attribution line is prose ("The image is a derivative
+  // of … on iStock"), not a structured record.
+  sources            String?
   tasks              LessonTask[]
   media              PageMedia[]
 
@@ -610,6 +614,11 @@ model LessonTask {
   aspect           String
   estimatedMinutes Int        @default(5)
   order            Int        @default(0)
+  // What the student is asked to DO — "Read and match the title and the
+  // paragraph". The payload carries the material, never the instruction, so
+  // before this a drag task arrived on the page with no wording at all.
+  // Nullable: tasks authored earlier simply show none.
+  instruction      String?
   // payload / answerKey: JSON strings; answerKey never leaves the server.
   payload          String
   answerKey        String?

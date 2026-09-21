@@ -67,6 +67,8 @@ export interface GenTask {
   gradingMode: string;
   aspect: string;
   estimatedMinutes: number;
+  /** The line telling the student what to do; '' when the model omitted one. */
+  instruction: string;
   payload: Record<string, unknown>;
   answerKey?: Record<string, unknown>;
 }
@@ -107,7 +109,7 @@ function taskFormats(brief: Brief): string {
 - gap_fill: {"type":"gap_fill","aspect":"Grammar","payload":{"text":"I [go] to [school] every day."}}  (answers wrapped in [brackets], 1-12 gaps)
 - categorization: {"type":"categorization","aspect":"Vocabulary","payload":{"categories":["Verbs","Nouns"],"items":[{"text":"run","category":"Verbs"}]}}  (2-6 categories)
 - multiple_choice: {"type":"multiple_choice","aspect":"Reading","payload":{"question":"...","options":["a","b","c"]},"answerKey":{"correct":"a"}}  (correct MUST equal one option)
-Every task also has "gradingMode":"AUTO" and an "aspect" from: ${ASPECTS.join(', ')}.`;
+Every task also has "gradingMode":"AUTO", an "aspect" from: ${ASPECTS.join(', ')}, and an "instruction": the short line telling the student what to DO with it, in English, imperative, no numbering — e.g. "Read and match the title and the paragraph", "Find the words in the text".`;
 }
 
 export function skeletonPrompt(brief: Brief): { system: string; user: string } {
@@ -211,7 +213,10 @@ export function normalizeTask(raw: unknown): GenTask | null {
     type,
     gradingMode,
     aspect,
-    estimatedMinutes: clamp(Math.round(Number(r.estimatedMinutes) || 5), 1, 60)
+    estimatedMinutes: clamp(Math.round(Number(r.estimatedMinutes) || 5), 1, 60),
+    // Clamped to the column's length; a task with no instruction is still valid
+    // and simply renders without a heading.
+    instruction: str(r.instruction).slice(0, 300)
   };
 
   switch (type) {

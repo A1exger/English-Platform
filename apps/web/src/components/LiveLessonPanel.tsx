@@ -7,6 +7,7 @@ import { fetchMe, tokenStore } from '@/lib/auth';
 import { SessionEnvelope, SessionState, useSession } from '@/lib/session';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
 import { ExerciseState } from './ExerciseRenderer';
+import { RichText } from './RichText';
 
 const CONTENT_LEVELS = [
   'Beginner',
@@ -321,8 +322,8 @@ export function LiveLessonPanel({ lessonId }: { lessonId: string }) {
             page && (
               <div className="learn-page">
                 {page.text && (
-                  <div className="card">
-                    <p>{page.text}</p>
+                  <div className="card lesson-article">
+                    <RichText text={page.text} />
                   </div>
                 )}
                 {page.tasks.map((task) =>

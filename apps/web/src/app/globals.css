@@ -1398,6 +1398,71 @@ select.err {
   flex-direction: column;
   gap: 14px;
 }
+
+/* ——— article body (RichText) ———
+   A reading page is something a student READS, at length, so it gets measure
+   and rhythm rather than the app's default line height: ~68 characters a line,
+   and space between paragraphs instead of a single undifferentiated block. */
+.lesson-article {
+  font-size: 16px;
+  line-height: 1.65;
+}
+.lesson-article .rich-p {
+  margin: 0 0 14px;
+  max-inline-size: 68ch;
+}
+.lesson-article .rich-p:last-child {
+  margin-block-end: 0;
+}
+.lesson-article .rich-h3,
+.lesson-article .rich-h4 {
+  font-family: var(--font-serif);
+  margin: 22px 0 10px;
+}
+.lesson-article .rich-h3:first-child,
+.lesson-article .rich-h4:first-child {
+  margin-block-start: 0;
+}
+.lesson-article .rich-h3 {
+  font-size: 21px;
+}
+.lesson-article .rich-h4 {
+  font-size: 17px;
+}
+.lesson-article strong {
+  font-weight: 600;
+}
+
+/* The task's own heading: "1. Read and match the title and the paragraph". */
+.task-instruction {
+  margin: 10px 0 4px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--indigo-700);
+}
+.task-instruction-n {
+  margin-inline-end: 6px;
+  color: var(--indigo);
+}
+
+/* The instruction, edited in place on a task row in the builder. */
+.ed-task-instruction {
+  display: block;
+  inline-size: 100%;
+  margin-block-start: 6px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+
+/* Credits for the page's text and pictures — present, but never competing
+   with the material. */
+.page-sources {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--mist);
+}
 .grammar-table {
   margin-top: 10px;
   border: 1px solid var(--line);

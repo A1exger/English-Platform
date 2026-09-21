@@ -19,6 +19,8 @@ export interface ContentTask {
   gradingMode: string;
   aspect: string;
   estimatedMinutes: number;
+  /** What the student is asked to do. Absent on tasks authored before this. */
+  instruction?: string | null;
   question: Record<string, unknown>;
 }
 
@@ -33,6 +35,7 @@ const DND_TYPES = ['sentence_ordering', 'word_matching', 'gap_fill', 'categoriza
 
 export function ContentTaskPlayer({
   task,
+  index,
   onResult,
   submit,
   initialState,
@@ -42,6 +45,8 @@ export function ContentTaskPlayer({
   spectator = false
 }: {
   task: ContentTask;
+  /** 1-based position on the page, shown in front of the instruction. */
+  index?: number;
   onResult?: (r: {
     taskId: string;
     score?: number;
@@ -162,6 +167,15 @@ export function ContentTaskPlayer({
           {task.estimatedMinutes} {t('min')}
         </span>
       </div>
+
+      {/* The instruction is the task's heading: what to DO with the material
+          below it. Tasks authored without one render exactly as before. */}
+      {task.instruction && (
+        <p className="task-instruction">
+          {index != null && <span className="task-instruction-n mono-num">{index}.</span>}
+          {task.instruction}
+        </p>
+      )}
 
       {DND_TYPES.includes(task.type) && (
         <ExerciseRenderer

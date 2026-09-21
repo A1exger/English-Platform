@@ -7,9 +7,11 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
 import { MediaItem, PageMediaBlock, PageMediaItem } from './PageMediaBlock';
+import { RichText } from './RichText';
 import { AssignmentBuilder } from './AssignmentBuilder';
 import { Skeleton } from './Skeleton';
 import { Stepper } from './Stepper';
+import { ScoreRing } from './ScoreRing';
 import { Icon } from './Icon';
 
 interface PageRow {
@@ -17,6 +19,7 @@ interface PageRow {
   type: string;
   order: number;
   text?: string | null;
+  sources?: string | null;
   mediaUrl?: string | null;
   media?: PageMediaItem[];
   tasks: ContentTask[];
@@ -39,8 +42,10 @@ interface LessonDetail {
 const MEDIA_MARKER = /!\[\[media:([^\]]+)\]\]/g;
 
 // Render page text, expanding inline `![[media:ID]]` markers into the referenced
-// attachment (ФТ-К304). Markerless text renders exactly as one paragraph; any
-// attachment pulled inline is dropped from the trailing media block (no dupes).
+// attachment (ФТ-К304). The text between markers goes through <RichText>, so a
+// reading page arrives as headings and paragraphs rather than one block of
+// prose. Any attachment pulled inline is dropped from the trailing media block
+// (no dupes).
 function PageBody({ text, media }: { text?: string | null; media?: PageMediaItem[] }) {
   const items = media ?? [];
   const byId = new Map(items.map((m) => [m.id, m]));
@@ -53,7 +58,7 @@ function PageBody({ text, media }: { text?: string | null; media?: PageMediaItem
     MEDIA_MARKER.lastIndex = 0;
     while ((match = MEDIA_MARKER.exec(text)) !== null) {
       const before = text.slice(last, match.index);
-      if (before.trim()) nodes.push(<p key={`t${k++}`}>{before}</p>);
+      if (before.trim()) nodes.push(<RichText key={`t${k++}`} text={before} />);
       const m = byId.get(match[1]);
       if (m) {
         used.add(m.id);
@@ -62,11 +67,11 @@ function PageBody({ text, media }: { text?: string | null; media?: PageMediaItem
       last = match.index + match[0].length;
     }
     const rest = text.slice(last);
-    if (rest.trim() || nodes.length === 0) nodes.push(<p key={`t${k++}`}>{rest}</p>);
+    if (rest.trim()) nodes.push(<RichText key={`t${k++}`} text={rest} />);
   }
   return (
     <>
-      {nodes.length > 0 && <div className="card">{nodes}</div>}
+      {nodes.length > 0 && <div className="card lesson-article">{nodes}</div>}
       <PageMediaBlock media={items} exclude={used} />
     </>
   );
@@ -103,6 +108,10 @@ export function LessonPlayerView({
   const [pageIdx, setPageIdx] = useState(0); // 0 = Preparation
   const [added, setAdded] = useState<Record<string, boolean>>({});
   const [showAssign, setShowAssign] = useState(false);
+  // Scores of the AUTO tasks checked in this sitting, keyed by task id. The
+  // lesson itself stores no result (that is what an assignment is for), so the
+  // ring reports what the reader has actually done here and nothing more.
+  const [scores, setScores] = useState<Record<string, number>>({});
 
   const load = useCallback(async () => {
     const token = tokenStore.get();
@@ -145,6 +154,13 @@ export function LessonPlayerView({
 
   const page = pageIdx > 0 ? lesson.pages[pageIdx - 1] : null;
   const allTasks = lesson.pages.flatMap((p) => p.tasks);
+  // The average over this page's checked tasks, on the 0-10 scale the rest of
+  // the app uses. Null until something has been checked, so an untouched page
+  // shows no ring rather than a zero.
+  const pageDone = (page?.tasks ?? []).map((tk) => scores[tk.id]).filter((v) => v !== undefined);
+  const pageScore = pageDone.length
+    ? Math.round((pageDone.reduce((a, b) => a + b, 0) / pageDone.length) * 10) / 10
+    : null;
 
   return (
     <div className="content learn">
@@ -160,6 +176,9 @@ export function LessonPlayerView({
       )}
       <div className="row-between">
         <h2>{lesson.title}</h2>
+        {pageScore !== null && (
+          <ScoreRing value={pageScore * 10} display={String(pageScore)} size={56} label={t('score')} />
+        )}
         {!isStudent && allTasks.length > 0 && (
           <button type="button" onClick={() => setShowAssign((v) => !v)}>
             {tAssign('assignHomework')}
@@ -257,9 +276,24 @@ export function LessonPlayerView({
         page && (
           <div className="learn-page">
             <PageBody text={page.text} media={page.media} />
-            {page.tasks.map((task) => (
-              <ContentTaskPlayer key={task.id} task={task} />
+            {page.tasks.map((task, i) => (
+              <ContentTaskPlayer
+                key={task.id}
+                task={task}
+                index={i + 1}
+                onResult={(r) =>
+                  setScores((prev) =>
+                    r.score === undefined ? prev : { ...prev, [r.taskId]: r.score }
+                  )
+                }
+              />
             ))}
+            {page.sources && (
+              <div className="card">
+                <strong className="muted">{t('sources')}</strong>
+                <p className="page-sources">{page.sources}</p>
+              </div>
+            )}
           </div>
         )
       )}
