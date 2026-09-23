@@ -210,7 +210,10 @@
     "confirm": "Confirm",
     "currency": "Currency",
     "delete": "Delete",
-    "deleted": "Package deleted"
+    "deleted": "Package deleted",
+    "reject": "Reject",
+    "transferRejected": "Transfer rejected",
+    "transferDeleted": "Request deleted"
   },
   "room": {
     "title": "Lesson room",
@@ -761,6 +764,7 @@
     "lesson_booked": "The lesson \"{title}\" has been added to your schedule. You can see the details in the Schedule section.",
     "lesson_reminder": "A reminder: your lesson \"{title}\" is starting soon. You can join it from the Schedule section.",
     "transfer_pending": "{student} has reported a payment and is waiting for your confirmation. You can confirm it in the Billing section.",
-    "payment_confirmed": "Your payment has been confirmed and the lessons have been added to your balance. You can check it in the Payment section."
+    "payment_confirmed": "Your payment has been confirmed and the lessons have been added to your balance. You can check it in the Payment section.",
+    "payment_rejected": "Your tutor could not confirm the transfer you reported, so nothing has been credited. Check the tracking number in the Billing section, or send it again."
   }
 }

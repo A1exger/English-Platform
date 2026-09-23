@@ -210,7 +210,10 @@
     "confirm": "Confirmer",
     "currency": "Devise",
     "delete": "Supprimer",
-    "deleted": "Forfait supprimé"
+    "deleted": "Forfait supprimé",
+    "reject": "Refuser",
+    "transferRejected": "Transfert refusé",
+    "transferDeleted": "Demande supprimée"
   },
   "room": {
     "title": "Salle de cours",
@@ -761,6 +764,7 @@
     "lesson_booked": "Le cours « {title} » a été ajouté à votre planning. Vous en trouverez les détails dans la rubrique « Planning ».",
     "lesson_reminder": "Rappel : votre cours « {title} » commence bientôt. Vous pouvez le rejoindre depuis la rubrique « Planning ».",
     "transfer_pending": "{student} a signalé un paiement et attend votre confirmation. Vous pouvez le confirmer dans la rubrique « Facturation ».",
-    "payment_confirmed": "Votre paiement a été confirmé et les cours ont été ajoutés à votre solde. Vous pouvez le vérifier dans la rubrique « Paiement »."
+    "payment_confirmed": "Votre paiement a été confirmé et les cours ont été ajoutés à votre solde. Vous pouvez le vérifier dans la rubrique « Paiement ».",
+    "payment_rejected": "Votre professeur n'a pas pu confirmer le transfert que vous avez signalé, rien n'a été crédité. Vérifiez le numéro de suivi dans la section « Facturation » ou renvoyez-le."
   }
 }

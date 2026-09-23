@@ -18,7 +18,9 @@
     "subject_lesson_booked": "تم حجز درسك",
     "subject_lesson_reminder": "سيبدأ درسك قريبًا",
     "subject_transfer_pending": "دفعة بانتظار تأكيدك",
-    "subject_payment_confirmed": "تم تأكيد الدفع"
+    "subject_payment_confirmed": "تم تأكيد الدفع",
+    "payment_rejected": "مرحباً! لم يتمكّن معلّمك من تأكيد التحويل الذي أبلغت عنه، لذلك لم يُضَف أي رصيد. تحقّق من رقم التتبّع في قسم «الدفع» أو أرسله مرة أخرى.",
+    "subject_payment_rejected": "لم يتم تأكيد الدفع"
   },
   "auth": {
     "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",

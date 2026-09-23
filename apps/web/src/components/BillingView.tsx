@@ -59,10 +59,11 @@ function money(format: ReturnType<typeof useFormatter>, cents: number, currency:
 export function BillingView() {
   const t = useTranslations('billing');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
-  const { showUndo } = useToast();
+  const { show, showUndo } = useToast();
 
   const [me, setMe] = useState<Me | null>(null);
   const [packages, setPackages] = useState<Pkg[]>([]);
@@ -167,6 +168,31 @@ export function BillingView() {
     } finally {
       setBusy(false);
     }
+  }
+
+  /**
+   * Reject and delete both take the row off the list at once and do the work
+   * after the undo window, the way every other destructive action here does.
+   * Rejecting also emails the student, which is the reason to keep the window:
+   * a mis-click is taken back before they are told anything.
+   */
+  function reviewTransfer(id: string, action: 'reject' | 'delete') {
+    setPending((prev) => prev.filter((x) => x.id !== id));
+    showUndo(action === 'reject' ? t('transferRejected') : t('transferDeleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        const ok = await apiFetch(
+          action === 'reject' ? `/billing/transfer/${id}/reject` : `/billing/transfer/${id}`,
+          { method: action === 'reject' ? 'POST' : 'DELETE', token, locale }
+        )
+          .then(() => true)
+          .catch(() => false);
+        if (!ok) show(tc('saveFailed'));
+        await load();
+      }
+    });
   }
 
   // Optimistic + undoable (project rule: no destructive action without undo).
@@ -374,9 +400,27 @@ export function BillingView() {
                     {p.externalId}
                   </span>
                   <span className="muted">{money(format, p.amountCents, p.currency)}</span>
-                  <button type="button" disabled={busy} onClick={() => confirmTransfer(p.id)}>
-                    {t('confirm')}
-                  </button>
+                  <span className="row-actions">
+                    <button type="button" disabled={busy} onClick={() => confirmTransfer(p.id)}>
+                      {t('confirm')}
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost"
+                      disabled={busy}
+                      onClick={() => reviewTransfer(p.id, 'reject')}
+                    >
+                      {t('reject')}
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost danger"
+                      disabled={busy}
+                      onClick={() => reviewTransfer(p.id, 'delete')}
+                    >
+                      {t('delete')}
+                    </button>
+                  </span>
                 </li>
               ))}
             </ul>

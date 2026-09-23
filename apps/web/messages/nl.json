@@ -210,7 +210,10 @@
     "confirm": "Bevestigen",
     "currency": "Valuta",
     "delete": "Verwijderen",
-    "deleted": "Pakket verwijderd"
+    "deleted": "Pakket verwijderd",
+    "reject": "Afwijzen",
+    "transferRejected": "Overboeking afgewezen",
+    "transferDeleted": "Verzoek verwijderd"
   },
   "room": {
     "title": "Lesruimte",
@@ -761,6 +764,7 @@
     "lesson_booked": "De les \"{title}\" is aan je rooster toegevoegd. De details vind je in het onderdeel \"Rooster\".",
     "lesson_reminder": "Herinnering: je les \"{title}\" begint binnenkort. Je kunt deelnemen vanuit het onderdeel \"Rooster\".",
     "transfer_pending": "{student} heeft een betaling gemeld en wacht op je bevestiging. Je kunt die bevestigen in het onderdeel \"Facturatie\".",
-    "payment_confirmed": "Je betaling is bevestigd en de lessen zijn aan je saldo toegevoegd. Je kunt het controleren in het onderdeel \"Betaling\"."
+    "payment_confirmed": "Je betaling is bevestigd en de lessen zijn aan je saldo toegevoegd. Je kunt het controleren in het onderdeel \"Betaling\".",
+    "payment_rejected": "Je docent kon de door jou gemelde overboeking niet bevestigen, er is niets bijgeschreven. Controleer het trackingnummer bij „Facturering” of stuur het opnieuw."
   }
 }

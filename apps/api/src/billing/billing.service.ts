@@ -399,18 +399,7 @@ export class BillingService {
 
   /** Confirm receipt of a money transfer and credit the student. */
   async confirmTransfer(user: AuthenticatedUser, transactionId: string) {
-    const tx = await this.prisma.transaction.findUnique({
-      where: { id: transactionId },
-    });
-    if (!tx || !OFFLINE_PROVIDERS.includes(tx.provider as never)) {
-      throw new NotFoundException('Transfer not found');
-    }
-    if (user.role !== 'admin') {
-      const own = await this.studentUserIdsForTutor(user.id);
-      if (!own.includes(tx.userId)) {
-        throw new ForbiddenException('Not your student');
-      }
-    }
+    const tx = await this.transferForReview(user, transactionId);
     if (tx.status !== 'pending') {
       throw new BadRequestException('Transfer already processed');
     }
@@ -421,6 +410,63 @@ export class BillingService {
       templateKey: 'payment_confirmed',
     });
     return { confirmed: true, transactionId: tx.id };
+  }
+
+  /**
+   * The money never arrived, or arrived wrong. Marks the transfer failed, which
+   * drops it out of the pending queue, and tells the student — a request that
+   * silently stops being listed is indistinguishable from one still waiting.
+   * Nothing is credited and no ledger entry is written, so a rejection cannot
+   * move a balance.
+   */
+  async rejectTransfer(user: AuthenticatedUser, transactionId: string) {
+    const tx = await this.transferForReview(user, transactionId);
+    if (tx.status !== 'pending') {
+      throw new BadRequestException('Transfer already processed');
+    }
+    await this.prisma.transaction.update({
+      where: { id: tx.id },
+      data: { status: 'failed' },
+    });
+    await this.notifications.enqueue({
+      userId: tx.userId,
+      templateKey: 'payment_rejected',
+    });
+    return { rejected: true, transactionId: tx.id };
+  }
+
+  /**
+   * Remove a transfer request outright — for a duplicate or a test row, where
+   * even a rejected entry is only clutter in the student's history.
+   *
+   * A CONFIRMED transfer is refused: it has been credited, and a LedgerEntry
+   * references it by id (referenceType "transaction"). Deleting the row would
+   * leave the student's balance standing on a reference to nothing.
+   */
+  async deleteTransfer(user: AuthenticatedUser, transactionId: string) {
+    const tx = await this.transferForReview(user, transactionId);
+    if (tx.status === 'succeeded') {
+      throw new BadRequestException(
+        'A confirmed transfer cannot be deleted — the balance it credited refers to it',
+      );
+    }
+    await this.prisma.transaction.delete({ where: { id: tx.id } });
+    return { deleted: true, transactionId: tx.id };
+  }
+
+  /** The transfer, if it exists, is an offline one, and is this tutor's to act on. */
+  private async transferForReview(user: AuthenticatedUser, transactionId: string) {
+    const tx = await this.prisma.transaction.findUnique({ where: { id: transactionId } });
+    if (!tx || !OFFLINE_PROVIDERS.includes(tx.provider as never)) {
+      throw new NotFoundException('Transfer not found');
+    }
+    if (user.role !== 'admin') {
+      const own = await this.studentUserIdsForTutor(user.id);
+      if (!own.includes(tx.userId)) {
+        throw new ForbiddenException('Not your student');
+      }
+    }
+    return tx;
   }
 
   // --- webhooks -------------------------------------------------------------

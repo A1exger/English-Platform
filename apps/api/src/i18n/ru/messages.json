@@ -18,7 +18,9 @@
     "subject_lesson_booked": "Урок забронирован",
     "subject_lesson_reminder": "Скоро начнётся урок",
     "subject_transfer_pending": "Оплата ждёт подтверждения",
-    "subject_payment_confirmed": "Оплата подтверждена"
+    "subject_payment_confirmed": "Оплата подтверждена",
+    "payment_rejected": "Здравствуйте! Преподаватель не смог подтвердить перевод, о котором Вы сообщили, поэтому ничего не зачислено. Проверьте номер перевода в разделе «Оплата» или отправьте его заново.",
+    "subject_payment_rejected": "Оплата не подтверждена"
   },
   "auth": {
     "invalid_credentials": "Неверный email или пароль.",

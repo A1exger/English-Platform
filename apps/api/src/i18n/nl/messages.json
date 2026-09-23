@@ -18,7 +18,9 @@
     "subject_lesson_booked": "Je les is geboekt",
     "subject_lesson_reminder": "Je les begint binnenkort",
     "subject_transfer_pending": "Een betaling wacht op je bevestiging",
-    "subject_payment_confirmed": "Betaling bevestigd"
+    "subject_payment_confirmed": "Betaling bevestigd",
+    "payment_rejected": "Hallo! Je docent kon de door jou gemelde overboeking niet bevestigen, er is niets bijgeschreven. Controleer het trackingnummer bij „Facturering” of stuur het opnieuw.",
+    "subject_payment_rejected": "Betaling niet bevestigd"
   },
   "auth": {
     "invalid_credentials": "Ongeldig e-mailadres of wachtwoord.",

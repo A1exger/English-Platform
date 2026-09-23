@@ -18,7 +18,9 @@
     "subject_lesson_booked": "Your lesson is booked",
     "subject_lesson_reminder": "Your lesson starts soon",
     "subject_transfer_pending": "A payment is waiting for your confirmation",
-    "subject_payment_confirmed": "Payment confirmed"
+    "subject_payment_confirmed": "Payment confirmed",
+    "payment_rejected": "Hello! Your tutor could not confirm the transfer you reported, so nothing has been credited. Check the tracking number in the Billing section, or send it again.",
+    "subject_payment_rejected": "Payment not confirmed"
   },
   "auth": {
     "invalid_credentials": "Invalid email or password.",

@@ -18,7 +18,9 @@
     "subject_lesson_booked": "Votre cours est réservé",
     "subject_lesson_reminder": "Votre cours commence bientôt",
     "subject_transfer_pending": "Un paiement attend votre confirmation",
-    "subject_payment_confirmed": "Paiement confirmé"
+    "subject_payment_confirmed": "Paiement confirmé",
+    "payment_rejected": "Bonjour ! Votre professeur n'a pas pu confirmer le transfert que vous avez signalé, rien n'a été crédité. Vérifiez le numéro de suivi dans la section « Facturation » ou renvoyez-le.",
+    "subject_payment_rejected": "Paiement non confirmé"
   },
   "auth": {
     "invalid_credentials": "E-mail ou mot de passe invalide.",

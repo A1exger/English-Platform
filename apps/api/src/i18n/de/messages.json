@@ -18,7 +18,9 @@
     "subject_lesson_booked": "Deine Stunde ist gebucht",
     "subject_lesson_reminder": "Deine Stunde beginnt bald",
     "subject_transfer_pending": "Eine Zahlung wartet auf deine Bestätigung",
-    "subject_payment_confirmed": "Zahlung bestätigt"
+    "subject_payment_confirmed": "Zahlung bestätigt",
+    "payment_rejected": "Hallo! Deine Lehrkraft konnte die gemeldete Überweisung nicht bestätigen, es wurde nichts gutgeschrieben. Prüfe die Tracking-Nummer im Bereich „Abrechnung“ oder sende sie erneut.",
+    "subject_payment_rejected": "Zahlung nicht bestätigt"
   },
   "auth": {
     "invalid_credentials": "Ungültige E-Mail oder Passwort.",
