@@ -71,6 +71,9 @@ function mondayIndex(dayNumber: number): number {
   return ((dayNumber % 7) + 3) % 7;
 }
 
+/** One cell on the hour grid — the length a slot booked from it gets. */
+const SLOT_MINUTES = 60;
+
 export function ScheduleView() {
   const t = useTranslations('schedule');
   const tApp = useTranslations('app');
@@ -97,8 +100,6 @@ export function ScheduleView() {
   const [slot, setSlot] = useState<{ date: Date; key: string } | null>(null);
   const [form, setForm] = useState({
     title: '',
-    duration: '60',
-    price: '25',
     studentProfileId: '',
     courseId: '',
     materialLessonId: ''
@@ -252,7 +253,7 @@ export function ScheduleView() {
     const { year, month, day } = ymdFromDayNumber(dn);
     const date = zonedInstant(year, month, day, hour, 0, tz);
     setSlot({ date, key: `${dayIndex}-${hour}` });
-    setForm({ title: '', duration: '60', price: '25', studentProfileId: '', courseId: '', materialLessonId: '' });
+    setForm({ title: '', studentProfileId: '', courseId: '', materialLessonId: '' });
   }
 
   async function createLesson(e: FormEvent) {
@@ -262,7 +263,8 @@ export function ScheduleView() {
     setBusy(true);
     try {
       const start = slot.date;
-      const end = new Date(start.getTime() + (Number(form.duration) || 60) * 60000);
+      // One grid cell is one hour, so that is the slot's length.
+      const end = new Date(start.getTime() + SLOT_MINUTES * 60000);
       await apiFetch('/lessons', {
         method: 'POST',
         token,
@@ -271,7 +273,7 @@ export function ScheduleView() {
           title: form.title || undefined,
           startsAt: start.toISOString(),
           endsAt: end.toISOString(),
-          priceCents: Math.round((Number(form.price) || 0) * 100),
+          // No priceCents: the server prices it from the tutor's hourly rate.
           studentProfileIds: form.studentProfileId ? [form.studentProfileId] : undefined,
           materialLessonId: form.materialLessonId || undefined
         }
@@ -363,14 +365,10 @@ export function ScheduleView() {
             </label>
           </div>
         )}
-        <label>
-          {t('duration')}
-          <input type="number" min={15} step={15} value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
-        </label>
-        <label>
-          {t('price')}
-          <input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        </label>
+        {/* No duration or price here. A slot IS an hour on this grid, and the
+            price the tutor charges is the rate on their profile — asking for
+            both again on every booking only invites the two to disagree. Both
+            are still editable on the lesson itself. */}
         <button type="submit" disabled={busy}>{busy ? t('creating') : t('create')}</button>
       </form>
     </div>

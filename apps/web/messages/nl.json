@@ -256,7 +256,9 @@
     "planDraft": "concept",
     "planPrivate": "individueel",
     "planDraftHint": "Deze cursus is een concept — publiceer hem, anders ziet de leerling dit materiaal niet.",
-    "homeworkAssignFailed": "Toewijzen mislukt — er is niets verstuurd."
+    "homeworkAssignFailed": "Toewijzen mislukt — er is niets verstuurd.",
+    "endLesson": "Les beëindigen",
+    "ending": "Wordt beëindigd…"
   },
   "board": {
     "title": "Whiteboard",

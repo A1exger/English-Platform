@@ -297,13 +297,18 @@ export function BoardCanvas({
         <button type="button" onClick={save}>
           {saved ? t('saved') : t('save')}
         </button>
-        <button
-          type="button"
-          className={notesOpen ? 'active' : ''}
-          onClick={() => setNotesOpen((v) => !v)}
-        >
-          <Icon name="edit" /> {t('notes')}
-        </button>
+        {/* Embedded in the lesson room, notes are a room tool beside Dictionary
+            and Help — reachable whether the board or the video is showing. The
+            room is then the only writer, so this one stands down. */}
+        {!embedded && (
+          <button
+            type="button"
+            className={notesOpen ? 'active' : ''}
+            onClick={() => setNotesOpen((v) => !v)}
+          >
+            <Icon name="edit" /> {t('notes')}
+          </button>
+        )}
         {!embedded && (
           <span className="muted">
             {status === 'connected' ? `● ${t('connected')}` : `○ ${t('connecting')}`}
@@ -320,7 +325,7 @@ export function BoardCanvas({
           onPointerLeave={onPointerUp}
         />
       </div>
-      {notesOpen && (
+      {notesOpen && !embedded && (
         <DraggablePanel
           title={t('notes')}
           onClose={() => setNotesOpen(false)}

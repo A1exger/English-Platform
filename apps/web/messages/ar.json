@@ -256,7 +256,9 @@
     "planDraft": "مسودة",
     "planPrivate": "فردي",
     "planDraftHint": "هذه الدورة مسودة — انشرها، وإلا لن يرى الطالب هذه المادة.",
-    "homeworkAssignFailed": "تعذّر الإسناد — لم يُرسل شيء."
+    "homeworkAssignFailed": "تعذّر الإسناد — لم يُرسل شيء.",
+    "endLesson": "إنهاء الدرس",
+    "ending": "جارٍ الإنهاء…"
   },
   "board": {
     "title": "اللوحة",

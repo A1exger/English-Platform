@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Link } from '@/i18n/routing';
+import { Link, useRouter } from '@/i18n/routing';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
 import { usePopoverDismiss } from '@/lib/use-popover-dismiss';
@@ -14,6 +14,7 @@ import { StageBody } from './LiveMaterial';
 import { LessonPlanPanel } from './LessonPlanPanel';
 import { AnswerGauge } from './AnswerGauge';
 import { useBoardSocket } from '@/lib/board';
+import type { Socket } from 'socket.io-client';
 
 type Tab = 'plan' | 'lesson';
 
@@ -27,14 +28,23 @@ const CEFR: Record<string, string> = {
   Advanced: 'C1'
 };
 
-// Quick add-to-dictionary (students) — posts a word to the personal dictionary
-// without leaving the room.
+/**
+ * Add a word without leaving the room. It used to be shown to students only,
+ * because the personal dictionary is a student's — but a teacher hears the word
+ * that needs writing down just as often, and had nowhere to put it. So each
+ * role writes where the word belongs for them: a student to their own
+ * dictionary, a teacher to the shared word bank they curate and students copy
+ * from. Same panel, same two fields.
+ */
 function RoomDictionary({
   locale,
-  tr
+  tr,
+  toWordBank
 }: {
   locale: string;
   tr: ReturnType<typeof useTranslations>;
+  /** Teacher: the word goes to the shared bank instead of a personal list. */
+  toWordBank?: boolean;
 }) {
   const [word, setWord] = useState('');
   const [translation, setTranslation] = useState('');
@@ -46,12 +56,20 @@ function RoomDictionary({
     if (!token || !word.trim()) return;
     setBusy(true);
     try {
-      await apiFetch('/content/dictionary', {
-        method: 'POST',
-        token,
-        locale,
-        body: { word: word.trim(), translation: translation.trim() || undefined }
-      });
+      await (toWordBank
+        ? apiFetch('/content/word-bank/import', {
+            method: 'POST',
+            token,
+            locale,
+            // The bank's import format is one "word = translation" per line.
+            body: { text: `${word.trim()}${translation.trim() ? ` = ${translation.trim()}` : ''}` }
+          })
+        : apiFetch('/content/dictionary', {
+            method: 'POST',
+            token,
+            locale,
+            body: { word: word.trim(), translation: translation.trim() || undefined }
+          }));
       setWord('');
       setTranslation('');
       setDone(true);
@@ -85,6 +103,75 @@ function RoomDictionary({
   );
 }
 
+/**
+ * The shared notepad, as a room tool rather than a board tool. It speaks the
+ * same protocol it always did — broadcast over the /board socket, debounce-
+ * persisted — and it is the only writer in the room: BoardCanvas drops its own
+ * copy when embedded, so the two can never race each other.
+ */
+function RoomNotes({ lessonId, socket }: { lessonId: string; socket: Socket | null }) {
+  // The board's own strings, because this IS the board's notepad: its
+  // placeholder is the one that says the notes are shared. The room namespace
+  // has a notesHint describing private, device-local notes — a different thing
+  // that this is not, and telling a teacher their notes are private while the
+  // student watches them type would be the worst kind of wrong label.
+  const tb = useTranslations('board');
+  const [notes, setNotes] = useState('');
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const token = tokenStore.get();
+    if (!token) return;
+    apiFetch<{ notes: string | null }>(`/lessons/${lessonId}/board`, { token })
+      .then((b) => b.notes && setNotes(b.notes))
+      .catch(() => undefined);
+  }, [lessonId]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const onNote = (msg: { notes: string }) => setNotes(msg.notes);
+    socket.on('board:note', onNote);
+    return () => {
+      socket.off('board:note', onNote);
+    };
+  }, [socket]);
+
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  function change(value: string) {
+    setNotes(value);
+    socket?.emit('board:note', { lessonId, notes: value });
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      const token = tokenStore.get();
+      if (!token) return;
+      void apiFetch(`/lessons/${lessonId}/board/notes`, {
+        method: 'POST',
+        token,
+        body: { notes: value }
+      }).catch(() => undefined);
+    }, 700);
+  }
+
+  return (
+    <details className="room-tool">
+      <summary aria-label={tb('notes')}>
+        <Icon name="edit" /> <span className="room-tool-label">{tb('notes')}</span>
+      </summary>
+      <div className="room-tool-pop room-tool-pop-wide">
+        <textarea
+          className="room-notes-area"
+          value={notes}
+          placeholder={tb('notesPlaceholder')}
+          onChange={(e) => change(e.target.value)}
+        />
+      </div>
+    </details>
+  );
+}
+
 // Help — a short reminder of where the room's tools live (chat/mic/camera are in
 // the video controls; drawing is the board; the teacher drives the stages).
 function RoomHelp({ tr }: { tr: ReturnType<typeof useTranslations> }) {
@@ -113,6 +200,7 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
   const tr = useTranslations('room');
   const t = useTranslations('learn');
   const locale = useLocale();
+  const router = useRouter();
   const live = useLiveLesson(lessonId);
   const board = useBoardSocket(lessonId);
   const [showBoard, setShowBoard] = useState(false);
@@ -121,6 +209,27 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
   usePopoverDismiss();
 
   const { lesson, pageIdx, totalSteps, isTeacher, isStudent } = live;
+  const [ending, setEnding] = useState(false);
+
+  async function endLesson() {
+    const token = tokenStore.get();
+    if (!token) return;
+    setEnding(true);
+    try {
+      // Best-effort: a lesson the server will not close should still let the
+      // teacher out rather than trapping them in the room.
+      await apiFetch(`/lessons/${lessonId}`, {
+        method: 'PATCH',
+        token,
+        locale,
+        body: { status: 'completed' }
+      }).catch(() => undefined);
+      router.push('/dashboard');
+    } finally {
+      setEnding(false);
+    }
+  }
+
   const pageLabel = pageIdx === 0 ? t('preparation') : String(pageIdx);
 
   // The current stage's name, shown in the content header.
@@ -161,11 +270,21 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
 
   return (
     <div className="lesson-room room-5050 room-broadsheet">
-      {/* TOP: header — leave · title · level · live/connected (Broadsheet) */}
+      {/* TOP: header — end/leave · title · level · live/connected (Broadsheet) */}
       <header className="room-header">
-        <Link href="/dashboard" className="room-back">
-          <Icon name="arrow-left" /> {tr('exit')}
-        </Link>
+        {/* The teacher ENDS the lesson: it is marked completed and they leave,
+            which is what walking out of a lesson means for the person running
+            it. A student only leaves — finishing someone else's lesson is not
+            theirs to do, and the API agrees (PATCH is tutor-only). */}
+        {isTeacher ? (
+          <button type="button" className="room-back room-end" disabled={ending} onClick={endLesson}>
+            <Icon name="arrow-left" /> {ending ? tr('ending') : tr('endLesson')}
+          </button>
+        ) : (
+          <Link href="/dashboard" className="room-back room-end">
+            <Icon name="arrow-left" /> {tr('exit')}
+          </Link>
+        )}
         {lesson && <h1 className="room-title">{lesson.title}</h1>}
         {levelLabel && <span className="room-tag room-tag-neutral">{levelLabel}</span>}
         <div className="room-header-status">
@@ -188,7 +307,12 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
             </button>
           </div>
           <div className="room-stage-tools">
-            {isStudent && <RoomDictionary locale={locale} tr={tr} />}
+            <RoomDictionary locale={locale} tr={tr} toWordBank={isTeacher} />
+            {/* Notes used to live in the board's own toolbar, which put them
+                out of reach whenever the video was showing — and the video is
+                where most of a lesson is spent. They belong with the other
+                room tools, reachable from either stage. */}
+            <RoomNotes lessonId={lessonId} socket={board} />
             <RoomHelp tr={tr} />
           </div>
         </div>

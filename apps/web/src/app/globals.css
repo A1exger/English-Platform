@@ -42,6 +42,8 @@
   --mid: #e8a93b;
   --mid-100: #fcf1dc;
   --low: #e5544b;
+  /* the pressed/hover step for --low, which the scale was missing */
+  --low-600: #c6392f;
   --low-100: #fbe7e5;
 
   /* type — serif headings/labels, sans (Inter) for body & data */
@@ -651,6 +653,10 @@ textarea {
   background: var(--card);
   min-height: 44px;
   padding: 2px;
+  /* The booking form is absolutely positioned; without this it measured from
+     whatever was positioned further up the page and opened over the wrong
+     column, detached from the slot that was clicked. */
+  position: relative;
 }
 .cal-cell.clickable {
   cursor: pointer;
@@ -682,20 +688,32 @@ textarea {
   margin-top: 2px;
   align-items: center;
 }
+/* Join is the thing you came to the calendar to do, so it is a filled chip in
+   the app's accent rather than a tinted link on a tinted block. */
 .cal-event-actions .link {
-  color: #eef0ff;
+  background: var(--spark);
+  color: #fff;
   font-size: 11px;
+  font-weight: 600;
+  padding: 1px 9px;
+  border-radius: var(--r-pill);
+  text-decoration: none;
 }
+.cal-event-actions .link:hover {
+  background: var(--spark-700);
+}
+/* Delete is the one irreversible thing in the row, and reads like it. */
 .cal-del {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--low);
   border: none;
   color: #fff;
   font-size: 11px;
+  font-weight: 600;
   padding: 1px 7px;
   border-radius: var(--r-pill);
 }
 .cal-del:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--low-600);
 }
 
 /* ——— whiteboard ——— */
@@ -2963,6 +2981,24 @@ button.link-button:focus-visible {
 .room-back:hover {
   color: var(--rm-accent-800);
 }
+/* Ending the lesson closes it for everyone, so it is the red thing in the
+   header rather than another quiet link. It is a <button> for the teacher and
+   an <a> for the student, hence the reset. */
+.room-end {
+  padding: 5px 12px;
+  border: 1px solid var(--low);
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--low);
+}
+.room-end:hover {
+  background: var(--low);
+  color: #fff;
+}
+.room-end:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .room-title {
   margin: 0;
   font-family: var(--font-serif);
@@ -3363,6 +3399,13 @@ button.link-button:focus-visible {
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   box-shadow: var(--sh-md);
+}
+.room-tool-pop-wide {
+  inline-size: 340px;
+}
+.room-notes-area {
+  min-block-size: 190px;
+  resize: vertical;
 }
 .room-tool-pop textarea {
   inline-size: 100%;
@@ -5056,6 +5099,12 @@ input[type='radio']:focus-visible {
 .slot-popover .form-grid {
   grid-template-columns: 1fr;
   margin-bottom: 0;
+}
+/* A slot near the bottom of the grid would otherwise push the form past the
+   viewport with its submit button out of reach. */
+.slot-popover {
+  max-block-size: min(70vh, 460px);
+  overflow-y: auto;
 }
 .slot-popover-head strong {
   font-size: 13px;

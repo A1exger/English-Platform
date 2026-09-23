@@ -256,7 +256,9 @@
     "planDraft": "brouillon",
     "planPrivate": "individuel",
     "planDraftHint": "Ce cours est un brouillon — publiez-le, sinon l'élève ne verra pas ce contenu.",
-    "homeworkAssignFailed": "Attribution impossible — rien n’a été envoyé."
+    "homeworkAssignFailed": "Attribution impossible — rien n’a été envoyé.",
+    "endLesson": "Terminer le cours",
+    "ending": "Fin du cours…"
   },
   "board": {
     "title": "Tableau",

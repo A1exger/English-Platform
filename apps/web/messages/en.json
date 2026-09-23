@@ -256,7 +256,9 @@
     "planDraft": "draft",
     "planPrivate": "individual",
     "planDraftHint": "This course is a draft — publish it, or the student will not see this material.",
-    "homeworkAssignFailed": "Could not assign — nothing was sent."
+    "homeworkAssignFailed": "Could not assign — nothing was sent.",
+    "endLesson": "End lesson",
+    "ending": "Ending…"
   },
   "board": {
     "title": "Whiteboard",
