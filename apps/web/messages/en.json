@@ -310,7 +310,8 @@
     "resetDone": "Password changed. Taking you to sign in…",
     "resetInvalid": "This link is invalid or has expired. Request a new one.",
     "dismiss": "Dismiss",
-    "delete": "Delete"
+    "delete": "Delete",
+    "saveFailed": "Could not save — nothing was changed."
   },
   "nav": {
     "overview": "Overview",

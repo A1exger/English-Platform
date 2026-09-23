@@ -310,7 +310,8 @@
     "resetDone": "Mot de passe modifié. Redirection vers la connexion…",
     "resetInvalid": "Ce lien est invalide ou expiré. Demandez-en un nouveau.",
     "dismiss": "Masquer",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "saveFailed": "Échec de l'enregistrement — rien n'a été modifié."
   },
   "nav": {
     "overview": "Aperçu",

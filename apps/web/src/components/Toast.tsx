@@ -49,6 +49,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
   const seq = useRef(0);
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+  // The commit each pending toast still owes, so it can be run rather than lost
+  // when the countdown is cut short (see the unmount effect below).
+  const commits = useRef(new Map<number, () => void | Promise<void>>());
 
   const dismiss = useCallback((id: number) => {
     setItems((prev) => prev.filter((x) => x.id !== id));
@@ -75,13 +78,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     (message: string, options: UndoOptions) => {
       const id = (seq.current += 1);
       const undo = () => {
+        // Undo cancels the debt before dismiss() can hand it to the flush.
+        commits.current.delete(id);
         dismiss(id);
         options.onUndo?.();
       };
       setItems((prev) => [...prev, { id, message, undo }]);
+      if (options.onCommit) commits.current.set(id, options.onCommit);
       timers.current.set(
         id,
         setTimeout(() => {
+          commits.current.delete(id);
           dismiss(id);
           void options.onCommit?.();
         }, options.ms ?? 6000)
@@ -90,11 +97,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [dismiss]
   );
 
-  // Flush every pending commit if the provider unmounts mid-countdown.
+  // Flush every pending commit if the provider unmounts mid-countdown — this
+  // used to clear the timers WITHOUT running them, so a delete the user had
+  // already confirmed was silently forgotten the moment they navigated into a
+  // different layout (the lesson room) or the provider otherwise went away.
+  //
+  // A full page unload still drops the pending call, and that is the one case
+  // where dropping it is safe: nothing has been destroyed yet, and the list
+  // re-reads the server on the next load. Anything that must survive a reload
+  // should not be deferred behind this window at all.
   useEffect(() => {
-    const pending = timers.current;
+    const pending = commits.current;
+    const handles = timers.current;
     return () => {
-      pending.forEach((handle) => clearTimeout(handle));
+      handles.forEach((handle) => clearTimeout(handle));
+      handles.clear();
+      pending.forEach((commit) => void commit());
       pending.clear();
     };
   }, []);

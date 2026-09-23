@@ -310,7 +310,8 @@
     "resetDone": "Passwort geändert. Weiter zur Anmeldung…",
     "resetInvalid": "Dieser Link ist ungültig oder abgelaufen. Fordere einen neuen an.",
     "dismiss": "Ausblenden",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "saveFailed": "Speichern fehlgeschlagen — nichts wurde geändert."
   },
   "nav": {
     "overview": "Übersicht",

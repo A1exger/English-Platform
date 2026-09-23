@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ContentService } from '../content/content.service';
@@ -42,8 +43,37 @@ type JobRow = {
 };
 
 @Injectable()
-export class GenerationService {
+export class GenerationService implements OnModuleInit {
   private readonly logger = new Logger(GenerationService.name);
+
+  /**
+   * A generation job runs in this process, not in a queue, so a restart in the
+   * middle of one leaves its row saying "generating" with nobody working on it.
+   * It never finishes and it cannot be dismissed (dismiss only takes failed
+   * jobs), so the course strip shows "Generating… this can take a minute."
+   * forever — and every deploy while a course is being written creates one.
+   *
+   * Nothing of ours can be in flight the instant we boot, so anything still
+   * marked generating belongs to a process that is gone. Mark it failed and say
+   * why, which gets the tutor a message they can read and a button that clears
+   * it. (This assumes ONE api container, which is what docker-compose.prod.yml
+   * runs; with several replicas this would have to skip jobs another replica
+   * still owns.)
+   */
+  async onModuleInit() {
+    const orphaned = await this.prisma.generationJob.updateMany({
+      where: { status: 'generating' },
+      data: {
+        status: 'failed',
+        error: 'Generation was interrupted when the server restarted. Nothing was lost — start it again.',
+      },
+    });
+    if (orphaned.count) {
+      this.logger.warn(
+        `Marked ${orphaned.count} generation job(s) failed: they were still running when the server last stopped`,
+      );
+    }
+  }
 
   constructor(
     private readonly prisma: PrismaService,

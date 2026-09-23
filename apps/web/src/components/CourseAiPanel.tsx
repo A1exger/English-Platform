@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
@@ -43,30 +43,64 @@ export function CourseAiPanel({
   const [notes, setNotes] = useState('');
   const [aspects, setAspects] = useState<string[]>(['Grammar']);
 
-  const loadJobs = useCallback(async () => {
-    const token = tokenStore.get();
-    if (!token) return;
-    const jobs = await apiFetch<Job[]>(`/content/generate?courseId=${courseId}`, { token, locale }).catch(() => null);
-    setJob(jobs && jobs.length ? jobs[0] : null);
-  }, [courseId, locale]);
-
-  useEffect(() => {
-    void loadJobs();
-  }, [loadJobs]);
-
   // Poll a running job until it settles, then refresh the tree + the marker.
+  // `polling` holds the job id a chain is already following, so opening the
+  // page on a running job and then launching another one cannot leave two
+  // chains racing each other. The chain also has to die with the component:
+  // otherwise leaving the course and coming back leaves the old chain running
+  // beside the new one, which is the very race the id guard exists to stop.
+  const polling = useRef<string | null>(null);
+  const alive = useRef(true);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+      polling.current = null;
+    };
+  }, []);
+
   const poll = useCallback(
     async (id: string) => {
       const token = tokenStore.get();
       if (!token) return;
+      polling.current = id;
       const j = await apiFetch<Job>(`/content/generate/${id}`, { token, locale }).catch(() => null);
-      if (!j) return;
+      if (!alive.current) return;
+      if (!j) {
+        polling.current = null;
+        return;
+      }
       setJob(j);
-      if (j.status === 'generating') setTimeout(() => void poll(id), 2000);
-      else onChanged();
+      if (j.status === 'generating') {
+        pollTimer.current = setTimeout(() => void poll(id), 2000);
+      } else {
+        polling.current = null;
+        onChanged();
+      }
     },
     [locale, onChanged]
   );
+
+  const loadJobs = useCallback(async () => {
+    const token = tokenStore.get();
+    if (!token) return;
+    const jobs = await apiFetch<Job[]>(`/content/generate?courseId=${courseId}`, { token, locale }).catch(() => null);
+    const latest = jobs && jobs.length ? jobs[0] : null;
+    setJob(latest);
+    // Polling used to start only where a job was LAUNCHED, so a job found
+    // already running — after a reload, or just opening the course again —
+    // was displayed and then never checked. The banner sat on "generating"
+    // however long ago the job had actually finished.
+    if (latest?.status === 'generating' && polling.current !== latest.id) {
+      void poll(latest.id);
+    }
+  }, [courseId, locale, poll]);
+
+  useEffect(() => {
+    void loadJobs();
+  }, [loadJobs]);
 
   async function dismiss() {
     const token = tokenStore.get();

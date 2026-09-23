@@ -167,7 +167,7 @@ export function CoursesView() {
   const tc = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
-  const { showUndo } = useToast();
+  const { show, showUndo } = useToast();
   // Dismiss the per-row ⋯ menus on an outside click / Escape.
   usePopoverDismiss();
 
@@ -226,26 +226,50 @@ export function CoursesView() {
     void load();
   }, [load]);
 
-  // Publish/unpublish is reversible through the undo window (Sprint 4.2).
-  function togglePublish(c: Course) {
+  /**
+   * Publish/unpublish writes IMMEDIATELY, and Undo writes the opposite.
+   *
+   * It used to go through the undo window's deferred commit, the way a delete
+   * does: the row changed on screen and the PATCH fired six seconds later. A
+   * delete can afford that — losing a pending delete destroys nothing — but a
+   * publish that never fires is a click that did nothing, and leaving the page
+   * inside those six seconds is exactly what someone does after publishing:
+   * they go and look at the catalogue. The course was not there, the builder
+   * showed "draft" again, and it took a second click. Nothing here is
+   * destructive, so there is nothing to defer.
+   */
+  async function togglePublish(c: Course) {
+    const token = tokenStore.get();
+    if (!token) return;
     const next = c.status === 'published' ? 'draft' : 'published';
-    setCats((prev) =>
-      prev.map((cat) => ({
-        ...cat,
-        courses: cat.courses.map((x) => (x.id === c.id ? { ...x, status: next } : x))
-      }))
-    );
+
+    const setStatus = (status: string) =>
+      setCats((prev) =>
+        prev.map((cat) => ({
+          ...cat,
+          courses: cat.courses.map((x) => (x.id === c.id ? { ...x, status } : x))
+        }))
+      );
+    const write = (status: string) =>
+      apiFetch(`/content/courses/${c.id}`, { method: 'PATCH', token, locale, body: { status } })
+        .then(() => true)
+        .catch(() => false);
+
+    setStatus(next);
+    if (!(await write(next))) {
+      // Say so rather than leaving the row claiming a state the server rejected.
+      setStatus(c.status);
+      show(tc('saveFailed'));
+      return;
+    }
     showUndo(next === 'published' ? t('published') : t('unpublished'), {
-      onUndo: () => void load(),
-      onCommit: async () => {
-        const token = tokenStore.get();
-        if (!token) return;
-        await apiFetch(`/content/courses/${c.id}`, { method: 'PATCH', token, locale, body: { status: next } }).catch(
-          () => undefined
-        );
+      onUndo: async () => {
+        setStatus(c.status);
+        await write(c.status);
         await load();
       }
     });
+    await load();
   }
 
   // Rename in place — optimistic, then PATCH the title.

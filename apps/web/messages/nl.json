@@ -310,7 +310,8 @@
     "resetDone": "Wachtwoord gewijzigd. Je gaat naar inloggen…",
     "resetInvalid": "Deze link is ongeldig of verlopen. Vraag een nieuwe aan.",
     "dismiss": "Verbergen",
-    "delete": "Verwijderen"
+    "delete": "Verwijderen",
+    "saveFailed": "Opslaan mislukt — er is niets gewijzigd."
   },
   "nav": {
     "overview": "Overzicht",
