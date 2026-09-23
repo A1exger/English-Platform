@@ -156,7 +156,13 @@ export function lessonPrompt(
       `A "reading" page is an ARTICLE page: put a self-contained text of 150-300 words in "text" ` +
       `(not a summary or instructions), add 1-2 "image" media items describing pictures that suit the ` +
       `topic, and make EVERY task on that page answerable from the article alone — a true_false over ` +
-      `statements about it, and multiple_choice questions about what happens in it.` +
+      `statements about it, and multiple_choice questions about what happens in it.\n` +
+      // The player renders page text as an article, and until this was asked for
+      // the model wrote one undifferentiated block: the headings and the bold
+      // terms a reader navigates by simply were not in the data.
+      `FORMAT "text" as an article: separate paragraphs with a BLANK LINE, start a section with ` +
+      `"## Heading" on its own line, and wrap a term the lesson teaches in **double asterisks** the ` +
+      `first time it appears. Use nothing else — no lists, no links, no underscores.` +
       // Last word, and explicitly above the default counts: a revision that asks
       // for "at least 15 words" used to be overruled by the "4-8 wordlist
       // entries" line that followed it, so the lesson came back unchanged.
