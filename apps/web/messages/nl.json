@@ -258,7 +258,13 @@
     "planDraftHint": "Deze cursus is een concept — publiceer hem, anders ziet de leerling dit materiaal niet.",
     "homeworkAssignFailed": "Toewijzen mislukt — er is niets verstuurd.",
     "endLesson": "Les beëindigen",
-    "ending": "Wordt beëindigd…"
+    "ending": "Wordt beëindigd…",
+    "searchWord": "typ om te zoeken",
+    "searching": "zoeken…",
+    "assign": "Toewijzen",
+    "assignNew": "Toevoegen en toewijzen",
+    "assigned": "Toegewezen ✓",
+    "assignTo": "Toewijzen aan"
   },
   "board": {
     "title": "Whiteboard",

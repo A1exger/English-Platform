@@ -80,6 +80,45 @@ function wordSearchTerms(q: string) {
 }
 
 /**
+ * Does the row the database handed back really match the needle?
+ *
+ * Searching `translations` as raw JSON text is what finds a German reader's
+ * "Apfel", but that text also holds the locale KEYS — so "de", "en", "fr",
+ * "nl", "ru" and "ar" each match every row in the bank. A two-letter needle is
+ * precisely what a search-as-you-type box sends first, so the match is made
+ * again here against the glosses alone.
+ */
+function wordMatches(
+  row: { word: string; translation: string | null; translations: string | null },
+  q: string,
+) {
+  return wordMatchRank(row, q) < 3;
+}
+
+/**
+ * How well a row answers the needle: 0 the word begins with it, 1 the word
+ * contains it, 2 only a gloss does, 3 not at all.
+ *
+ * Ranking is what makes a search-as-you-type box usable across six locales. A
+ * gloss match is a real hit — a Dutch reader's "deur" should find "door" — but
+ * "de" also reaches that same "deur", and a teacher typing "de" wants
+ * "deadline" first, not every word whose Dutch or German gloss happens to
+ * contain those two letters.
+ */
+function wordMatchRank(
+  row: { word: string; translation: string | null; translations: string | null },
+  q: string,
+) {
+  const needle = q.toLowerCase();
+  const word = row.word.toLowerCase();
+  if (word.startsWith(needle)) return 0;
+  if (word.includes(needle)) return 1;
+  const glosses = [row.translation, ...Object.values(parseTranslations(row.translations))];
+  if (glosses.some((g) => typeof g === 'string' && g.toLowerCase().includes(needle))) return 2;
+  return 3;
+}
+
+/**
  * word -> gloss in the request locale, built from the lesson's wordlist. Used to
  * re-language vocabulary exercises whose glosses were baked in at authoring time
  * (an AI-written lesson can carry e.g. Spanish rights regardless of the reader's
@@ -560,7 +599,15 @@ export class ContentService {
     // `translations` is storage, not API surface: it holds all six locales, and
     // shipping it would roughly double a thousand-word payload to say again what
     // `definition` and `translation` already answer for this reader.
-    return rows.map(({ _count, translations, ...r }) => ({
+    // Closest match first when searching; otherwise the SQL order (topic, word).
+    const found = q
+      ? rows
+          .filter((r) => wordMatches(r, q))
+          .map((r, i) => ({ r, i, rank: wordMatchRank(r, q) }))
+          .sort((a, b) => a.rank - b.rank || a.i - b.i)
+          .map((x) => x.r)
+      : rows;
+    return found.map(({ _count, translations, ...r }) => ({
       ...r,
       definition: parseTranslations(translations).en ?? null,
       translation: resolveWordTranslation({ translation: r.translation, translations }, lang),
@@ -951,6 +998,71 @@ export class ContentService {
         sourceLessonId: dto.sourceLessonId,
       },
     });
+  }
+
+  /**
+   * Tutor: put a word into a STUDENT's dictionary, so it enters their review
+   * rotation. A student adds words themselves; until now a tutor who heard the
+   * word that needed learning had no way to hand it over — they could only say
+   * it aloud and hope.
+   *
+   * Upserts on (student, word), so assigning the same word twice updates the
+   * gloss instead of failing on the unique constraint — a teacher pressing the
+   * button again is correcting a translation, not making an error.
+   */
+  async assignDictionaryWord(
+    user: AuthenticatedUser,
+    dto: { studentProfileId: string; word: string; translation?: string; senseId?: string; sourceLessonId?: string },
+  ) {
+    await this.assertOwnStudent(user, dto.studentProfileId);
+    return this.prisma.dictionaryEntry.upsert({
+      where: {
+        studentProfileId_word: { studentProfileId: dto.studentProfileId, word: dto.word },
+      },
+      update: { translation: dto.translation, ...(dto.senseId ? { senseId: dto.senseId } : {}) },
+      create: {
+        studentProfileId: dto.studentProfileId,
+        word: dto.word,
+        translation: dto.translation,
+        senseId: dto.senseId,
+        sourceLessonId: dto.sourceLessonId,
+      },
+    });
+  }
+
+  /**
+   * A tutor may only reach into the dictionaries of students who are theirs —
+   * "theirs" being either a CRM link or a lesson they teach this student.
+   *
+   * The lesson half matters: the feature this guards is a teacher assigning a
+   * word mid-lesson, and a student can sit in a room without ever having been
+   * added to the tutor's CRM list (booking creates a LessonParticipant, not a
+   * TutorStudent). Requiring only the link would refuse exactly the case the
+   * button exists for.
+   */
+  private async assertOwnStudent(user: AuthenticatedUser, studentProfileId: string) {
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { id: studentProfileId },
+      select: { id: true },
+    });
+    if (!student) throw new NotFoundException('Student not found');
+    if (user.role === 'admin') return;
+    const tutor = await this.prisma.tutorProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+    if (!tutor) throw new ForbiddenException('Not your student');
+    const [link, shared] = await Promise.all([
+      this.prisma.tutorStudent.findFirst({
+        where: { tutorProfileId: tutor.id, studentProfileId },
+        select: { id: true },
+      }),
+      this.prisma.lessonParticipant.findFirst({
+        where: { studentProfileId, lesson: { tutorProfileId: tutor.id } },
+        select: { id: true },
+      }),
+    ]);
+    if (!link && !shared) throw new ForbiddenException('Not your student');
   }
 
   async listDictionary(user: AuthenticatedUser) {

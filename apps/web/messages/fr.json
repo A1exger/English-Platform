@@ -258,7 +258,13 @@
     "planDraftHint": "Ce cours est un brouillon — publiez-le, sinon l'élève ne verra pas ce contenu.",
     "homeworkAssignFailed": "Attribution impossible — rien n’a été envoyé.",
     "endLesson": "Terminer le cours",
-    "ending": "Fin du cours…"
+    "ending": "Fin du cours…",
+    "searchWord": "saisissez pour chercher",
+    "searching": "recherche…",
+    "assign": "Attribuer",
+    "assignNew": "Ajouter et attribuer",
+    "assigned": "Attribué ✓",
+    "assignTo": "Attribuer à"
   },
   "board": {
     "title": "Tableau",

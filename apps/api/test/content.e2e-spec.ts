@@ -610,6 +610,63 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     expect(again.body.repaired).toBe(0);
   });
 
+  // A teacher hears the word a student needs and files it into that student's
+  // review rotation without leaving the room. The interesting part is who is
+  // allowed to: the tutor teaching them, not any tutor who knows the id.
+  it('dictionary: a tutor assigns a word to a student they teach', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const authS = auth(student.accessToken);
+    const sp = await prisma.studentProfile.findFirstOrThrow({
+      where: { user: { email: 'c.student@test.com' } },
+      select: { id: true },
+    });
+
+    // No CRM link and no shared lesson yet: the tutor has no claim on them.
+    await api().post('/api/v1/content/dictionary/assign').set(auth2)
+      .send({ studentProfileId: sp.id, word: 'ledger' }).expect(403);
+
+    // Booking the student into one of this tutor's lessons is the claim.
+    const tp = await prisma.tutorProfile.findFirstOrThrow({
+      where: { user: { email: 'c.tutor@test.com' } },
+      select: { id: true },
+    });
+    const lesson = await prisma.lesson.create({
+      data: {
+        tutorProfileId: tp.id,
+        title: 'Vocabulary',
+        startsAt: new Date(Date.now() + 3_600_000),
+        endsAt: new Date(Date.now() + 7_200_000),
+        participants: { create: { studentProfileId: sp.id } },
+      },
+    });
+
+    await api().post('/api/v1/content/dictionary/assign').set(auth2)
+      .send({ studentProfileId: sp.id, word: 'ledger', translation: 'бухгалтерская книга', sourceLessonId: lesson.id })
+      .expect(201);
+
+    // It lands in the student's own dictionary, ready for the trainer.
+    const mine = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
+    const row = mine.body.find((e: { word: string }) => e.word === 'ledger');
+    expect(row.translation).toBe('бухгалтерская книга');
+    expect(row.sourceLessonId).toBe(lesson.id);
+
+    // Assigning the same word again corrects the gloss instead of duplicating.
+    await api().post('/api/v1/content/dictionary/assign').set(auth2)
+      .send({ studentProfileId: sp.id, word: 'ledger', translation: 'гроссбух' }).expect(201);
+    const after = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
+    const rows = after.body.filter((e: { word: string }) => e.word === 'ledger');
+    expect(rows.length).toBe(1);
+    expect(rows[0].translation).toBe('гроссбух');
+
+    // A student cannot assign to anyone, themselves included.
+    await api().post('/api/v1/content/dictionary/assign').set(authS)
+      .send({ studentProfileId: sp.id, word: 'ledger' }).expect(403);
+
+    // An id that is not a student is a 404, not a silent no-op.
+    await api().post('/api/v1/content/dictionary/assign').set(auth2)
+      .send({ studentProfileId: 'nope', word: 'ledger' }).expect(404);
+  });
+
   it('word bank: tutor imports, student copies into their own dictionary', async () => {
     const auth2 = auth(tutor.accessToken);
     const authS = auth(student.accessToken);
@@ -658,6 +715,15 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     const def = (r: { body: { word: string; definition: string }[] }) =>
       r.body.find((w) => w.word === 'water')?.definition;
     expect(def(ru)).toBe('what you drink');
+
+    // A two-letter needle is what a search-as-you-type box sends first, and the
+    // gloss map is stored as JSON whose KEYS are locale codes — so "de" used to
+    // match the whole bank through the raw text. It must match words now.
+    const short = await api().get('/api/v1/content/word-bank?q=de').set(auth2).expect(200);
+    const whole = await api().get('/api/v1/content/word-bank').set(auth2).expect(200);
+    expect(short.body.length).toBeLessThan(whole.body.length);
+    expect(short.body.map((w: { word: string }) => w.word)).toContain('deadline');
+    expect(short.body.map((w: { word: string }) => w.word)).not.toContain('water');
     expect(def(de)).toBe('what you drink');
 
     // The bundled starter pack loads once and skips what is already there.

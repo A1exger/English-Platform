@@ -29,56 +29,137 @@ const CEFR: Record<string, string> = {
 };
 
 /**
- * Add a word without leaving the room. It used to be shown to students only,
- * because the personal dictionary is a student's — but a teacher hears the word
- * that needs writing down just as often, and had nowhere to put it. So each
- * role writes where the word belongs for them: a student to their own
- * dictionary, a teacher to the shared word bank they curate and students copy
- * from. Same panel, same two fields.
+ * The room's dictionary: look a word up in the shared bank, and put it where it
+ * belongs for whoever is asking.
+ *
+ * It began as an add-a-word box for students only. Two things were missing. A
+ * teacher had nowhere to put a word at all, and neither side could check
+ * whether the bank already had one — so the same word got typed in twice, with
+ * two different glosses. And a teacher who heard the word a student needed
+ * could only say it aloud and hope: assigning it puts it straight into that
+ * student's review rotation.
  */
 function RoomDictionary({
   locale,
   tr,
-  toWordBank
+  isTeacher,
+  studentIds,
+  lessonId
 }: {
   locale: string;
   tr: ReturnType<typeof useTranslations>;
-  /** Teacher: the word goes to the shared bank instead of a personal list. */
-  toWordBank?: boolean;
+  isTeacher: boolean;
+  /** Students booked on this lesson — who a teacher can assign a word to. */
+  studentIds: string[];
+  lessonId: string;
 }) {
   const [word, setWord] = useState('');
   const [translation, setTranslation] = useState('');
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState('');
+  const [hits, setHits] = useState<{ id: string; word: string; translation?: string | null }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [target, setTarget] = useState('');
+  const [students, setStudents] = useState<{ studentProfileId: string; name: string }[]>([]);
 
-  async function add() {
+  // Name the students this lesson has, so "assign" says who it goes to.
+  useEffect(() => {
+    if (!isTeacher || studentIds.length === 0) return;
     const token = tokenStore.get();
-    if (!token || !word.trim()) return;
+    if (!token) return;
+    apiFetch<{ studentProfileId: string; name: string }[]>('/crm/students', { token, locale })
+      .then((all) => {
+        const mine = all.filter((x) => studentIds.includes(x.studentProfileId));
+        setStudents(mine);
+        setTarget((prev) => prev || mine[0]?.studentProfileId || '');
+      })
+      .catch(() => undefined);
+  }, [isTeacher, studentIds, locale]);
+
+  // Search the shared bank as the word is typed. Debounced, because this fires
+  // on every keystroke and the bank holds a few thousand words.
+  useEffect(() => {
+    const q = word.trim();
+    if (q.length < 2) {
+      setHits([]);
+      return;
+    }
+    const token = tokenStore.get();
+    if (!token) return;
+    setSearching(true);
+    const timer = setTimeout(() => {
+      apiFetch<{ id: string; word: string; translation?: string | null }[]>(
+        `/content/word-bank?q=${encodeURIComponent(q)}`,
+        { token, locale }
+      )
+        .then((rows) => setHits(rows.slice(0, 6)))
+        .catch(() => setHits([]))
+        .finally(() => setSearching(false));
+    }, 350);
+    return () => {
+      clearTimeout(timer);
+      setSearching(false);
+    };
+  }, [word, locale]);
+
+  const flash = (msg: string) => {
+    setDone(msg);
+    setTimeout(() => setDone(''), 1600);
+  };
+
+  /** Student: into my dictionary. Teacher: into the chosen student's. */
+  async function take(w: string, tr2?: string | null) {
+    const token = tokenStore.get();
+    if (!token || !w.trim()) return;
     setBusy(true);
     try {
-      await (toWordBank
-        ? apiFetch('/content/word-bank/import', {
-            method: 'POST',
-            token,
-            locale,
-            // The bank's import format is one "word = translation" per line.
-            body: { text: `${word.trim()}${translation.trim() ? ` = ${translation.trim()}` : ''}` }
-          })
-        : apiFetch('/content/dictionary', {
-            method: 'POST',
-            token,
-            locale,
-            body: { word: word.trim(), translation: translation.trim() || undefined }
-          }));
+      if (isTeacher) {
+        if (!target) return;
+        await apiFetch('/content/dictionary/assign', {
+          method: 'POST',
+          token,
+          locale,
+          body: {
+            studentProfileId: target,
+            word: w.trim(),
+            translation: tr2?.trim() || undefined,
+            sourceLessonId: lessonId
+          }
+        });
+        flash(tr('assigned'));
+      } else {
+        await apiFetch('/content/dictionary', {
+          method: 'POST',
+          token,
+          locale,
+          body: { word: w.trim(), translation: tr2?.trim() || undefined, sourceLessonId: lessonId }
+        });
+        flash(tr('added'));
+      }
       setWord('');
       setTranslation('');
-      setDone(true);
-      setTimeout(() => setDone(false), 1500);
+      setHits([]);
     } catch {
-      /* ignore — best-effort */
+      /* best-effort — the room must not break over a word */
     } finally {
       setBusy(false);
     }
+  }
+
+  /** A word the bank does not have yet: a teacher also files it in the bank. */
+  async function addNew() {
+    const token = tokenStore.get();
+    if (!token || !word.trim()) return;
+    if (isTeacher) {
+      await apiFetch('/content/word-bank/import', {
+        method: 'POST',
+        token,
+        locale,
+        // The bank's import format is one "word = translation" per line.
+        body: { text: `${word.trim()}${translation.trim() ? ` = ${translation.trim()}` : ''}` }
+      }).catch(() => undefined);
+    }
+    await take(word, translation);
   }
 
   return (
@@ -86,17 +167,46 @@ function RoomDictionary({
       <summary aria-label={tr('dictionary')}>
         <Icon name="book" /> <span className="room-tool-label">{tr('dictionary')}</span>
       </summary>
-      <div className="room-tool-pop">
+      <div className="room-tool-pop room-tool-pop-wide">
+        {isTeacher && students.length > 1 && (
+          <label className="room-tool-field">
+            {tr('assignTo')}
+            <select value={target} onChange={(e) => setTarget(e.target.value)}>
+              {students.map((s) => (
+                <option key={s.studentProfileId} value={s.studentProfileId}>{s.name}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="room-tool-field">
           {tr('word')}
-          <input value={word} onChange={(e) => setWord(e.target.value)} />
+          <input value={word} onChange={(e) => setWord(e.target.value)} placeholder={tr('searchWord')} />
         </label>
+
+        {/* What the bank already has, so the same word is not filed twice. */}
+        {hits.length > 0 && (
+          <ul className="room-dict-hits">
+            {hits.map((h) => (
+              <li key={h.id}>
+                <span className="room-dict-word">
+                  <b>{h.word}</b>
+                  {h.translation ? <span className="muted"> — {h.translation}</span> : null}
+                </span>
+                <button type="button" className="ghost" disabled={busy} onClick={() => take(h.word, h.translation)}>
+                  {isTeacher ? tr('assign') : tr('addWord')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {searching && <span className="muted">{tr('searching')}</span>}
+
         <label className="room-tool-field">
           {tr('translation')}
           <input value={translation} onChange={(e) => setTranslation(e.target.value)} />
         </label>
-        <button type="button" disabled={busy || !word.trim()} onClick={add}>
-          {done ? tr('added') : tr('addWord')}
+        <button type="button" disabled={busy || !word.trim() || (isTeacher && !target)} onClick={addNew}>
+          {done || (isTeacher ? tr('assignNew') : tr('addWord'))}
         </button>
       </div>
     </details>
@@ -307,7 +417,13 @@ export function LessonRoom({ lessonId }: { lessonId: string }) {
             </button>
           </div>
           <div className="room-stage-tools">
-            <RoomDictionary locale={locale} tr={tr} toWordBank={isTeacher} />
+            <RoomDictionary
+              locale={locale}
+              tr={tr}
+              isTeacher={isTeacher}
+              studentIds={live.studentIds}
+              lessonId={lessonId}
+            />
             {/* Notes used to live in the board's own toolbar, which put them
                 out of reach whenever the video was showing — and the video is
                 where most of a lesson is spent. They belong with the other

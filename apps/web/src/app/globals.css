@@ -668,15 +668,22 @@ textarea {
   background: var(--indigo);
   color: #fff;
   border-radius: var(--r-sm);
-  padding: 4px 8px;
+  /* A chip has to fit a one-hour cell next to six other days, so the padding is
+     the smallest that still keeps the title off the edge. */
+  padding: 3px 6px;
   font-size: 12px;
 }
 .cal-event.status-cancelled {
   background: var(--mist);
   text-decoration: line-through;
 }
+/* A finished lesson. It is green because it is done, but a full-strength green
+   pulls the eye harder than the lessons still ahead of you, which are what the
+   week view is for — so it reads as a tinted, past-tense card instead. */
 .cal-event.status-completed {
-  background: var(--high);
+  background: var(--high-100);
+  color: var(--ink);
+  border: 1px solid var(--high);
 }
 .cal-event-title {
   font-weight: 600;
@@ -684,7 +691,10 @@ textarea {
 }
 .cal-event-actions {
   display: flex;
-  gap: 8px;
+  /* Wrap rather than overflow: a narrow column puts Delete on its own line
+     instead of pushing it out of the cell. */
+  flex-wrap: wrap;
+  gap: 4px;
   margin-top: 2px;
   align-items: center;
 }
@@ -693,11 +703,13 @@ textarea {
 .cal-event-actions .link {
   background: var(--spark);
   color: #fff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 1px 9px;
+  padding: 1px 7px;
   border-radius: var(--r-pill);
   text-decoration: none;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 .cal-event-actions .link:hover {
   background: var(--spark-700);
@@ -707,10 +719,12 @@ textarea {
   background: var(--low);
   border: none;
   color: #fff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 1px 7px;
+  padding: 1px 6px;
   border-radius: var(--r-pill);
+  line-height: 1.5;
+  white-space: nowrap;
 }
 .cal-del:hover {
   background: var(--low-600);
@@ -3402,6 +3416,40 @@ button.link-button:focus-visible {
 }
 .room-tool-pop-wide {
   inline-size: 340px;
+}
+/* What the word bank already holds for what is being typed. Short, scrollable,
+   and each row acts on itself — the point is to reuse an existing entry instead
+   of filing the same word a second time with a different gloss. */
+.room-dict-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-block-size: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  padding: 4px;
+}
+.room-dict-hits li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.room-dict-word {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.room-dict-hits button {
+  flex: none;
+  font-size: 11px;
+  padding: 2px 8px;
 }
 .room-notes-area {
   min-block-size: 190px;

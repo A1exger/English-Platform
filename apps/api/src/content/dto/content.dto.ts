@@ -327,6 +327,28 @@ export class AddDictionaryDto {
   sourceLessonId?: string;
 }
 
+/** Tutor hands a word to one of their students for review. */
+export class AssignDictionaryDto {
+  @IsString()
+  studentProfileId!: string;
+
+  @IsString()
+  @Length(1, 120)
+  word!: string;
+
+  @IsOptional()
+  @IsString()
+  translation?: string;
+
+  @IsOptional()
+  @IsString()
+  senseId?: string;
+
+  @IsOptional()
+  @IsString()
+  sourceLessonId?: string;
+}
+
 export class ReviewDictionaryDto {
   // true = remembered (promote), false = missed (reset the streak).
   @IsBoolean()

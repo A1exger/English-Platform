@@ -258,7 +258,13 @@
     "planDraftHint": "This course is a draft — publish it, or the student will not see this material.",
     "homeworkAssignFailed": "Could not assign — nothing was sent.",
     "endLesson": "End lesson",
-    "ending": "Ending…"
+    "ending": "Ending…",
+    "searchWord": "type to search the bank",
+    "searching": "searching…",
+    "assign": "Assign",
+    "assignNew": "Add & assign",
+    "assigned": "Assigned ✓",
+    "assignTo": "Assign to"
   },
   "board": {
     "title": "Whiteboard",

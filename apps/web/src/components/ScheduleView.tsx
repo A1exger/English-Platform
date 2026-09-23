@@ -77,7 +77,6 @@ const SLOT_MINUTES = 60;
 export function ScheduleView() {
   const t = useTranslations('schedule');
   const tApp = useTranslations('app');
-  const tDash = useTranslations('dashboard');
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
@@ -421,7 +420,7 @@ export function ScheduleView() {
             slotForm={slotForm}
             onSlot={openSlot}
             onDelete={deleteLesson}
-            joinLabel={tDash('joinLesson')}
+            joinLabel={t('join')}
             delLabel={t('delete')}
           />
         ))}

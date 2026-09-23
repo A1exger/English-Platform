@@ -258,7 +258,13 @@
     "planDraftHint": "Dieser Kurs ist ein Entwurf — veröffentliche ihn, sonst sieht die Lernende dieses Material nicht.",
     "homeworkAssignFailed": "Zuweisen fehlgeschlagen — nichts wurde gesendet.",
     "endLesson": "Stunde beenden",
-    "ending": "Wird beendet…"
+    "ending": "Wird beendet…",
+    "searchWord": "zum Suchen tippen",
+    "searching": "suche…",
+    "assign": "Zuweisen",
+    "assignNew": "Hinzufügen & zuweisen",
+    "assigned": "Zugewiesen ✓",
+    "assignTo": "Zuweisen an"
   },
   "board": {
     "title": "Whiteboard",

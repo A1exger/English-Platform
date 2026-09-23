@@ -15,6 +15,7 @@ import { ContentService } from './content.service';
 import { AiUnavailableError } from '../generation/ai-client';
 import {
   AddDictionaryDto,
+  AssignDictionaryDto,
   CheckTaskDto,
   CreateCategoryDto,
   CreateCourseDto,
@@ -186,6 +187,17 @@ export class ContentController {
   @Get('dictionary')
   listDictionary(@CurrentUser() user: AuthenticatedUser) {
     return this.content.listDictionary(user);
+  }
+
+  // A tutor hands a word to one of their students, so it joins that student's
+  // review rotation without the student having to type it in themselves.
+  @Roles('tutor', 'admin')
+  @Post('dictionary/assign')
+  assignDictionary(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: AssignDictionaryDto,
+  ) {
+    return this.content.assignDictionaryWord(user, dto);
   }
 
   // Spaced-repetition review of one dictionary word.
