@@ -35,10 +35,6 @@ interface Invoice {
   currency: string;
   status: string;
 }
-interface Checkout {
-  transactionId: string;
-  checkoutUrl: string;
-}
 interface Transfer {
   transactionId: string;
   method: 'westernunion' | 'moneygram';
@@ -73,7 +69,6 @@ export function BillingView() {
   const [balance, setBalance] = useState<Balance | null>(null);
   const [txns, setTxns] = useState<Txn[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [checkout, setCheckout] = useState<Checkout | null>(null);
   const [transfer, setTransfer] = useState<Transfer | null>(null);
   const [mtcn, setMtcn] = useState('');
   const [mtcnSent, setMtcnSent] = useState(false);
@@ -125,23 +120,6 @@ export function BillingView() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function buy(packageId: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      const res = await apiFetch<Checkout>('/billing/checkout', {
-        method: 'POST',
-        token,
-        locale,
-        body: { provider: 'stripe', packageId }
-      });
-      setCheckout(res);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function startTransfer(method: 'westernunion' | 'moneygram', packageId: string) {
     const token = tokenStore.get();
@@ -324,9 +302,10 @@ export function BillingView() {
                 <span className="muted">{money(format, p.priceCents, p.currency)}</span>
                 {isStudent && (
                   <span className="row-actions">
-                    <button type="button" disabled={busy} onClick={() => buy(p.id)}>
-                      {t('buy')}
-                    </button>
+                    {/* Card checkout is off for now: Western Union and MoneyGram
+                        are the payment routes on offer. The API endpoint and its
+                        Stripe/PayPal wiring are untouched, so bringing the button
+                        back is putting it back here. */}
                     <button
                       type="button"
                       disabled={busy}
@@ -351,14 +330,6 @@ export function BillingView() {
               </li>
             ))}
           </ul>
-        )}
-        {checkout && (
-          <p className="note">
-            {t('checkoutReady')}{' '}
-            <a className="link" href={checkout.checkoutUrl} target="_blank" rel="noreferrer">
-              {checkout.checkoutUrl}
-            </a>
-          </p>
         )}
       </div>
 
