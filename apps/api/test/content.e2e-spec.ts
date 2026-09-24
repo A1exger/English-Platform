@@ -667,6 +667,41 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
       .send({ studentProfileId: 'nope', word: 'ledger' }).expect(404);
   });
 
+  // A category made by mistake, or for a test, used to sit in the course list
+  // for good. Deleting one is allowed — but only while it is empty, because the
+  // schema cascades its courses (and their lessons, pages and tasks) away with
+  // it, which no confirmation dialog would make safe.
+  it('categories: an empty one can be deleted, a full one cannot', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const cat = await api().post('/api/v1/content/categories').set(auth2).send({ title: 'Scratch' }).expect(201);
+    const course = await api()
+      .post('/api/v1/content/courses')
+      .set(auth2)
+      .send({ categoryId: cat.body.id, title: 'In the way' })
+      .expect(201);
+
+    await api().delete(`/api/v1/content/categories/${cat.body.id}`).set(auth2).expect(400);
+    // Still there, with its course.
+    const tree = await api().get('/api/v1/content/catalog').set(auth2).expect(200);
+    expect(tree.body.find((c: { id: string }) => c.id === cat.body.id)).toBeTruthy();
+
+    await api().delete(`/api/v1/content/courses/${course.body.id}`).set(auth2).expect(200);
+    await api().delete(`/api/v1/content/categories/${cat.body.id}`).set(auth2).expect(200);
+    const after = await api().get('/api/v1/content/catalog').set(auth2).expect(200);
+    expect(after.body.find((c: { id: string }) => c.id === cat.body.id)).toBeFalsy();
+
+    // Gone for good, and a second delete says so rather than pretending.
+    await api().delete(`/api/v1/content/categories/${cat.body.id}`).set(auth2).expect(404);
+
+    // A student cannot delete one at all.
+    const other = await api().post('/api/v1/content/categories').set(auth2).send({ title: 'Theirs' }).expect(201);
+    await api()
+      .delete(`/api/v1/content/categories/${other.body.id}`)
+      .set(auth(student.accessToken))
+      .expect(403);
+    await api().delete(`/api/v1/content/categories/${other.body.id}`).set(auth2).expect(200);
+  });
+
   it('word bank: tutor imports, student copies into their own dictionary', async () => {
     const auth2 = auth(tutor.accessToken);
     const authS = auth(student.accessToken);

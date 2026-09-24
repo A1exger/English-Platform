@@ -28,6 +28,7 @@ import { Skeleton } from './Skeleton';
 import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
 import { EmptyState } from './EmptyState';
+import { Icon } from './Icon';
 
 // CEFR-style levels a course's sections use (mirrors the API CONTENT_LEVELS).
 const LEVELS = ['Beginner', 'Elementary', 'PreIntermediate', 'Intermediate', 'UpperIntermediate', 'Advanced'] as const;
@@ -360,6 +361,22 @@ export function CoursesView() {
     });
   }
 
+  /**
+   * Delete an empty category. Only empty: the server refuses one that still has
+   * courses, because deleting it would cascade them away. No undo window here —
+   * unlike a course, the delete has to be able to fail and say why.
+   */
+  async function removeCategory(cat: Category) {
+    const token = tokenStore.get();
+    if (!token) return;
+    try {
+      await apiFetch(`/content/categories/${cat.id}`, { method: 'DELETE', token, locale });
+      setCats((prev) => prev.filter((c) => c.id !== cat.id));
+    } catch {
+      show(t('categoryNotEmpty'));
+    }
+  }
+
   function persist(path: string, body: unknown) {
     const token = tokenStore.get();
     if (!token) return;
@@ -471,6 +488,19 @@ export function CoursesView() {
       <div className="course-cat-head">
         {handle}
         <strong>{cat.title}</strong>
+        {/* Offered only on an empty category: a full one cannot be deleted
+            anyway, so a button that always refuses would be worse than none. */}
+        {canAuthor && cat.courses.length === 0 && (
+          <button
+            type="button"
+            className="ghost cat-del"
+            aria-label={t('deleteCategory')}
+            title={t('deleteCategory')}
+            onClick={() => void removeCategory(cat)}
+          >
+            <Icon name="close" />
+          </button>
+        )}
       </div>
       {renderCourses(cat)}
     </div>

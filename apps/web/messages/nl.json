@@ -636,7 +636,9 @@
     "grammarExamples": "Voorbeelden (één per regel)",
     "grammarExamplesHint": "She will call you tomorrow.",
     "taskInstruction": "Opdrachttekst",
-    "pageSources": "Bronnen (naamsvermelding)"
+    "pageSources": "Bronnen (naamsvermelding)",
+    "deleteCategory": "Categorie verwijderen",
+    "categoryNotEmpty": "Verwijder of verplaats eerst de cursussen erin."
   },
   "learn": {
     "title": "Les",

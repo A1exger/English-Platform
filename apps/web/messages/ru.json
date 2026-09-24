@@ -636,7 +636,9 @@
     "grammarExamples": "Примеры (по одному в строке)",
     "grammarExamplesHint": "She will call you tomorrow.",
     "taskInstruction": "Инструкция",
-    "pageSources": "Источники (атрибуция)"
+    "pageSources": "Источники (атрибуция)",
+    "deleteCategory": "Удалить категорию",
+    "categoryNotEmpty": "Сначала удалите или перенесите курсы из неё."
   },
   "learn": {
     "title": "Урок",

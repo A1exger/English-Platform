@@ -9,6 +9,8 @@ import { Skeleton } from './Skeleton';
 
 interface Overview {
   revenueCents: number;
+  /** Confirmed payments per month, "YYYY-MM", oldest first (24 months). */
+  revenueMonths: { month: string; amountCents: number }[];
   currency: string;
   lessonsCompleted: number;
   lessonsUpcoming: number;
@@ -20,7 +22,6 @@ interface Lesson {
   id: string;
   startsAt: string;
   status: string;
-  priceCents: number;
 }
 
 const PERIODS = [3, 6, 12] as const;
@@ -65,24 +66,30 @@ export function AnalyticsView() {
   }, [locale, router]);
 
   // Month buckets for the selected window plus the preceding window (delta base).
+  // The two series come from different places on purpose: lessons are counted
+  // here from the tutor's own calendar, while revenue is what the server says
+  // was confirmed as paid — the calendar knows what a lesson costs, not whether
+  // the money for it ever arrived.
   const buckets = useMemo(() => {
     const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
     const out = Array.from({ length: months * 2 }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (months * 2 - 1 - i), 1);
-      return { date: d, key: `${d.getFullYear()}-${d.getMonth()}`, revenue: 0, lessons: 0 };
+      return { date: d, key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`, revenue: 0, lessons: 0 };
     });
     const map = new Map(out.map((b) => [b.key, b]));
     for (const l of lessons) {
       if (l.status !== 'completed') continue;
       const d = new Date(l.startsAt);
-      const b = map.get(`${d.getFullYear()}-${d.getMonth()}`);
-      if (b) {
-        b.revenue += l.priceCents;
-        b.lessons += 1;
-      }
+      const b = map.get(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
+      if (b) b.lessons += 1;
+    }
+    for (const m of overview?.revenueMonths ?? []) {
+      const b = map.get(m.month);
+      if (b) b.revenue += m.amountCents;
     }
     return out;
-  }, [lessons, months]);
+  }, [lessons, months, overview]);
 
   if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error' || !overview) return <div className="content"><p className="error">{tApp('loadError')}</p></div>;

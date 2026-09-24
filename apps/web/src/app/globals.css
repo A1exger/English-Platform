@@ -4215,6 +4215,16 @@ button.link-button:focus-visible {
 .course-cat-head > strong {
   font-size: 16px;
 }
+/* The delete × of an empty category, pushed to the far end of its header. */
+.cat-del {
+  margin-inline-start: auto;
+  padding: 2px 6px;
+  color: var(--mist);
+}
+.cat-del:hover,
+.cat-del:focus-visible {
+  color: var(--low-600);
+}
 .catalog-filters {
   display: flex;
   flex-wrap: wrap;

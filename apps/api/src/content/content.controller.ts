@@ -226,6 +226,14 @@ export class ContentController {
     return this.content.createCategory(dto);
   }
 
+  // An empty category only; the one with courses in it refuses, because the
+  // schema would cascade them away silently.
+  @Roles('tutor', 'admin')
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string) {
+    return this.content.deleteCategory(id);
+  }
+
   @Roles('tutor', 'admin')
   @Post('courses')
   createCourse(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateCourseDto) {

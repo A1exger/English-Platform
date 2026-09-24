@@ -1224,6 +1224,28 @@ export class ContentService {
     return this.prisma.category.create({ data: { title: dto.title, order: dto.order ?? 0 } });
   }
 
+  /**
+   * Remove a category — a section of the course list that turned out to be a
+   * mistake or a test, and otherwise sits there for good.
+   *
+   * Only an empty one. The schema cascades a category's courses away with it,
+   * so deleting a full category would take every lesson, page and task under it
+   * without ever saying so. Emptying it first is one extra step and makes that
+   * impossible.
+   */
+  async deleteCategory(id: string) {
+    const category = await this.prisma.category.findUnique({
+      where: { id },
+      include: { _count: { select: { courses: true } } },
+    });
+    if (!category) throw new NotFoundException('Category not found');
+    if (category._count.courses > 0) {
+      throw new BadRequestException('Category still has courses');
+    }
+    await this.prisma.category.delete({ where: { id } });
+    return { deleted: true };
+  }
+
   async createCourse(user: AuthenticatedUser, dto: CreateCourseDto) {
     // Append to the end of its category's manual order (ФТ-К104).
     const order = await this.prisma.course.count({ where: { categoryId: dto.categoryId } });

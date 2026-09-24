@@ -636,7 +636,9 @@
     "grammarExamples": "Examples (one per line)",
     "grammarExamplesHint": "She will call you tomorrow.",
     "taskInstruction": "Instruction",
-    "pageSources": "Sources (credits)"
+    "pageSources": "Sources (credits)",
+    "deleteCategory": "Delete category",
+    "categoryNotEmpty": "Delete or move its courses first."
   },
   "learn": {
     "title": "Lesson",
