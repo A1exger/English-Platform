@@ -471,19 +471,25 @@ function FragmentRow({
                   <Link className="link" href={`/lessons/${l.id}/room`} onClick={(e) => e.stopPropagation()}>
                     {joinLabel}
                   </Link>
-                  {canManage && (
-                    <button
-                      type="button"
-                      className="cal-del"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(l.id);
-                      }}
-                    >
-                      {delLabel}
-                    </button>
-                  )}
                 </div>
+                {/* Delete sits in the far corner from Join, as a small ×: the two
+                    were side by side, a couple of pixels apart, and one of them
+                    removes the lesson. The word is kept as the label so it is
+                    still announced and still shows on hover. */}
+                {canManage && (
+                  <button
+                    type="button"
+                    className="cal-del"
+                    aria-label={delLabel}
+                    title={delLabel}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(l.id);
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             ))}
             {slotKey === key && slotForm}

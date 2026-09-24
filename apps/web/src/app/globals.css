@@ -672,6 +672,8 @@ textarea {
      the smallest that still keeps the title off the edge. */
   padding: 3px 6px;
   font-size: 12px;
+  /* Anchors the delete × in the corner. */
+  position: relative;
 }
 .cal-event.status-cancelled {
   background: var(--mist);
@@ -688,6 +690,8 @@ textarea {
 .cal-event-title {
   font-weight: 600;
   font-family: var(--font-display);
+  /* Keeps the title clear of the × in the corner. */
+  padding-inline-end: 14px;
 }
 .cal-event-actions {
   display: flex;
@@ -714,20 +718,33 @@ textarea {
 .cal-event-actions .link:hover {
   background: var(--spark-700);
 }
-/* Delete is the one irreversible thing in the row, and reads like it. */
+/* Delete lives in the corner opposite Join, and stays quiet until it is aimed
+   at: the two used to sit side by side in a chip a few pixels tall, and only
+   one of them removes the lesson. It turns red on hover and focus, so what it
+   does is clear before the click — and the click itself is still undoable. */
 .cal-del {
-  background: var(--low);
+  position: absolute;
+  inset-block-start: 1px;
+  inset-inline-end: 1px;
+  inline-size: 18px;
+  block-size: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
   border: none;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 1px 6px;
+  color: currentColor;
+  /* Quiet, but not so quiet it cannot be found on the darker chips. */
+  opacity: 0.65;
+  font-size: 14px;
+  line-height: 1;
   border-radius: var(--r-pill);
-  line-height: 1.5;
-  white-space: nowrap;
 }
-.cal-del:hover {
-  background: var(--low-600);
+.cal-del:hover,
+.cal-del:focus-visible {
+  background: var(--low);
+  color: #fff;
+  opacity: 1;
 }
 
 /* ——— whiteboard ——— */
