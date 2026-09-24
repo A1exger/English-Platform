@@ -3466,6 +3466,14 @@ button.link-button:focus-visible {
 /* What the word bank already holds for what is being typed. Short, scrollable,
    and each row acts on itself — the point is to reuse an existing entry instead
    of filing the same word a second time with a different gloss. */
+/* "New topic" sits under the field, always visible: as a row at the bottom of
+   the dropdown it was below the fold once the bank had a few dozen topics. */
+.topic-picker-toggle {
+  align-self: flex-start;
+  font-size: 12px;
+  margin-block-start: -2px;
+}
+
 /* The topic picker inside the room's dictionary: the same control as the word
    bank's import, in a popover a third the width. */
 .room-tool-topic {

@@ -737,9 +737,10 @@
     "translateMissing": "ترجمة {count} الناقصة",
     "translated": "تمت ترجمة {count}؛ ولا يزال {remaining} ناقصًا.",
     "translatingNow": "يجري استكمال الترجمات الناقصة — أعد تحميل الصفحة بعد قليل.",
-    "newTopic": "موضوع جديد…",
+    "newTopic": "موضوع جديد",
     "noTopic": "بدون موضوع",
-    "topicName": "اسم الموضوع"
+    "topicName": "اسم الموضوع",
+    "topicFromList": "الاختيار من القائمة"
   },
   "enum": {
     "role": {

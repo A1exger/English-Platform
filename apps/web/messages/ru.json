@@ -737,9 +737,10 @@
     "translateMissing": "Перевести недостающие ({count})",
     "translated": "Переведено: {count}; осталось: {remaining}.",
     "translatingNow": "Недостающие переводы заполняются — обновите страницу через минуту.",
-    "newTopic": "Новая тема…",
+    "newTopic": "Новая тема",
     "noTopic": "Без темы",
-    "topicName": "Название темы"
+    "topicName": "Название темы",
+    "topicFromList": "Выбрать из списка"
   },
   "enum": {
     "role": {

@@ -737,9 +737,10 @@
     "translateMissing": "Translate the {count} missing",
     "translated": "Translated {count}; {remaining} still missing.",
     "translatingNow": "Missing translations are being filled in — reload in a moment.",
-    "newTopic": "New topic…",
+    "newTopic": "New topic",
     "noTopic": "No topic",
-    "topicName": "Topic name"
+    "topicName": "Topic name",
+    "topicFromList": "Choose from the list"
   },
   "enum": {
     "role": {

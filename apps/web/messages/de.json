@@ -737,9 +737,10 @@
     "translateMissing": "Die {count} fehlenden übersetzen",
     "translated": "{count} übersetzt; {remaining} fehlen noch.",
     "translatingNow": "Fehlende Übersetzungen werden ergänzt — laden Sie die Seite gleich neu.",
-    "newTopic": "Neues Thema…",
+    "newTopic": "Neues Thema",
     "noTopic": "Kein Thema",
-    "topicName": "Themenname"
+    "topicName": "Themenname",
+    "topicFromList": "Aus der Liste wählen"
   },
   "enum": {
     "role": {

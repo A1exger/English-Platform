@@ -737,9 +737,10 @@
     "translateMissing": "De {count} ontbrekende vertalen",
     "translated": "{count} vertaald; {remaining} ontbreken nog.",
     "translatingNow": "Ontbrekende vertalingen worden aangevuld — herlaad zo meteen.",
-    "newTopic": "Nieuw thema…",
+    "newTopic": "Nieuw thema",
     "noTopic": "Geen thema",
-    "topicName": "Naam van het thema"
+    "topicName": "Naam van het thema",
+    "topicFromList": "Kies uit de lijst"
   },
   "enum": {
     "role": {
