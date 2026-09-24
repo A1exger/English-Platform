@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useTransition } from 'react';
 import { usePathname, useRouter } from '@/i18n/routing';
 import { locales, type Locale } from '@/i18n/routing';
+import { Icon } from './Icon';
 
 const labels: Record<Locale, string> = {
   en: 'English',
@@ -26,7 +27,7 @@ export function LanguageSwitcher() {
   return (
     <label className="lang-switcher">
       <span className="sr-only">{t('language')}</span>
-      🌐
+      <Icon name="globe" />
       <select
         value={locale}
         disabled={isPending}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { Icon } from './Icon';
 
 export type Question =
   | { type: 'order'; title: string; prompt?: string | null; tokens: string[] }
@@ -52,7 +53,7 @@ export function ExerciseRenderer({ question, state, onChange, readOnly, review }
             </button>
           ))}
         </div>
-        {sol && <p className="muted ex-correct">✓ {sol.join(' ')}</p>}
+        {sol && <p className="muted ex-correct"><Icon name="check" size={13} /> {sol.join(' ')}</p>}
         <div className="ex-bank ex-row">
           {bank.map((w, i) => (
             <button key={i} type="button" className="chip chip-bank" draggable={!readOnly} onDragStart={(e) => e.dataTransfer.setData('text/plain', w)} onClick={() => place(w)}>
@@ -124,7 +125,7 @@ export function ExerciseRenderer({ question, state, onChange, readOnly, review }
                 <option key={r} value={r}>{r}</option>
               ))}
             </select>
-            {sol && norm(map[left]) !== norm(sol[left]) && <span className="muted ex-correct">✓ {sol[left]}</span>}
+            {sol && norm(map[left]) !== norm(sol[left]) && <span className="muted ex-correct"><Icon name="check" size={13} /> {sol[left]}</span>}
           </div>
         ))}
       </div>
@@ -150,7 +151,7 @@ export function ExerciseRenderer({ question, state, onChange, readOnly, review }
             {it}
           </button>
         ))}
-        {unplaced.length === 0 && <span className="muted ex-hint">✓</span>}
+        {unplaced.length === 0 && <span className="muted ex-hint"><Icon name="check" size={14} /></span>}
       </div>
       <div className="ex-cats">
         {question.categories.map((cat) => (

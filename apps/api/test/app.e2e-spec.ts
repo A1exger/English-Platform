@@ -230,6 +230,85 @@ describe('English-Platform API (e2e)', () => {
     expect(res.body.status).toBe('present');
   });
 
+  it('PATCH /lessons/:id attaches course material and GET returns it', async () => {
+    const patched = await api()
+      .patch(`/api/v1/lessons/${groupLessonId}`)
+      .set('Authorization', `Bearer ${tutorTokens.accessToken}`)
+      .send({ materialLessonId: 'course-lesson-1' })
+      .expect(200);
+    expect(patched.body.materialLessonId).toBe('course-lesson-1');
+
+    const got = await api()
+      .get(`/api/v1/lessons/${groupLessonId}`)
+      .set('Authorization', `Bearer ${tutorTokens.accessToken}`)
+      .expect(200);
+    expect(got.body.materialLessonId).toBe('course-lesson-1');
+
+    // An empty string detaches the material.
+    const detached = await api()
+      .patch(`/api/v1/lessons/${groupLessonId}`)
+      .set('Authorization', `Bearer ${tutorTokens.accessToken}`)
+      .send({ materialLessonId: '' })
+      .expect(200);
+    expect(detached.body.materialLessonId).toBeNull();
+  });
+
+  // Rescheduling: what the calendar's move form does. The lesson keeps its id,
+  // its participants and its material — only when it happens changes.
+  it('PATCH /lessons/:id moves the lesson to another day and time', async () => {
+    const auth2 = { Authorization: `Bearer ${tutorTokens.accessToken}` };
+    const before = await api().get(`/api/v1/lessons/${groupLessonId}`).set(auth2).expect(200);
+    const length =
+      new Date(before.body.endsAt).getTime() - new Date(before.body.startsAt).getTime();
+
+    const startsAt = new Date(new Date(before.body.startsAt).getTime() + 2 * 86400000 + 30 * 60000);
+    const endsAt = new Date(startsAt.getTime() + length);
+    const moved = await api()
+      .patch(`/api/v1/lessons/${groupLessonId}`)
+      .set(auth2)
+      .send({ startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() })
+      .expect(200);
+    expect(new Date(moved.body.startsAt).toISOString()).toBe(startsAt.toISOString());
+    expect(new Date(moved.body.endsAt).getTime() - new Date(moved.body.startsAt).getTime()).toBe(length);
+    expect(moved.body.id).toBe(groupLessonId);
+    expect(moved.body.participants.length).toBe(before.body.participants.length);
+
+    // It really moved — a re-read says the same, not just the write's echo.
+    const after = await api().get(`/api/v1/lessons/${groupLessonId}`).set(auth2).expect(200);
+    expect(new Date(after.body.startsAt).toISOString()).toBe(startsAt.toISOString());
+
+    // A lesson cannot end before it starts.
+    await api()
+      .patch(`/api/v1/lessons/${groupLessonId}`)
+      .set(auth2)
+      .send({ startsAt: endsAt.toISOString(), endsAt: startsAt.toISOString() })
+      .expect(400);
+
+    // Someone else's lesson is not yours to move.
+    const other = await api()
+      .post('/api/v1/auth/register')
+      .send({
+        email: 'other.tutor@test.com',
+        password: 'Password123!',
+        role: 'tutor',
+        firstName: 'O',
+        lastName: 'T',
+      })
+      .expect(201);
+    await api()
+      .patch(`/api/v1/lessons/${groupLessonId}`)
+      .set('Authorization', `Bearer ${other.body.accessToken}`)
+      .send({ startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() })
+      .expect(403);
+
+    // And a student cannot move one at all.
+    await api()
+      .patch(`/api/v1/lessons/${groupLessonId}`)
+      .set('Authorization', `Bearer ${studentTokens.accessToken}`)
+      .send({ startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() })
+      .expect(403);
+  });
+
   it('PATCH /lessons/:id as tutor cancels the lesson', async () => {
     const res = await api()
       .patch(`/api/v1/lessons/${groupLessonId}`)

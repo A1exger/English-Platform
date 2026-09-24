@@ -1,105 +1,225 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
-import { Link, useRouter } from '@/i18n/routing';
+import { Link } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { EmptyState } from './EmptyState';
+import { Skeleton } from './Skeleton';
+import { Icon } from './Icon';
 
 interface Lesson {
   id: string;
   title?: string | null;
   startsAt: string;
+  endsAt?: string | null;
   status: string;
+}
+// Teacher KPI trio from GET /analytics/overview.
+interface Overview {
+  activeStudents: number;
+  hoursThisWeek: number;
+  assignmentsGradedPct: number | null;
 }
 
 type State = 'loading' | 'unauth' | 'error' | 'ready';
 
-// Client component: reads the stored token and loads the signed-in user's real
-// profile + lessons from the API. Every label is localized; the lesson times
-// are formatted in the user's locale.
+// Broadsheet Overview. Teachers get a workload dashboard (stats + upcoming +
+// quick actions); students see only their upcoming lesson(s) — progress, courses
+// and homework each live on their own tab.
 export function DashboardData() {
   const tApp = useTranslations('app');
   const tDash = useTranslations('dashboard');
   const locale = useLocale();
   const format = useFormatter();
-  const router = useRouter();
 
   const [me, setMe] = useState<Me | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [hwPending, setHwPending] = useState(0);
+  const [overview, setOverview] = useState<Overview | null>(null);
   const [state, setState] = useState<State>('loading');
 
-  useEffect(() => {
-    const token = tokenStore.get();
-    if (!token) {
-      setState('unauth');
-      return;
-    }
-    (async () => {
+  const load = useCallback(
+    async (silent = false) => {
+      const token = tokenStore.get();
+      if (!token) {
+        if (!silent) setState('unauth');
+        return;
+      }
       try {
         const profile = await fetchMe(token, locale);
         setMe(profile);
         const list = await apiFetch<Lesson[]>('/lessons', { token, locale });
         setLessons(list);
-        if (profile.role === 'student') {
-          const hw = await apiFetch<{ status: string }[]>('/homework', { token, locale }).catch(() => []);
-          setHwPending(hw.filter((h) => h.status !== 'graded').length);
+        // Teacher/admin stat cards; students don't need them here.
+        if (profile.role !== 'student') {
+          setOverview(
+            await apiFetch<Overview>('/analytics/overview', { token, locale }).catch(() => null)
+          );
         }
         setState('ready');
       } catch (e) {
-        setState(e instanceof ApiError && e.status === 401 ? 'unauth' : 'error');
+        if (!silent) setState(e instanceof ApiError && e.status === 401 ? 'unauth' : 'error');
       }
-    })();
-  }, [locale]);
+    },
+    [locale]
+  );
 
-  if (state === 'loading') {
-    return <p className="note">…</p>;
-  }
-  if (state === 'unauth') {
+  useEffect(() => {
+    void load();
+    // Re-fetch when the tab/page regains focus so a lesson changed elsewhere
+    // (e.g. on the schedule) is reflected here without a hard reload.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void load(true);
+    };
+    const onFocus = () => void load(true);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [load]);
+
+  if (state === 'loading') return <div className="content"><Skeleton lines={4} /></div>;
+  if (state === 'unauth')
     return (
       <p className="note">
         {tApp('loginPrompt')} <Link href="/">→</Link>
       </p>
     );
-  }
-  if (state === 'error') {
-    return <p className="error">{tApp('loadError')}</p>;
+  if (state === 'error') return <p className="error">{tApp('loadError')}</p>;
+
+  const now = Date.now();
+  const HOUR = 60 * 60 * 1000;
+  // When a lesson is over. Older rows may not carry endsAt, so assume an hour.
+  const endOf = (l: Lesson) =>
+    l.endsAt ? new Date(l.endsAt).getTime() : new Date(l.startsAt).getTime() + HOUR;
+  // A lesson leaves the overview once it has actually ended (or was cancelled)
+  // — showing a finished lesson as "next" is worse than showing nothing.
+  const relevant = [...lessons]
+    .filter((l) => l.status !== 'cancelled' && l.status !== 'completed' && endOf(l) > now)
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+  // The soonest lesson still ahead, or the one running right now.
+  const next = relevant[0];
+  const upcoming = relevant;
+  const dt = (s: string) => format.dateTime(new Date(s), { dateStyle: 'medium', timeStyle: 'short' });
+  const greeting = tDash('greeting', { name: me?.firstName ?? '' });
+
+  // ——— Student: only the upcoming lesson(s) ———
+  if (me?.role === 'student') {
+    return (
+      <div className="content">
+        <div className="overview-head">
+          <h2>{greeting}</h2>
+        </div>
+        {next ? (
+          <div className="card hero-lesson">
+            <div className="hero-lesson-main">
+              <span className="hero-kicker">{tDash('nextLesson')}</span>
+              <strong className="hero-title">{next.title ?? next.id}</strong>
+              <span className="muted">{dt(next.startsAt)}</span>
+            </div>
+            <Link href={`/lessons/${next.id}/room`} className="cta-primary">
+              {tDash('joinLesson')}
+            </Link>
+          </div>
+        ) : (
+          <div className="card">
+            <EmptyState title={tDash('noLessons')} />
+          </div>
+        )}
+        {upcoming.length > 1 && (
+          <div className="card">
+            <div className="card-kicker">{tDash('upcomingLessons')}</div>
+            <ul className="lesson-list">
+              {upcoming.slice(1, 5).map((l) => (
+                <li key={l.id}>
+                  <span>{l.title ?? l.id}</span>
+                  <span className="muted">{dt(l.startsAt)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
   }
 
+  // ——— Teacher / admin: stats + upcoming + quick actions ———
+  const pct = overview?.assignmentsGradedPct;
   return (
     <div className="content">
-      <h2>{tDash('greeting', { name: me?.firstName ?? '' })}</h2>
-
-      {hwPending > 0 && (
-        <Link href="/homework" className="banner">
-          🔔 {tDash('homeworkPending', { count: hwPending })}
+      <div className="overview-head">
+        <h2>{greeting}</h2>
+        <Link href="/schedule" className="cta-primary">
+          <Icon name="calendar-plus" size={16} /> {tDash('bookLesson')}
         </Link>
-      )}
+      </div>
 
-      <div className="card">
-        <strong>{tApp('upcomingLessons')}</strong>
-        {lessons.length === 0 ? (
-          <p className="note">{tApp('noLessons')}</p>
-        ) : (
+      <div className="stat-grid">
+        <div className="card stat-card">
+          <Icon name="users" size={26} className="stat-ic" />
+          <div>
+            <div className="stat-value">{overview?.activeStudents ?? 0}</div>
+            <div className="stat-label">{tDash('activeStudents')}</div>
+          </div>
+        </div>
+        <div className="card stat-card">
+          <Icon name="clock" size={26} className="stat-ic" />
+          <div>
+            <div className="stat-value">{overview?.hoursThisWeek ?? 0}h</div>
+            <div className="stat-label">{tDash('thisWeek')}</div>
+          </div>
+        </div>
+        <div className="card stat-card">
+          <Icon name="check-circle" size={26} className="stat-ic alt" />
+          <div>
+            <div className="stat-value">{pct == null ? '—' : `${pct}%`}</div>
+            <div className="stat-label">{tDash('graded')}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card-kicker">{tDash('upcomingLessons')}</div>
+      {upcoming.length === 0 ? (
+        <div className="card upcoming-empty" style={{ marginBlockEnd: 30 }}>
+          <Icon name="calendar" size={20} />
+          <span>{tDash('calendarClear')}</span>
+        </div>
+      ) : (
+        <div className="card" style={{ marginBlockEnd: 30 }}>
           <ul className="lesson-list">
-            {lessons.map((l) => (
+            {upcoming.slice(0, 5).map((l) => (
               <li key={l.id}>
                 <span>{l.title ?? l.id}</span>
-                <span className="muted">
-                  {format.dateTime(new Date(l.startsAt), {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  })}{' '}
-                  · {l.status}
+                <span className="lesson-list-side">
+                  <span className="muted">{dt(l.startsAt)}</span>
+                  <Link href={`/lessons/${l.id}/room`} className="link">
+                    {tDash('joinLesson')}
+                  </Link>
                 </span>
               </li>
             ))}
           </ul>
-        )}
-      </div>
+        </div>
+      )}
 
-      <p className="note">{tDash('everyoneOwnLanguage')}</p>
+      <div className="card-kicker">{tDash('quickActions')}</div>
+      <div className="qa-grid">
+        <Link href="/assignments" className="card qa-card">
+          <Icon name="clipboard" size={22} className="qa-ic" />
+          <span className="qa-label">{tDash('reviewAssignments')}</span>
+        </Link>
+        <Link href="/exercises" className="card qa-card">
+          <Icon name="edit" size={22} className="qa-ic" />
+          <span className="qa-label">{tDash('buildExercise')}</span>
+        </Link>
+        <Link href="/analytics" className="card qa-card">
+          <Icon name="chart" size={22} className="qa-ic" />
+          <span className="qa-label">{tDash('viewAnalytics')}</span>
+        </Link>
+      </div>
     </div>
   );
 }

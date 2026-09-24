@@ -104,18 +104,47 @@ export class BillingController {
     return this.billing.submitTransferReference(user, id, dto);
   }
 
+  // The tutor receives the money, so the tutor confirms it (scoped to their own
+  // students in the service); admins can still confirm anything.
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('tutor', 'admin')
   @Get('transfers/pending')
-  pendingTransfers() {
-    return this.billing.listPendingTransfers();
+  pendingTransfers(@CurrentUser() user: AuthenticatedUser) {
+    return this.billing.listPendingTransfers(user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('tutor', 'admin')
   @Post('transfer/:id/confirm')
-  confirmTransfer(@Param('id') id: string) {
-    return this.billing.confirmTransfer(id);
+  confirmTransfer(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    return this.billing.confirmTransfer(user, id);
+  }
+
+  // The money did not arrive: the request leaves the queue and the student is
+  // told. Same scope as confirming — it is the tutor's own students.
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('tutor', 'admin')
+  @Post('transfer/:id/reject')
+  rejectTransfer(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    return this.billing.rejectTransfer(user, id);
+  }
+
+  // Remove the request entirely (a duplicate, a test). Refused for a confirmed
+  // transfer, whose credit refers back to it.
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('tutor', 'admin')
+  @Delete('transfer/:id')
+  deleteTransfer(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    return this.billing.deleteTransfer(user, id);
   }
 
   /**
