@@ -9,6 +9,7 @@ import { Skeleton } from './Skeleton';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
 import { Icon } from './Icon';
+import { TopicPicker } from './TopicPicker';
 
 interface BankEntry {
   id: string;
@@ -31,12 +32,6 @@ interface Sense {
   example: string | null;
   translation: string | null;
 }
-
-/**
- * Sentinel for the "new topic" row of the topic picker. A value no topic can
- * have, because a topic is trimmed text and this one is bracketed.
- */
-const NEW_TOPIC = '<new>';
 
 /**
  * The shared word bank: one pool a tutor curates, that every student copies from
@@ -69,12 +64,8 @@ export function WordBankView() {
   // Import drawer
   const [importOpen, setImportOpen] = useState(false);
   const [text, setText] = useState('');
-  // The topic to import into. A tutor picks one that already exists — typing it
-  // again by hand was how "Business" and "business" ended up as two topics —
-  // and can still start a new one, which is the only way a first topic appears.
+  // The topic to import into (see TopicPicker: an existing one, or a new name).
   const [importTopic, setImportTopic] = useState('');
-  const [newTopic, setNewTopic] = useState('');
-  const [topicMode, setTopicMode] = useState<'existing' | 'new'>('existing');
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [seedMsg, setSeedMsg] = useState<string | null>(null);
   // Words still missing a language, and the result of filling them.
@@ -174,7 +165,7 @@ export function WordBankView() {
   async function runImport() {
     const token = tokenStore.get();
     if (!token || !text.trim()) return;
-    const chosen = (topicMode === 'new' ? newTopic : importTopic).trim();
+    const chosen = importTopic.trim();
     setBusy(true);
     setImportMsg(null);
     try {
@@ -190,13 +181,9 @@ export function WordBankView() {
           .join(' ')
       );
       setText('');
-      // A topic just created is now one that exists: keep it selected, so the
-      // next paste goes to the same place without typing it again.
-      if (chosen) {
-        setImportTopic(chosen);
-        setNewTopic('');
-        setTopicMode('existing');
-      }
+      // A topic just created is now one that exists: `load()` brings it back in
+      // `topics`, and it stays selected, so the next paste goes to the same
+      // place without typing it again.
       await load();
     } catch {
       setImportMsg(tApp('loadError'));
@@ -418,37 +405,7 @@ export function WordBankView() {
 
       <Drawer open={importOpen} onClose={() => setImportOpen(false)} title={t('import')}>
         <div className="assign-form">
-          <label>
-            {t('topic')}
-            <select
-              value={topicMode === 'new' ? NEW_TOPIC : importTopic}
-              onChange={(e) => {
-                if (e.target.value === NEW_TOPIC) {
-                  setTopicMode('new');
-                  return;
-                }
-                setTopicMode('existing');
-                setImportTopic(e.target.value);
-              }}
-            >
-              <option value="">{t('noTopic')}</option>
-              {topics.map((tp) => (
-                <option key={tp} value={tp}>{tp}</option>
-              ))}
-              <option value={NEW_TOPIC}>{t('newTopic')}</option>
-            </select>
-          </label>
-          {topicMode === 'new' && (
-            <label>
-              {t('topicName')}
-              <input
-                autoFocus
-                value={newTopic}
-                placeholder={t('topicHint')}
-                onChange={(e) => setNewTopic(e.target.value)}
-              />
-            </label>
-          )}
+          <TopicPicker topics={topics} value={importTopic} onChange={setImportTopic} disabled={busy} />
           <label>
             {t('importWords')}
             <textarea

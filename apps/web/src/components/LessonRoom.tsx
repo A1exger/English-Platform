@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { apiFetch } from '@/lib/api';
@@ -13,6 +13,7 @@ import { useLiveLesson } from './useLiveLesson';
 import { StageBody } from './LiveMaterial';
 import { LessonPlanPanel } from './LessonPlanPanel';
 import { AnswerGauge } from './AnswerGauge';
+import { TopicPicker } from './TopicPicker';
 import { useBoardSocket } from '@/lib/board';
 import type { Socket } from 'socket.io-client';
 
@@ -61,6 +62,10 @@ function RoomDictionary({
   const [searching, setSearching] = useState(false);
   const [target, setTarget] = useState('');
   const [students, setStudents] = useState<{ studentProfileId: string; name: string }[]>([]);
+  // Which shelf of the bank a brand-new word goes on. Words added here used to
+  // land with no topic at all, so they stayed unfilterable for good.
+  const [topics, setTopics] = useState<string[]>([]);
+  const [topic, setTopic] = useState('');
 
   // Name the students this lesson has, so "assign" says who it goes to.
   useEffect(() => {
@@ -75,6 +80,19 @@ function RoomDictionary({
       })
       .catch(() => undefined);
   }, [isTeacher, studentIds, locale]);
+
+  // The bank's topics, for filing a new word. Only a teacher writes to the bank.
+  const loadTopics = useCallback(() => {
+    const token = tokenStore.get();
+    if (!token) return;
+    apiFetch<string[]>('/content/word-bank/topics', { token, locale })
+      .then(setTopics)
+      .catch(() => undefined);
+  }, [locale]);
+
+  useEffect(() => {
+    if (isTeacher) loadTopics();
+  }, [isTeacher, loadTopics]);
 
   // Search the shared bank as the word is typed. Debounced, because this fires
   // on every keystroke and the bank holds a few thousand words.
@@ -156,8 +174,14 @@ function RoomDictionary({
         token,
         locale,
         // The bank's import format is one "word = translation" per line.
-        body: { text: `${word.trim()}${translation.trim() ? ` = ${translation.trim()}` : ''}` }
+        body: {
+          text: `${word.trim()}${translation.trim() ? ` = ${translation.trim()}` : ''}`,
+          topic: topic.trim() || undefined
+        }
       }).catch(() => undefined);
+      // A topic typed here now exists: pick it up so the picker offers it, and
+      // the next word of the lesson goes to the same shelf.
+      if (topic.trim()) loadTopics();
     }
     await take(word, translation);
   }
@@ -205,6 +229,13 @@ function RoomDictionary({
           {tr('translation')}
           <input value={translation} onChange={(e) => setTranslation(e.target.value)} />
         </label>
+        {/* Only a teacher writes to the shared bank, so only a teacher picks
+            the shelf. The same picker as the word bank's own import. */}
+        {isTeacher && (
+          <div className="room-tool-field room-tool-topic">
+            <TopicPicker topics={topics} value={topic} onChange={setTopic} disabled={busy} />
+          </div>
+        )}
         <button type="button" disabled={busy || !word.trim() || (isTeacher && !target)} onClick={addNew}>
           {done || (isTeacher ? tr('assignNew') : tr('addWord'))}
         </button>

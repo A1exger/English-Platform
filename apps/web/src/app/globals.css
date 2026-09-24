@@ -3466,6 +3466,19 @@ button.link-button:focus-visible {
 /* What the word bank already holds for what is being typed. Short, scrollable,
    and each row acts on itself — the point is to reuse an existing entry instead
    of filing the same word a second time with a different gloss. */
+/* The topic picker inside the room's dictionary: the same control as the word
+   bank's import, in a popover a third the width. */
+.room-tool-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.room-tool-topic label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
 .room-dict-hits {
   list-style: none;
   margin: 0;
