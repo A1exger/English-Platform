@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { ApiError, apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
@@ -14,6 +14,8 @@ interface Entry {
   id: string;
   word: string;
   translation: string | null;
+  /** The bank's shelf this word sits on, if the bank has the word at all. */
+  topic: string | null;
   repetitions: number;
   due: boolean;
   nextReviewAt: string | null;
@@ -38,6 +40,9 @@ export function DictionaryView() {
   const [idx, setIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [dueOnly, setDueOnly] = useState(false);
+  // Learning one shelf at a time: a student revising "Business" before a lesson
+  // does not want the whole dictionary in the deck.
+  const [topic, setTopic] = useState('');
   // Manual "add a word" — the dictionary also fills from lesson wordlists, but a
   // student can type any word + translation here to build vocabulary directly.
   const [newWord, setNewWord] = useState('');
@@ -92,12 +97,25 @@ export function DictionaryView() {
     [newWord, newTr, adding, locale, load]
   );
 
-  const dueCount = entries.filter((e) => e.due).length;
-  const learnedCount = entries.filter((e) => e.repetitions >= LEARNED_AT).length;
-  const learnedPct = entries.length ? Math.round((learnedCount / entries.length) * 100) : 0;
+  // The topics a student actually has — offering every topic in the bank would
+  // mostly list shelves their dictionary has nothing on.
+  const topics = useMemo(
+    () => [...new Set(entries.map((e) => e.topic).filter((x): x is string => !!x))].sort(),
+    [entries]
+  );
+  // Everything below the filter — counts, the ring and the deck — is about the
+  // words on screen, so "Train · 7" drills exactly those seven.
+  const selected = useMemo(
+    () => (topic ? entries.filter((e) => e.topic === topic) : entries),
+    [entries, topic]
+  );
+
+  const dueCount = selected.filter((e) => e.due).length;
+  const learnedCount = selected.filter((e) => e.repetitions >= LEARNED_AT).length;
+  const learnedPct = selected.length ? Math.round((learnedCount / selected.length) * 100) : 0;
 
   function startTraining() {
-    setQueue(entries.filter((e) => e.due));
+    setQueue(selected.filter((e) => e.due));
     setIdx(0);
     setRevealed(false);
     setMode('train');
@@ -187,7 +205,7 @@ export function DictionaryView() {
   }
 
   // Next review date when nothing is due — the "Train" button used to just sit disabled.
-  const upcoming = entries
+  const upcoming = selected
     .map((e) => e.nextReviewAt)
     .filter((d): d is string => !!d)
     .map((d) => new Date(d))
@@ -199,7 +217,7 @@ export function DictionaryView() {
       <div className="row-between dict-head">
         <h2>{t('title')}</h2>
         <div className="dict-head-side">
-          {entries.length > 0 && <ScoreRing value={learnedPct} label={t('learned')} size={56} stroke={4} />}
+          {selected.length > 0 && <ScoreRing value={learnedPct} label={t('learned')} size={56} stroke={4} />}
           {dueCount > 0 ? (
             <button type="button" onClick={startTraining}>{t('train')} · {dueCount}</button>
           ) : (
@@ -235,15 +253,30 @@ export function DictionaryView() {
       <DataList
         items={entries}
         getKey={(e) => e.id}
-        searchText={(e) => `${e.word} ${e.translation ?? ''}`}
+        searchText={(e) => `${e.word} ${e.translation ?? ''} ${e.topic ?? ''}`}
         listClassName="dict-list"
         rowClassName="dict-row"
-        filterFn={dueOnly ? (e) => e.due : undefined}
+        filterFn={(e) => (dueOnly ? e.due : true) && (topic ? e.topic === topic : true)}
         toolbar={
-          <label className="check dict-due-filter">
-            <input type="checkbox" checked={dueOnly} onChange={(e) => setDueOnly(e.target.checked)} />
-            {t('due')}
-          </label>
+          <>
+            {topics.length > 0 && (
+              <select
+                className="data-filter"
+                aria-label={t('topic')}
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+              >
+                <option value="">{t('allTopics')}</option>
+                {topics.map((tp) => (
+                  <option key={tp} value={tp}>{tp}</option>
+                ))}
+              </select>
+            )}
+            <label className="check dict-due-filter">
+              <input type="checkbox" checked={dueOnly} onChange={(e) => setDueOnly(e.target.checked)} />
+              {t('due')}
+            </label>
+          </>
         }
         empty={{ title: t('empty') }}
         renderRow={(e) => (
@@ -253,6 +286,7 @@ export function DictionaryView() {
               {e.translation ? <span className="muted"> — {e.translation}</span> : null}
             </span>
             <span className="dict-meta">
+              {e.topic ? <span className="chip">{e.topic}</span> : null}
               {e.due ? <span className="chip status-in_progress">{t('due')}</span> : null}
               <span className="muted mono-num dict-reps" title={t('repsHint')}>
                 <Icon name="star" size={12} /> {e.repetitions}

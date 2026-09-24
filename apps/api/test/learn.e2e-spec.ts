@@ -149,4 +149,40 @@ describe('Phase 3: task runtime + preparation (e2e)', () => {
     expect(list.body.length).toBe(1);
     expect(list.body[0].translation).toBe('ездить на работу');
   });
+
+  // A student sees which shelf of the bank each of their words came from, so
+  // they can revise one topic at a time. The topic is READ from the bank rather
+  // than copied into the entry, which is what makes the next three assertions
+  // hold: a word the bank does not have has none, re-filing a word in the bank
+  // moves it here too, and none of it needs a backfill.
+  it('dictionary: each word carries the topic the bank files it under', async () => {
+    const authS = auth(student.accessToken);
+    await api()
+      .post('/api/v1/content/word-bank/import')
+      .set(auth(tutor.accessToken))
+      .send({ text: 'invoice = счёт\nrefund = возврат', topic: 'Business' })
+      .expect(201);
+
+    // Added by hand, spelled with a capital: the same word as the bank's.
+    await api().post('/api/v1/content/dictionary').set(authS).send({ word: 'Invoice' }).expect(201);
+    // And one the bank has never heard of.
+    await api().post('/api/v1/content/dictionary').set(authS).send({ word: 'zzz-own-word' }).expect(201);
+
+    const list = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
+    const topicOf = (w: string) =>
+      list.body.find((e: { word: string }) => e.word === w)?.topic;
+    expect(topicOf('Invoice')).toBe('Business');
+    expect(topicOf('zzz-own-word')).toBeNull();
+    // A word added before any of this still has no topic of its own to carry.
+    expect(topicOf('commute')).toBeNull();
+
+    // The tutor re-files the word; the student's dictionary follows.
+    await api()
+      .post('/api/v1/content/word-bank/import')
+      .set(auth(tutor.accessToken))
+      .send({ text: 'invoice = счёт', topic: 'Money & shopping' })
+      .expect(201);
+    const after = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
+    expect(after.body.find((e: { word: string }) => e.word === 'Invoice').topic).toBe('Money & shopping');
+  });
 });

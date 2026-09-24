@@ -1071,10 +1071,39 @@ export class ContentService {
       where: { studentProfileId: student.id },
       orderBy: { createdAt: 'desc' },
     });
+
+    // The topic a word belongs to is read from the bank rather than copied into
+    // the entry. It is the tutor's own shelving, so a word re-filed under a
+    // better topic follows here too, every dictionary that already exists gets
+    // its topics without a backfill, and there is one place where a topic is
+    // decided. A word the bank does not have — one a student typed themselves —
+    // simply has none. Matched case-insensitively, because "Deadline" in a
+    // dictionary and "deadline" in the bank are the same word.
+    // `contains`/`in` are case-sensitive on Postgres and `in` is on SQLite too,
+    // so the needle is offered in the casings words are actually written in —
+    // the same trick the bank's own search uses.
+    const wanted = new Set<string>();
+    for (const e of entries) {
+      const w = e.word.trim();
+      wanted.add(w);
+      wanted.add(w.toLowerCase());
+      wanted.add(w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+    }
+    const banked = wanted.size
+      ? await this.prisma.wordBankEntry.findMany({
+          where: { word: { in: [...wanted] } },
+          select: { word: true, topic: true },
+        })
+      : [];
+    const topicOf = new Map(
+      banked.filter((b) => b.topic).map((b) => [b.word.trim().toLowerCase(), b.topic]),
+    );
+
     const now = new Date();
     // Enrich with spaced-repetition scheduling for the trainer (Phase 6).
     return entries.map((e) => ({
       ...e,
+      topic: topicOf.get(e.word.trim().toLowerCase()) ?? null,
       due: isDue(e.repetitions, e.lastReviewedAt, now),
       nextReviewAt: nextReviewAt(e.repetitions, e.lastReviewedAt),
     }));
