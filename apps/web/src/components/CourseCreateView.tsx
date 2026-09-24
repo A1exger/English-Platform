@@ -79,6 +79,7 @@ export function CourseCreateView() {
     try {
       const fd = new FormData();
       fd.append('file', file);
+      fd.append('scope', 'inline');
       const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token, locale });
       setCourse((prev) => ({ ...prev, coverUrl: res.url }));
     } catch {

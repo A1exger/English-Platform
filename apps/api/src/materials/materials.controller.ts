@@ -65,8 +65,12 @@ export class MaterialsController {
     @CurrentUser() user: AuthenticatedUser,
     @UploadedFile() file: Express.Multer.File,
     @Body('title') title?: string,
+    // "inline" for a file that lives inside course content — a page picture, a
+    // course cover, an exercise image. Those are stored and owned like any
+    // other upload, but they are not items in the Materials library.
+    @Body('scope') scope?: string,
   ) {
-    return this.materials.createUploaded(user, file, title);
+    return this.materials.createUploaded(user, file, title, scope);
   }
 
   @Get()

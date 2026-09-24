@@ -205,6 +205,13 @@ model Material {
   title       String
   url         String?
   language    String?
+  // scope: "library" -> a teaching material, listed in Materials
+  //        "inline"  -> a file embedded in course content (a page picture, a
+  //                     course cover, an exercise image). The row exists so the
+  //                     upload still has an owner and a record, but the library
+  //                     is a curated shelf and a lesson's illustrations are not
+  //                     items on it.
+  scope       String   @default("library")
   createdAt   DateTime @default(now())
 
   @@index([ownerUserId])

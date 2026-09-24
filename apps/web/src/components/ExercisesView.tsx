@@ -218,6 +218,7 @@ export function ExercisesView() {
     if (!token) return;
     const fd = new FormData();
     fd.append('file', file);
+    fd.append('scope', 'inline');
     const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token, locale }).catch(() => null);
     if (res?.url) setImagePairs((prev) => prev.map((x, j) => (j === index ? { ...x, right: res.url } : x)));
   }

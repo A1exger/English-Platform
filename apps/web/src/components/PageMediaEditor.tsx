@@ -121,6 +121,7 @@ export function PageMediaEditor({
     try {
       const fd = new FormData();
       fd.append('file', file);
+      fd.append('scope', 'inline');
       const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token, locale });
       await apiFetch(`/content/pages/${pageId}/media`, {
         method: 'POST',
@@ -178,6 +179,7 @@ export function PageMediaEditor({
     if (!token) return;
     const fd = new FormData();
     fd.append('file', file);
+    fd.append('scope', 'inline');
     const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token, locale }).catch(() => null);
     if (res?.url) patch(id, { url: res.url });
   }
