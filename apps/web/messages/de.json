@@ -736,7 +736,10 @@
     "seeded": "{count} Wörter und {senses} Bedeutungen hinzugefügt; {relanguaged} ältere Wörter haben jetzt alle Sprachen.",
     "translateMissing": "Die {count} fehlenden übersetzen",
     "translated": "{count} übersetzt; {remaining} fehlen noch.",
-    "translatingNow": "Fehlende Übersetzungen werden ergänzt — laden Sie die Seite gleich neu."
+    "translatingNow": "Fehlende Übersetzungen werden ergänzt — laden Sie die Seite gleich neu.",
+    "newTopic": "Neues Thema…",
+    "noTopic": "Kein Thema",
+    "topicName": "Themenname"
   },
   "enum": {
     "role": {

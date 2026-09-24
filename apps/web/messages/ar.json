@@ -736,7 +736,10 @@
     "seeded": "تمت إضافة {count} كلمة و{senses} معنى؛ و{relanguaged} كلمة قديمة أصبحت بجميع اللغات.",
     "translateMissing": "ترجمة {count} الناقصة",
     "translated": "تمت ترجمة {count}؛ ولا يزال {remaining} ناقصًا.",
-    "translatingNow": "يجري استكمال الترجمات الناقصة — أعد تحميل الصفحة بعد قليل."
+    "translatingNow": "يجري استكمال الترجمات الناقصة — أعد تحميل الصفحة بعد قليل.",
+    "newTopic": "موضوع جديد…",
+    "noTopic": "بدون موضوع",
+    "topicName": "اسم الموضوع"
   },
   "enum": {
     "role": {

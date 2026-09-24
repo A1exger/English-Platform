@@ -736,7 +736,10 @@
     "seeded": "{count} woorden en {senses} betekenissen toegevoegd; {relanguaged} oudere woorden hebben nu alle talen.",
     "translateMissing": "De {count} ontbrekende vertalen",
     "translated": "{count} vertaald; {remaining} ontbreken nog.",
-    "translatingNow": "Ontbrekende vertalingen worden aangevuld — herlaad zo meteen."
+    "translatingNow": "Ontbrekende vertalingen worden aangevuld — herlaad zo meteen.",
+    "newTopic": "Nieuw thema…",
+    "noTopic": "Geen thema",
+    "topicName": "Naam van het thema"
   },
   "enum": {
     "role": {

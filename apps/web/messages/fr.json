@@ -736,7 +736,10 @@
     "seeded": "{count} mots et {senses} sens ajoutés ; {relanguaged} anciens mots ont maintenant toutes les langues.",
     "translateMissing": "Traduire les {count} manquants",
     "translated": "{count} traduits ; {remaining} manquent encore.",
-    "translatingNow": "Les traductions manquantes sont en cours — rechargez dans un instant."
+    "translatingNow": "Les traductions manquantes sont en cours — rechargez dans un instant.",
+    "newTopic": "Nouveau thème…",
+    "noTopic": "Sans thème",
+    "topicName": "Nom du thème"
   },
   "enum": {
     "role": {

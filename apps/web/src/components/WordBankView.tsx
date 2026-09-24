@@ -33,6 +33,12 @@ interface Sense {
 }
 
 /**
+ * Sentinel for the "new topic" row of the topic picker. A value no topic can
+ * have, because a topic is trimmed text and this one is bracketed.
+ */
+const NEW_TOPIC = '<new>';
+
+/**
  * The shared word bank: one pool a tutor curates, that every student copies from
  * into their own dictionary. Same screen for both roles — a tutor sees import
  * and delete, a student sees "add to my dictionary".
@@ -63,7 +69,12 @@ export function WordBankView() {
   // Import drawer
   const [importOpen, setImportOpen] = useState(false);
   const [text, setText] = useState('');
+  // The topic to import into. A tutor picks one that already exists — typing it
+  // again by hand was how "Business" and "business" ended up as two topics —
+  // and can still start a new one, which is the only way a first topic appears.
   const [importTopic, setImportTopic] = useState('');
+  const [newTopic, setNewTopic] = useState('');
+  const [topicMode, setTopicMode] = useState<'existing' | 'new'>('existing');
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [seedMsg, setSeedMsg] = useState<string | null>(null);
   // Words still missing a language, and the result of filling them.
@@ -163,12 +174,13 @@ export function WordBankView() {
   async function runImport() {
     const token = tokenStore.get();
     if (!token || !text.trim()) return;
+    const chosen = (topicMode === 'new' ? newTopic : importTopic).trim();
     setBusy(true);
     setImportMsg(null);
     try {
       const r = await apiFetch<{ imported: number; translating?: boolean }>(
         '/content/word-bank/import',
-        { method: 'POST', token, locale, body: { text, topic: importTopic.trim() || undefined } }
+        { method: 'POST', token, locale, body: { text, topic: chosen || undefined } }
       );
       // Translation runs in the background, so say it is happening — otherwise
       // the words appear blank and look broken until it finishes.
@@ -178,6 +190,13 @@ export function WordBankView() {
           .join(' ')
       );
       setText('');
+      // A topic just created is now one that exists: keep it selected, so the
+      // next paste goes to the same place without typing it again.
+      if (chosen) {
+        setImportTopic(chosen);
+        setNewTopic('');
+        setTopicMode('existing');
+      }
       await load();
     } catch {
       setImportMsg(tApp('loadError'));
@@ -401,12 +420,35 @@ export function WordBankView() {
         <div className="assign-form">
           <label>
             {t('topic')}
-            <input
-              value={importTopic}
-              placeholder={t('topicHint')}
-              onChange={(e) => setImportTopic(e.target.value)}
-            />
+            <select
+              value={topicMode === 'new' ? NEW_TOPIC : importTopic}
+              onChange={(e) => {
+                if (e.target.value === NEW_TOPIC) {
+                  setTopicMode('new');
+                  return;
+                }
+                setTopicMode('existing');
+                setImportTopic(e.target.value);
+              }}
+            >
+              <option value="">{t('noTopic')}</option>
+              {topics.map((tp) => (
+                <option key={tp} value={tp}>{tp}</option>
+              ))}
+              <option value={NEW_TOPIC}>{t('newTopic')}</option>
+            </select>
           </label>
+          {topicMode === 'new' && (
+            <label>
+              {t('topicName')}
+              <input
+                autoFocus
+                value={newTopic}
+                placeholder={t('topicHint')}
+                onChange={(e) => setNewTopic(e.target.value)}
+              />
+            </label>
+          )}
           <label>
             {t('importWords')}
             <textarea
