@@ -182,7 +182,14 @@
     "material": "المادة",
     "noMaterial": "بدون مادة",
     "level": "المستوى",
-    "lesson": "الدرس"
+    "lesson": "الدرس",
+    "edit": "نقل الدرس",
+    "move": "نقل الدرس",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "save": "نقل",
+    "saving": "جارٍ النقل…",
+    "keepsLength": "تبقى المدة {minutes} دقيقة."
   },
   "billing": {
     "title": "الفواتير",

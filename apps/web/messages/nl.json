@@ -182,7 +182,14 @@
     "material": "Materiaal",
     "noMaterial": "Geen materiaal",
     "level": "Niveau",
-    "lesson": "Les"
+    "lesson": "Les",
+    "edit": "Les verplaatsen",
+    "move": "Les verplaatsen",
+    "date": "Datum",
+    "time": "Tijd",
+    "save": "Verplaatsen",
+    "saving": "Verplaatsen…",
+    "keepsLength": "Duurt nog steeds {minutes} minuten."
   },
   "billing": {
     "title": "Facturatie",

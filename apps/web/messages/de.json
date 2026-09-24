@@ -182,7 +182,14 @@
     "material": "Material",
     "noMaterial": "Kein Material",
     "level": "Niveau",
-    "lesson": "Lektion"
+    "lesson": "Lektion",
+    "edit": "Stunde verschieben",
+    "move": "Stunde verschieben",
+    "date": "Datum",
+    "time": "Uhrzeit",
+    "save": "Verschieben",
+    "saving": "Wird verschoben…",
+    "keepsLength": "Dauer bleibt {minutes} Minuten."
   },
   "billing": {
     "title": "Abrechnung",

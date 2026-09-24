@@ -182,7 +182,14 @@
     "material": "Matériel",
     "noMaterial": "Aucun matériel",
     "level": "Niveau",
-    "lesson": "Leçon"
+    "lesson": "Leçon",
+    "edit": "Déplacer le cours",
+    "move": "Déplacer le cours",
+    "date": "Date",
+    "time": "Heure",
+    "save": "Déplacer",
+    "saving": "Déplacement…",
+    "keepsLength": "La durée reste de {minutes} minutes."
   },
   "billing": {
     "title": "Facturation",

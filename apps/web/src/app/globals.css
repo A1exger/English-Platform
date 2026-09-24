@@ -718,6 +718,35 @@ textarea {
 .cal-event-actions .link:hover {
   background: var(--spark-700);
 }
+/* Move sits next to Join: both are everyday, both are safe, and a lesson that
+   needs a new day is asked for far more often than one that needs deleting. */
+.cal-edit {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 18px;
+  block-size: 18px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.22);
+  border: none;
+  color: currentColor;
+  border-radius: var(--r-pill);
+}
+.cal-edit svg {
+  inline-size: 11px;
+  block-size: 11px;
+}
+.cal-edit:hover,
+.cal-edit:focus-visible {
+  background: rgba(255, 255, 255, 0.4);
+}
+/* The completed chip is light, so a white wash would vanish on it. */
+.cal-event.status-completed .cal-edit {
+  background: rgba(0, 0, 0, 0.08);
+}
+.cal-event.status-completed .cal-edit:hover,
+.cal-event.status-completed .cal-edit:focus-visible {
+  background: rgba(0, 0, 0, 0.16);
+}
 /* Delete lives in the corner opposite Join, and stays quiet until it is aimed
    at: the two used to sit side by side in a chip a few pixels tall, and only
    one of them removes the lesson. It turns red on hover and focus, so what it

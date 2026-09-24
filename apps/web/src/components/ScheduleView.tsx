@@ -77,10 +77,11 @@ const SLOT_MINUTES = 60;
 export function ScheduleView() {
   const t = useTranslations('schedule');
   const tApp = useTranslations('app');
+  const tCommon = useTranslations('common');
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
-  const { showUndo } = useToast();
+  const { show, showUndo } = useToast();
 
   // The effective display zone is resolved app-wide by AppIntlProvider (APP_TIMEZONE
   // → the user's Settings zone → browser). Read it via next-intl so calendar math
@@ -97,6 +98,12 @@ export function ScheduleView() {
   const [anchorDay, setAnchorDay] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [slot, setSlot] = useState<{ date: Date; key: string } | null>(null);
+  // The lesson being moved. `date`/`time` are civil fields in the display zone,
+  // not instants: what the tutor reads on the grid is what they edit. The
+  // length is carried along so moving a lesson never silently resizes it.
+  const [edit, setEdit] = useState<
+    { id: string; key: string; date: string; time: string; minutes: number } | null
+  >(null);
   const [form, setForm] = useState({
     title: '',
     studentProfileId: '',
@@ -251,8 +258,57 @@ export function ScheduleView() {
     if (dn === undefined) return;
     const { year, month, day } = ymdFromDayNumber(dn);
     const date = zonedInstant(year, month, day, hour, 0, tz);
+    setEdit(null);
     setSlot({ date, key: `${dayIndex}-${hour}` });
     setForm({ title: '', studentProfileId: '', courseId: '', materialLessonId: '' });
+  }
+
+  /** Open the move form on a lesson, filled with where it currently sits. */
+  function openEdit(lesson: Lesson, key: string) {
+    const p = zonedParts(new Date(lesson.startsAt), tz);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    setSlot(null);
+    setEdit({
+      id: lesson.id,
+      key,
+      date: `${p.year}-${pad(p.month)}-${pad(p.day)}`,
+      time: `${pad(p.hour)}:${pad(p.minute)}`,
+      minutes: Math.max(
+        1,
+        Math.round((new Date(lesson.endsAt).getTime() - new Date(lesson.startsAt).getTime()) / 60000)
+      )
+    });
+  }
+
+  /**
+   * Move a lesson to another day and time. The two fields are read as wall
+   * clock in the display zone — the same zone the grid is drawn in — and the
+   * lesson keeps the length it had.
+   */
+  async function saveEdit(e: FormEvent) {
+    e.preventDefault();
+    const token = tokenStore.get();
+    if (!token || !edit) return;
+    const [year, month, day] = edit.date.split('-').map(Number);
+    const [hour, minute] = edit.time.split(':').map(Number);
+    if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute)) return;
+    const start = zonedInstant(year, month, day, hour, minute, tz);
+    const end = new Date(start.getTime() + edit.minutes * 60000);
+    setBusy(true);
+    try {
+      await apiFetch(`/lessons/${edit.id}`, {
+        method: 'PATCH',
+        token,
+        locale,
+        body: { startsAt: start.toISOString(), endsAt: end.toISOString() }
+      });
+      setEdit(null);
+      await load();
+    } catch {
+      show(tCommon('saveFailed'));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function createLesson(e: FormEvent) {
@@ -373,6 +429,37 @@ export function ScheduleView() {
     </div>
   );
 
+  // Moving a lesson is deliberately a small form, not a drag: the grid is one
+  // hour per row, and a tutor rescheduling to "Thursday at half past two" would
+  // otherwise have to find a cell that does not exist.
+  const editForm = edit && (
+    <div className="slot-popover" onClick={(e) => e.stopPropagation()}>
+      <form className="form-grid" onSubmit={saveEdit}>
+        <div className="row-between slot-popover-head">
+          <strong>{t('move')}</strong>
+          <button type="button" className="ghost" aria-label={t('cancel')} onClick={() => setEdit(null)}>
+            <Icon name="close" />
+          </button>
+        </div>
+        <label>
+          {t('date')}
+          <input
+            autoFocus
+            type="date"
+            value={edit.date}
+            onChange={(e) => setEdit({ ...edit, date: e.target.value })}
+          />
+        </label>
+        <label>
+          {t('time')}
+          <input type="time" value={edit.time} onChange={(e) => setEdit({ ...edit, time: e.target.value })} />
+        </label>
+        <p className="note">{t('keepsLength', { minutes: edit.minutes })}</p>
+        <button type="submit" disabled={busy}>{busy ? t('saving') : t('save')}</button>
+      </form>
+    </div>
+  );
+
   return (
     <div className="content">
       <div className="row-between sched-head">
@@ -397,7 +484,7 @@ export function ScheduleView() {
       </div>
       {tz && <p className="note sched-tz">{t('timezone', { tz })}</p>}
 
-      <div className={`cal${view === 'day' ? ' cal-day' : ''}`} style={{ '--cal-days': days.length } as CSSProperties} onClick={() => slot && setSlot(null)}>
+      <div className={`cal${view === 'day' ? ' cal-day' : ''}`} style={{ '--cal-days': days.length } as CSSProperties} onClick={() => { if (slot) setSlot(null); if (edit) setEdit(null); }}>
         <div className="cal-head cal-corner" />
         {days.map((d, i) => {
           const isToday = dayNumbers[i] === todayNum;
@@ -418,9 +505,13 @@ export function ScheduleView() {
             canManage={canManage}
             slotKey={slot?.key ?? null}
             slotForm={slotForm}
+            editKey={edit?.key ?? null}
+            editForm={editForm}
             onSlot={openSlot}
+            onEdit={openEdit}
             onDelete={deleteLesson}
             joinLabel={t('join')}
+            editLabel={t('edit')}
             delLabel={t('delete')}
           />
         ))}
@@ -436,9 +527,13 @@ function FragmentRow({
   canManage,
   slotKey,
   slotForm,
+  editKey,
+  editForm,
   onSlot,
+  onEdit,
   onDelete,
   joinLabel,
+  editLabel,
   delLabel
 }: {
   hour: number;
@@ -447,9 +542,13 @@ function FragmentRow({
   canManage: boolean;
   slotKey: string | null;
   slotForm: ReactNode;
+  editKey: string | null;
+  editForm: ReactNode;
   onSlot: (dayIndex: number, hour: number) => void;
+  onEdit: (lesson: Lesson, key: string) => void;
   onDelete: (id: string) => void;
   joinLabel: string;
+  editLabel: string;
   delLabel: string;
 }) {
   return (
@@ -471,6 +570,20 @@ function FragmentRow({
                   <Link className="link" href={`/lessons/${l.id}/room`} onClick={(e) => e.stopPropagation()}>
                     {joinLabel}
                   </Link>
+                  {canManage && (
+                    <button
+                      type="button"
+                      className="cal-edit"
+                      aria-label={editLabel}
+                      title={editLabel}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(l, key);
+                      }}
+                    >
+                      <Icon name="edit" />
+                    </button>
+                  )}
                 </div>
                 {/* Delete sits in the far corner from Join, as a small ×: the two
                     were side by side, a couple of pixels apart, and one of them
@@ -493,6 +606,7 @@ function FragmentRow({
               </div>
             ))}
             {slotKey === key && slotForm}
+            {editKey === key && editForm}
           </div>
         );
       })}
