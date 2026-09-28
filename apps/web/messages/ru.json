@@ -106,7 +106,10 @@
     "telegramHint": "Получать уведомления ещё и в Telegram.",
     "telegramOn": "Telegram подключён.",
     "telegramConnect": "Подключить Telegram",
-    "telegramDisconnect": "Отключить"
+    "telegramDisconnect": "Отключить",
+    "myData": "Мои данные",
+    "myDataHint": "Копия всего, что платформа хранит о вас, одним файлом JSON.",
+    "myDataDownload": "Скачать мои данные"
   },
   "register": {
     "title": "Создание аккаунта",

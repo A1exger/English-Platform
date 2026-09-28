@@ -106,7 +106,10 @@
     "telegramHint": "Recevoir aussi les notifications dans Telegram.",
     "telegramOn": "Telegram est connecté.",
     "telegramConnect": "Connecter Telegram",
-    "telegramDisconnect": "Déconnecter"
+    "telegramDisconnect": "Déconnecter",
+    "myData": "Mes données",
+    "myDataHint": "Une copie de toutes les données que cette plateforme conserve sur vous, en un fichier JSON.",
+    "myDataDownload": "Télécharger mes données"
   },
   "register": {
     "title": "Créer un compte",

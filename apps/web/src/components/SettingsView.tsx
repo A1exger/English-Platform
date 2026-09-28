@@ -65,6 +65,7 @@ export function SettingsView() {
   const [me, setMe] = useState<Me | null>(null);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [saved, setSaved] = useState(false);
   // Telegram is opt-in per person: the bot cannot message anyone who has not
   // pressed Start, so each user connects their own chat from here (one tap).
@@ -171,6 +172,29 @@ export function SettingsView() {
     }
   }
 
+  /**
+   * Download everything the platform holds about this account (GDPR Art. 15 and
+   * 20). Fetched with the access token and saved as a file from memory —
+   * a plain link cannot carry an Authorization header.
+   */
+  async function downloadMyData() {
+    const token = tokenStore.get();
+    if (!token) return;
+    setExporting(true);
+    try {
+      const data = await apiFetch<unknown>('/users/me/export', { token, locale });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function disconnectTelegram() {
     const token = tokenStore.get();
     if (!token) return;
@@ -252,6 +276,17 @@ export function SettingsView() {
           {saving ? '…' : saved ? t('saved') : t('save')}
         </button>
       </form>
+
+      {/* A copy of your own data, on request and without asking anyone. The
+          right exists whether or not there is a button; the button is what
+          makes answering the request take a second instead of a week. */}
+      <div className="card">
+        <strong>{t('myData')}</strong>
+        <p className="muted">{t('myDataHint')}</p>
+        <button type="button" className="ghost" disabled={exporting} onClick={downloadMyData}>
+          {exporting ? '…' : t('myDataDownload')}
+        </button>
+      </div>
 
       {/* Notification channels. Email needs nothing — it goes to the address
           above. Telegram is a one-tap connect, only offered when the server has

@@ -106,7 +106,10 @@
     "telegramHint": "Ontvang meldingen ook in Telegram.",
     "telegramOn": "Telegram is verbonden.",
     "telegramConnect": "Telegram verbinden",
-    "telegramDisconnect": "Ontkoppelen"
+    "telegramDisconnect": "Ontkoppelen",
+    "myData": "Mijn gegevens",
+    "myDataHint": "Een kopie van alles wat dit platform over u bewaart, als één JSON-bestand.",
+    "myDataDownload": "Mijn gegevens downloaden"
   },
   "register": {
     "title": "Account aanmaken",

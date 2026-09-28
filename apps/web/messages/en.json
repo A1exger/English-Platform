@@ -106,7 +106,10 @@
     "telegramHint": "Also get notifications in Telegram.",
     "telegramOn": "Telegram is connected.",
     "telegramConnect": "Connect Telegram",
-    "telegramDisconnect": "Disconnect"
+    "telegramDisconnect": "Disconnect",
+    "myData": "My data",
+    "myDataHint": "A copy of everything this platform holds about you, as one JSON file.",
+    "myDataDownload": "Download my data"
   },
   "register": {
     "title": "Create your account",

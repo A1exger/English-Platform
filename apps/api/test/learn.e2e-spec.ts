@@ -150,6 +150,40 @@ describe('Phase 3: task runtime + preparation (e2e)', () => {
     expect(list.body[0].translation).toBe('ездить на работу');
   });
 
+  // GDPR Art. 15/20: a copy of everything held about the caller, on request.
+  it('export: a student gets their own data, including notes written about them', async () => {
+    const authS = auth(student.accessToken);
+    const sp = await prisma.studentProfile.findFirstOrThrow({ select: { id: true } });
+    const tp = await prisma.tutorProfile.findFirstOrThrow({ select: { id: true } });
+    await prisma.tutorNote.create({
+      data: { tutorProfileId: tp.id, studentProfileId: sp.id, body: 'Struggles with articles.' },
+    });
+
+    const res = await api().get('/api/v1/users/me/export').set(authS).expect(200);
+    expect(res.body.account.email).toBeDefined();
+    expect(res.body.account.passwordHash).toBeUndefined();
+    expect(res.body.exportedAt).toBeDefined();
+    // Their own words come along.
+    expect(res.body.dictionary.map((d: { word: string }) => d.word)).toContain('commute');
+    // And so does what the tutor wrote about them: it is their personal data,
+    // and Art. 15 has no exception for a note being unflattering.
+    expect(res.body.notesWrittenAboutMe.map((n: { body: string }) => n.body)).toContain(
+      'Struggles with articles.',
+    );
+    // A student's export carries no teaching side.
+    expect(res.body.lessonsTaught).toBeUndefined();
+
+    // The tutor's own export is about the tutor, not about their students.
+    const mine = await api().get('/api/v1/users/me/export').set(auth(tutor.accessToken)).expect(200);
+    expect(mine.body.account.role).toBe('tutor');
+    expect(mine.body.notesIWrote.length).toBeGreaterThanOrEqual(1);
+    expect(mine.body.notesWrittenAboutMe).toBeUndefined();
+    expect(mine.body.dictionary).toBeUndefined();
+
+    // Signing in is required — this is the one endpoint that hands over everything.
+    await api().get('/api/v1/users/me/export').expect(401);
+  });
+
   // A student sees which shelf of the bank each of their words came from, so
   // they can revise one topic at a time. The topic is READ from the bank rather
   // than copied into the entry, which is what makes the next three assertions

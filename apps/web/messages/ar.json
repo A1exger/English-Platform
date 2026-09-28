@@ -106,7 +106,10 @@
     "telegramHint": "استلم الإشعارات في تيليجرام أيضًا.",
     "telegramOn": "تم ربط تيليجرام.",
     "telegramConnect": "ربط تيليجرام",
-    "telegramDisconnect": "إلغاء الربط"
+    "telegramDisconnect": "إلغاء الربط",
+    "myData": "بياناتي",
+    "myDataHint": "نسخة من كل ما تحتفظ به هذه المنصة عنك، في ملف JSON واحد.",
+    "myDataDownload": "تنزيل بياناتي"
   },
   "register": {
     "title": "إنشاء حساب",
