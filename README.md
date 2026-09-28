@@ -20,7 +20,8 @@ English-Platform/
 │   ├── 04-ux-ui.md            ← UX/UI-макеты основных экранов (wireframes)
 │   ├── 05-i18n.md             ← мультиязычность и RTL
 │   ├── 06-mvp-plan.md         ← поэтапный план разработки MVP, сроки и бюджет
-│   └── 07-security-compliance.md ← безопасность и GDPR
+│   ├── 07-security-compliance.md ← безопасность и GDPR (проектные меры)
+│   └── 10-legal-eu-tunisia.md ← что требуется юридически: ученики в ЕС, оператор в Тунисе
 ├── apps/
 │   ├── api/                   ← рабочий MVP-бэкенд (NestJS + Prisma + JWT + i18n)
 │   └── web/                   ← каркас фронтенда (Next.js + next-intl, 6 языков, RTL)
