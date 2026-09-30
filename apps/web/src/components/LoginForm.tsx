@@ -3,7 +3,8 @@
 import { FormEvent, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
-import { login, tokenStore } from '@/lib/auth';
+import { locales, type Locale } from '@/i18n/routing';
+import { fetchMe, login, tokenStore } from '@/lib/auth';
 import { apiFetch } from '@/lib/api';
 
 export function LoginForm() {
@@ -28,7 +29,18 @@ export function LoginForm() {
     try {
       const tokens = await login(email, password, locale);
       tokenStore.set(tokens);
-      router.push('/dashboard');
+      // The account's own language wins over whatever language the sign-in page
+      // happened to be in. It is the language the person chose, the one their
+      // emails are written in, and the one the Settings field shows — without
+      // this, someone whose account says Russian lands in an English interface
+      // and the two language controls disagree from the first screen.
+      const me = await fetchMe(tokens.accessToken, locale).catch(() => null);
+      const mine = me?.locale as Locale | undefined;
+      if (mine && mine !== locale && locales.includes(mine)) {
+        router.push('/dashboard', { locale: mine });
+      } else {
+        router.push('/dashboard');
+      }
     } catch {
       setError(tApp('authError'));
     } finally {

@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
-import { locales, type Locale } from '@/i18n/routing';
+import { locales, localeLabels, type Locale } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
@@ -44,15 +44,6 @@ const TIMEZONES = [
 function autoTz(v?: string): string {
   return v && v !== 'UTC' ? v : '';
 }
-
-const localeLabels: Record<Locale, string> = {
-  en: 'English',
-  ru: 'Русский',
-  de: 'Deutsch',
-  fr: 'Français',
-  nl: 'Nederlands',
-  ar: 'العربية'
-};
 
 export function SettingsView() {
   const t = useTranslations('settings');
