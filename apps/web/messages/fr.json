@@ -186,12 +186,11 @@
     "noMaterial": "Aucun matériel",
     "level": "Niveau",
     "lesson": "Leçon",
-    "edit": "Déplacer le cours",
-    "move": "Déplacer le cours",
+    "edit": "Modifier le cours",
     "date": "Date",
     "time": "Heure",
-    "save": "Déplacer",
-    "saving": "Déplacement…",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
     "keepsLength": "La durée reste de {minutes} minutes."
   },
   "billing": {

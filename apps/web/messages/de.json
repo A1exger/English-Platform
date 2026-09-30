@@ -186,12 +186,11 @@
     "noMaterial": "Kein Material",
     "level": "Niveau",
     "lesson": "Lektion",
-    "edit": "Stunde verschieben",
-    "move": "Stunde verschieben",
+    "edit": "Stunde bearbeiten",
     "date": "Datum",
     "time": "Uhrzeit",
-    "save": "Verschieben",
-    "saving": "Wird verschoben…",
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
     "keepsLength": "Dauer bleibt {minutes} Minuten."
   },
   "billing": {

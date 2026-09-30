@@ -186,12 +186,11 @@
     "noMaterial": "No material",
     "level": "Level",
     "lesson": "Lesson",
-    "edit": "Move lesson",
-    "move": "Move lesson",
+    "edit": "Edit lesson",
     "date": "Date",
     "time": "Time",
-    "save": "Move",
-    "saving": "Moving…",
+    "save": "Save",
+    "saving": "Saving…",
     "keepsLength": "Stays {minutes} minutes long."
   },
   "billing": {

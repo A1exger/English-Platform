@@ -186,12 +186,11 @@
     "noMaterial": "Geen materiaal",
     "level": "Niveau",
     "lesson": "Les",
-    "edit": "Les verplaatsen",
-    "move": "Les verplaatsen",
+    "edit": "Les bewerken",
     "date": "Datum",
     "time": "Tijd",
-    "save": "Verplaatsen",
-    "saving": "Verplaatsen…",
+    "save": "Opslaan",
+    "saving": "Opslaan…",
     "keepsLength": "Duurt nog steeds {minutes} minuten."
   },
   "billing": {

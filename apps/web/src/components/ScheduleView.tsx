@@ -102,7 +102,7 @@ export function ScheduleView() {
   // not instants: what the tutor reads on the grid is what they edit. The
   // length is carried along so moving a lesson never silently resizes it.
   const [edit, setEdit] = useState<
-    { id: string; key: string; date: string; time: string; minutes: number } | null
+    { id: string; key: string; title: string; date: string; time: string; minutes: number } | null
   >(null);
   const [form, setForm] = useState({
     title: '',
@@ -263,7 +263,7 @@ export function ScheduleView() {
     setForm({ title: '', studentProfileId: '', courseId: '', materialLessonId: '' });
   }
 
-  /** Open the move form on a lesson, filled with where it currently sits. */
+  /** Open the edit form on a lesson, filled with what it currently is. */
   function openEdit(lesson: Lesson, key: string) {
     const p = zonedParts(new Date(lesson.startsAt), tz);
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -271,6 +271,7 @@ export function ScheduleView() {
     setEdit({
       id: lesson.id,
       key,
+      title: lesson.title ?? '',
       date: `${p.year}-${pad(p.month)}-${pad(p.day)}`,
       time: `${pad(p.hour)}:${pad(p.minute)}`,
       minutes: Math.max(
@@ -281,7 +282,7 @@ export function ScheduleView() {
   }
 
   /**
-   * Move a lesson to another day and time. The two fields are read as wall
+   * Save the lesson's name and when it happens. Date and time are read as wall
    * clock in the display zone — the same zone the grid is drawn in — and the
    * lesson keeps the length it had.
    */
@@ -300,7 +301,9 @@ export function ScheduleView() {
         method: 'PATCH',
         token,
         locale,
-        body: { startsAt: start.toISOString(), endsAt: end.toISOString() }
+        // The trimmed title goes as-is, empty included: clearing the name is a
+        // thing a tutor may want, and an empty one falls back to "—" on the chip.
+        body: { title: edit.title.trim(), startsAt: start.toISOString(), endsAt: end.toISOString() }
       });
       setEdit(null);
       await load();
@@ -429,22 +432,29 @@ export function ScheduleView() {
     </div>
   );
 
-  // Moving a lesson is deliberately a small form, not a drag: the grid is one
+  // Editing a lesson is deliberately a small form, not a drag: the grid is one
   // hour per row, and a tutor rescheduling to "Thursday at half past two" would
   // otherwise have to find a cell that does not exist.
   const editForm = edit && (
     <div className="slot-popover" onClick={(e) => e.stopPropagation()}>
       <form className="form-grid" onSubmit={saveEdit}>
         <div className="row-between slot-popover-head">
-          <strong>{t('move')}</strong>
+          <strong>{t('edit')}</strong>
           <button type="button" className="ghost" aria-label={t('cancel')} onClick={() => setEdit(null)}>
             <Icon name="close" />
           </button>
         </div>
         <label>
-          {t('date')}
+          {t('titleField')}
           <input
             autoFocus
+            value={edit.title}
+            onChange={(e) => setEdit({ ...edit, title: e.target.value })}
+          />
+        </label>
+        <label>
+          {t('date')}
+          <input
             type="date"
             value={edit.date}
             onChange={(e) => setEdit({ ...edit, date: e.target.value })}
@@ -565,7 +575,7 @@ function FragmentRow({
           >
             {items.map((l) => (
               <div key={l.id} className={`cal-event status-${l.status}`}>
-                <div className="cal-event-title">{l.title ?? '—'}</div>
+                <div className="cal-event-title">{l.title?.trim() || '—'}</div>
                 <div className="cal-event-actions">
                   <Link className="link" href={`/lessons/${l.id}/room`} onClick={(e) => e.stopPropagation()}>
                     {joinLabel}
