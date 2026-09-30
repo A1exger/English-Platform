@@ -83,8 +83,9 @@ model StudentProfile {
   goals          String?
   nativeLanguage String?
   country        String?
-  address        String?
-  birthDate      DateTime?
+  // No address and no date of birth: neither is needed to teach a lesson or to
+  // bill for one, and data that is not collected cannot leak, cannot be asked
+  // for under an access request and needs no retention rule.
   parentUserId   String?
   balanceCents   Int     @default(0)
 

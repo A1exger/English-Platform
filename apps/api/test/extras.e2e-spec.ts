@@ -64,7 +64,7 @@ describe('Admin CRM / student profile / progress / uploads / notes (e2e)', () =>
     const res = await api()
       .patch(`/api/v1/crm/students/${studentProfileId}`)
       .set('Authorization', `Bearer ${tutor.accessToken}`)
-      .send({ firstName: 'Yusuf', lastName: 'Ben Ali', country: 'Tunisia', cefrLevel: 'A2', birthDate: '2008-05-01' })
+      .send({ firstName: 'Yusuf', lastName: 'Ben Ali', country: 'Tunisia', cefrLevel: 'A2' })
       .expect(200);
     expect(res.body.user.firstName).toBe('Yusuf');
     expect(res.body.country).toBe('Tunisia');
@@ -75,8 +75,22 @@ describe('Admin CRM / student profile / progress / uploads / notes (e2e)', () =>
     await api()
       .patch(`/api/v1/crm/students/${studentProfileId}`)
       .set('Authorization', `Bearer ${admin.accessToken}`)
-      .send({ address: '12 Rue de Tunis' })
+      .send({ goals: 'Business English by June' })
       .expect(200);
+  });
+
+  // A postal address and a date of birth are not needed to schedule, teach or
+  // bill a lesson, so the platform no longer has anywhere to put them. The
+  // refusal is the point: a field that is merely unused creeps back, a field
+  // the API rejects does not.
+  it('refuses an address or a date of birth outright', async () => {
+    for (const body of [{ address: '12 Rue de Tunis' }, { birthDate: '2008-05-01' }]) {
+      await api()
+        .patch(`/api/v1/crm/students/${studentProfileId}`)
+        .set('Authorization', `Bearer ${admin.accessToken}`)
+        .send(body)
+        .expect(400);
+    }
   });
 
   it('student progress endpoint returns stats + achievements', async () => {

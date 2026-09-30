@@ -18,8 +18,6 @@ interface Profile {
   goals?: string | null;
   nativeLanguage?: string | null;
   country?: string | null;
-  address?: string | null;
-  birthDate?: string | null;
   balanceCents?: number;
   user: { firstName: string; lastName: string; email: string; locale: string };
 }
@@ -45,13 +43,6 @@ interface Card {
   assignments?: AssignmentRow[];
 }
 
-function ageFrom(birthDate?: string | null): number | null {
-  if (!birthDate) return null;
-  const b = new Date(birthDate);
-  const diff = Date.now() - b.getTime();
-  return Math.floor(diff / (365.25 * 24 * 3600 * 1000));
-}
-
 export function StudentProfileView({ studentProfileId }: { studentProfileId: string }) {
   const t = useTranslations('studentProfile');
   const tApp = useTranslations('app');
@@ -71,8 +62,6 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
     firstName: '',
     lastName: '',
     country: '',
-    address: '',
-    birthDate: '',
     cefrLevel: '',
     goals: ''
   });
@@ -90,8 +79,6 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
         firstName: c.profile.user.firstName ?? '',
         lastName: c.profile.user.lastName ?? '',
         country: c.profile.country ?? '',
-        address: c.profile.address ?? '',
-        birthDate: c.profile.birthDate ? c.profile.birthDate.slice(0, 10) : '',
         cefrLevel: c.profile.cefrLevel ?? '',
         goals: c.profile.goals ?? ''
       });
@@ -124,8 +111,6 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
           firstName: form.firstName,
           lastName: form.lastName,
           country: form.country,
-          address: form.address,
-          birthDate: form.birthDate ? new Date(form.birthDate).toISOString() : undefined,
           cefrLevel: form.cefrLevel || undefined,
           goals: form.goals
         }
@@ -162,7 +147,6 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
   const assignments = card.assignments ?? [];
   const name = `${profile.user.firstName} ${profile.user.lastName}`.trim();
   const initials = `${profile.user.firstName?.[0] ?? ''}${profile.user.lastName?.[0] ?? ''}`.toUpperCase() || '?';
-  const age = ageFrom(profile.birthDate);
   const past = lessons.filter((l) => l.status === 'completed' || l.status === 'no_show');
   const completed = past.filter((l) => l.status === 'completed').length;
   const attendance = past.length ? Math.round((completed / past.length) * 100) : null;
@@ -180,7 +164,6 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
           <div className="profile-chips">
             {profile.cefrLevel && <span className="level-chip">{profile.cefrLevel}</span>}
             <span className="muted">{profile.user.email}</span>
-            {age !== null && <span className="muted">· {t('age')}: {age}</span>}
           </div>
         </div>
         <div className="profile-head-stats">
@@ -335,8 +318,6 @@ export function StudentProfileView({ studentProfileId }: { studentProfileId: str
           <label>{t('firstName')}<input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></label>
           <label>{t('lastName')}<input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></label>
           <label>{t('country')}<input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} /></label>
-          <label>{t('address')}<input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></label>
-          <label>{t('birthDate')}<input type="date" value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} /></label>
           <label>
             {t('level')}
             <select value={form.cefrLevel} onChange={(e) => setForm({ ...form, cefrLevel: e.target.value })}>

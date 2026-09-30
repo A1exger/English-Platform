@@ -256,10 +256,6 @@ export class CrmService {
           ? { nativeLanguage: dto.nativeLanguage }
           : {}),
         ...(dto.country !== undefined ? { country: dto.country } : {}),
-        ...(dto.address !== undefined ? { address: dto.address } : {}),
-        ...(dto.birthDate !== undefined
-          ? { birthDate: dto.birthDate ? new Date(dto.birthDate) : null }
-          : {}),
       },
     });
 

@@ -56,6 +56,11 @@ export class LiveKitService {
         canPublish: opts.canPublish ?? true,
         canSubscribe: true,
         canPublishData: true,
+        // Lessons are not recorded. Absent would mean the same thing, but said
+        // out loud it is a decision someone has to reverse deliberately rather
+        // than enable by adding a field — and recording a lesson with a child
+        // in it needs consent from everyone in the room first.
+        roomRecord: false,
       },
     };
 
