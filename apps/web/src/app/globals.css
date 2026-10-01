@@ -1470,17 +1470,27 @@ select.err {
   color: #fff;
   border-color: var(--indigo);
 }
-/* The Preparation picture: a wide scene the lesson opens on, never taller than
-   a third of the viewport so the objectives below it stay visible. */
+/* The Preparation picture. Shown WHOLE, never cropped: these are usually
+   infographics — a table of forms, a diagram with captions — and cutting the
+   top and bottom off to fill a box removes exactly the part being taught.
+   So the width leads, the height follows the picture's own proportions, and
+   the cap only stops a very tall image from swallowing the screen. */
 .prep-cover {
   padding: 0;
   overflow: hidden;
+  /* Letterboxing is visible on a tall image; keep it the card's own colour. */
+  background: var(--card);
 }
 .prep-cover img {
   display: block;
-  inline-size: 100%;
-  max-block-size: 34vh;
-  object-fit: cover;
+  margin-inline: auto;
+  /* The picture sizes itself, bounded on both axes. Forcing the width to 100%
+     instead put a tall picture in a full-width box with empty bars either side,
+     and blew a small one up until it blurred. */
+  max-inline-size: 100%;
+  max-block-size: 70vh;
+  inline-size: auto;
+  block-size: auto;
 }
 .ed-cover {
   display: flex;
@@ -1497,7 +1507,10 @@ select.err {
 .ed-cover-row img {
   inline-size: 140px;
   block-size: 84px;
-  object-fit: cover;
+  /* The whole picture in the thumbnail too: a cropped preview of a cropped
+     infographic tells a tutor nothing about what they just attached. */
+  object-fit: contain;
+  background: var(--indigo-50);
   border-radius: var(--r-sm);
   border: 1px solid var(--line);
 }
