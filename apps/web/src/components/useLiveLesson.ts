@@ -37,6 +37,8 @@ export interface LiveLesson {
   id: string;
   title: string;
   level?: string | null;
+  /** Picture shown on the Preparation screen. */
+  coverUrl?: string | null;
   objectives: string[];
   pages: LivePageRow[];
   wordlist?: { entries: { word: string; translation?: string | null }[] } | null;

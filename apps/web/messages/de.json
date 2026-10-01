@@ -637,7 +637,11 @@
     "taskInstruction": "Anweisung",
     "pageSources": "Quellen (Nachweis)",
     "deleteCategory": "Kategorie löschen",
-    "categoryNotEmpty": "Löschen oder verschieben Sie zuerst die Kurse darin."
+    "categoryNotEmpty": "Löschen oder verschieben Sie zuerst die Kurse darin.",
+    "prepImage": "Bild für die Vorbereitung",
+    "prepImageAdd": "Bild hinzufügen",
+    "prepImageReplace": "Bild ersetzen",
+    "prepImageRemove": "Entfernen"
   },
   "learn": {
     "title": "Lektion",
@@ -786,5 +790,6 @@
     "transfer_pending": "{student} hat eine Zahlung gemeldet und wartet auf deine Bestätigung. Du kannst sie im Bereich „Abrechnung“ bestätigen.",
     "payment_confirmed": "Deine Zahlung wurde bestätigt und die Stunden wurden deinem Guthaben gutgeschrieben. Du kannst es im Bereich „Zahlung“ prüfen.",
     "payment_rejected": "Deine Lehrkraft konnte die gemeldete Überweisung nicht bestätigen, es wurde nichts gutgeschrieben. Prüfe die Tracking-Nummer im Bereich „Abrechnung“ oder sende sie erneut."
-  }
+  },
+  "builder": {}
 }

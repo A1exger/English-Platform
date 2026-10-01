@@ -14,7 +14,7 @@ import {
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link, useRouter } from '@/i18n/routing';
-import { ApiError, apiFetch } from '@/lib/api';
+import { ApiError, apiFetch, apiUpload, fileUrl } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { PageHeader } from './PageHeader';
@@ -825,6 +825,8 @@ interface LessonDetail {
   id: string;
   title: string;
   objectives: string[];
+  /** Picture shown on the lesson's Preparation screen. */
+  coverUrl?: string | null;
   pages: PageRow[];
   wordlist?: {
     entries: { word: string; translation?: string | null; translations?: Record<string, string> }[];
@@ -864,6 +866,11 @@ function LessonEditor({
   // inline ![[media:ID]] marker at the caret (ФТ-К304 authoring).
   const pageTextRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [objectives, setObjectives] = useState('');
+  // The Preparation picture. Kept in its own state (not in the autosaved text
+  // fields) because it is written the moment a file is chosen — a picture that
+  // only lands on blur would look like the upload failed.
+  const [cover, setCover] = useState<string | null>(null);
+  const [coverBusy, setCoverBusy] = useState(false);
   const [wordlist, setWordlist] = useState('');
   // `examples` is edited as text — one sentence per line — and split on save.
   const [grammar, setGrammar] = useState({ title: '', meaning: '', form: '', examples: '' });
@@ -881,6 +888,7 @@ function LessonEditor({
     const d = await apiFetch<LessonDetail>(`/content/lessons/${lessonId}?edit=1`, { token: tok, locale });
     setDetail(d);
     setObjectives((d.objectives ?? []).join('\n'));
+    setCover(d.coverUrl ?? null);
     setWordlist((d.wordlist?.entries ?? []).map((e) => (e.translation ? `${e.word} = ${e.translation}` : e.word)).join('\n'));
     setGrammar({
       title: d.grammarReference?.title ?? '',
@@ -919,6 +927,46 @@ function LessonEditor({
     setDetail(await apiFetch<LessonDetail>(`/content/lessons/${lessonId}?edit=1`, { token: tok, locale }));
     onChanged();
   }, [lessonId, locale, onChanged]);
+
+  /** Put a picture on the Preparation screen, or take it off (url = ''). */
+  const saveCover = useCallback(
+    async (url: string) => {
+      const tok = token();
+      if (!tok) return;
+      setCoverBusy(true);
+      try {
+        await apiFetch(`/content/lessons/${lessonId}`, {
+          method: 'PATCH',
+          token: tok,
+          locale,
+          body: { coverUrl: url }
+        });
+        setCover(url || null);
+      } finally {
+        setCoverBusy(false);
+      }
+    },
+    [lessonId, locale]
+  );
+
+  const uploadCover = useCallback(
+    async (file: File) => {
+      const tok = token();
+      if (!tok) return;
+      setCoverBusy(true);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        // Belongs to the lesson, not to the Materials library.
+        fd.append('scope', 'inline');
+        const res = await apiUpload<{ url: string }>('/materials/upload', fd, { token: tok, locale });
+        await saveCover(res.url);
+      } catch {
+        setCoverBusy(false);
+      }
+    },
+    [locale, saveCover]
+  );
 
   // Autosave objectives / wordlist / grammar (ФТ-К206); called on blur + Save.
   const saveLesson = useCallback(async () => {
@@ -1117,10 +1165,38 @@ function LessonEditor({
         </button>
       </div>
       <div className="two-col">
-        <label className="ed-field">
-          {t('objectives')}
-          <textarea value={objectives} onChange={(e) => { setObjectives(e.target.value); setSaved(false); }} onBlur={() => void saveLesson()} />
-        </label>
+        <div className="ed-field">
+          <label className="ed-field">
+            {t('objectives')}
+            <textarea value={objectives} onChange={(e) => { setObjectives(e.target.value); setSaved(false); }} onBlur={() => void saveLesson()} />
+          </label>
+          {/* The picture the Preparation screen opens on. Saved on choosing a
+              file rather than on blur, so it appears when it is picked. */}
+          <div className="ed-cover">
+            <span className="ed-field-head">{t('prepImage')}</span>
+            {cover && (
+              <div className="ed-cover-preview">
+                <img src={fileUrl(cover)} alt="" />
+                <button type="button" className="ghost" disabled={coverBusy} onClick={() => void saveCover('')}>
+                  {t('prepImageRemove')}
+                </button>
+              </div>
+            )}
+            <label className="ghost file-button">
+              {coverBusy ? t('saving') : cover ? t('prepImageReplace') : t('prepImageAdd')}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={coverBusy}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  if (f) void uploadCover(f);
+                }}
+              />
+            </label>
+          </div>
+        </div>
         <div className="ed-field">
           <div className="ed-field-head">
             <span>{t('wordlist')}</span>

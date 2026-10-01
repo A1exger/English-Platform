@@ -637,7 +637,11 @@
     "taskInstruction": "Consigne",
     "pageSources": "Sources (crédits)",
     "deleteCategory": "Supprimer la catégorie",
-    "categoryNotEmpty": "Supprimez ou déplacez d’abord ses cours."
+    "categoryNotEmpty": "Supprimez ou déplacez d’abord ses cours.",
+    "prepImage": "Image de préparation",
+    "prepImageAdd": "Ajouter une image",
+    "prepImageReplace": "Remplacer l’image",
+    "prepImageRemove": "Retirer"
   },
   "learn": {
     "title": "Leçon",
@@ -786,5 +790,6 @@
     "transfer_pending": "{student} a signalé un paiement et attend votre confirmation. Vous pouvez le confirmer dans la rubrique « Facturation ».",
     "payment_confirmed": "Votre paiement a été confirmé et les cours ont été ajoutés à votre solde. Vous pouvez le vérifier dans la rubrique « Paiement ».",
     "payment_rejected": "Votre professeur n'a pas pu confirmer le transfert que vous avez signalé, rien n'a été crédité. Vérifiez le numéro de suivi dans la section « Facturation » ou renvoyez-le."
-  }
+  },
+  "builder": {}
 }

@@ -149,7 +149,14 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
    * its locale and mark it sent. Returns the rendered messages for inspection.
    */
   async dispatchQueued(): Promise<
-    { id: string; channel: string; locale: string; text: string; delivered: string }[]
+    {
+      id: string;
+      channel: string;
+      locale: string;
+      text: string;
+      subject?: string;
+      delivered: string;
+    }[]
   > {
     const queued = await this.prisma.notification.findMany({
       where: { status: 'queued' },
@@ -159,6 +166,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       channel: string;
       locale: string;
       text: string;
+      subject?: string;
       delivered: string;
     }[] = [];
     for (const n of queued) {
@@ -176,6 +184,10 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
       // server or bot keeps working.
       let delivered = 'sent';
       let reason: string | undefined;
+      // Kept for the caller: the subject is half of what a recipient reads, and
+      // it is rendered from its own catalogue key, so it can be wrong in ways
+      // the body is not.
+      let subject: string | undefined;
       if (n.channel === 'telegram') {
         const chatId = await this.telegram.chatIdFor(n.userId);
         const result = chatId
@@ -188,7 +200,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
           where: { id: n.userId },
           select: { email: true },
         });
-        const subject = await this.subjectFor(n.templateKey, n.locale);
+        subject = await this.subjectFor(n.templateKey, n.locale);
         const result = user?.email
           ? await this.mail.sendMail(user.email, subject, text)
           : { delivered: 'skipped' as const, reason: 'no_address' };
@@ -210,7 +222,7 @@ export class NotificationsService implements OnModuleInit, OnModuleDestroy {
         where: { id: n.id },
         data: { status, error: reason ?? null, sentAt: new Date() },
       });
-      out.push({ id: n.id, channel: n.channel, locale: n.locale, text, delivered });
+      out.push({ id: n.id, channel: n.channel, locale: n.locale, text, subject, delivered });
     }
     return out;
   }

@@ -3,7 +3,7 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
-import { ApiError, apiFetch } from '@/lib/api';
+import { ApiError, apiFetch, fileUrl } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { ContentTask, ContentTaskPlayer } from './ContentTaskPlayer';
 import { MediaItem, PageMediaBlock, PageMediaItem } from './PageMediaBlock';
@@ -28,6 +28,8 @@ interface LessonDetail {
   id: string;
   title: string;
   courseId: string;
+  /** Picture shown on the Preparation screen. */
+  coverUrl?: string | null;
   objectives: string[];
   pages: PageRow[];
   wordlist?: { entries: { word: string; translation?: string | null; translations?: Record<string, string> | null }[] } | null;
@@ -205,6 +207,12 @@ export function LessonPlayerView({
 
       {pageIdx === 0 ? (
         <div className="learn-prep">
+          {/* The picture the lesson opens on, above the objectives. */}
+          {lesson.coverUrl && (
+            <div className="card prep-cover">
+              <img src={fileUrl(lesson.coverUrl)} alt="" />
+            </div>
+          )}
           {lesson.objectives.length > 0 && (
             <div className="card">
               <strong>{t('objectives')}</strong>

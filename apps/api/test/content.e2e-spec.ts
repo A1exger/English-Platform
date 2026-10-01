@@ -702,6 +702,45 @@ describe('Phase 2: content catalog + authoring (e2e)', () => {
     await api().delete(`/api/v1/content/categories/${other.body.id}`).set(auth2).expect(200);
   });
 
+  // A lesson can open on a picture. It lives on the lesson, not on a page: the
+  // Preparation screen is built from the lesson itself and has no page to hang
+  // media on.
+  it('lesson: a Preparation picture can be set, replaced and taken off', async () => {
+    const auth2 = auth(tutor.accessToken);
+    const set = await api()
+      .patch(`/api/v1/content/lessons/${lesson1}`)
+      .set(auth2)
+      .send({ coverUrl: '/uploads/scene.png' })
+      .expect(200);
+    expect(set.body.coverUrl).toBe('/uploads/scene.png');
+
+    // It comes back with the lesson, for the player and for the live room.
+    const read = await api().get(`/api/v1/content/lessons/${lesson1}`).set(auth2).expect(200);
+    expect(read.body.coverUrl).toBe('/uploads/scene.png');
+
+    await api()
+      .patch(`/api/v1/content/lessons/${lesson1}`)
+      .set(auth2)
+      .send({ coverUrl: '/uploads/other.jpg' })
+      .expect(200)
+      .expect((r) => expect(r.body.coverUrl).toBe('/uploads/other.jpg'));
+
+    // An empty string takes it off — a JSON body has no other way to say null.
+    await api()
+      .patch(`/api/v1/content/lessons/${lesson1}`)
+      .set(auth2)
+      .send({ coverUrl: '' })
+      .expect(200)
+      .expect((r) => expect(r.body.coverUrl).toBeNull());
+
+    // Students read lessons; they do not author them.
+    await api()
+      .patch(`/api/v1/content/lessons/${lesson1}`)
+      .set(auth(student.accessToken))
+      .send({ coverUrl: '/uploads/scene.png' })
+      .expect(403);
+  });
+
   it('word bank: tutor imports, student copies into their own dictionary', async () => {
     const auth2 = auth(tutor.accessToken);
     const authS = auth(student.accessToken);

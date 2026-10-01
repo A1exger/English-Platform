@@ -558,6 +558,9 @@ model CourseLesson {
   order    Int
   // objectives: JSON string array (Preparation phase content)
   objectives String?
+  // Picture shown on the Preparation screen, above the objectives — the scene a
+  // lesson opens on. An uploaded file's URL, like a course cover.
+  coverUrl   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

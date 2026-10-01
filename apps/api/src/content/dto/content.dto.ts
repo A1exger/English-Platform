@@ -293,6 +293,12 @@ export class UpdateCourseLessonDto {
   @Length(1, 200)
   title?: string;
 
+  // The Preparation picture. An empty string removes it.
+  @IsOptional()
+  @IsString()
+  @Length(0, 500)
+  coverUrl?: string;
+
   @IsOptional()
   @IsBoolean()
   optional?: boolean;

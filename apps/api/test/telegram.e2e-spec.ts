@@ -81,6 +81,70 @@ describe('Telegram notifications (e2e)', () => {
     expect(tg!.delivered).toBe('skipped');
   });
 
+  // An email has to arrive in the language of the account it is addressed to —
+  // subject included, since that is what is read first in an inbox and it comes
+  // from its own catalogue key, so it can be wrong in ways the body is not.
+  it('email is written in the recipient account\'s language, subject and body', async () => {
+    const french = await register('fr.student@test.com', 'student', 'fr');
+    void french;
+    const fr = await prisma.user.findUniqueOrThrow({ where: { email: 'fr.student@test.com' } });
+
+    for (const userId of [studentUserId, fr.id]) {
+      await notifications.enqueue({
+        userId,
+        templateKey: 'homework_assigned',
+        channel: 'email',
+        payload: { title: 'Unit 3' },
+      });
+    }
+
+    const res = await api()
+      .post('/api/v1/notifications/dispatch')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(201);
+    const mails = (
+      res.body as { channel: string; locale: string; text: string; subject?: string }[]
+    ).filter((n) => n.channel === 'email');
+
+    const de = mails.find((m) => m.locale === 'de');
+    const frMail = mails.find((m) => m.locale === 'fr');
+    expect(de).toBeDefined();
+    expect(frMail).toBeDefined();
+
+    // Each is in its own language, not the server default and not each other's.
+    expect(de!.subject).toBe('Neue Hausaufgabe für dich');
+    expect(frMail!.subject).toBe('Un nouveau devoir pour vous');
+    expect(de!.text).not.toBe(frMail!.text);
+    expect(de!.text).toContain('Hausaufgabe');
+    expect(frMail!.text).toContain('devoir');
+    // The lesson title passes through untranslated, as content should.
+    expect(de!.text).toContain('Unit 3');
+  });
+
+  // The language is taken when the message is queued, so changing it moves the
+  // NEXT message, not one already waiting — which is what makes the switcher in
+  // the sidebar and the inbox agree.
+  it('a language change applies to the next email', async () => {
+    await prisma.user.update({ where: { id: studentUserId }, data: { locale: 'nl' } });
+    await notifications.enqueue({
+      userId: studentUserId,
+      templateKey: 'homework_assigned',
+      channel: 'email',
+      payload: { title: 'Unit 4' },
+    });
+    const res = await api()
+      .post('/api/v1/notifications/dispatch')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(201);
+    const mail = (res.body as { channel: string; locale: string; subject?: string }[]).find(
+      (n) => n.channel === 'email',
+    );
+    expect(mail!.locale).toBe('nl');
+    expect(mail!.subject).toBe('Nieuw huiswerk voor je');
+    // Put it back so the suite's later expectations still hold.
+    await prisma.user.update({ where: { id: studentUserId }, data: { locale: 'de' } });
+  });
+
   it('self-service linking: the /start deep link connects the chat, no manual setup', async () => {
     // Each user gets their own signed connect link…
     process.env.TELEGRAM_BOT_USERNAME = 'spark_bot';

@@ -1576,6 +1576,9 @@ export class ContentService {
       data: {
         ...(dto.title !== undefined ? { title: dto.title } : {}),
         ...(dto.optional !== undefined ? { optional: dto.optional } : {}),
+        // Empty string means "take the picture off", which a nullable column
+        // cannot say in a JSON body.
+        ...(dto.coverUrl !== undefined ? { coverUrl: dto.coverUrl || null } : {}),
         ...(dto.objectives !== undefined
           ? { objectives: JSON.stringify(dto.objectives) }
           : {}),

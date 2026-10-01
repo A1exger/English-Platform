@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { ContentTaskPlayer } from './ContentTaskPlayer';
 import { PageMediaBlock } from './PageMediaBlock';
 import { RichText } from './RichText';
+import { fileUrl } from '@/lib/api';
 import { LiveLessonApi } from './useLiveLesson';
 
 // The current stage's body — the Preparation summary, or the current page's text
@@ -17,11 +18,18 @@ export function StageBody({ live }: { live: LiveLessonApi }) {
 
   if (pageIdx === 0) {
     const empty =
+      !lesson.coverUrl &&
       lesson.objectives.length === 0 &&
       !(lesson.wordlist && lesson.wordlist.entries.length > 0) &&
       !lesson.grammarReference;
     return (
       <div className="learn-prep">
+        {/* The picture the lesson opens on, above the objectives. */}
+        {lesson.coverUrl && (
+          <div className="card prep-cover">
+            <img src={fileUrl(lesson.coverUrl)} alt="" />
+          </div>
+        )}
         {lesson.objectives.length > 0 && (
           <div className="card">
             <strong>{t('objectives')}</strong>

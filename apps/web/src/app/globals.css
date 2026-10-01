@@ -1470,6 +1470,48 @@ select.err {
   color: #fff;
   border-color: var(--indigo);
 }
+/* The Preparation picture: a wide scene the lesson opens on, never taller than
+   a third of the viewport so the objectives below it stay visible. */
+.prep-cover {
+  padding: 0;
+  overflow: hidden;
+}
+.prep-cover img {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 34vh;
+  object-fit: cover;
+}
+/* A file input dressed as a button: the native control cannot be styled, so it
+   is hidden inside its own label. */
+.file-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.file-button input[type='file'] {
+  display: none;
+}
+.ed-cover {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-block-start: 10px;
+}
+.ed-cover-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.ed-cover-preview img {
+  inline-size: 140px;
+  block-size: 84px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+}
+
 .learn-prep,
 .learn-page {
   display: flex;
