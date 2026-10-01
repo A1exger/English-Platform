@@ -1482,29 +1482,19 @@ select.err {
   max-block-size: 34vh;
   object-fit: cover;
 }
-/* A file input dressed as a button: the native control cannot be styled, so it
-   is hidden inside its own label. */
-.file-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-.file-button input[type='file'] {
-  display: none;
-}
 .ed-cover {
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin-block-start: 10px;
 }
-.ed-cover-preview {
+.ed-cover-row {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-.ed-cover-preview img {
+.ed-cover-row img {
   inline-size: 140px;
   block-size: 84px;
   object-fit: cover;

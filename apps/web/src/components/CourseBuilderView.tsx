@@ -871,6 +871,7 @@ function LessonEditor({
   // only lands on blur would look like the upload failed.
   const [cover, setCover] = useState<string | null>(null);
   const [coverBusy, setCoverBusy] = useState(false);
+  const coverInput = useRef<HTMLInputElement | null>(null);
   const [wordlist, setWordlist] = useState('');
   // `examples` is edited as text — one sentence per line — and split on save.
   const [grammar, setGrammar] = useState({ title: '', meaning: '', form: '', examples: '' });
@@ -1174,27 +1175,40 @@ function LessonEditor({
               file rather than on blur, so it appears when it is picked. */}
           <div className="ed-cover">
             <span className="ed-field-head">{t('prepImage')}</span>
-            {cover && (
-              <div className="ed-cover-preview">
-                <img src={fileUrl(cover)} alt="" />
-                <button type="button" className="ghost" disabled={coverBusy} onClick={() => void saveCover('')}>
-                  {t('prepImageRemove')}
+            <div className="ed-cover-row">
+              {cover && <img src={fileUrl(cover)} alt="" />}
+              {/* A real button, not a label dressed as one: it picks up every
+                  button style the page already has, including the disabled
+                  state — which a <label> cannot have at all. The file input it
+                  opens is hidden next to it. */}
+              <div className="row-actions">
+                <button
+                  type="button"
+                  className="ghost"
+                  disabled={coverBusy}
+                  onClick={() => coverInput.current?.click()}
+                >
+                  {coverBusy ? t('saving') : cover ? t('prepImageReplace') : t('prepImageAdd')}
                 </button>
+                {cover && (
+                  <button type="button" className="ghost" disabled={coverBusy} onClick={() => void saveCover('')}>
+                    {t('prepImageRemove')}
+                  </button>
+                )}
               </div>
-            )}
-            <label className="ghost file-button">
-              {coverBusy ? t('saving') : cover ? t('prepImageReplace') : t('prepImageAdd')}
-              <input
-                type="file"
-                accept="image/*"
-                disabled={coverBusy}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = '';
-                  if (f) void uploadCover(f);
-                }}
-              />
-            </label>
+            </div>
+            <input
+              ref={coverInput}
+              className="sr-only"
+              type="file"
+              accept="image/*"
+              tabIndex={-1}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = '';
+                if (f) void uploadCover(f);
+              }}
+            />
           </div>
         </div>
         <div className="ed-field">
