@@ -661,6 +661,14 @@ textarea {
 .cal-cell.clickable {
   cursor: pointer;
 }
+/* Each cell measures itself, so a chip adapts to ITS column rather than to the
+   window. The same week grid is 190px per day on a laptop and 90px on a tablet
+   in portrait, and a viewport media query cannot tell those apart — the day
+   view has wide columns at any width. Layout containment does not clip, so the
+   booking popover still opens over its neighbours. */
+.cal-cell {
+  container-type: inline-size;
+}
 .cal-cell.clickable:hover {
   background: var(--indigo-50);
 }
@@ -772,6 +780,47 @@ textarea {
   background: rgba(0, 0, 0, 0.1);
   border-color: rgba(0, 0, 0, 0.32);
 }
+/* Narrow column — a tablet, or a week squeezed into a small window. Join and
+   Edit side by side stopped fitting and wrapped onto two rows, which made the
+   chip taller than its hour and let it lean on the lesson underneath.
+   
+   Tightening them was not enough: "Join" is "Rejoindre" in French and
+   "Deelnemen" in Dutch, so no width threshold holds for every language. Edit
+   moves up beside the × instead — the two icon buttons pair in the corner, and
+   the row below belongs to Join alone, whatever its label says. */
+@container (max-width: 132px) {
+  .cal-event {
+    padding: 4px 5px 5px;
+  }
+  .cal-event-title {
+    font-size: 11px;
+    /* Room for both corner buttons. */
+    padding-inline-end: 42px;
+  }
+  .cal-event-actions {
+    gap: 3px;
+    margin-top: 3px;
+  }
+  .cal-event-actions .link {
+    block-size: 21px;
+    font-size: 10px;
+    padding-inline: 9px;
+    max-inline-size: 100%;
+  }
+  .cal-edit {
+    position: absolute;
+    inset-block-start: 1px;
+    /* Left of the ×: 1px inset + its 18px + a 2px gap. */
+    inset-inline-end: 21px;
+    inline-size: 22px;
+    block-size: 18px;
+  }
+  .cal-edit svg {
+    inline-size: 11px;
+    block-size: 11px;
+  }
+}
+
 /* Delete lives in the corner opposite Join, and stays quiet until it is aimed
    at: the two used to sit side by side in a chip a few pixels tall, and only
    one of them removes the lesson. It turns red on hover and focus, so what it
