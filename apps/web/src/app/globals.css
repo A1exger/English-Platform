@@ -670,13 +670,17 @@ textarea {
   border-radius: var(--r-sm);
   /* A chip has to fit a one-hour cell next to six other days, so the padding is
      the smallest that still keeps the title off the edge. */
-  padding: 3px 6px;
+  padding: 5px 7px 6px;
   font-size: 12px;
   /* Anchors the delete × in the corner. */
   position: relative;
 }
 .cal-event.status-cancelled {
   background: var(--mist);
+}
+/* Strike the name, not the card: a line-through on the chip is drawn across its
+   whole line box, so it ran straight through the Join button. */
+.cal-event.status-cancelled .cal-event-title {
   text-decoration: line-through;
 }
 /* A finished lesson. It is green because it is done, but a full-strength green
@@ -692,60 +696,81 @@ textarea {
   font-family: var(--font-display);
   /* Keeps the title clear of the × in the corner. */
   padding-inline-end: 14px;
+  /* Two lines at most: in a narrow column a long name ran to four and pushed
+     the chip over its neighbours. The rest is cut with an ellipsis — the full
+     name is one click away in the edit form. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .cal-event-actions {
   display: flex;
-  /* Wrap rather than overflow: a narrow column puts Delete on its own line
-     instead of pushing it out of the cell. */
+  /* Wrap rather than overflow: a narrow column puts the second control on its
+     own line instead of pushing it out of the cell. */
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 2px;
+  gap: 5px;
+  margin-top: 4px;
   align-items: center;
 }
-/* Join is the thing you came to the calendar to do, so it is a filled chip in
-   the app's accent rather than a tinted link on a tinted block. */
+/* Join and Edit are the two things done from a chip, so they are proper
+   controls rather than the near-invisible 10px pills they started as: one
+   height, one radius, a hairline that holds its shape on any chip colour, and
+   enough padding to be a comfortable target. */
+.cal-event-actions .link,
+.cal-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  block-size: 24px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+/* Join is what you came to the calendar to do: filled, in the app's accent. */
 .cal-event-actions .link {
   background: var(--spark);
   color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 1px 7px;
-  border-radius: var(--r-pill);
+  padding-inline: 12px;
   text-decoration: none;
-  line-height: 1.5;
-  white-space: nowrap;
 }
-.cal-event-actions .link:hover {
+.cal-event-actions .link:hover,
+.cal-event-actions .link:focus-visible {
   background: var(--spark-700);
 }
-/* Move sits next to Join: both are everyday, both are safe, and a lesson that
-   needs a new day is asked for far more often than one that needs deleting. */
+/* Edit sits beside it as the quieter of the two: the chip's own colour, held
+   together by a hairline so it reads as a button and not as a stray glyph. */
 .cal-edit {
-  display: inline-grid;
-  place-items: center;
-  inline-size: 18px;
-  block-size: 18px;
+  inline-size: 28px;
   padding: 0;
-  background: rgba(255, 255, 255, 0.22);
-  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.45);
   color: currentColor;
-  border-radius: var(--r-pill);
 }
 .cal-edit svg {
-  inline-size: 11px;
-  block-size: 11px;
+  inline-size: 13px;
+  block-size: 13px;
 }
 .cal-edit:hover,
 .cal-edit:focus-visible {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.34);
+  border-color: rgba(255, 255, 255, 0.75);
 }
 /* The completed chip is light, so a white wash would vanish on it. */
 .cal-event.status-completed .cal-edit {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.18);
 }
 .cal-event.status-completed .cal-edit:hover,
 .cal-event.status-completed .cal-edit:focus-visible {
-  background: rgba(0, 0, 0, 0.16);
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.32);
 }
 /* Delete lives in the corner opposite Join, and stays quiet until it is aimed
    at: the two used to sit side by side in a chip a few pixels tall, and only
@@ -5275,6 +5300,37 @@ input[type='radio']:focus-visible {
 .slot-popover {
   max-block-size: min(70vh, 460px);
   overflow-y: auto;
+  /* Nothing may make this box wider than itself. A <select> is sized by its
+     longest option, so one student named "Konstantinopolskaya-Vvedenskaya" or
+     one course called "Intermediate Business English — negotiations and
+     reports" pushed the form to 498px inside a 258px box and put a horizontal
+     scrollbar under the Create button. */
+  overflow-x: hidden;
+}
+.slot-popover input,
+.slot-popover select,
+.slot-popover textarea,
+.slot-popover button {
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  box-sizing: border-box;
+}
+/* Grid and flex children refuse to shrink below their content unless told. */
+.slot-popover label,
+.slot-popover .form-grid > * {
+  min-inline-size: 0;
+}
+/* The × in the header is not a full-width control. */
+.slot-popover-head button {
+  inline-size: auto;
+  flex: 0 0 auto;
+}
+/* A slot in one of the last columns would open off the right edge of the
+   calendar; anchor those to the cell's trailing edge instead. */
+.slot-popover.flip-start {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
 }
 .slot-popover-head strong {
   font-size: 13px;

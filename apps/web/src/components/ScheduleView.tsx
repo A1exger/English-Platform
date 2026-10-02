@@ -365,8 +365,15 @@ export function ScheduleView() {
       ? format.dateTime(days[0], { weekday: 'long', day: 'numeric', month: 'short', timeZone: tz })
       : `${format.dateTime(days[0], { day: 'numeric', month: 'short', timeZone: tz })} – ${format.dateTime(days[days.length - 1], { day: 'numeric', month: 'short', timeZone: tz })}`;
 
+  /**
+   * A popover opens from its cell's leading edge, which runs it off the right
+   * of the calendar in the last columns. Those flip to open leftwards.
+   */
+  const flipFor = (key: string | undefined) =>
+    key && days.length > 2 && Number(key.split('-')[0]) >= days.length - 2 ? ' flip-start' : '';
+
   const slotForm = slot && (
-    <div className="slot-popover" onClick={(e) => e.stopPropagation()}>
+    <div className={`slot-popover${flipFor(slot.key)}`} onClick={(e) => e.stopPropagation()}>
       <form className="form-grid" onSubmit={createLesson}>
         <div className="row-between slot-popover-head">
           <strong>{format.dateTime(slot.date, { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone: tz })}</strong>
@@ -436,7 +443,7 @@ export function ScheduleView() {
   // hour per row, and a tutor rescheduling to "Thursday at half past two" would
   // otherwise have to find a cell that does not exist.
   const editForm = edit && (
-    <div className="slot-popover" onClick={(e) => e.stopPropagation()}>
+    <div className={`slot-popover${flipFor(edit.key)}`} onClick={(e) => e.stopPropagation()}>
       <form className="form-grid" onSubmit={saveEdit}>
         <div className="row-between slot-popover-head">
           <strong>{t('edit')}</strong>
