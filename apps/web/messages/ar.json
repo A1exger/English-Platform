@@ -429,7 +429,9 @@
     "goal": "الهدف",
     "forecast": "التوقع",
     "projected": "متوقع",
-    "remaining": "إلزامي متبقٍ"
+    "remaining": "إلزامي متبقٍ",
+    "badge_week_streak": "أسبوع متتالٍ",
+    "streak": "سلسلة"
   },
   "exercises": {
     "title": "التمارين",
@@ -668,7 +670,12 @@
     "true": "صحيح",
     "false": "خطأ",
     "examples": "أمثلة",
-    "sources": "المصادر"
+    "sources": "المصادر",
+    "questProgress": "الصفحة {done} من {total}",
+    "questLeft": "{count, plural, other {بقيت # صفحة}}",
+    "questDone": "الصفحة الأخيرة — أحسنت!",
+    "questStreak": "{days, plural, other {# يوم متتالٍ}}",
+    "questBadges": "شاراتك"
   },
   "assignments": {
     "title": "الواجبات",

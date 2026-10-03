@@ -429,7 +429,9 @@
     "goal": "Objectif",
     "forecast": "Prévision",
     "projected": "prévu",
-    "remaining": "requis restants"
+    "remaining": "requis restants",
+    "badge_week_streak": "Une semaine d’affilée",
+    "streak": "Série"
   },
   "exercises": {
     "title": "Exercices",
@@ -668,7 +670,12 @@
     "true": "Vrai",
     "false": "Faux",
     "examples": "Exemples",
-    "sources": "Sources"
+    "sources": "Sources",
+    "questProgress": "Page {done} sur {total}",
+    "questLeft": "{count, plural, one {# page restante} other {# pages restantes}}",
+    "questDone": "Dernière page — bravo !",
+    "questStreak": "{days, plural, one {# jour d’affilée} other {# jours d’affilée}}",
+    "questBadges": "Tes badges"
   },
   "assignments": {
     "title": "Devoirs",

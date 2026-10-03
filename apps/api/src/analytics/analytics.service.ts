@@ -172,6 +172,79 @@ export class AnalyticsService {
     };
   }
 
+  /**
+   * Consecutive days, up to today, on which the student did something: finished
+   * a lesson, handed in homework, or drilled a word.
+   *
+   * Counted in the STUDENT's own time zone. A streak is about their days, and
+   * a learner in Dubai finishing a lesson at 01:00 would otherwise see it land
+   * on the server's yesterday and break the count they just earned.
+   *
+   * Today being empty does not break it: the day is not over yet, so the count
+   * runs from today if there is activity and from yesterday if there is not.
+   */
+  private async streakDays(
+    studentProfileId: string,
+    userId: string,
+    timezone: string,
+    now: Date,
+  ): Promise<number> {
+    // Ninety days of history is far more than any streak anyone will hold, and
+    // bounds the query on a table that only grows.
+    const since = new Date(now.getTime() - 90 * 86_400_000);
+    const [lessons, homework, reviews] = await Promise.all([
+      this.prisma.lesson.findMany({
+        where: {
+          status: 'completed',
+          endsAt: { gte: since, lte: now },
+          participants: { some: { studentProfileId } },
+        },
+        select: { endsAt: true },
+      }),
+      this.prisma.homeworkSubmission.findMany({
+        where: {
+          submittedAt: { gte: since, lte: now },
+          homework: { studentProfileId },
+        },
+        select: { submittedAt: true },
+      }),
+      this.prisma.dictionaryEntry.findMany({
+        where: { studentProfileId, lastReviewedAt: { gte: since, lte: now } },
+        select: { lastReviewedAt: true },
+      }),
+    ]);
+
+    const zone = timezone || 'UTC';
+    const dayOf = (d: Date) => {
+      try {
+        // en-CA gives YYYY-MM-DD, which sorts and compares as text.
+        return new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(d);
+      } catch {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(d);
+      }
+    };
+    const active = new Set<string>();
+    for (const l of lessons) active.add(dayOf(l.endsAt));
+    for (const h of homework) active.add(dayOf(h.submittedAt));
+    for (const r of reviews) if (r.lastReviewedAt) active.add(dayOf(r.lastReviewedAt));
+    if (active.size === 0) return 0;
+
+    const today = dayOf(now);
+    const yesterday = dayOf(new Date(now.getTime() - 86_400_000));
+    // Start on today when it counts, otherwise on yesterday; if neither is
+    // active the streak is over, whatever came before.
+    let cursor = active.has(today) ? today : active.has(yesterday) ? yesterday : null;
+    if (!cursor) return 0;
+
+    let days = 0;
+    let at = new Date(`${cursor}T12:00:00Z`);
+    while (active.has(dayOf(at))) {
+      days += 1;
+      at = new Date(at.getTime() - 86_400_000);
+    }
+    return days;
+  }
+
   /** Learning progress + achievements for the signed-in student. */
   async progress(user: AuthenticatedUser) {
     const student = await this.prisma.studentProfile.findUnique({
@@ -184,6 +257,7 @@ export class AnalyticsService {
         lessonsUpcoming: 0,
         attendanceRate: null,
         homeworkGraded: 0,
+        streakDays: 0,
         achievements: [],
       };
     }
@@ -212,6 +286,17 @@ export class AnalyticsService {
         }),
       ]);
 
+    const me = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { timezone: true },
+    });
+    const streakDays = await this.streakDays(
+      student.id,
+      user.id,
+      me?.timezone ?? 'UTC',
+      now,
+    );
+
     const present = attendance.filter((a) => a.status === 'present').length;
     const attendanceRate = attendance.length
       ? Math.round((present / attendance.length) * 100)
@@ -224,6 +309,7 @@ export class AnalyticsService {
       { key: 'ten_lessons', earned: lessonsCompleted >= 10 },
       { key: 'homework_hero', earned: homeworkGraded >= 5 },
       { key: 'perfect_attendance', earned: attendance.length >= 5 && attendanceRate === 100 },
+      { key: 'week_streak', earned: streakDays >= 7 },
     ];
 
     return {
@@ -232,6 +318,7 @@ export class AnalyticsService {
       lessonsUpcoming,
       attendanceRate,
       homeworkGraded,
+      streakDays,
       achievements,
     };
   }

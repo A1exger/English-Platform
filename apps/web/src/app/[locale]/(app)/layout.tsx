@@ -2,6 +2,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { Sidebar } from '@/components/Sidebar';
 import { ToastProvider } from '@/components/Toast';
 import { IdleGuard } from '@/components/IdleGuard';
+import { StudyTheme } from '@/components/StudyTheme';
 
 // The authenticated shell. Mounts ONCE for every route in this group, so the
 // rail no longer remounts (and no longer refetches the profile) on navigation.
@@ -16,6 +17,7 @@ export default async function AppLayout(props: {
   return (
     <ToastProvider>
       <IdleGuard />
+      <StudyTheme />
       <div className="app-shell">
         <Sidebar />
         <main className="app-main">

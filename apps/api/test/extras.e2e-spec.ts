@@ -102,6 +102,67 @@ describe('Admin CRM / student profile / progress / uploads / notes (e2e)', () =>
     expect(Array.isArray(res.body.achievements)).toBe(true);
   });
 
+  // The streak is what the quest bar above a lesson counts. Three things make
+  // it worth a test: what counts as a day of activity, that a gap ends it, and
+  // that an empty today does not — the day is not over yet.
+  it('streak counts consecutive days of activity in the student\'s own zone', async () => {
+    const authS = { Authorization: `Bearer ${student.accessToken}` };
+    const me = await prisma.user.findFirstOrThrow({ where: { role: 'student' } });
+    const sp = await prisma.studentProfile.findFirstOrThrow({ where: { userId: me.id } });
+    const tp = await prisma.tutorProfile.findFirstOrThrow();
+    const DAY = 86_400_000;
+    const ago = (d: number) => new Date(Date.now() - d * DAY);
+
+    const nothing = await api().get('/api/v1/analytics/progress').set(authS).expect(200);
+    expect(nothing.body.streakDays).toBe(0);
+
+    // Yesterday and the day before: a lesson, then homework handed in.
+    const lesson = await prisma.lesson.create({
+      data: {
+        tutorProfileId: tp.id,
+        status: 'completed',
+        startsAt: ago(1),
+        endsAt: ago(1),
+        participants: { create: { studentProfileId: sp.id } },
+      },
+    });
+    void lesson;
+    const hw = await prisma.homework.create({
+      data: { tutorProfileId: tp.id, studentProfileId: sp.id, title: 'Unit 2' },
+    });
+    await prisma.homeworkSubmission.create({
+      data: { homeworkId: hw.id, content: 'done', submittedAt: ago(2) },
+    });
+
+    // Nothing today, and that is fine: the count runs from yesterday.
+    const two = await api().get('/api/v1/analytics/progress').set(authS).expect(200);
+    expect(two.body.streakDays).toBe(2);
+
+    // A word drilled today extends it to three.
+    await prisma.dictionaryEntry.create({
+      data: { studentProfileId: sp.id, word: 'streak', lastReviewedAt: new Date() },
+    });
+    const three = await api().get('/api/v1/analytics/progress').set(authS).expect(200);
+    expect(three.body.streakDays).toBe(3);
+    // Seven days running earns its badge; three does not.
+    expect(
+      three.body.achievements.find((a: { key: string }) => a.key === 'week_streak').earned,
+    ).toBe(false);
+
+    // A lesson a week ago does not join a broken chain.
+    await prisma.lesson.create({
+      data: {
+        tutorProfileId: tp.id,
+        status: 'completed',
+        startsAt: ago(7),
+        endsAt: ago(7),
+        participants: { create: { studentProfileId: sp.id } },
+      },
+    });
+    const stillThree = await api().get('/api/v1/analytics/progress').set(authS).expect(200);
+    expect(stillThree.body.streakDays).toBe(3);
+  });
+
   it('admin can view analytics overview (platform-wide)', async () => {
     const res = await api()
       .get('/api/v1/analytics/overview')

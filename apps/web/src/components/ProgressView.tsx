@@ -13,6 +13,8 @@ interface Achievement { key: string; earned: boolean }
 interface Progress {
   cefrLevel: string | null;
   lessonsCompleted: number;
+  /** Consecutive days with a lesson, homework or a word drilled. */
+  streakDays: number;
   lessonsUpcoming: number;
   attendanceRate: number | null;
   homeworkGraded: number;
@@ -71,6 +73,9 @@ export function ProgressView() {
 
   const cards = [
     { label: t('level'), value: data.cefrLevel ?? '—' },
+    // The streak sits first among the counts: it is the one number that moves
+    // every day, and the one a student can do something about today.
+    { label: t('streak'), value: data.streakDays > 0 ? `🔥 ${data.streakDays}` : '—' },
     { label: t('lessonsCompleted'), value: String(data.lessonsCompleted) },
     { label: t('lessonsUpcoming'), value: String(data.lessonsUpcoming) },
     { label: t('attendance'), value: data.attendanceRate === null ? '—' : `${data.attendanceRate}%` },

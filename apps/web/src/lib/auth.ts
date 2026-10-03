@@ -33,6 +33,10 @@ export const tokenStore = {
   clear(): void {
     localStorage.removeItem(ACCESS);
     localStorage.removeItem(REFRESH);
+    // The cached role drives the student skin (see StudyTheme). Leaving it
+    // behind would paint the next person to sign in on this device in the
+    // previous one's theme until their profile loads.
+    localStorage.removeItem('esp.role');
   },
 };
 

@@ -11,6 +11,7 @@ import { RichText } from './RichText';
 import { AssignmentBuilder } from './AssignmentBuilder';
 import { Skeleton } from './Skeleton';
 import { Stepper } from './Stepper';
+import { QuestBar } from './QuestBar';
 import { ScoreRing } from './ScoreRing';
 import { Icon } from './Icon';
 
@@ -195,6 +196,11 @@ export function LessonPlayerView({
           onClose={() => setShowAssign(false)}
         />
       )}
+
+      {/* A student sees how far through the lesson they are, their streak and
+          their badges. A tutor does not: in a teaching view it would be a
+          progress bar for someone else's progress. */}
+      {isStudent && <QuestBar step={pageIdx} total={lesson.pages.length + 1} />}
 
       <Stepper
         current={pageIdx}

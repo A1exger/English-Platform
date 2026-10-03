@@ -429,7 +429,9 @@
     "goal": "Doel",
     "forecast": "Prognose",
     "projected": "verwacht",
-    "remaining": "verplicht over"
+    "remaining": "verplicht over",
+    "badge_week_streak": "Een week op rij",
+    "streak": "Reeks"
   },
   "exercises": {
     "title": "Oefeningen",
@@ -668,7 +670,12 @@
     "true": "Waar",
     "false": "Onwaar",
     "examples": "Voorbeelden",
-    "sources": "Bronnen"
+    "sources": "Bronnen",
+    "questProgress": "Pagina {done} van {total}",
+    "questLeft": "{count, plural, one {nog # pagina} other {nog # pagina’s}}",
+    "questDone": "Laatste pagina — goed gedaan!",
+    "questStreak": "{days, plural, one {# dag op rij} other {# dagen op rij}}",
+    "questBadges": "Jouw badges"
   },
   "assignments": {
     "title": "Opdrachten",

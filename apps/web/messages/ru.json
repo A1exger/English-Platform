@@ -429,7 +429,9 @@
     "goal": "Цель",
     "forecast": "Прогноз",
     "projected": "прогноз",
-    "remaining": "обязательных осталось"
+    "remaining": "обязательных осталось",
+    "badge_week_streak": "Неделя подряд",
+    "streak": "Серия"
   },
   "exercises": {
     "title": "Упражнения",
@@ -668,7 +670,12 @@
     "true": "Верно",
     "false": "Неверно",
     "examples": "Примеры",
-    "sources": "Источники"
+    "sources": "Источники",
+    "questProgress": "Страница {done} из {total}",
+    "questLeft": "{count, plural, one {осталась # страница} few {осталось # страницы} many {осталось # страниц} other {осталось # страницы}}",
+    "questDone": "Последняя страница — отлично!",
+    "questStreak": "{days, plural, one {# день подряд} few {# дня подряд} many {# дней подряд} other {# дня подряд}}",
+    "questBadges": "Ваши значки"
   },
   "assignments": {
     "title": "Задания",
