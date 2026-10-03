@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="English Spark Studio">
+  <!-- Brand mark: the Spark glyph knocked out of a filled indigo tile. The star
+       is deliberately fatter than the in-app `spark` icon — the UI version's
+       thin arms disappear at the 16px a browser tab actually renders. -->
+  <rect width="24" height="24" rx="5" fill="#0088b0"/>
+  <path d="M12 3.5 L14.97 9.03 L20.5 12 L14.97 14.97 L12 20.5 L9.03 14.97 L3.5 12 L9.03 9.03 Z" fill="#ffffff"/>
+</svg>

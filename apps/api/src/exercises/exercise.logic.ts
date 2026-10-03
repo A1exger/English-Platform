@@ -1,4 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
+// Shared, canonical helpers (SPEC §4: one set of task utilities, no duplicates).
+import { shuffle } from '../common/tasks/task-contract';
 
 export const EXERCISE_TYPES = ['order', 'match', 'fill', 'categorize'] as const;
 export type ExerciseType = (typeof EXERCISE_TYPES)[number];
@@ -8,15 +10,6 @@ export interface CheckResult {
   correct: boolean;
   total: number;
   right: number;
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  const r = [...arr];
-  for (let i = r.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [r[i], r[j]] = [r[j], r[i]];
-  }
-  return r;
 }
 
 const norm = (s: unknown) => String(s ?? '').trim().toLowerCase();

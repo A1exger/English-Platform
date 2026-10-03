@@ -149,4 +149,74 @@ describe('Phase 3: task runtime + preparation (e2e)', () => {
     expect(list.body.length).toBe(1);
     expect(list.body[0].translation).toBe('ездить на работу');
   });
+
+  // GDPR Art. 15/20: a copy of everything held about the caller, on request.
+  it('export: a student gets their own data, including notes written about them', async () => {
+    const authS = auth(student.accessToken);
+    const sp = await prisma.studentProfile.findFirstOrThrow({ select: { id: true } });
+    const tp = await prisma.tutorProfile.findFirstOrThrow({ select: { id: true } });
+    await prisma.tutorNote.create({
+      data: { tutorProfileId: tp.id, studentProfileId: sp.id, body: 'Struggles with articles.' },
+    });
+
+    const res = await api().get('/api/v1/users/me/export').set(authS).expect(200);
+    expect(res.body.account.email).toBeDefined();
+    expect(res.body.account.passwordHash).toBeUndefined();
+    expect(res.body.exportedAt).toBeDefined();
+    // Their own words come along.
+    expect(res.body.dictionary.map((d: { word: string }) => d.word)).toContain('commute');
+    // And so does what the tutor wrote about them: it is their personal data,
+    // and Art. 15 has no exception for a note being unflattering.
+    expect(res.body.notesWrittenAboutMe.map((n: { body: string }) => n.body)).toContain(
+      'Struggles with articles.',
+    );
+    // A student's export carries no teaching side.
+    expect(res.body.lessonsTaught).toBeUndefined();
+
+    // The tutor's own export is about the tutor, not about their students.
+    const mine = await api().get('/api/v1/users/me/export').set(auth(tutor.accessToken)).expect(200);
+    expect(mine.body.account.role).toBe('tutor');
+    expect(mine.body.notesIWrote.length).toBeGreaterThanOrEqual(1);
+    expect(mine.body.notesWrittenAboutMe).toBeUndefined();
+    expect(mine.body.dictionary).toBeUndefined();
+
+    // Signing in is required — this is the one endpoint that hands over everything.
+    await api().get('/api/v1/users/me/export').expect(401);
+  });
+
+  // A student sees which shelf of the bank each of their words came from, so
+  // they can revise one topic at a time. The topic is READ from the bank rather
+  // than copied into the entry, which is what makes the next three assertions
+  // hold: a word the bank does not have has none, re-filing a word in the bank
+  // moves it here too, and none of it needs a backfill.
+  it('dictionary: each word carries the topic the bank files it under', async () => {
+    const authS = auth(student.accessToken);
+    await api()
+      .post('/api/v1/content/word-bank/import')
+      .set(auth(tutor.accessToken))
+      .send({ text: 'invoice = счёт\nrefund = возврат', topic: 'Business' })
+      .expect(201);
+
+    // Added by hand, spelled with a capital: the same word as the bank's.
+    await api().post('/api/v1/content/dictionary').set(authS).send({ word: 'Invoice' }).expect(201);
+    // And one the bank has never heard of.
+    await api().post('/api/v1/content/dictionary').set(authS).send({ word: 'zzz-own-word' }).expect(201);
+
+    const list = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
+    const topicOf = (w: string) =>
+      list.body.find((e: { word: string }) => e.word === w)?.topic;
+    expect(topicOf('Invoice')).toBe('Business');
+    expect(topicOf('zzz-own-word')).toBeNull();
+    // A word added before any of this still has no topic of its own to carry.
+    expect(topicOf('commute')).toBeNull();
+
+    // The tutor re-files the word; the student's dictionary follows.
+    await api()
+      .post('/api/v1/content/word-bank/import')
+      .set(auth(tutor.accessToken))
+      .send({ text: 'invoice = счёт', topic: 'Money & shopping' })
+      .expect(201);
+    const after = await api().get('/api/v1/content/dictionary').set(authS).expect(200);
+    expect(after.body.find((e: { word: string }) => e.word === 'Invoice').topic).toBe('Money & shopping');
+  });
 });

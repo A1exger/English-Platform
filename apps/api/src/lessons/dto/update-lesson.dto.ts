@@ -26,4 +26,9 @@ export class UpdateLessonDto {
   @IsOptional()
   @IsString()
   meetingUrl?: string;
+
+  // The attached course lesson (content) for this slot. Empty string detaches.
+  @IsOptional()
+  @IsString()
+  materialLessonId?: string;
 }

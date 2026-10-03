@@ -9,6 +9,7 @@ import { CreateHomeworkDto } from './dto/create-homework.dto';
 import { SubmitHomeworkDto } from './dto/submit-homework.dto';
 import { GradeHomeworkDto } from './dto/grade-homework.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { seedInstanceState } from '../exercises/canonical';
 
 const HOMEWORK_INCLUDE = {
   submissions: { orderBy: { submittedAt: 'desc' } },
@@ -80,6 +81,14 @@ export class HomeworkService {
     },
   ) {
     const tutor = await this.tutorProfileForOwner(user);
+    // Fetch the referenced templates so each instance can seed its OWN
+    // server-side layout — independent per (student × task), never revealing the
+    // answer (ФТ-У302). Canonical + legacy exercises both ride this path.
+    const refs = await this.prisma.exercise.findMany({
+      where: { id: { in: dto.exerciseIds } },
+      select: { id: true, type: true, payload: true },
+    });
+    const byId = new Map(refs.map((r) => [r.id, r]));
     const created: string[] = [];
     for (const studentProfileId of dto.studentProfileIds) {
       const student = await this.prisma.studentProfile.findUnique({
@@ -96,12 +105,15 @@ export class HomeworkService {
         },
       });
       for (const exerciseId of dto.exerciseIds) {
+        const ex = byId.get(exerciseId);
+        const seeded = ex ? seedInstanceState(ex.type, ex.payload) : undefined;
         await this.prisma.exerciseInstance.create({
           data: {
             exerciseId,
             context: 'homework',
             homeworkId: homework.id,
             studentProfileId,
+            ...(seeded ? { state: seeded } : {}),
           },
         });
       }
@@ -214,9 +226,34 @@ export class HomeworkService {
       where: { id },
       data: { status: 'submitted' },
     });
+
+    // Tell the tutor there is work waiting to be checked.
+    await this.notifyTutor(hw.tutorProfileId, hw.title, user.id);
+
     return this.prisma.homework.findUnique({
       where: { id },
       include: HOMEWORK_INCLUDE,
+    });
+  }
+
+  /** "<student> submitted homework" → the owning tutor. Best-effort. */
+  private async notifyTutor(tutorProfileId: string, title: string, studentUserId: string) {
+    const [tutor, student] = await Promise.all([
+      this.prisma.tutorProfile.findUnique({ where: { id: tutorProfileId } }),
+      this.prisma.user.findUnique({
+        where: { id: studentUserId },
+        select: { firstName: true, lastName: true, email: true },
+      }),
+    ]);
+    if (!tutor) return;
+    const name =
+      [student?.firstName, student?.lastName].filter(Boolean).join(' ').trim() ||
+      student?.email ||
+      '';
+    await this.notifications.enqueue({
+      userId: tutor.userId,
+      templateKey: 'homework_submitted',
+      payload: { student: name, title },
     });
   }
 
@@ -248,6 +285,20 @@ export class HomeworkService {
       where: { id },
       data: { status: 'graded' },
     });
+
+    // Tell the student their work was reviewed, so feedback isn't something
+    // they have to go looking for.
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { id: hw.studentProfileId },
+    });
+    if (student) {
+      await this.notifications.enqueue({
+        userId: student.userId,
+        templateKey: 'homework_feedback',
+        payload: { title: hw.title },
+      });
+    }
+
     return this.prisma.homework.findUnique({
       where: { id },
       include: HOMEWORK_INCLUDE,

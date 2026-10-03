@@ -144,8 +144,8 @@ describe('Materials + Notifications + Analytics (e2e)', () => {
       .set('Authorization', `Bearer ${admin.accessToken}`)
       .expect(201);
     const texts = res.body.map((n: { text: string }) => n.text).join(' | ');
-    expect(texts).toContain('Nouveau devoir'); // fr homework_assigned
-    expect(texts).toContain('Cours réservé'); // fr lesson_booked
+    expect(texts).toContain('vous a attribué un nouveau devoir'); // fr homework_assigned
+    expect(texts).toContain('a été ajouté à votre planning'); // fr lesson_booked
 
     const after = await api()
       .get('/api/v1/notifications')
@@ -186,9 +186,51 @@ describe('Materials + Notifications + Analytics (e2e)', () => {
       .set('Authorization', `Bearer ${tutor.accessToken}`)
       .expect(200);
     expect(res.body.lessonsCompleted).toBe(1);
-    expect(res.body.revenueCents).toBe(5000);
     expect(res.body.activeStudents).toBe(1);
     expect(res.body.attendanceRate).toBe(100);
+    // Teaching a lesson is not income. The lesson above was priced and taught,
+    // and nothing has been paid for it yet.
+    expect(res.body.revenueCents).toBe(0);
+  });
+
+  it('revenue counts a payment only once the tutor confirms it', async () => {
+    const authT = { Authorization: `Bearer ${tutor.accessToken}` };
+    const transfer = await api()
+      .post('/api/v1/billing/transfer')
+      .set('Authorization', `Bearer ${student.accessToken}`)
+      .send({ method: 'westernunion', amountCents: 7500 })
+      .expect(201);
+
+    // Requested, not confirmed: the money may never arrive.
+    const pending = await api().get('/api/v1/analytics/overview').set(authT).expect(200);
+    expect(pending.body.revenueCents).toBe(0);
+
+    await api()
+      .post(`/api/v1/billing/transfer/${transfer.body.transactionId}/confirm`)
+      .set(authT)
+      .expect(201);
+
+    const after = await api().get('/api/v1/analytics/overview').set(authT).expect(200);
+    expect(after.body.revenueCents).toBe(7500);
+    // And it lands in this month's bucket, which is what the chart draws.
+    const now = new Date();
+    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    expect(after.body.revenueMonths).toHaveLength(24);
+    expect(after.body.revenueMonths.at(-1).month).toBe(key);
+    expect(after.body.revenueMonths.at(-1).amountCents).toBe(7500);
+
+    // A rejected transfer is not revenue either.
+    const rejected = await api()
+      .post('/api/v1/billing/transfer')
+      .set('Authorization', `Bearer ${student.accessToken}`)
+      .send({ method: 'westernunion', amountCents: 9900 })
+      .expect(201);
+    await api()
+      .post(`/api/v1/billing/transfer/${rejected.body.transactionId}/reject`)
+      .set(authT)
+      .expect(201);
+    const end = await api().get('/api/v1/analytics/overview').set(authT).expect(200);
+    expect(end.body.revenueCents).toBe(7500);
   });
 
   it('students cannot access tutor analytics -> 403', async () => {

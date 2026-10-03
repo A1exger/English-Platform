@@ -5,6 +5,7 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../notifications/mail.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -62,6 +63,9 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: jwt },
         { provide: ConfigService, useValue: config },
         { provide: (require('nestjs-i18n').I18nService), useValue: i18n },
+        // AuthService emails password-reset links; the unit tests never assert
+        // on delivery, so a no-op adapter keeps them focused on the auth logic.
+        { provide: MailService, useValue: { sendMail: jest.fn() } },
       ],
     }).compile();
 

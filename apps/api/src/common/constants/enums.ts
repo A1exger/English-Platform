@@ -52,7 +52,7 @@ export const CHECKOUT_PROVIDERS = ['stripe', 'paypal'] as const;
 export type CheckoutProvider = (typeof CHECKOUT_PROVIDERS)[number];
 
 // Money-transfer methods settled manually: the student sends funds and submits
-// a reference (MTCN), then an admin confirms receipt.
+// a reference (MTCN), then their tutor (or an admin) confirms receipt.
 export const OFFLINE_PROVIDERS = ['westernunion', 'moneygram'] as const;
 export type OfflineProvider = (typeof OFFLINE_PROVIDERS)[number];
 
@@ -105,6 +105,7 @@ export type PageType = (typeof PAGE_TYPES)[number];
 
 export const TASK_TYPES = [
   'sentence_ordering',
+  'true_false',
   'word_matching',
   'gap_fill',
   'categorization',
@@ -130,3 +131,31 @@ export type Aspect = (typeof ASPECTS)[number];
 
 export const ASSIGNMENT_KINDS = ['lesson', 'homework'] as const;
 export type AssignmentKind = (typeof ASSIGNMENT_KINDS)[number];
+
+// assigned -> in_progress -> needs_review -> done.
+//
+// "needs_review" exists because a student finishing and a tutor checking are
+// two different events. Without it the assignment read "done" the moment the
+// essay was handed in, so a tutor coming back a week later had nothing telling
+// them which work they had already read. An assignment with no manually graded
+// task skips the state entirely and goes straight to done.
+export const ASSIGNMENT_STATUSES = [
+  'assigned',
+  'in_progress',
+  'needs_review',
+  'done',
+] as const;
+export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number];
+
+// The statuses where the STUDENT has done everything asked of them. Course
+// progress counts these: a lesson the student finished is finished for them,
+// whether or not the tutor has got round to reading the essay.
+export const STUDENT_FINISHED_STATUSES = ['needs_review', 'done'] as const;
+
+// --- AI generation (SPEC §7/§10) ---
+
+export const GEN_TARGET_TYPES = ['COURSE', 'LESSON'] as const;
+export type GenTargetType = (typeof GEN_TARGET_TYPES)[number];
+
+export const GEN_STATUSES = ['generating', 'ready_for_review', 'approved', 'failed'] as const;
+export type GenStatus = (typeof GEN_STATUSES)[number];
