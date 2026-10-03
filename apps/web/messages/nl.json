@@ -643,7 +643,8 @@
     "prepImage": "Afbeelding voor de voorbereiding",
     "prepImageAdd": "Afbeelding toevoegen",
     "prepImageReplace": "Afbeelding vervangen",
-    "prepImageRemove": "Verwijderen"
+    "prepImageRemove": "Verwijderen",
+    "prepImageAuto": "Nog geen afbeelding — de les opent met deze."
   },
   "learn": {
     "title": "Les",

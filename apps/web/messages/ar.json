@@ -643,7 +643,8 @@
     "prepImage": "صورة التحضير",
     "prepImageAdd": "إضافة صورة",
     "prepImageReplace": "استبدال الصورة",
-    "prepImageRemove": "إزالة"
+    "prepImageRemove": "إزالة",
+    "prepImageAuto": "لا توجد صورة بعد — سيبدأ الدرس بهذه."
   },
   "learn": {
     "title": "الدرس",

@@ -2,40 +2,44 @@
    Light-first. RTL via logical properties only (no left/right). */
 
 :root {
-  /* Broadsheet — newsprint light theme, cyan primary accent, near-square corners.
-     Applied platform-wide (the lesson room shares these values). Brand ramps keep
-     their old --indigo-/--spark- names so existing components inherit the new hues
-     with no per-component edits. */
+  /* One look for everyone — tutor and student alike. White ground, sky-blue
+     primary, coral second accent, generous rounding, soft shadows instead of
+     hairlines, and a single sans. It started as a separate skin for students
+     and became the platform's own: two designs mean two things to maintain and
+     one of them always falls behind.
+
+     Brand ramps keep their old --indigo-/--spark- names so every component
+     inherits the new hues with no per-component edits. */
 
   /* surfaces */
-  --paper: #f3f2f2;   /* page background (newsprint) */
+  --paper: #ffffff;
   --card: #ffffff;    /* cards / panels */
-  --cloud: #eae9e9;   /* sidebar / inset surface (a touch darker than paper) */
-  --line: rgba(32, 30, 29, 0.14);
-  --line-strong: rgba(32, 30, 29, 0.26);
+  --cloud: #f1f7fc;   /* sidebar / inset surface */
+  --line: rgba(20, 45, 72, 0.1);
+  --line-strong: rgba(20, 45, 72, 0.18);
 
   /* ink */
-  --ink: #201e1d;
-  --slate: #605d5d;
-  --mist: #9b9797;
+  --ink: #16304a;
+  --slate: #50687f;
+  --mist: #93a6b8;
 
   /* brand: cyan (primary interactive) — name kept for back-compat */
-  --indigo-50: #e9f8ff;
-  --indigo-100: #cbeeff;
-  --indigo: #0088b0;
-  --indigo-700: #006786;
-  --indigo-900: #0a303e;
+  --indigo-50: #eaf7ff;
+  --indigo-100: #cfecfd;
+  --indigo: #3db8f5;
+  --indigo-700: #1f93cd;
+  --indigo-900: #10364f;
 
   /* second accent: magenta (rare) — name kept for back-compat */
-  --spark-50: #fff1f4;
-  --spark-100: #ffdee6;
-  --spark: #d6006c;
-  --spark-700: #aa0b56;
+  --spark-50: #fff3ef;
+  --spark-100: #ffded4;
+  --spark: #ff6b4a;
+  --spark-700: #e2512f;
 
   /* grade tiers (semantic, unchanged) */
   /* answer gauge: the platform's deep teal when a task is answered correctly,
      bordeaux when it is not */
-  --gauge-ok: #006786;
+  --gauge-ok: #1f93cd;
   --gauge-wrong: #8c1b3d;
   --high: #1fa971;
   --high-100: #e2f5ec;
@@ -47,29 +51,29 @@
   --low-100: #fbe7e5;
 
   /* type — serif headings/labels, sans (Inter) for body & data */
-  --font-display: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Inter', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-ar: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
 
-  /* radius — near-square for surfaces (cards, panels, tables) */
-  --r-sm: 1px;
-  --r-md: 2px;
-  --r-lg: 4px;
-  --r-xl: 6px;
+  /* radius — rounded throughout; surfaces and controls differ only in degree */
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-xl: 28px;
   --r-pill: 999px;
   /* …and rounded for things you click and type into. Controls read as controls
      when their corners differ from the panels they sit on, and one token keeps
      a button and the field above it agreeing — which is what you notice in a
      sign-in form, where they sit directly on top of each other. */
-  --r-control: 8px;
+  --r-control: 16px;
 
   /* elevation */
   --sh-xs: none;
-  --sh-sm: 0 1px 2px rgba(45, 43, 43, 0.14);
-  --sh-md: 0 3px 10px rgba(45, 43, 43, 0.16);
-  --ring: 0 0 0 3px rgba(0, 136, 176, 0.28);
+  --sh-sm: 0 2px 8px rgba(22, 48, 74, 0.08);
+  --sh-md: 0 12px 30px rgba(22, 48, 74, 0.12);
+  --ring: 0 0 0 4px rgba(61, 184, 245, 0.35);
 
   /* motion */
   --e-out: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -85,86 +89,23 @@
   --radius: var(--r-md);
 }
 
-/* ——— «Квест»: вид, который видит ученик ————————————————————————————————
-   Преподаватель остаётся на Broadsheet: его экраны — расписание, ученики,
-   деньги, конструктор — выигрывают от плотности и строгости. Ребёнку та же
-   строгость читается как бланк, поэтому ученическая часть получает свою
-   шкурку: белый фон, крупные скругления, мягкие тени вместо рамок, гротеск
-   вместо засечек и тёплый коралловый акцент.
-
-   Это переопределение переменных, а не вторая вёрстка: ни один компонент о
-   теме не знает. Ставится атрибутом на <html> (см. StudyTheme). */
-:root[data-theme='study'] {
-  --paper: #ffffff;
-  --card: #ffffff;
-  --cloud: #f1f7fc;
-  --line: rgba(20, 45, 72, 0.1);
-  --line-strong: rgba(20, 45, 72, 0.18);
-  --ink: #16304a;
-  --slate: #50687f;
-  --mist: #93a6b8;
-
-  --indigo-50: #eaf7ff;
-  --indigo-100: #cfecfd;
-  --indigo: #3db8f5;
-  --indigo-700: #1f93cd;
-  --indigo-900: #10364f;
-
-  --spark-50: #fff3ef;
-  --spark-100: #ffded4;
-  --spark: #ff6b4a;
-  --spark-700: #e2512f;
-
-  --r-sm: 12px;
-  --r-md: 18px;
-  --r-lg: 24px;
-  --r-xl: 28px;
-  --r-control: 16px;
-
-  --sh-sm: 0 2px 8px rgba(22, 48, 74, 0.08);
-  --sh-md: 0 12px 30px rgba(22, 48, 74, 0.12);
-  --ring: 0 0 0 4px rgba(61, 184, 245, 0.35);
-
-  /* One sans throughout: a serif heading over a child's exercise reads as a
-     document, which is the single strongest signal we are removing. */
-  --font-display: 'Inter', system-ui, sans-serif;
-  --font-serif: 'Inter', system-ui, sans-serif;
-}
-
-:root[data-theme='study'] body {
-  font-size: 18px;
-}
-:root[data-theme='study'] .card {
+/* Карточка — основная поверхность: мягкая тень вместо рамки и крупное
+   скругление. Одно правило на всё приложение. */
+.card {
   border: 0;
   box-shadow: var(--sh-sm);
   border-radius: var(--r-lg);
-  padding: 24px;
 }
-:root[data-theme='study'] h2 {
+h2 {
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-/* The heading of a card — "Objectives", "Wordlist" — carries the accent, the
-   way a workbook names its sections. */
-:root[data-theme='study'] .card > strong {
+/* Заголовок карточки — «Objectives», «Wordlist» — несёт акцент, как название
+   раздела в рабочей тетради. */
+.card > strong {
   color: var(--spark);
-  font-weight: 800;
-  font-size: 19px;
-}
-/* Comfortable targets: a child works on a tablet with a finger, not a mouse. */
-:root[data-theme='study'] button:not(.link-button):not(.drag-handle):not(.cal-del):not(.cal-edit) {
-  min-block-size: 48px;
-  border-radius: var(--r-control);
   font-weight: 700;
 }
-:root[data-theme='study'] .stepper button,
-:root[data-theme='study'] .tabs button {
-  min-block-size: 44px;
-}
-:root[data-theme='study'] .lesson-list > li {
-  padding-block: 12px;
-}
-
 
 * {
   box-sizing: border-box;
@@ -1658,6 +1599,10 @@ select.err {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+}
+/* The auto-chosen scene is shown dimmed, so it does not look like an upload. */
+.ed-cover-auto {
+  opacity: 0.75;
 }
 .ed-cover-row img {
   inline-size: 140px;

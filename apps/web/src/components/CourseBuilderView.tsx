@@ -15,6 +15,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { Link, useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch, apiUpload, fileUrl } from '@/lib/api';
+import { illustrationFor } from '@/lib/illustration';
 import { fetchMe, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { PageHeader } from './PageHeader';
@@ -1176,7 +1177,14 @@ function LessonEditor({
           <div className="ed-cover">
             <span className="ed-field-head">{t('prepImage')}</span>
             <div className="ed-cover-row">
-              {cover && <img src={fileUrl(cover)} alt="" />}
+              {/* Without an upload the lesson still opens on a picture — show
+                  the tutor which one, so the choice is informed rather than a
+                  surprise on the student's screen. */}
+              <img
+                src={cover ? fileUrl(cover) : illustrationFor(detail?.title ?? '', lessonId)}
+                alt=""
+                className={cover ? undefined : 'ed-cover-auto'}
+              />
               {/* A real button, not a label dressed as one: it picks up every
                   button style the page already has, including the disabled
                   state — which a <label> cannot have at all. The file input it
@@ -1196,6 +1204,7 @@ function LessonEditor({
                   </button>
                 )}
               </div>
+              {!cover && <small className="muted">{t('prepImageAuto')}</small>}
             </div>
             <input
               ref={coverInput}

@@ -643,7 +643,8 @@
     "prepImage": "Картинка для подготовки",
     "prepImageAdd": "Добавить картинку",
     "prepImageReplace": "Заменить картинку",
-    "prepImageRemove": "Убрать"
+    "prepImageRemove": "Убрать",
+    "prepImageAuto": "Картинка не загружена — урок откроется с этой."
   },
   "learn": {
     "title": "Урок",

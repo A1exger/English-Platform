@@ -643,7 +643,8 @@
     "prepImage": "Image de préparation",
     "prepImageAdd": "Ajouter une image",
     "prepImageReplace": "Remplacer l’image",
-    "prepImageRemove": "Retirer"
+    "prepImageRemove": "Retirer",
+    "prepImageAuto": "Pas encore d’image — le cours s’ouvrira avec celle-ci."
   },
   "learn": {
     "title": "Leçon",

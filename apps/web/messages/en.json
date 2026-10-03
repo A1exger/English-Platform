@@ -643,7 +643,8 @@
     "prepImage": "Preparation picture",
     "prepImageAdd": "Add a picture",
     "prepImageReplace": "Replace the picture",
-    "prepImageRemove": "Remove"
+    "prepImageRemove": "Remove",
+    "prepImageAuto": "No picture yet — the lesson opens on this one."
   },
   "learn": {
     "title": "Lesson",

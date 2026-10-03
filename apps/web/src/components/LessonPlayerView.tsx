@@ -11,6 +11,7 @@ import { RichText } from './RichText';
 import { AssignmentBuilder } from './AssignmentBuilder';
 import { Skeleton } from './Skeleton';
 import { Stepper } from './Stepper';
+import { lessonCover } from '@/lib/illustration';
 import { QuestBar } from './QuestBar';
 import { ScoreRing } from './ScoreRing';
 import { Icon } from './Icon';
@@ -213,12 +214,12 @@ export function LessonPlayerView({
 
       {pageIdx === 0 ? (
         <div className="learn-prep">
-          {/* The picture the lesson opens on, above the objectives. */}
-          {lesson.coverUrl && (
-            <div className="card prep-cover">
-              <img src={fileUrl(lesson.coverUrl)} alt="" />
-            </div>
-          )}
+          {/* The picture the lesson opens on. Always one: the tutor's upload, or
+              a scene chosen for this lesson — a half-illustrated course reads
+              as an unfinished one. */}
+          <div className="card prep-cover">
+            <img src={lessonCover(lesson, fileUrl)} alt="" />
+          </div>
           {lesson.objectives.length > 0 && (
             <div className="card">
               <strong>{t('objectives')}</strong>
