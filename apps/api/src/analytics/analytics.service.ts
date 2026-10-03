@@ -40,6 +40,9 @@ export class AnalyticsService {
     const scope = tutor ? { tutorProfileId: tutor.id } : {};
     const attendanceScope = tutor ? { lesson: { tutorProfileId: tutor.id } } : {};
     const homeworkScope = tutor ? { tutorProfileId: tutor.id } : {};
+    // Content assignments are owned by the user who handed them out, not by a
+    // tutor profile — the same scoping the Assignments list uses.
+    const assignmentScope = tutor ? { assignedByUserId: user.id } : {};
 
     // Current calendar week [Monday 00:00 .. next Monday) for the "this week" stat.
     const weekStart = new Date(now);
@@ -72,6 +75,7 @@ export class AnalyticsService {
       trialLessons,
       lessonsThisWeek,
       homeworks,
+      assignments,
       paidTotal,
       paidPayments,
     ] = await Promise.all([
@@ -108,6 +112,10 @@ export class AnalyticsService {
         where: homeworkScope,
         select: { status: true },
       }),
+      this.prisma.contentAssignment.findMany({
+        where: assignmentScope,
+        select: { status: true },
+      }),
       this.prisma.transaction.aggregate({ where: paid, _sum: { amountCents: true } }),
       this.prisma.transaction.findMany({
         where: { ...paid, createdAt: { gte: seriesFrom } },
@@ -133,10 +141,24 @@ export class AnalyticsService {
       0,
     );
     const hoursThisWeek = Math.round((weekMs / 3_600_000) * 10) / 10;
-    const gradedHw = homeworks.filter((h) => h.status === 'graded').length;
-    const assignmentsGradedPct = homeworks.length
-      ? Math.round((gradedHw / homeworks.length) * 100)
-      : null;
+    // "Assignments graded": how much of the work waiting on this tutor they
+    // have actually marked.
+    //
+    // Two things used to make the number meaningless. It read the legacy
+    // Homework table only, so marking a content assignment — what the
+    // Assignments screen hands out — could not move it at all. And it divided
+    // by every assignment ever handed out, including ones the student has not
+    // started, so handing out more work lowered the tutor's score for marking.
+    //
+    // The denominator is now what has been handed in, because that is the only
+    // part a tutor can do anything about.
+    const handedIn =
+      homeworks.filter((h) => h.status === 'submitted' || h.status === 'graded').length +
+      assignments.filter((a) => a.status === 'needs_review' || a.status === 'done').length;
+    const reviewed =
+      homeworks.filter((h) => h.status === 'graded').length +
+      assignments.filter((a) => a.status === 'done').length;
+    const assignmentsGradedPct = handedIn ? Math.round((reviewed / handedIn) * 100) : null;
     const present = attendance.filter((a) => a.status === 'present').length;
     const attendanceRate = attendance.length
       ? Math.round((present / attendance.length) * 100)

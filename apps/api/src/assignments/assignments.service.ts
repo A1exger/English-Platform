@@ -323,8 +323,11 @@ export class AssignmentsService {
     });
     await this.recomputeResult(card.assignmentId);
 
-    // Written feedback is the part a student would otherwise never notice.
-    if (dto.feedback) {
+    // A review is the part a student would otherwise never notice — nothing on
+    // their screen changes until they go back and reopen the work. A grade on
+    // its own counts: a tutor who marks an essay 9 and writes nothing has
+    // still told the student something worth hearing.
+    if (dto.feedback || dto.score !== undefined) {
       const student = await this.prisma.studentProfile.findUnique({
         where: { id: card.assignment.studentProfileId },
       });

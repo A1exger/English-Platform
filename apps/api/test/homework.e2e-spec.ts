@@ -149,6 +149,14 @@ describe('Phase 4/6: homework, results, dictionary, progress (e2e)', () => {
     expect(row.awaitingReview).toBe(1);
   });
 
+  it('the dashboard "graded" figure counts content assignments, not just legacy homework', async () => {
+    // One assignment handed in, none marked. The tile used to read the legacy
+    // Homework table only, so this screen could never move no matter how much
+    // the tutor reviewed.
+    const res = await api().get('/api/v1/analytics/overview').set(auth(tutor.accessToken)).expect(200);
+    expect(res.body.assignmentsGradedPct).toBe(0);
+  });
+
   it('a nonsense score is refused, not stored (0–10)', async () => {
     for (const score of ['abc', 999, -5]) {
       await api()
@@ -177,10 +185,35 @@ describe('Phase 4/6: homework, results, dictionary, progress (e2e)', () => {
     expect(detail.body.awaitingReview).toBe(0);
     expect(detail.body.result.perAspect.Writing).toBe(7);
     expect(detail.body.result.overall).toBe(9);
+
+    // …and the dashboard figure moves with it.
+    const kpi = await api().get('/api/v1/analytics/overview').set(auth(tutor.accessToken)).expect(200);
+    expect(kpi.body.assignmentsGradedPct).toBe(100);
+  });
+
+  it('a grade with no comment still tells the student', async () => {
+    const studentUser = await prisma.user.findUniqueOrThrow({ where: { email: 'h.student@test.com' } });
+    const before = await prisma.notification.count({
+      where: { userId: studentUser.id, templateKey: 'homework_feedback' },
+    });
+    await api()
+      .post(`/api/v1/assignments/cards/${cardByType.essay}/grade`)
+      .set(auth(tutor.accessToken))
+      // Same mark as before, so the result stays comparable for the later
+      // progress assertions; what is under test is that a bare score pings.
+      .send({ score: 7 })
+      .expect(201);
+    const after = await prisma.notification.count({
+      where: { userId: studentUser.id, templateKey: 'homework_feedback' },
+    });
+    expect(after).toBeGreaterThan(before);
   });
 
   it('notifies the tutor when homework is finished and the student when feedback lands', async () => {
-    // Finishing the assignment (previous tests) pinged the tutor…
+    // Finishing the assignment (previous tests) pinged the tutor. That ping is
+    // keyed on the STUDENT being finished, which is needs_review while an essay
+    // is waiting; keyed on "done" it would stay silent for exactly the
+    // assignments that need the tutor most.
     const tutorUser = await prisma.user.findUniqueOrThrow({
       where: { email: 'h.tutor@test.com' },
     });
@@ -188,15 +221,16 @@ describe('Phase 4/6: homework, results, dictionary, progress (e2e)', () => {
       where: { userId: tutorUser.id, templateKey: 'homework_submitted' },
     });
     expect(toTutor.length).toBeGreaterThan(0);
+    expect([...new Set(toTutor.map((n) => n.channel))].sort()).toEqual(['email', 'in_app']);
 
-    // …and the tutor's written feedback pinged the student, on every channel.
+    // …and the tutor's review pinged the student, on every channel.
     const studentUser = await prisma.user.findUniqueOrThrow({
       where: { email: 'h.student@test.com' },
     });
     const toStudent = await prisma.notification.findMany({
       where: { userId: studentUser.id, templateKey: 'homework_feedback' },
     });
-    expect(toStudent.map((n) => n.channel).sort()).toEqual(['email', 'in_app']);
+    expect([...new Set(toStudent.map((n) => n.channel))].sort()).toEqual(['email', 'in_app']);
   });
 
   it('assignments are private: another student cannot view, students cannot grade', async () => {
