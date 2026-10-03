@@ -20,6 +20,11 @@ import {
   GradeCardDto,
   SubmitCardDto,
 } from './dto/assignment.dto';
+import { STUDENT_FINISHED_STATUSES } from '../common/constants/enums';
+
+/** The student has handed in everything; the tutor may or may not have read it. */
+const isStudentFinished = (status: string): boolean =>
+  (STUDENT_FINISHED_STATUSES as readonly string[]).includes(status);
 
 @Injectable()
 export class AssignmentsService {
@@ -145,7 +150,9 @@ export class AssignmentsService {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        cards: { select: { status: true } },
+        // taskSnapshot is needed to tell a MANUAL card from an AUTO one; the
+        // list cannot count what is waiting for review without it.
+        cards: { select: { status: true, score: true, taskSnapshot: true } },
         result: true,
       },
     });
@@ -164,6 +171,7 @@ export class AssignmentsService {
       createdAt: a.createdAt,
       cardCount: a.cards.length,
       submittedCount: a.cards.filter((c) => c.status === 'submitted').length,
+      awaitingReview: this.awaitingReview(a.cards),
       studentName: names[a.studentProfileId],
       result: a.result
         ? {
@@ -224,6 +232,7 @@ export class AssignmentsService {
       createdAt: a.createdAt,
       courseLessonId: a.courseLessonId,
       studentName: names[a.studentProfileId],
+      awaitingReview: this.awaitingReview(a.cards),
       cards,
       result: a.result
         ? {
@@ -260,14 +269,19 @@ export class AssignmentsService {
         submittedAt: new Date(),
       },
     });
-    await this.recomputeResult(card.assignmentId);
+    const status = await this.recomputeResult(card.assignmentId);
 
     // Notify the tutor once the whole assignment is finished — per-card pings
     // would be noise, and manual (essay) cards are what they need to review.
+    // "Finished" means the student is done, which is `needs_review` whenever
+    // there is an essay waiting; keying this on `done` alone would silence the
+    // ping for exactly the assignments that need the tutor most.
+    const justFinished =
+      isStudentFinished(status) && !isStudentFinished(card.assignment.status);
     const after = await this.prisma.contentAssignment.findUnique({
       where: { id: card.assignmentId },
     });
-    if (after && after.status === 'done' && card.assignment.status !== 'done') {
+    if (after && justFinished) {
       const who = await this.prisma.user.findUnique({
         where: { id: user.id },
         select: { firstName: true, lastName: true, email: true },
@@ -327,10 +341,28 @@ export class AssignmentsService {
   }
 
   /**
-   * Recompute and persist the LessonResult (INV-3/4/5) from the current cards,
-   * and advance the assignment status (assigned -> in_progress -> done).
+   * How many handed-in cards still need a human: MANUAL tasks with no score on
+   * them yet. A number is what counts as reviewed, not feedback — the score is
+   * what reaches the result, so feedback alone would leave the grade missing
+   * while the assignment claimed to be finished.
    */
-  private async recomputeResult(assignmentId: string) {
+  private awaitingReview(
+    cards: { status: string; score: number | null; taskSnapshot: string }[],
+  ): number {
+    return cards.filter(
+      (c) =>
+        c.status === 'submitted' &&
+        this.parseSnapshot(c).gradingMode === 'MANUAL' &&
+        c.score === null,
+    ).length;
+  }
+
+  /**
+   * Recompute and persist the LessonResult (INV-3/4/5) from the current cards,
+   * and advance the status: assigned -> in_progress -> needs_review -> done.
+   * Returns the new status so callers can tell when a transition just happened.
+   */
+  private async recomputeResult(assignmentId: string): Promise<string> {
     const cards = await this.prisma.homeworkCard.findMany({
       where: { assignmentId },
     });
@@ -363,10 +395,18 @@ export class AssignmentsService {
     });
 
     const submitted = cards.filter((c) => c.status === 'submitted').length;
-    const status = submitted === 0 ? 'assigned' : submitted === cards.length ? 'done' : 'in_progress';
+    const status =
+      submitted === 0
+        ? 'assigned'
+        : submitted < cards.length
+          ? 'in_progress'
+          : this.awaitingReview(cards) > 0
+            ? 'needs_review'
+            : 'done';
     await this.prisma.contentAssignment.update({
       where: { id: assignmentId },
       data: { status },
     });
+    return status;
   }
 }

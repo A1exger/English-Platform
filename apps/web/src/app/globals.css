@@ -1948,9 +1948,19 @@ select.err {
   background: var(--spark-100);
   color: var(--spark-700);
 }
+.chip.status-needs_review {
+  background: var(--indigo-50);
+  color: var(--indigo-700);
+}
 .chip.status-done {
   background: var(--high-100);
   color: #0f7a4f;
+}
+/* The tutor's own to-do count, so it reads as a task and not as a grade. */
+.chip.review-pill {
+  background: var(--spark-50);
+  color: var(--spark-700);
+  font-weight: 600;
 }
 
 /* ——— homework state: new · in progress · done ——— */
@@ -2180,6 +2190,20 @@ button.link-button:focus-visible {
   margin: 6px 0 16px;
   padding-inline-start: 12px;
   border-inline-start: 3px solid var(--spark-100);
+}
+.grade-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.grade-score > span {
+  font-weight: 600;
+}
+/* Wide enough for "10" and the spinner, narrow enough to read as one number
+   and not as another text field. */
+.grade-score input {
+  inline-size: 92px;
+  text-align: center;
 }
 .ex-feedback {
   color: var(--spark-700);

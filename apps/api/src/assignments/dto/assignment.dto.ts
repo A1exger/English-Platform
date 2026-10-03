@@ -1,10 +1,13 @@
 import {
   IsArray,
   IsIn,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
   Length,
+  Max,
+  Min,
 } from 'class-validator';
 
 // kind: "lesson" (assigned as a guided lesson) | "homework" (async ДЗ).
@@ -48,10 +51,20 @@ export class SubmitCardDto {
 
 // Manual grade/feedback for MANUAL (essay) cards.
 export class GradeCardDto {
+  /**
+   * 0–10, same scale the auto-scored cards use, because both now feed the same
+   * average. Bounded here on purpose: @IsOptional() on its own runs no other
+   * check at all, so this field used to take "abc" (a 500 from the database
+   * layer) and -5 (stored, and quietly dragging the average below zero).
+   */
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(10)
   score?: number;
 
   @IsOptional()
   @IsString()
+  @Length(0, 4000)
   feedback?: string;
 }

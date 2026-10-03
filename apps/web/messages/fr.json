@@ -688,6 +688,7 @@
     "status_assigned": "Assigné",
     "status_in_progress": "En cours",
     "status_done": "Terminé",
+    "status_needs_review": "À corriger",
     "back": "Retour aux devoirs",
     "perAspect": "Par aspect",
     "completion": "Progression",
@@ -707,7 +708,14 @@
     "allDone": "Terminé !",
     "overallScore": "Note globale",
     "nextLesson": "Prochain cours",
-    "joinLesson": "Rejoindre le cours"
+    "joinLesson": "Rejoindre le cours",
+    "score": "Note",
+    "scoreOutOf": "sur 10",
+    "scoreRange": "La note doit être comprise entre 0 et 10.",
+    "saveReview": "Enregistrer la correction",
+    "awaitingThisCard": "Pas encore corrigé. Attribuez une note pour terminer le devoir.",
+    "awaitingReview": "{count, plural, one {# exercice à corriger} other {# exercices à corriger}}",
+    "sortReview": "À corriger"
   },
   "dictionary": {
     "title": "Dictionnaire",

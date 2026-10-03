@@ -688,6 +688,7 @@
     "status_assigned": "Assigned",
     "status_in_progress": "In progress",
     "status_done": "Done",
+    "status_needs_review": "Needs review",
     "back": "Back to assignments",
     "perAspect": "By aspect",
     "completion": "Completion",
@@ -707,7 +708,14 @@
     "allDone": "All done!",
     "overallScore": "Overall score",
     "nextLesson": "Next lesson",
-    "joinLesson": "Join lesson"
+    "joinLesson": "Join lesson",
+    "score": "Score",
+    "scoreOutOf": "out of 10",
+    "scoreRange": "The score must be between 0 and 10.",
+    "saveReview": "Save review",
+    "awaitingThisCard": "Not reviewed yet. Give it a score to finish the assignment.",
+    "awaitingReview": "{count, plural, one {# task awaiting review} other {# tasks awaiting review}}",
+    "sortReview": "Awaiting review"
   },
   "dictionary": {
     "title": "Dictionary",

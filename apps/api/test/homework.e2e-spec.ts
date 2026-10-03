@@ -121,25 +121,62 @@ describe('Phase 4/6: homework, results, dictionary, progress (e2e)', () => {
     expect(essay.body.score).toBeUndefined();
   });
 
-  it('result aggregates AUTO only (INV-4) and the assignment is done (INV-3)', async () => {
+  it('everything handed in, essay unread -> needs_review, not done (INV-3)', async () => {
     const detail = await api().get(`/api/v1/assignments/${assignmentId}`).set(auth(student.accessToken)).expect(200);
-    expect(detail.body.status).toBe('done');
+    // The student is finished; the tutor is not. "done" would claim otherwise.
+    expect(detail.body.status).toBe('needs_review');
     expect(detail.body.result.overall).toBe(10);
     expect(detail.body.result.perAspect).toEqual({ Grammar: 10, Reading: 10 });
-    expect(detail.body.result.perAspect.Writing).toBeUndefined(); // MANUAL excluded
+    // Ungraded, so it has no average to contribute yet.
+    expect(detail.body.result.perAspect.Writing).toBeUndefined();
     expect(detail.body.result.completion).toBe(100);
     expect(detail.body.result.motivationTier).toBe('excellent');
   });
 
-  it('tutor leaves manual feedback on the essay card', async () => {
+  it('a lesson waiting on review still counts as done for the student', async () => {
+    // The tutor's queue is not the student's problem: course progress counts
+    // the lesson the moment they hand it in.
+    const progress = await api().get('/api/v1/content/progress').set(auth(student.accessToken)).expect(200);
+    const course = progress.body.courses.find((c: { level: string }) => c.level === 'Elementary');
+    expect(course.lessonsDone).toBe(1);
+    expect(course.courseCompletion).toBe(100);
+  });
+
+  it('the tutor list shows how many tasks are waiting to be read', async () => {
+    const list = await api().get('/api/v1/assignments').set(auth(tutor.accessToken)).expect(200);
+    const row = list.body.find((a: { id: string }) => a.id === assignmentId);
+    expect(row.status).toBe('needs_review');
+    expect(row.awaitingReview).toBe(1);
+  });
+
+  it('a nonsense score is refused, not stored (0–10)', async () => {
+    for (const score of ['abc', 999, -5]) {
+      await api()
+        .post(`/api/v1/assignments/cards/${cardByType.essay}/grade`)
+        .set(auth(tutor.accessToken))
+        .send({ score })
+        .expect(400);
+    }
+    const detail = await api().get(`/api/v1/assignments/${assignmentId}`).set(auth(tutor.accessToken)).expect(200);
+    const essayCard = detail.body.cards.find((c: { type: string }) => c.type === 'essay');
+    expect(essayCard.score).toBeNull();
+  });
+
+  it('tutor grades the essay: the score lands in the result and the status flips to done', async () => {
     await api()
       .post(`/api/v1/assignments/cards/${cardByType.essay}/grade`)
       .set(auth(tutor.accessToken))
-      .send({ feedback: 'Great work!' })
+      .send({ score: 7, feedback: 'Great work!' })
       .expect(201);
     const detail = await api().get(`/api/v1/assignments/${assignmentId}`).set(auth(tutor.accessToken)).expect(200);
     const essayCard = detail.body.cards.find((c: { type: string }) => c.type === 'essay');
     expect(essayCard.feedback).toBe('Great work!');
+    expect(essayCard.score).toBe(7);
+    // Nothing left unread -> done, and the tutor's 7 is in the average.
+    expect(detail.body.status).toBe('done');
+    expect(detail.body.awaitingReview).toBe(0);
+    expect(detail.body.result.perAspect.Writing).toBe(7);
+    expect(detail.body.result.overall).toBe(9);
   });
 
   it('notifies the tutor when homework is finished and the student when feedback lands', async () => {
@@ -204,8 +241,9 @@ describe('Phase 4/6: homework, results, dictionary, progress (e2e)', () => {
     const prog = await api().get('/api/v1/content/progress').set(auth(student.accessToken)).expect(200);
     const course = prog.body.courses.find((c: { level: string }) => c.level === 'Elementary');
     expect(course.courseCompletion).toBe(100); // 1 of 1 required lesson done
-    expect(course.goalProgress).toBe(10);
+    // 10, 10 auto-scored and the essay the tutor marked 7 -> 9.
+    expect(course.goalProgress).toBe(9);
     expect(course.forecast.remaining).toBe(0);
-    expect(prog.body.overall.goalProgress).toBe(10);
+    expect(prog.body.overall.goalProgress).toBe(9);
   });
 });

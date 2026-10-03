@@ -688,6 +688,7 @@
     "status_assigned": "Zugewiesen",
     "status_in_progress": "In Bearbeitung",
     "status_done": "Erledigt",
+    "status_needs_review": "Zu prüfen",
     "back": "Zurück zu den Aufgaben",
     "perAspect": "Nach Aspekt",
     "completion": "Fortschritt",
@@ -707,7 +708,14 @@
     "allDone": "Alles erledigt!",
     "overallScore": "Gesamtnote",
     "nextLesson": "Nächste Stunde",
-    "joinLesson": "Stunde beitreten"
+    "joinLesson": "Stunde beitreten",
+    "score": "Note",
+    "scoreOutOf": "von 10",
+    "scoreRange": "Die Note muss zwischen 0 und 10 liegen.",
+    "saveReview": "Bewertung speichern",
+    "awaitingThisCard": "Noch nicht bewertet. Vergib eine Note, um die Aufgabe abzuschließen.",
+    "awaitingReview": "{count, plural, one {# Aufgabe wartet auf Bewertung} other {# Aufgaben warten auf Bewertung}}",
+    "sortReview": "Wartet auf Bewertung"
   },
   "dictionary": {
     "title": "Wörterbuch",

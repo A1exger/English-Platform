@@ -688,6 +688,7 @@
     "status_assigned": "معيَّن",
     "status_in_progress": "قيد التنفيذ",
     "status_done": "مكتمل",
+    "status_needs_review": "بانتظار التصحيح",
     "back": "العودة إلى الواجبات",
     "perAspect": "حسب المهارة",
     "completion": "الإنجاز",
@@ -707,7 +708,14 @@
     "allDone": "تم كل شيء!",
     "overallScore": "الدرجة الإجمالية",
     "nextLesson": "الدرس التالي",
-    "joinLesson": "الانضمام إلى الدرس"
+    "joinLesson": "الانضمام إلى الدرس",
+    "score": "الدرجة",
+    "scoreOutOf": "من 10",
+    "scoreRange": "يجب أن تكون الدرجة بين 0 و10.",
+    "saveReview": "حفظ التصحيح",
+    "awaitingThisCard": "لم يُصحَّح بعد. ضع درجة لإنهاء الواجب.",
+    "awaitingReview": "{count, plural, other {# مهمة بانتظار التصحيح}}",
+    "sortReview": "بانتظار التصحيح"
   },
   "dictionary": {
     "title": "القاموس",

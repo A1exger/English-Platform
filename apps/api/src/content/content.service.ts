@@ -18,7 +18,7 @@ import {
   computeGoalProgress,
   LessonProgressInput,
 } from './scoring';
-import { CONTENT_LEVELS } from '../common/constants/enums';
+import { CONTENT_LEVELS, STUDENT_FINISHED_STATUSES } from '../common/constants/enums';
 import { STARTER_WORD_BANK } from './starter-word-bank';
 import { STARTER_WORD_SENSES } from './starter-word-senses';
 import {
@@ -381,16 +381,25 @@ export class ContentService {
     }));
 
     // Students get their per-lesson progress on the roadmap: a lesson is "done"
-    // when they have a finished (status=done) assignment for it, and its score
-    // is that assignment's overall — the same rule as the progress cabinet
-    // (INV-3). Additive: the author path keeps the plain shape.
+    // when they have a finished assignment for it, and its score is that
+    // assignment's overall — the same rule as the progress cabinet (INV-3).
+    // Additive: the author path keeps the plain shape.
+    //
+    // "Finished" is the STUDENT's side of it, so an assignment waiting on the
+    // tutor's review counts too: the lesson is behind them either way, and
+    // greying it out until the tutor reads the essay would punish them for
+    // someone else's queue.
     const student =
       user.role === 'student'
         ? await this.prisma.studentProfile.findUnique({ where: { userId: user.id } })
         : null;
     if (student) {
       const finished = await this.prisma.contentAssignment.findMany({
-        where: { studentProfileId: student.id, status: 'done', courseLessonId: { not: null } },
+        where: {
+          studentProfileId: student.id,
+          status: { in: [...STUDENT_FINISHED_STATUSES] },
+          courseLessonId: { not: null },
+        },
         include: { result: { select: { overall: true } } },
       });
       const byLesson = new Map<string, number | null>();
@@ -1137,8 +1146,9 @@ export class ContentService {
   /**
    * Both progress counters + goal forecast for the cabinet (INV-3), grouped by
    * the courses the student has been assigned lessons in. A lesson counts as
-   * completed when the student has a finished (status=done) assignment for it;
-   * its grade comes from that assignment's LessonResult.
+   * completed when the student has handed in every card of an assignment for
+   * it — including one still waiting on the tutor's review — and its grade
+   * comes from that assignment's LessonResult.
    */
   async studentProgress(user: AuthenticatedUser) {
     const student = await this.studentProfileForUser(user.id);
@@ -1149,8 +1159,9 @@ export class ContentService {
 
     // Best (highest overall) finished assignment per course lesson.
     const doneByLesson = new Map<string, number | null>();
+    const finished: readonly string[] = STUDENT_FINISHED_STATUSES;
     for (const a of assignments) {
-      if (a.status !== 'done' || !a.courseLessonId) continue;
+      if (!finished.includes(a.status) || !a.courseLessonId) continue;
       const overall = a.result?.overall ?? null;
       const prev = doneByLesson.get(a.courseLessonId);
       if (prev === undefined || (overall ?? -1) > (prev ?? -1)) {

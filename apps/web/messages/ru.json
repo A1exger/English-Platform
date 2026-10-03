@@ -688,6 +688,7 @@
     "status_assigned": "Назначено",
     "status_in_progress": "В процессе",
     "status_done": "Готово",
+    "status_needs_review": "На проверке",
     "back": "К заданиям",
     "perAspect": "По аспектам",
     "completion": "Выполнение",
@@ -707,7 +708,14 @@
     "allDone": "Готово!",
     "overallScore": "Общий балл",
     "nextLesson": "Следующий урок",
-    "joinLesson": "Войти в урок"
+    "joinLesson": "Войти в урок",
+    "score": "Оценка",
+    "scoreOutOf": "из 10",
+    "scoreRange": "Оценка должна быть от 0 до 10.",
+    "saveReview": "Сохранить проверку",
+    "awaitingThisCard": "Ещё не проверено. Поставьте оценку, чтобы завершить задание.",
+    "awaitingReview": "{count, plural, one {# задание ждёт проверки} few {# задания ждут проверки} many {# заданий ждут проверки} other {# задания ждут проверки}}",
+    "sortReview": "Ждут проверки"
   },
   "dictionary": {
     "title": "Словарь",

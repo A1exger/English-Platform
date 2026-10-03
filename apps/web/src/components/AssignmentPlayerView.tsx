@@ -27,6 +27,8 @@ interface AssignmentDetail {
   dueAt: string | null;
   status: string;
   studentName?: string;
+  /** Handed-in essays with no score yet — what keeps this off "done". */
+  awaitingReview: number;
   cards: Card[];
   result: AssignmentResult | null;
 }
@@ -43,6 +45,9 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
   const [isStudent, setIsStudent] = useState(false);
   const [phase, setPhase] = useState<'loading' | 'error' | 'ready'>('loading');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [scores, setScores] = useState<Record<string, string>>({});
+  const [gradeError, setGradeError] = useState<string | null>(null);
+  const [saving, setSaving] = useState<string | null>(null);
   const [step, setStep] = useState(0); // one task per step; last step = result
 
   const load = useCallback(async () => {
@@ -96,15 +101,35 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
     return { completed: r.completed, score: r.score, correct: r.score === 10, solution: r.solution };
   };
 
+  /**
+   * Save the tutor's review of one essay. The score is what the assignment
+   * waits on — it feeds the overall average and flips the status to done once
+   * no card is left unmarked — so an empty box sends nothing rather than a
+   * zero, and the card stays in the review queue.
+   */
   async function saveGrade(cardId: string) {
     const token = tokenStore.get();
-    await apiFetch(`/assignments/cards/${cardId}/grade`, {
-      method: 'POST',
-      token,
-      locale,
-      body: { feedback: drafts[cardId] ?? '' }
-    }).catch(() => undefined);
-    await load();
+    const raw = scores[cardId];
+    const score = raw === undefined || raw.trim() === '' ? undefined : Number(raw);
+    if (score !== undefined && (Number.isNaN(score) || score < 0 || score > 10)) {
+      setGradeError(t('scoreRange'));
+      return;
+    }
+    setGradeError(null);
+    setSaving(cardId);
+    try {
+      await apiFetch(`/assignments/cards/${cardId}/grade`, {
+        method: 'POST',
+        token,
+        locale,
+        body: { feedback: drafts[cardId] ?? '', ...(score !== undefined ? { score } : {}) }
+      });
+      await load();
+    } catch {
+      setGradeError(tApp('loadError'));
+    } finally {
+      setSaving(null);
+    }
   }
 
   if (phase === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
@@ -129,6 +154,9 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
         <span className={`chip status-${data.status}`}>{t(`status_${data.status}`)}</span>
       </div>
       {!isStudent && data.studentName && <p className="muted">{data.studentName}</p>}
+      {!isStudent && data.awaitingReview > 0 && (
+        <p className="note">{t('awaitingReview', { count: data.awaitingReview })}</p>
+      )}
       {data.dueAt && (
         <p className="muted">
           {t('due')}: {format.dateTime(new Date(data.dueAt), { dateStyle: 'medium' })}
@@ -166,16 +194,38 @@ export function AssignmentPlayerView({ assignmentId }: { assignmentId: string })
                     initialResult={isStudent ? initialResult : initialResult ?? { completed: true }}
                     feedback={card.feedback}
                   />
-                  {/* Tutor grading box for the viewed MANUAL (essay) card only. */}
+                  {/* Tutor review box for the viewed MANUAL (essay) card only. */}
                   {!isStudent && card.gradingMode === 'MANUAL' && (
                     <div className="grade-box">
+                      {card.status === 'submitted' && card.score === null && (
+                        <p className="note">{t('awaitingThisCard')}</p>
+                      )}
+                      <label className="grade-score">
+                        <span>{t('score')}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={10}
+                          step={0.5}
+                          inputMode="decimal"
+                          className="mono-num"
+                          defaultValue={card.score ?? ''}
+                          onChange={(e) => setScores({ ...scores, [card.id]: e.target.value })}
+                        />
+                        <small className="muted">{t('scoreOutOf')}</small>
+                      </label>
                       <textarea
                         placeholder={t('feedbackPlaceholder')}
                         defaultValue={card.feedback ?? ''}
                         onChange={(e) => setDrafts({ ...drafts, [card.id]: e.target.value })}
                       />
-                      <button type="button" onClick={() => saveGrade(card.id)}>
-                        {t('saveFeedback')}
+                      {gradeError && <p className="error">{gradeError}</p>}
+                      <button
+                        type="button"
+                        disabled={saving === card.id}
+                        onClick={() => saveGrade(card.id)}
+                      >
+                        {t('saveReview')}
                       </button>
                     </div>
                   )}

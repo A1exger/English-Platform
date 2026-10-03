@@ -688,6 +688,7 @@
     "status_assigned": "Toegewezen",
     "status_in_progress": "Bezig",
     "status_done": "Klaar",
+    "status_needs_review": "Te beoordelen",
     "back": "Terug naar opdrachten",
     "perAspect": "Per aspect",
     "completion": "Voltooiing",
@@ -707,7 +708,14 @@
     "allDone": "Helemaal klaar!",
     "overallScore": "Totaalscore",
     "nextLesson": "Volgende les",
-    "joinLesson": "Deelnemen aan les"
+    "joinLesson": "Deelnemen aan les",
+    "score": "Cijfer",
+    "scoreOutOf": "van de 10",
+    "scoreRange": "Het cijfer moet tussen 0 en 10 liggen.",
+    "saveReview": "Beoordeling opslaan",
+    "awaitingThisCard": "Nog niet beoordeeld. Geef een cijfer om de opdracht af te ronden.",
+    "awaitingReview": "{count, plural, one {# opdracht wacht op beoordeling} other {# opdrachten wachten op beoordeling}}",
+    "sortReview": "Wacht op beoordeling"
   },
   "dictionary": {
     "title": "Woordenboek",

@@ -17,6 +17,8 @@ interface Row {
   status: string;
   cardCount: number;
   submittedCount: number;
+  /** Handed-in essays with no score yet — the tutor's own to-do count. */
+  awaitingReview: number;
   studentName?: string;
   result: { overall: number | null; completion: number; motivationTier: string } | null;
 }
@@ -76,7 +78,18 @@ export function AssignmentsView() {
             label: t('tasks'),
             value: (r) => (r.cardCount ? r.submittedCount / r.cardCount : 0),
             dir: 'desc'
-          }
+          },
+          // A tutor's actual working order: what is waiting to be read, first.
+          ...(isStudent
+            ? []
+            : [
+                {
+                  key: 'review',
+                  label: t('sortReview'),
+                  value: (r: Row) => r.awaitingReview,
+                  dir: 'desc' as const
+                }
+              ])
         ]}
         empty={{ title: t('empty') }}
         renderRow={(r) => (
@@ -90,6 +103,11 @@ export function AssignmentsView() {
               </span>
             </div>
             <div className="assign-row-side">
+              {!isStudent && r.awaitingReview > 0 && (
+                <span className="chip review-pill">
+                  {t('awaitingReview', { count: r.awaitingReview })}
+                </span>
+              )}
               {r.result && r.result.overall !== null && (
                 <span className="mono-num result-pill">{r.result.overall}</span>
               )}
