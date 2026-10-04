@@ -175,7 +175,18 @@ export class HomeworkService {
                 include: HOMEWORK_INCLUDE,
               })
             : [];
-      return this.withExercises(hws);
+      // The tutor's Assignments list shows these beside content assignments,
+      // and a row there is read by who it belongs to. Without the name a
+      // handed-in homework was a title with no student attached.
+      const profiles = await this.prisma.studentProfile.findMany({
+        where: { id: { in: Array.from(new Set(hws.map((h) => h.studentProfileId))) } },
+        select: { id: true, user: { select: { firstName: true, lastName: true } } },
+      });
+      const names = new Map(
+        profiles.map((p) => [p.id, `${p.user.firstName} ${p.user.lastName}`.trim()]),
+      );
+      const withEx = await this.withExercises(hws);
+      return withEx.map((h) => ({ ...h, studentName: names.get(h.studentProfileId) }));
     }
     if (user.role === 'student') {
       const student = await this.prisma.studentProfile.findUnique({

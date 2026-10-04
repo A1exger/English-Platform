@@ -193,6 +193,40 @@ describe('Materials + Notifications + Analytics (e2e)', () => {
     expect(res.body.revenueCents).toBe(0);
   });
 
+  it('"graded" counts handed-in legacy homework, and the tutor can find it', async () => {
+    const authT = { Authorization: `Bearer ${tutor.accessToken}` };
+    const kpi = async () =>
+      (await api().get('/api/v1/analytics/overview').set(authT).expect(200)).body
+        .assignmentsGradedPct;
+
+    // Assigned but not handed in: nothing for the tutor to mark yet.
+    expect(await kpi()).toBeNull();
+
+    const hws = await api().get('/api/v1/homework').set(authT).expect(200);
+    const devoir = hws.body.find((h: { title: string }) => h.title === 'Devoir 1');
+    await api()
+      .post(`/api/v1/homework/${devoir.id}/submit`)
+      .set('Authorization', `Bearer ${student.accessToken}`)
+      .send({ content: 'Mon devoir.' })
+      .expect(201);
+
+    // Handed in, unmarked. This is the row that used to hold the tile below
+    // 100% while being reachable only through the student's profile: the
+    // tutor's Assignments list now shows it, and needs the name to.
+    expect(await kpi()).toBe(0);
+    const listed = await api().get('/api/v1/homework').set(authT).expect(200);
+    const row = listed.body.find((h: { id: string }) => h.id === devoir.id);
+    expect(row.status).toBe('submitted');
+    expect(row.studentName).toBe('F L');
+
+    await api()
+      .post(`/api/v1/homework/${devoir.id}/grade`)
+      .set(authT)
+      .send({ grade: '8' })
+      .expect(201);
+    expect(await kpi()).toBe(100);
+  });
+
   it('revenue counts a payment only once the tutor confirms it', async () => {
     const authT = { Authorization: `Bearer ${tutor.accessToken}` };
     const transfer = await api()

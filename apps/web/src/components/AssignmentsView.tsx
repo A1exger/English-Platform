@@ -21,10 +21,60 @@ interface Row {
   awaitingReview: number;
   studentName?: string;
   result: { overall: number | null; completion: number; motivationTier: string } | null;
+  /** Where the row opens. Content assignments and legacy homework differ. */
+  href: string;
 }
 
-// Cabinet section for the Skyeng-style content homework (ContentAssignment).
-// Students see their assigned homework; tutors see what they handed out.
+/** A homework from the older, exercise-based system, as the API returns it. */
+interface LegacyHomework {
+  id: string;
+  title: string;
+  status: 'assigned' | 'submitted' | 'graded' | string;
+  dueAt?: string | null;
+  createdAt?: string;
+  studentName?: string;
+  submissions: { grade?: string | null }[];
+  exercises?: { status: string }[];
+}
+
+/**
+ * Fold a legacy homework into an Assignments row.
+ *
+ * The status mapping is the one the dashboard's "graded" figure uses —
+ * submitted is waiting on the tutor, graded is done — so the list and the
+ * percentage can never disagree about what is left: every row that keeps the
+ * figure below 100% is a row this list shows as waiting.
+ */
+function fromLegacy(h: LegacyHomework): Row {
+  const exercises = h.exercises ?? [];
+  const total = exercises.length || 1;
+  const done = exercises.length
+    ? exercises.filter((e) => e.status !== 'open').length
+    : h.status === 'assigned'
+      ? 0
+      : 1;
+  const grade = h.submissions[0]?.grade;
+  const overall = grade != null && grade !== '' && !Number.isNaN(Number(grade)) ? Number(grade) : null;
+  return {
+    id: `hw-${h.id}`,
+    href: `/homework/${h.id}`,
+    kind: 'homework',
+    topicTag: h.title,
+    dueAt: h.dueAt ?? null,
+    status: h.status === 'submitted' ? 'needs_review' : h.status === 'graded' ? 'done' : 'assigned',
+    cardCount: total,
+    submittedCount: done,
+    awaitingReview: h.status === 'submitted' ? 1 : 0,
+    studentName: h.studentName,
+    result: overall === null ? null : { overall, completion: 100, motivationTier: '' }
+  };
+}
+
+// Cabinet section for homework. Students see their content assignments; tutors
+// see everything they handed out — content assignments AND homework from the
+// older exercise system, which has no other way into a tutor's menu. Leaving it
+// out made the dashboard's "graded" figure stick below 100% with every row in
+// this list marked done.
 export function AssignmentsView() {
   const t = useTranslations('assignments');
   const tApp = useTranslations('app');
@@ -44,8 +94,15 @@ export function AssignmentsView() {
     }
     try {
       const me = await fetchMe(token, locale);
-      setIsStudent(me.role === 'student');
-      setRows(await apiFetch<Row[]>('/assignments', { token, locale }));
+      const student = me.role === 'student';
+      setIsStudent(student);
+      const [content, legacy] = await Promise.all([
+        apiFetch<Omit<Row, 'href'>[]>('/assignments', { token, locale }),
+        // Students already get legacy homework on their own Homework page.
+        student ? Promise.resolve([]) : apiFetch<LegacyHomework[]>('/homework', { token, locale })
+      ]);
+      const contentRows: Row[] = content.map((r) => ({ ...r, href: `/assignments/${r.id}` }));
+      setRows([...contentRows, ...legacy.map(fromLegacy)]);
       setPhase('ready');
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
@@ -93,7 +150,7 @@ export function AssignmentsView() {
         ]}
         empty={{ title: t('empty') }}
         renderRow={(r) => (
-          <Link className="assign-row" href={`/assignments/${r.id}`}>
+          <Link className="assign-row" href={r.href}>
             <div className="assign-row-main">
               <strong>{r.topicTag || t(r.kind === 'homework' ? 'homework' : 'lesson')}</strong>
               <span className="muted">

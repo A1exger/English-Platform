@@ -37,6 +37,7 @@ const GRADES = Array.from({ length: 11 }, (_, i) => String(i));
 // submission), the tutor reviews and grades.
 export function HomeworkDetailView({ homeworkId }: { homeworkId: string }) {
   const t = useTranslations('homework');
+  const tAssign = useTranslations('assignments');
   const tApp = useTranslations('app');
   const locale = useLocale();
   const format = useFormatter();
@@ -118,19 +119,32 @@ export function HomeworkDetailView({ homeworkId }: { homeworkId: string }) {
   const hasExercises = !!hw.exercises && hw.exercises.length > 0;
   const statusLabel =
     hw.status === 'assigned' ? t('statusNew') : hw.status === 'submitted' ? t('statusProgress') : t('statusDone');
+  // A tutor reaches this page from Assignments, where handed-in work reads
+  // "Needs review" — the Homework section is a student's page and is not in a
+  // tutor's menu at all. Same words, same chip, and back to where they came from.
+  const staffStatus =
+    hw.status === 'submitted' ? 'needs_review' : hw.status === 'graded' ? 'done' : 'assigned';
 
   return (
     <div className="content learn">
-      <Link className="link" href="/homework">← {t('back')}</Link>
+      {isStaff ? (
+        <Link className="link" href="/assignments">← {tAssign('back')}</Link>
+      ) : (
+        <Link className="link" href="/homework">← {t('back')}</Link>
+      )}
       <div className="row-between">
         <h2>{hw.title}</h2>
-        <span
-          className={`chip hw-${
-            hw.status === 'assigned' ? 'new' : hw.status === 'submitted' ? 'progress' : 'done'
-          }`}
-        >
-          {statusLabel}
-        </span>
+        {isStaff ? (
+          <span className={`chip status-${staffStatus}`}>{tAssign(`status_${staffStatus}`)}</span>
+        ) : (
+          <span
+            className={`chip hw-${
+              hw.status === 'assigned' ? 'new' : hw.status === 'submitted' ? 'progress' : 'done'
+            }`}
+          >
+            {statusLabel}
+          </span>
+        )}
       </div>
       {hw.dueAt && (
         <p className="muted mono-num">
