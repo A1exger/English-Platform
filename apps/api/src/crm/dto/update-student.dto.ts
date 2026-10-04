@@ -1,4 +1,4 @@
-import { IsIn, IsISO8601, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString } from 'class-validator';
 import { CEFR_LEVELS, CefrLevel } from '../../common/constants/enums';
 
 export class UpdateStudentDto {
@@ -25,12 +25,4 @@ export class UpdateStudentDto {
   @IsOptional()
   @IsString()
   country?: string;
-
-  @IsOptional()
-  @IsString()
-  address?: string;
-
-  @IsOptional()
-  @IsISO8601()
-  birthDate?: string;
 }

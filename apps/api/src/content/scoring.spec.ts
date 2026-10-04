@@ -1,5 +1,6 @@
 import {
   computeCourseCompletion,
+  computeGoalForecast,
   computeGoalProgress,
   computeLessonResult,
   GradedTask,
@@ -30,18 +31,32 @@ describe('computeLessonResult (INV-4/INV-5)', () => {
     expect(r.motivationTier).toBe('excellent');
   });
 
-  it('MANUAL and COMPLETION tasks never enter the numeric aggregate (INV-5)', () => {
+  it('a tutor-graded MANUAL task counts; an ungraded one waits (INV-5)', () => {
     const tasks: GradedTask[] = [
       auto('Grammar', 8),
       { gradingMode: 'MANUAL', aspect: 'Writing', score: 2, completed: true },
-      { gradingMode: 'COMPLETION', aspect: 'Speaking', score: 0, completed: false },
+      { gradingMode: 'COMPLETION', aspect: 'Speaking', score: null, completed: false },
+    ];
+    const r = computeLessonResult(tasks);
+    // The essay the tutor marked 2 pulls the average down from 8 to 5 — which
+    // is the point of grading it at all.
+    expect(r.overall).toBe(5);
+    expect(r.perAspect.Writing).toBe(2);
+    // Never scored by anyone, so it has no aspect average to show.
+    expect(r.perAspect.Speaking).toBeUndefined();
+    // completion counts every grading mode: 2 of 3 done
+    expect(r.completion).toBe(67);
+  });
+
+  it('an essay nobody has read yet leaves the average alone', () => {
+    const tasks: GradedTask[] = [
+      auto('Grammar', 8),
+      { gradingMode: 'MANUAL', aspect: 'Writing', score: null, completed: true },
     ];
     const r = computeLessonResult(tasks);
     expect(r.overall).toBe(8);
     expect(r.perAspect.Writing).toBeUndefined();
-    expect(r.perAspect.Speaking).toBeUndefined();
-    // completion counts every grading mode: 2 of 3 done
-    expect(r.completion).toBe(67);
+    expect(r.completion).toBe(100);
   });
 
   it('aspect comes from the explicit tag, never the title (INV-6)', () => {
@@ -51,7 +66,7 @@ describe('computeLessonResult (INV-4/INV-5)', () => {
     expect(r.perAspect.Grammar).toBe(9.0);
   });
 
-  it('no AUTO tasks -> overall null, tier keepGoing', () => {
+  it('nothing scored at all -> overall null, tier keepGoing', () => {
     const r = computeLessonResult([
       { gradingMode: 'COMPLETION', aspect: 'Speaking', score: null, completed: true },
     ]);
@@ -84,5 +99,12 @@ describe('progress counters (INV-3)', () => {
   it('empty inputs are safe', () => {
     expect(computeCourseCompletion([])).toBe(0);
     expect(computeGoalProgress([])).toBeNull();
+  });
+
+  it('goal forecast projects the current average and counts required remaining', () => {
+    const f = computeGoalForecast(lessons);
+    // projected = goalProgress (8.1); required not done = 2 (optional excluded)
+    expect(f.projected).toBe(8.1);
+    expect(f.remaining).toBe(2);
   });
 });

@@ -17,6 +17,19 @@ export class AnalyticsService {
   }
 
   /**
+   * The user ids whose payments count as this tutor's revenue: their own
+   * students. A single-tutor platform in practice, but the link is what says
+   * whose money it is, so an admin (no tutor profile) sees everyone's.
+   */
+  private async payerUserIds(tutorProfileId: string): Promise<string[]> {
+    const links = await this.prisma.tutorStudent.findMany({
+      where: { tutorProfileId },
+      select: { studentProfile: { select: { userId: true } } },
+    });
+    return links.map((l) => l.studentProfile.userId);
+  }
+
+  /**
    * KPI overview. Tutors see their own numbers; admins see platform-wide totals.
    */
   async overview(user: AuthenticatedUser) {
@@ -26,6 +39,33 @@ export class AnalyticsService {
     const tutor = isAdmin ? null : await this.tutorProfileForUser(user.id);
     const scope = tutor ? { tutorProfileId: tutor.id } : {};
     const attendanceScope = tutor ? { lesson: { tutorProfileId: tutor.id } } : {};
+    const homeworkScope = tutor ? { tutorProfileId: tutor.id } : {};
+    // Content assignments are owned by the user who handed them out, not by a
+    // tutor profile — the same scoping the Assignments list uses.
+    const assignmentScope = tutor ? { assignedByUserId: user.id } : {};
+
+    // Current calendar week [Monday 00:00 .. next Monday) for the "this week" stat.
+    const weekStart = new Date(now);
+    weekStart.setHours(0, 0, 0, 0);
+    weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    // Revenue is money the tutor has CONFIRMED receiving — a succeeded "topup"
+    // transaction, which is what confirming a transfer (or a card webhook)
+    // writes. It used to be the price of every completed lesson, which counted
+    // a lesson as income the moment it was taught, whether or not the student
+    // had paid for it, and a lesson taught on credit looked exactly like one
+    // paid up front.
+    const payerIds = tutor ? await this.payerUserIds(tutor.id) : null;
+    const paid = {
+      type: 'topup',
+      status: 'succeeded',
+      ...(payerIds ? { userId: { in: payerIds } } : {}),
+    };
+    // Two years of months: the chart shows up to twelve and compares them with
+    // the twelve before, so that is as far back as it can ask.
+    const seriesFrom = new Date(now.getFullYear(), now.getMonth() - 23, 1);
 
     const [
       completedLessons,
@@ -33,6 +73,11 @@ export class AnalyticsService {
       activeStudents,
       attendance,
       trialLessons,
+      lessonsThisWeek,
+      homeworks,
+      assignments,
+      paidTotal,
+      paidPayments,
     ] = await Promise.all([
       this.prisma.lesson.findMany({
         where: { ...scope, status: 'completed' },
@@ -54,9 +99,66 @@ export class AnalyticsService {
         where: { ...scope, type: 'trial' },
         select: { participants: { select: { studentProfileId: true } } },
       }),
+      // Teaching hours booked this week (excludes cancelled / no-show).
+      this.prisma.lesson.findMany({
+        where: {
+          ...scope,
+          status: { in: ['scheduled', 'completed'] },
+          startsAt: { gte: weekStart, lt: weekEnd },
+        },
+        select: { startsAt: true, endsAt: true },
+      }),
+      this.prisma.homework.findMany({
+        where: homeworkScope,
+        select: { status: true },
+      }),
+      this.prisma.contentAssignment.findMany({
+        where: assignmentScope,
+        select: { status: true },
+      }),
+      this.prisma.transaction.aggregate({ where: paid, _sum: { amountCents: true } }),
+      this.prisma.transaction.findMany({
+        where: { ...paid, createdAt: { gte: seriesFrom } },
+        select: { amountCents: true, createdAt: true },
+      }),
     ]);
 
-    const revenueCents = completedLessons.reduce((s, l) => s + l.priceCents, 0);
+    const revenueCents = paidTotal._sum.amountCents ?? 0;
+    // One bucket per month, so a month with no payments is a gap in the chart
+    // rather than a missing column.
+    const revenueMonths = Array.from({ length: 24 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 23 + i, 1);
+      return { month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, amountCents: 0 };
+    });
+    const monthIndex = new Map(revenueMonths.map((b, i) => [b.month, i]));
+    for (const p of paidPayments) {
+      const key = `${p.createdAt.getFullYear()}-${String(p.createdAt.getMonth() + 1).padStart(2, '0')}`;
+      const i = monthIndex.get(key);
+      if (i !== undefined) revenueMonths[i].amountCents += p.amountCents;
+    }
+    const weekMs = lessonsThisWeek.reduce(
+      (s, l) => s + (l.endsAt.getTime() - l.startsAt.getTime()),
+      0,
+    );
+    const hoursThisWeek = Math.round((weekMs / 3_600_000) * 10) / 10;
+    // "Assignments graded": how much of the work waiting on this tutor they
+    // have actually marked.
+    //
+    // Two things used to make the number meaningless. It read the legacy
+    // Homework table only, so marking a content assignment — what the
+    // Assignments screen hands out — could not move it at all. And it divided
+    // by every assignment ever handed out, including ones the student has not
+    // started, so handing out more work lowered the tutor's score for marking.
+    //
+    // The denominator is now what has been handed in, because that is the only
+    // part a tutor can do anything about.
+    const handedIn =
+      homeworks.filter((h) => h.status === 'submitted' || h.status === 'graded').length +
+      assignments.filter((a) => a.status === 'needs_review' || a.status === 'done').length;
+    const reviewed =
+      homeworks.filter((h) => h.status === 'graded').length +
+      assignments.filter((a) => a.status === 'done').length;
+    const assignmentsGradedPct = handedIn ? Math.round((reviewed / handedIn) * 100) : null;
     const present = attendance.filter((a) => a.status === 'present').length;
     const attendanceRate = attendance.length
       ? Math.round((present / attendance.length) * 100)
@@ -80,13 +182,89 @@ export class AnalyticsService {
 
     return {
       revenueCents,
+      revenueMonths,
       currency: tutor?.currency ?? 'EUR',
       lessonsCompleted: completedLessons.length,
       lessonsUpcoming: upcomingLessons,
       activeStudents,
+      hoursThisWeek,
+      assignmentsGradedPct,
       attendanceRate,
       trialConversionRate,
     };
+  }
+
+  /**
+   * Consecutive days, up to today, on which the student did something: finished
+   * a lesson, handed in homework, or drilled a word.
+   *
+   * Counted in the STUDENT's own time zone. A streak is about their days, and
+   * a learner in Dubai finishing a lesson at 01:00 would otherwise see it land
+   * on the server's yesterday and break the count they just earned.
+   *
+   * Today being empty does not break it: the day is not over yet, so the count
+   * runs from today if there is activity and from yesterday if there is not.
+   */
+  private async streakDays(
+    studentProfileId: string,
+    userId: string,
+    timezone: string,
+    now: Date,
+  ): Promise<number> {
+    // Ninety days of history is far more than any streak anyone will hold, and
+    // bounds the query on a table that only grows.
+    const since = new Date(now.getTime() - 90 * 86_400_000);
+    const [lessons, homework, reviews] = await Promise.all([
+      this.prisma.lesson.findMany({
+        where: {
+          status: 'completed',
+          endsAt: { gte: since, lte: now },
+          participants: { some: { studentProfileId } },
+        },
+        select: { endsAt: true },
+      }),
+      this.prisma.homeworkSubmission.findMany({
+        where: {
+          submittedAt: { gte: since, lte: now },
+          homework: { studentProfileId },
+        },
+        select: { submittedAt: true },
+      }),
+      this.prisma.dictionaryEntry.findMany({
+        where: { studentProfileId, lastReviewedAt: { gte: since, lte: now } },
+        select: { lastReviewedAt: true },
+      }),
+    ]);
+
+    const zone = timezone || 'UTC';
+    const dayOf = (d: Date) => {
+      try {
+        // en-CA gives YYYY-MM-DD, which sorts and compares as text.
+        return new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(d);
+      } catch {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(d);
+      }
+    };
+    const active = new Set<string>();
+    for (const l of lessons) active.add(dayOf(l.endsAt));
+    for (const h of homework) active.add(dayOf(h.submittedAt));
+    for (const r of reviews) if (r.lastReviewedAt) active.add(dayOf(r.lastReviewedAt));
+    if (active.size === 0) return 0;
+
+    const today = dayOf(now);
+    const yesterday = dayOf(new Date(now.getTime() - 86_400_000));
+    // Start on today when it counts, otherwise on yesterday; if neither is
+    // active the streak is over, whatever came before.
+    let cursor = active.has(today) ? today : active.has(yesterday) ? yesterday : null;
+    if (!cursor) return 0;
+
+    let days = 0;
+    let at = new Date(`${cursor}T12:00:00Z`);
+    while (active.has(dayOf(at))) {
+      days += 1;
+      at = new Date(at.getTime() - 86_400_000);
+    }
+    return days;
   }
 
   /** Learning progress + achievements for the signed-in student. */
@@ -101,6 +279,7 @@ export class AnalyticsService {
         lessonsUpcoming: 0,
         attendanceRate: null,
         homeworkGraded: 0,
+        streakDays: 0,
         achievements: [],
       };
     }
@@ -129,6 +308,17 @@ export class AnalyticsService {
         }),
       ]);
 
+    const me = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { timezone: true },
+    });
+    const streakDays = await this.streakDays(
+      student.id,
+      user.id,
+      me?.timezone ?? 'UTC',
+      now,
+    );
+
     const present = attendance.filter((a) => a.status === 'present').length;
     const attendanceRate = attendance.length
       ? Math.round((present / attendance.length) * 100)
@@ -141,6 +331,7 @@ export class AnalyticsService {
       { key: 'ten_lessons', earned: lessonsCompleted >= 10 },
       { key: 'homework_hero', earned: homeworkGraded >= 5 },
       { key: 'perfect_attendance', earned: attendance.length >= 5 && attendanceRate === 100 },
+      { key: 'week_streak', earned: streakDays >= 7 },
     ];
 
     return {
@@ -149,6 +340,7 @@ export class AnalyticsService {
       lessonsUpcoming,
       attendanceRate,
       homeworkGraded,
+      streakDays,
       achievements,
     };
   }
