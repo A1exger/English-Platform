@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Headers,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { TelegramService } from './telegram.service';
 import { LinkTelegramDto } from './dto/link-telegram.dto';
@@ -16,14 +27,25 @@ export class NotificationsController {
     private readonly telegram: TelegramService,
   ) {}
 
-  // Link the current user's Telegram chat so they can receive notifications
-  // there (in production captured via a bot /start deep link).
+  // Link the current user's Telegram chat by raw chat id. Kept for scripts and
+  // tests; users go through the deep link below instead.
   @Post('telegram/link')
   linkTelegram(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: LinkTelegramDto,
   ) {
     return this.telegram.link(user.id, dto.chatId);
+  }
+
+  /** The user's personal "connect Telegram" link + whether they're connected. */
+  @Get('telegram')
+  telegramStatus(@CurrentUser() user: AuthenticatedUser) {
+    return this.telegram.connectInfo(user.id);
+  }
+
+  @Delete('telegram')
+  unlinkTelegram(@CurrentUser() user: AuthenticatedUser) {
+    return this.telegram.unlink(user.id);
   }
 
   @Get()
@@ -44,5 +66,27 @@ export class NotificationsController {
   @Post('dispatch')
   dispatch() {
     return this.notifications.dispatchQueued();
+  }
+}
+
+/**
+ * Telegram's bot webhook. Unauthenticated by nature (Telegram calls it), so it
+ * lives outside the guarded controller above; trust comes from the secret token
+ * header configured with setWebhook. A user is only ever linked from a signed
+ * /start payload that the app itself issued.
+ */
+@Controller('notifications/telegram')
+export class TelegramWebhookController {
+  constructor(private readonly telegram: TelegramService) {}
+
+  @Post('webhook')
+  webhook(
+    @Headers('x-telegram-bot-api-secret-token') secret: string | undefined,
+    @Body() update: Record<string, unknown>,
+  ) {
+    if (!this.telegram.verifyWebhookSecret(secret)) {
+      throw new ForbiddenException('Bad webhook secret');
+    }
+    return this.telegram.handleUpdate(update);
   }
 }

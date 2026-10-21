@@ -17,6 +17,7 @@ export interface Me {
   firstName: string;
   lastName: string;
   locale: string;
+  timezone?: string;
   greeting?: string;
 }
 

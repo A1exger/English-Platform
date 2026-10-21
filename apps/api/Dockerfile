@@ -32,9 +32,12 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/package.json ./
+# tsconfig.json lets `prisma db seed` (ts-node prisma/seed.ts) run in this image.
+COPY --from=build /app/tsconfig.json ./
 
 EXPOSE 3001
 
-# Apply committed migrations, then start. (The image's schema provider is
-# postgresql, matching prisma/migrations.)
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Apply committed migrations, seed the provisioned accounts + demo data (the
+# seed is idempotent, so it is safe on every start), then start the API. The
+# seed is non-fatal: a failure logs and the server still boots.
+CMD ["sh", "-c", "npx prisma migrate deploy && (npx prisma db seed || echo 'seed step skipped') && node dist/main.js"]

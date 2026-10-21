@@ -6,7 +6,7 @@ import { Aspect, GradingMode } from '../common/constants/enums';
 export interface GradedTask {
   gradingMode: GradingMode;
   aspect: Aspect | string;
-  /** 0–10 score; only meaningful for AUTO tasks. */
+  /** 0–10 score: set by the server for AUTO, by the tutor for MANUAL. */
   score: number | null;
   /** Whether the student finished the task (any grading mode). */
   completed: boolean;
@@ -36,21 +36,25 @@ export function motivationTierFor(overall: number | null): MotivationTier {
 }
 
 /**
- * INV-4 + INV-5: the numeric aggregate uses ONLY AUTO tasks with a score.
- * `overall` = mean of all AUTO scores; `perAspect` = mean of AUTO scores per
- * explicit aspect tag. Both rounded to 1 decimal. MANUAL/COMPLETION tasks
- * contribute to `completion` only.
+ * INV-4 + INV-5: the numeric aggregate uses every SCORED task — AUTO ones
+ * scored by the server, MANUAL ones scored by the tutor. `overall` = mean of
+ * those scores; `perAspect` = the same mean per explicit aspect tag. Both
+ * rounded to 1 decimal.
+ *
+ * A MANUAL task counts only once a tutor has put a number on it, so an essay
+ * waiting to be read simply does not move the average yet; it starts counting
+ * on review. COMPLETION tasks are never scored and contribute to `completion`
+ * only — which is also why Writing and Speaking can be missing from
+ * `perAspect` until someone grades the work behind them.
  */
 export function computeLessonResult(tasks: GradedTask[]): LessonResultAggregate {
-  const auto = tasks.filter(
-    (t) => t.gradingMode === 'AUTO' && t.score !== null && !Number.isNaN(t.score),
-  );
+  const scored = tasks.filter((t) => t.score !== null && !Number.isNaN(t.score));
 
-  const overall = auto.length ? round1(mean(auto.map((t) => t.score as number))) : null;
+  const overall = scored.length ? round1(mean(scored.map((t) => t.score as number))) : null;
 
   const perAspect: Record<string, number> = {};
   const byAspect = new Map<string, number[]>();
-  for (const t of auto) {
+  for (const t of scored) {
     const arr = byAspect.get(t.aspect) ?? [];
     arr.push(t.score as number);
     byAspect.set(t.aspect, arr);
@@ -93,4 +97,22 @@ export function computeGoalProgress(lessons: LessonProgressInput[]): number | nu
   const scored = lessons.filter((l) => l.completed && l.overall !== null);
   if (scored.length === 0) return null;
   return round1(mean(scored.map((l) => l.overall as number)));
+}
+
+export interface GoalForecast {
+  /** Projected final course grade: the current mean of completed lessons. */
+  projected: number | null;
+  /** Required lessons still to do (optional lessons never block completion). */
+  remaining: number;
+}
+
+/**
+ * Goal forecast for the cabinet (INV-3): projects the current goal average as
+ * the expected final grade and reports how many required lessons remain.
+ */
+export function computeGoalForecast(lessons: LessonProgressInput[]): GoalForecast {
+  return {
+    projected: computeGoalProgress(lessons),
+    remaining: lessons.filter((l) => !l.optional && !l.completed).length,
+  };
 }

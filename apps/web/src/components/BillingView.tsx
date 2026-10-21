@@ -5,6 +5,10 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
+import { PageHeader } from './PageHeader';
+import { Drawer } from './Drawer';
 
 interface Pkg {
   id: string;
@@ -31,10 +35,6 @@ interface Invoice {
   currency: string;
   status: string;
 }
-interface Checkout {
-  transactionId: string;
-  checkoutUrl: string;
-}
 interface Transfer {
   transactionId: string;
   method: 'westernunion' | 'moneygram';
@@ -59,22 +59,24 @@ function money(format: ReturnType<typeof useFormatter>, cents: number, currency:
 export function BillingView() {
   const t = useTranslations('billing');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
   const locale = useLocale();
   const format = useFormatter();
   const router = useRouter();
+  const { show, showUndo } = useToast();
 
   const [me, setMe] = useState<Me | null>(null);
   const [packages, setPackages] = useState<Pkg[]>([]);
   const [balance, setBalance] = useState<Balance | null>(null);
   const [txns, setTxns] = useState<Txn[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [checkout, setCheckout] = useState<Checkout | null>(null);
   const [transfer, setTransfer] = useState<Transfer | null>(null);
   const [mtcn, setMtcn] = useState('');
   const [mtcnSent, setMtcnSent] = useState(false);
   const [pending, setPending] = useState<PendingTransfer[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({ name: '', lessons: '10', price: '200', currency: 'EUR' });
 
   const load = useCallback(async () => {
@@ -98,9 +100,12 @@ export function BillingView() {
         setTxns(tx);
         setInvoices(inv);
       }
-      if (profile.role === 'admin') {
+      // The tutor receives the transfer, so they confirm it (their students only).
+      if (profile.role === 'tutor' || profile.role === 'admin') {
         setPending(
-          await apiFetch<PendingTransfer[]>('/billing/transfers/pending', { token, locale })
+          await apiFetch<PendingTransfer[]>('/billing/transfers/pending', { token, locale }).catch(
+            () => []
+          )
         );
       }
       setState('ready');
@@ -116,23 +121,6 @@ export function BillingView() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  async function buy(packageId: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      const res = await apiFetch<Checkout>('/billing/checkout', {
-        method: 'POST',
-        token,
-        locale,
-        body: { provider: 'stripe', packageId }
-      });
-      setCheckout(res);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function startTransfer(method: 'westernunion' | 'moneygram', packageId: string) {
     const token = tokenStore.get();
@@ -182,16 +170,45 @@ export function BillingView() {
     }
   }
 
-  async function deletePackage(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/billing/packages/${id}`, { method: 'DELETE', token, locale });
-      await load();
-    } finally {
-      setBusy(false);
-    }
+  /**
+   * Reject and delete both take the row off the list at once and do the work
+   * after the undo window, the way every other destructive action here does.
+   * Rejecting also emails the student, which is the reason to keep the window:
+   * a mis-click is taken back before they are told anything.
+   */
+  function reviewTransfer(id: string, action: 'reject' | 'delete') {
+    setPending((prev) => prev.filter((x) => x.id !== id));
+    showUndo(action === 'reject' ? t('transferRejected') : t('transferDeleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        const ok = await apiFetch(
+          action === 'reject' ? `/billing/transfer/${id}/reject` : `/billing/transfer/${id}`,
+          { method: action === 'reject' ? 'POST' : 'DELETE', token, locale }
+        )
+          .then(() => true)
+          .catch(() => false);
+        if (!ok) show(tc('saveFailed'));
+        await load();
+      }
+    });
+  }
+
+  // Optimistic + undoable (project rule: no destructive action without undo).
+  function deletePackage(id: string) {
+    setPackages((prev) => prev.filter((p) => p.id !== id));
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/billing/packages/${id}`, { method: 'DELETE', token, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
   }
 
   async function createPackage(e: FormEvent) {
@@ -213,13 +230,14 @@ export function BillingView() {
         }
       });
       setForm({ name: '', lessons: '10', price: '200', currency: 'EUR' });
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error')
     return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
@@ -229,7 +247,10 @@ export function BillingView() {
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader
+        title={t('title')}
+        primary={isTutor || isAdmin ? { label: t('newPackage'), onClick: () => setDrawerOpen(true) } : undefined}
+      />
 
       {balance && (
         <div className="metrics">
@@ -247,49 +268,50 @@ export function BillingView() {
       )}
 
       {(isTutor || isAdmin) && (
-        <form className="card form-grid" onSubmit={createPackage}>
-          <strong>{t('newPackage')}</strong>
-          <label>
-            {t('name')}
-            <input
-              required
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </label>
-          <label>
-            {t('lessons')}
-            <input
-              type="number"
-              min={1}
-              value={form.lessons}
-              onChange={(e) => setForm({ ...form, lessons: e.target.value })}
-            />
-          </label>
-          <label>
-            {t('price')}
-            <input
-              type="number"
-              min={0}
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-            />
-          </label>
-          <label>
-            {t('currency')}
-            <select
-              value={form.currency}
-              onChange={(e) => setForm({ ...form, currency: e.target.value })}
-            >
-              <option value="EUR">EUR €</option>
-              <option value="USD">USD $</option>
-              <option value="TND">TND (DT)</option>
-            </select>
-          </label>
-          <button type="submit" disabled={busy}>
-            {busy ? t('processing') : t('create')}
-          </button>
-        </form>
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('newPackage')}>
+          <form className="form-grid" onSubmit={createPackage}>
+            <label>
+              {t('name')}
+              <input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('lessons')}
+              <input
+                type="number"
+                min={1}
+                value={form.lessons}
+                onChange={(e) => setForm({ ...form, lessons: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('price')}
+              <input
+                type="number"
+                min={0}
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+              />
+            </label>
+            <label>
+              {t('currency')}
+              <select
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value })}
+              >
+                <option value="EUR">EUR €</option>
+                <option value="USD">USD $</option>
+                <option value="TND">TND (DT)</option>
+              </select>
+            </label>
+            <button type="submit" disabled={busy}>
+              {busy ? t('processing') : t('create')}
+            </button>
+          </form>
+        </Drawer>
       )}
 
       <div className="card">
@@ -306,9 +328,10 @@ export function BillingView() {
                 <span className="muted">{money(format, p.priceCents, p.currency)}</span>
                 {isStudent && (
                   <span className="row-actions">
-                    <button type="button" disabled={busy} onClick={() => buy(p.id)}>
-                      {t('buy')}
-                    </button>
+                    {/* Card checkout is off for now: Western Union and MoneyGram
+                        are the payment routes on offer. The API endpoint and its
+                        Stripe/PayPal wiring are untouched, so bringing the button
+                        back is putting it back here. */}
                     <button
                       type="button"
                       disabled={busy}
@@ -333,14 +356,6 @@ export function BillingView() {
               </li>
             ))}
           </ul>
-        )}
-        {checkout && (
-          <p className="note">
-            {t('checkoutReady')}{' '}
-            <a className="link" href={checkout.checkoutUrl} target="_blank" rel="noreferrer">
-              {checkout.checkoutUrl}
-            </a>
-          </p>
         )}
       </div>
 
@@ -371,7 +386,7 @@ export function BillingView() {
         </div>
       )}
 
-      {isAdmin && (
+      {(isTutor || isAdmin) && (
         <div className="card">
           <strong>{t('pendingTransfers')}</strong>
           {pending.length === 0 ? (
@@ -385,9 +400,27 @@ export function BillingView() {
                     {p.externalId}
                   </span>
                   <span className="muted">{money(format, p.amountCents, p.currency)}</span>
-                  <button type="button" disabled={busy} onClick={() => confirmTransfer(p.id)}>
-                    {t('confirm')}
-                  </button>
+                  <span className="row-actions">
+                    <button type="button" disabled={busy} onClick={() => confirmTransfer(p.id)}>
+                      {t('confirm')}
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost"
+                      disabled={busy}
+                      onClick={() => reviewTransfer(p.id, 'reject')}
+                    >
+                      {t('reject')}
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost danger"
+                      disabled={busy}
+                      onClick={() => reviewTransfer(p.id, 'delete')}
+                    >
+                      {t('delete')}
+                    </button>
+                  </span>
                 </li>
               ))}
             </ul>

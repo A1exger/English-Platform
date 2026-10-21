@@ -5,6 +5,11 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch, apiUpload, fileUrl } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { useToast } from './Toast';
+import { PageHeader } from './PageHeader';
+import { Drawer } from './Drawer';
+import { DataList } from './DataList';
 
 interface Material {
   id: string;
@@ -19,13 +24,18 @@ const TYPES = ['pdf', 'video', 'audio', 'image', 'exercise', 'link'];
 export function MaterialsView() {
   const t = useTranslations('materials');
   const tApp = useTranslations('app');
+  const tc = useTranslations('common');
+  const te = useTranslations('enum');
   const locale = useLocale();
   const router = useRouter();
+  const { showUndo } = useToast();
 
   const [me, setMe] = useState<Me | null>(null);
   const [items, setItems] = useState<Material[]>([]);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [busy, setBusy] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('');
   const [form, setForm] = useState({ type: 'pdf', title: '', url: '', language: '' });
 
   const load = useCallback(async () => {
@@ -73,6 +83,7 @@ export function MaterialsView() {
         }
       });
       setForm({ type: 'pdf', title: '', url: '', language: '' });
+      setDrawerOpen(false);
       await load();
     } finally {
       setBusy(false);
@@ -96,95 +107,132 @@ export function MaterialsView() {
     }
   }
 
-  async function remove(id: string) {
-    const token = tokenStore.get();
-    if (!token) return;
-    setBusy(true);
-    try {
-      await apiFetch(`/materials/${id}`, { method: 'DELETE', token, locale });
-      await load();
-    } finally {
-      setBusy(false);
-    }
+  // Optimistic + undoable: the DELETE only fires once the undo window closes.
+  function remove(id: string) {
+    setItems((prev) => prev.filter((m) => m.id !== id));
+    showUndo(t('deleted'), {
+      onUndo: () => void load(),
+      onCommit: async () => {
+        const token = tokenStore.get();
+        if (!token) return;
+        await apiFetch(`/materials/${id}`, { method: 'DELETE', token, locale }).catch(
+          () => undefined
+        );
+        await load();
+      }
+    });
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   const canManage = me?.role === 'tutor' || me?.role === 'admin';
 
   return (
     <div className="content">
-      <h2>{t('title')}</h2>
+      <PageHeader
+        title={t('title')}
+        primary={canManage ? { label: t('add'), onClick: () => setDrawerOpen(true) } : undefined}
+      />
 
-      {canManage && (
-        <div className="card upload-row">
-          <strong>{t('uploadFile')}</strong>
-          <input type="file" disabled={busy} onChange={upload} />
-        </div>
-      )}
-
-      {canManage && (
-        <form className="card form-grid" onSubmit={create}>
-          <strong>{t('add')}</strong>
-          <label>
-            {t('type')}
-            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-              {TYPES.map((ty) => (
-                <option key={ty} value={ty}>
-                  {ty}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t('titleField')}
-            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          </label>
-          <label>
-            {t('url')}
-            <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
-          </label>
-          <label>
-            {t('language')}
-            <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} placeholder="en" />
-          </label>
-          <button type="submit" disabled={busy}>
-            {busy ? t('creating') : t('create')}
-          </button>
-        </form>
-      )}
-
-      <div className="card">
-        {items.length === 0 ? (
-          <p className="note">{t('empty')}</p>
-        ) : (
-          <ul className="lesson-list">
-            {items.map((m) => (
-              <li key={m.id}>
-                <span>
-                  {m.url ? (
-                    <a className="link" href={fileUrl(m.url)} target="_blank" rel="noreferrer">
-                      {m.title}
-                    </a>
-                  ) : (
-                    m.title
-                  )}
-                </span>
-                <span className="muted">
-                  {m.type}
-                  {m.language ? ` · ${m.language}` : ''}
-                </span>
-                {canManage && (
-                  <button type="button" disabled={busy} onClick={() => remove(m.id)}>
-                    {t('delete')}
-                  </button>
-                )}
-              </li>
+      <DataList
+        items={items}
+        getKey={(m) => m.id}
+        searchText={(m) => `${m.title} ${m.type} ${m.language ?? ''}`}
+        listClassName="lesson-list"
+        filterFn={typeFilter ? (m) => m.type === typeFilter : undefined}
+        sorts={[
+          { key: 'title', label: t('titleField'), value: (m) => m.title.toLowerCase() },
+          { key: 'type', label: t('type'), value: (m) => m.type }
+        ]}
+        toolbar={
+          <div className="tabs tabs-inline filter-chips" role="tablist" aria-label={t('type')}>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={typeFilter === ''}
+              className={typeFilter === '' ? 'active' : ''}
+              onClick={() => setTypeFilter('')}
+            >
+              {tc('all')}
+            </button>
+            {TYPES.map((ty) => (
+              <button
+                key={ty}
+                type="button"
+                role="tab"
+                aria-selected={typeFilter === ty}
+                className={typeFilter === ty ? 'active' : ''}
+                onClick={() => setTypeFilter(ty)}
+              >
+                {te(`materialType.${ty}`)}
+              </button>
             ))}
-          </ul>
+          </div>
+        }
+        empty={{
+          title: t('empty'),
+          action: canManage ? { label: t('add'), onClick: () => setDrawerOpen(true) } : undefined
+        }}
+        renderRow={(m) => (
+          <>
+            <span>
+              {m.url ? (
+                <a className="link" href={fileUrl(m.url)} target="_blank" rel="noreferrer">
+                  {m.title}
+                </a>
+              ) : (
+                m.title
+              )}
+            </span>
+            <span className="muted">
+              {te(`materialType.${m.type}`)}
+              {m.language ? ` · ${m.language}` : ''}
+            </span>
+            {canManage && (
+              <button type="button" disabled={busy} onClick={() => remove(m.id)}>
+                {t('delete')}
+              </button>
+            )}
+          </>
         )}
-      </div>
+      />
+
+      {canManage && (
+        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={t('add')}>
+          <div className="upload-row">
+            <strong>{t('uploadFile')}</strong>
+            <input type="file" disabled={busy} onChange={upload} />
+          </div>
+          <form className="form-grid" onSubmit={create}>
+            <label>
+              {t('type')}
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                {TYPES.map((ty) => (
+                  <option key={ty} value={ty}>
+                    {te(`materialType.${ty}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {t('titleField')}
+              <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </label>
+            <label>
+              {t('url')}
+              <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} />
+            </label>
+            <label>
+              {t('language')}
+              <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} placeholder="en" />
+            </label>
+            <button type="submit" disabled={busy}>
+              {busy ? t('creating') : t('create')}
+            </button>
+          </form>
+        </Drawer>
+      )}
     </div>
   );
 }

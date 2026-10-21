@@ -8,6 +8,17 @@ export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = 'en';
 
+// Название каждого языка на нём самом. Одно место на всё приложение: два списка
+// в двух переключателях однажды уже разъехались.
+export const localeLabels: Record<Locale, string> = {
+  en: 'English',
+  ru: 'Русский',
+  de: 'Deutsch',
+  fr: 'Français',
+  nl: 'Nederlands',
+  ar: 'العربية'
+};
+
 // Языки с раскладкой справа налево.
 export const rtlLocales: Locale[] = ['ar'];
 

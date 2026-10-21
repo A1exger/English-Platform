@@ -5,11 +5,12 @@ import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../notifications/mail.service';
 
 describe('AuthService', () => {
   let service: AuthService;
   let prisma: {
-    user: { findUnique: jest.Mock; create: jest.Mock };
+    user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
     refreshToken: {
       create: jest.Mock;
       findMany: jest.Mock;
@@ -36,7 +37,8 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     prisma = {
-      user: { findUnique: jest.fn(), create: jest.fn() },
+      // update: issuing tokens stamps lastSeenAt.
+      user: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn().mockResolvedValue({}) },
       refreshToken: {
         create: jest.fn().mockResolvedValue({}),
         findMany: jest.fn(),
@@ -62,6 +64,9 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: jwt },
         { provide: ConfigService, useValue: config },
         { provide: (require('nestjs-i18n').I18nService), useValue: i18n },
+        // AuthService emails password-reset links; the unit tests never assert
+        // on delivery, so a no-op adapter keeps them focused on the auth logic.
+        { provide: MailService, useValue: { sendMail: jest.fn() } },
       ],
     }).compile();
 

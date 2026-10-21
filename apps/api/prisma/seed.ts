@@ -9,7 +9,8 @@ async function main(): Promise<void> {
   // Tutor
   const tutor = await prisma.user.upsert({
     where: { email: 'tutor@example.com' },
-    update: {},
+    // Keep the provisioned staff login deterministic across deploys/reseeds.
+    update: { passwordHash: password, isActive: true },
     create: {
       email: 'tutor@example.com',
       passwordHash: password,
@@ -33,7 +34,8 @@ async function main(): Promise<void> {
   // Platform admin (cannot be created via public sign-up)
   await prisma.user.upsert({
     where: { email: 'admin@example.com' },
-    update: {},
+    // Keep the provisioned admin login deterministic across deploys/reseeds.
+    update: { passwordHash: password, isActive: true },
     create: {
       email: 'admin@example.com',
       passwordHash: password,
@@ -124,37 +126,42 @@ async function main(): Promise<void> {
   const now = Date.now();
   const hour = 60 * 60 * 1000;
 
-  // Individual lesson for student1
-  await prisma.lesson.create({
-    data: {
-      tutorProfileId,
-      type: 'individual',
-      title: 'Conversation practice',
-      startsAt: new Date(now + 24 * hour),
-      endsAt: new Date(now + 25 * hour),
-      priceCents: 2500,
-      currency: 'EUR',
-      participants: {
-        create: { studentProfileId: student1.studentProfile!.id },
+  // Demo lessons — created once, so re-running the seed on every deploy stays
+  // idempotent (it must not multiply lessons on each container restart).
+  const existingLessons = await prisma.lesson.count({ where: { tutorProfileId } });
+  if (existingLessons === 0) {
+    // Individual lesson for student1
+    await prisma.lesson.create({
+      data: {
+        tutorProfileId,
+        type: 'individual',
+        title: 'Conversation practice',
+        startsAt: new Date(now + 24 * hour),
+        endsAt: new Date(now + 25 * hour),
+        priceCents: 2500,
+        currency: 'EUR',
+        participants: {
+          create: { studentProfileId: student1.studentProfile!.id },
+        },
       },
-    },
-  });
+    });
 
-  // Group/trial lesson with open slot
-  await prisma.lesson.create({
-    data: {
-      tutorProfileId,
-      type: 'group',
-      title: 'Beginner group class',
-      startsAt: new Date(now + 48 * hour),
-      endsAt: new Date(now + 49 * hour),
-      priceCents: 1000,
-      currency: 'EUR',
-      participants: {
-        create: { studentProfileId: student2.studentProfile!.id },
+    // Group/trial lesson with open slot
+    await prisma.lesson.create({
+      data: {
+        tutorProfileId,
+        type: 'group',
+        title: 'Beginner group class',
+        startsAt: new Date(now + 48 * hour),
+        endsAt: new Date(now + 49 * hour),
+        priceCents: 1000,
+        currency: 'EUR',
+        participants: {
+          create: { studentProfileId: student2.studentProfile!.id },
+        },
       },
-    },
-  });
+    });
+  }
 
   // Lesson packages (tariffs) for the tutor — created once.
   const existingPackages = await prisma.package.count({

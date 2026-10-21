@@ -12,11 +12,20 @@ import { CreateMaterialDto } from './dto/create-material.dto';
 export class MaterialsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Create a Material from an uploaded file (served from /uploads). */
+  /**
+   * Create a Material from an uploaded file (served from /uploads).
+   *
+   * `scope` says what the file is. The library is a curated shelf a tutor
+   * builds and a student browses; the picture on a lesson page, a course cover
+   * and an exercise's image are not items on it — they are part of the content
+   * that embeds them. Both still become rows, so every upload keeps an owner
+   * and a record, but only "library" is listed.
+   */
   createUploaded(
     user: AuthenticatedUser,
     file: Express.Multer.File,
     title?: string,
+    scope?: string,
   ) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
@@ -37,6 +46,9 @@ export class MaterialsService {
         type,
         title: title || file.originalname,
         url: `/uploads/${file.filename}`,
+        // Anything but the one known value is the library, so an old client
+        // that sends no scope keeps behaving as it always did.
+        scope: scope === 'inline' ? 'inline' : 'library',
       },
     });
   }
@@ -68,8 +80,15 @@ export class MaterialsService {
   }
 
   async list(user: AuthenticatedUser) {
+    // Course media never appears here, for anyone: the pictures inside a lesson
+    // belong to that lesson, and a library that fills up with them stops being
+    // the shelf a tutor curated.
+    const library = { scope: 'library' };
     if (user.role === 'admin') {
-      return this.prisma.material.findMany({ orderBy: { createdAt: 'desc' } });
+      return this.prisma.material.findMany({
+        where: library,
+        orderBy: { createdAt: 'desc' },
+      });
     }
     // Admin-uploaded materials are shared platform-wide (visible to everyone).
     const adminIds = await this.adminUserIds();
@@ -78,7 +97,7 @@ export class MaterialsService {
         ? await this.enrolledTutorUserIds(user.id)
         : [user.id];
     return this.prisma.material.findMany({
-      where: { ownerUserId: { in: [...new Set([...ownerIds, ...adminIds])] } },
+      where: { ...library, ownerUserId: { in: [...new Set([...ownerIds, ...adminIds])] } },
       orderBy: { createdAt: 'desc' },
     });
   }

@@ -38,10 +38,20 @@ export class LessonsService {
     const room = this.livekit.roomNameForLesson(lesson.id);
     // Parents (if added later) would join subscribe-only; tutors/students publish.
     const canPublish = user.role !== 'parent';
+    // Label the video tile with the participant's display name (falls back to
+    // email) so tutors/students see each other by name, not raw address.
+    const profile = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: { firstName: true, lastName: true, email: true },
+    });
+    const name =
+      [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim() ||
+      profile?.email ||
+      user.email;
     const token = this.livekit.createToken({
       room,
       identity: user.id,
-      name: user.email,
+      name,
       canPublish,
     });
     return { roomName: room, url: this.livekit.url, token };
@@ -70,20 +80,31 @@ export class LessonsService {
   async create(user: AuthenticatedUser, dto: CreateLessonDto) {
     const tutorProfile = await this.tutorProfileForUser(user.id);
 
-    if (new Date(dto.endsAt) <= new Date(dto.startsAt)) {
+    const startsAt = new Date(dto.startsAt);
+    const endsAt = new Date(dto.endsAt);
+    if (endsAt <= startsAt) {
       throw new BadRequestException('endsAt must be after startsAt');
     }
+
+    // A price the caller did not give comes from the tutor's own hourly rate,
+    // pro-rated over the slot. It used to fall back to 0, which quietly booked
+    // a free lesson whenever the field was left out — and the rate on the
+    // profile is where a tutor sets what they charge, so asking again per
+    // booking only invites the two to disagree.
+    const minutes = (endsAt.getTime() - startsAt.getTime()) / 60000;
+    const fromRate = Math.round((tutorProfile.hourlyRate * 100 * minutes) / 60);
 
     return this.prisma.lesson.create({
       data: {
         tutorProfileId: tutorProfile.id,
         type: dto.type ?? 'individual',
         title: dto.title,
-        startsAt: new Date(dto.startsAt),
-        endsAt: new Date(dto.endsAt),
-        priceCents: dto.priceCents ?? 0,
-        currency: dto.currency ?? 'EUR',
+        startsAt,
+        endsAt,
+        priceCents: dto.priceCents ?? fromRate,
+        currency: dto.currency ?? tutorProfile.currency ?? 'EUR',
         meetingUrl: dto.meetingUrl,
+        materialLessonId: dto.materialLessonId || null,
         ...(dto.studentProfileIds && dto.studentProfileIds.length > 0
           ? {
               participants: {
@@ -175,6 +196,9 @@ export class LessonsService {
         ...(dto.endsAt !== undefined ? { endsAt } : {}),
         ...(dto.status !== undefined ? { status: dto.status } : {}),
         ...(dto.meetingUrl !== undefined ? { meetingUrl: dto.meetingUrl } : {}),
+        ...(dto.materialLessonId !== undefined
+          ? { materialLessonId: dto.materialLessonId || null }
+          : {}),
       },
       include: LESSON_INCLUDE,
     });

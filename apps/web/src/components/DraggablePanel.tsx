@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useCallback, useRef, useState } from 'react';
+import { Icon } from './Icon';
 
 interface Props {
   title: string;
@@ -48,7 +49,7 @@ export function DraggablePanel({ title, onClose, children, initial }: Props) {
         <strong>{title}</strong>
         {onClose && (
           <button type="button" onClick={onClose} aria-label="close">
-            ✕
+            <Icon name="close" />
           </button>
         )}
       </div>

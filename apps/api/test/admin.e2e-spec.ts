@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import request = require('supertest');
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { AuthService } from '../src/auth/auth.service';
 
 describe('Admin user management (e2e)', () => {
   let app: INestApplication;
@@ -59,6 +60,41 @@ describe('Admin user management (e2e)', () => {
     expect(res.body.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('"last seen" moves on sign-in and on token refresh, and the admin sees it', async () => {
+    const seen = async () =>
+      (await prisma.user.findUniqueOrThrow({ where: { email: 'tutor@adm.com' } })).lastSeenAt;
+
+    // Registering is a sign-in: the account was seen the moment it was made.
+    const atRegister = await seen();
+    expect(atRegister).toBeInstanceOf(Date);
+
+    const login = await api()
+      .post('/api/v1/auth/login')
+      .send({ email: 'tutor@adm.com', password: 'Password123!' })
+      .expect(201);
+    const atLogin = await seen();
+    expect(atLogin!.getTime()).toBeGreaterThanOrEqual(atRegister!.getTime());
+
+    // An open tab never types the password again — it refreshes. That has to
+    // count, or a tutor teaching daily would read "last seen a week ago".
+    await prisma.user.update({
+      where: { email: 'tutor@adm.com' },
+      data: { lastSeenAt: new Date('2020-01-01T00:00:00Z') },
+    });
+    await api()
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: login.body.refreshToken })
+      .expect(201);
+    expect((await seen())!.getFullYear()).toBeGreaterThan(2020);
+
+    const list = await api()
+      .get('/api/v1/admin/users')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(200);
+    const row = list.body.find((u: { email: string }) => u.email === 'tutor@adm.com');
+    expect(new Date(row.lastSeenAt).getFullYear()).toBeGreaterThan(2020);
+  });
+
   it('admin creates a tutor (with profile)', async () => {
     const res = await api()
       .post('/api/v1/admin/users')
@@ -111,6 +147,101 @@ describe('Admin user management (e2e)', () => {
       .delete(`/api/v1/admin/users/${adminUserId}`)
       .set('Authorization', `Bearer ${admin.accessToken}`)
       .expect(400);
+  });
+
+  it('admin edits a profile, and a role change provisions the new profile', async () => {
+    const res = await api()
+      .patch(`/api/v1/admin/users/${createdId}`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ firstName: 'Edited', lastName: 'Name', locale: 'ru', role: 'student' })
+      .expect(200);
+    expect(res.body.firstName).toBe('Edited');
+    expect(res.body.locale).toBe('ru');
+    expect(res.body.role).toBe('student');
+    // Promoted to student -> the StudentProfile now exists (the old tutor one
+    // is left alone so its history survives).
+    const withProfiles = await prisma.user.findUniqueOrThrow({
+      where: { id: createdId },
+      include: { studentProfile: true, tutorProfile: true },
+    });
+    expect(withProfiles.studentProfile).not.toBeNull();
+    expect(withProfiles.tutorProfile).not.toBeNull();
+  });
+
+  it('a new password set by the admin works, and deactivating blocks sign-in', async () => {
+    const email = (await prisma.user.findUniqueOrThrow({ where: { id: createdId } })).email;
+    await api()
+      .patch(`/api/v1/admin/users/${createdId}`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ password: 'BrandNewPass1!' })
+      .expect(200);
+    await api()
+      .post('/api/v1/auth/login')
+      .send({ email, password: 'BrandNewPass1!' })
+      .expect(201);
+
+    await api()
+      .patch(`/api/v1/admin/users/${createdId}`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ isActive: false })
+      .expect(200);
+    await api()
+      .post('/api/v1/auth/login')
+      .send({ email, password: 'BrandNewPass1!' })
+      .expect(401);
+  });
+
+  it('admin cannot demote or deactivate themselves', async () => {
+    await api()
+      .patch(`/api/v1/admin/users/${adminUserId}`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ role: 'student' })
+      .expect(400);
+    await api()
+      .patch(`/api/v1/admin/users/${adminUserId}`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .send({ isActive: false })
+      .expect(400);
+  });
+
+  it('forgot password: always accepted, and the link resets exactly once', async () => {
+    const auth = app.get(AuthService);
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: 'tutor@adm.com' } });
+
+    // An unknown address must look identical — no account enumeration.
+    await api()
+      .post('/api/v1/auth/forgot-password')
+      .send({ email: 'nobody@nowhere.test' })
+      .expect(201)
+      .expect((r) => expect(r.body.sent).toBe(true));
+    await api().post('/api/v1/auth/forgot-password').send({ email: user.email }).expect(201);
+
+    // Mint the same token the email carries.
+    const token = (
+      auth as unknown as {
+        signReset(id: string, hash: string, exp: number): string;
+      }
+    ).signReset(user.id, user.passwordHash, Date.now() + 60_000);
+
+    await api()
+      .post('/api/v1/auth/reset-password')
+      .send({ token, password: 'ResetPass123!' })
+      .expect(201);
+    await api()
+      .post('/api/v1/auth/login')
+      .send({ email: user.email, password: 'ResetPass123!' })
+      .expect(201);
+
+    // Replaying the same link fails: the signing key includes the old hash.
+    await api()
+      .post('/api/v1/auth/reset-password')
+      .send({ token, password: 'Another123!' })
+      .expect(401);
+    // So does a forged one.
+    await api()
+      .post('/api/v1/auth/reset-password')
+      .send({ token: `${user.id}.${Date.now() + 60_000}.deadbeef`, password: 'Another123!' })
+      .expect(401);
   });
 
   it('admin deletes a user', async () => {

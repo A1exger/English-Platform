@@ -22,6 +22,10 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { AdminModule } from './admin/admin.module';
 import { ExercisesModule } from './exercises/exercises.module';
 import { ContentModule } from './content/content.module';
+import { GenerationModule } from './generation/generation.module';
+import { AssignmentsModule } from './assignments/assignments.module';
+import { SessionModule } from './session/session.module';
+import { RetentionModule } from './retention/retention.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -55,6 +59,10 @@ import { HealthModule } from './health/health.module';
     AdminModule,
     ExercisesModule,
     ContentModule,
+    GenerationModule,
+    AssignmentsModule,
+    SessionModule,
+    RetentionModule,
     HealthModule,
   ],
 })

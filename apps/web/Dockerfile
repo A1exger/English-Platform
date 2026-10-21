@@ -7,11 +7,19 @@ COPY apps/web/package.json apps/web/package-lock.json ./
 RUN npm ci
 
 COPY apps/web/ ./
+# Guard against a stale .next sneaking in via the build context (belt-and-braces
+# with the root .dockerignore) — always compile from a clean slate.
+RUN rm -rf .next
 
 # NEXT_PUBLIC_* vars are inlined at build time, so the API URL must be provided
 # here (the browser calls it directly — use the public API URL in production).
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# The UI's date time zone. The locale shell is statically prerendered (next-intl
+# setRequestLocale), so the zone is resolved here at build time — it must be set
+# now, not only at runtime, or static pages bake UTC. See i18n/request.ts.
+ARG APP_TIMEZONE
+ENV APP_TIMEZONE=$APP_TIMEZONE
 RUN npm run build
 
 # ---- runtime stage ----

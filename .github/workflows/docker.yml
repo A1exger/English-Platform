@@ -41,3 +41,4 @@ jobs:
             ghcr.io/${{ steps.img.outputs.repo }}-${{ matrix.name }}:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            APP_TIMEZONE=${{ vars.APP_TIMEZONE }}

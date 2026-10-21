@@ -1,15 +1,19 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
-import { locales, type Locale } from '@/i18n/routing';
+import { locales, localeLabels, type Locale } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, Me, tokenStore } from '@/lib/auth';
+import { Skeleton } from './Skeleton';
+import { Icon } from './Icon';
+import { useAppTimeZone } from './AppIntlProvider';
+import { isValidTimeZone } from '@/lib/timezone';
 
-// Curated IANA time zones (label = UTC offset shown for orientation).
+// Curated IANA time zones offered as an explicit override. "Auto" (empty value)
+// is added in the <select> and means "use the viewer's own browser zone".
 const TIMEZONES = [
-  'UTC',
   'Europe/London',
   'Europe/Lisbon',
   'Europe/Berlin',
@@ -36,25 +40,32 @@ const TIMEZONES = [
   'Australia/Sydney'
 ];
 
-const localeLabels: Record<Locale, string> = {
-  en: 'English',
-  ru: 'Русский',
-  de: 'Deutsch',
-  fr: 'Français',
-  nl: 'Nederlands',
-  ar: 'العربية'
-};
+// '' means "auto (browser zone)". The legacy default 'UTC' is treated as auto too,
+// so users who never picked a zone keep seeing their own local time. So is a
+// stored value this browser's Intl rejects: the app is already ignoring it, and
+// showing it as the selection would hide the one save that replaces it.
+function autoTz(v?: string): string {
+  return v && v !== 'UTC' && isValidTimeZone(v) ? v : '';
+}
 
 export function SettingsView() {
   const t = useTranslations('settings');
   const tApp = useTranslations('app');
   const locale = useLocale();
   const router = useRouter();
+  const browserTz = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
+  const { setProfileTimeZone } = useAppTimeZone();
 
   const [me, setMe] = useState<Me | null>(null);
   const [state, setState] = useState<'loading' | 'error' | 'ready'>('loading');
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Telegram is opt-in per person: the bot cannot message anyone who has not
+  // pressed Start, so each user connects their own chat from here (one tap).
+  const [telegram, setTelegram] = useState<{ connected: boolean; url: string | null } | null>(
+    null
+  );
   const [form, setForm] = useState({
     email: '',
     firstName: '',
@@ -80,9 +91,10 @@ export function SettingsView() {
           email: profile.email ?? '',
           firstName: profile.firstName ?? '',
           lastName: profile.lastName ?? '',
-          timezone: (profile as { timezone?: string }).timezone ?? 'UTC',
+          timezone: autoTz((profile as { timezone?: string }).timezone),
           locale: (profile.locale as Locale) ?? locale
         });
+        setTelegram(await fetchTelegram(token));
         setState('ready');
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) {
@@ -93,6 +105,35 @@ export function SettingsView() {
       }
     })();
   }, [locale, router]);
+
+  const fetchTelegram = useCallback(
+    (token: string) =>
+      apiFetch<{ connected: boolean; url: string | null }>('/notifications/telegram', {
+        token,
+        locale
+      }).catch(() => null),
+    [locale]
+  );
+
+  /**
+   * Connecting happens in Telegram, in another tab — this page is never told.
+   * Re-check whenever the user comes back to it, so the state flips to connected
+   * on its own instead of needing a manual reload.
+   */
+  useEffect(() => {
+    const recheck = () => {
+      if (document.visibilityState !== 'visible') return;
+      const token = tokenStore.get();
+      if (!token) return;
+      void fetchTelegram(token).then((tg) => tg && setTelegram(tg));
+    };
+    window.addEventListener('focus', recheck);
+    document.addEventListener('visibilitychange', recheck);
+    return () => {
+      window.removeEventListener('focus', recheck);
+      document.removeEventListener('visibilitychange', recheck);
+    };
+  }, [fetchTelegram]);
 
   async function save(e: FormEvent) {
     e.preventDefault();
@@ -114,6 +155,8 @@ export function SettingsView() {
         }
       });
       setSaved(true);
+      // Apply the new zone across the app immediately (no reload needed).
+      setProfileTimeZone(form.timezone);
       // If the UI language changed, switch the route locale so it takes effect.
       if (form.locale !== locale) {
         router.replace('/settings', { locale: form.locale });
@@ -123,7 +166,39 @@ export function SettingsView() {
     }
   }
 
-  if (state === 'loading') return <div className="content"><p className="note">…</p></div>;
+  /**
+   * Download everything the platform holds about this account (GDPR Art. 15 and
+   * 20). Fetched with the access token and saved as a file from memory —
+   * a plain link cannot carry an Authorization header.
+   */
+  async function downloadMyData() {
+    const token = tokenStore.get();
+    if (!token) return;
+    setExporting(true);
+    try {
+      const data = await apiFetch<unknown>('/users/me/export', { token, locale });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function disconnectTelegram() {
+    const token = tokenStore.get();
+    if (!token) return;
+    setTelegram((prev) => (prev ? { ...prev, connected: false } : prev));
+    await apiFetch('/notifications/telegram', { method: 'DELETE', token, locale }).catch(
+      () => undefined
+    );
+  }
+
+  if (state === 'loading') return <div className="content"><Skeleton lines={5} /></div>;
   if (state === 'error') return <div className="content"><p className="error">{tApp('loadError')}</p></div>;
 
   return (
@@ -164,6 +239,9 @@ export function SettingsView() {
             value={form.timezone}
             onChange={(e) => setForm({ ...form, timezone: e.target.value })}
           >
+            <option value="">
+              {t('timezoneAuto')}{browserTz ? ` (${browserTz})` : ''}
+            </option>
             {!TIMEZONES.includes(form.timezone) && form.timezone && (
               <option value={form.timezone}>{form.timezone}</option>
             )}
@@ -173,6 +251,7 @@ export function SettingsView() {
               </option>
             ))}
           </select>
+          <small className="muted">{t('timezoneHint')}</small>
         </label>
         <label>
           {t('language')}
@@ -191,6 +270,47 @@ export function SettingsView() {
           {saving ? '…' : saved ? t('saved') : t('save')}
         </button>
       </form>
+
+      {/* A copy of your own data, on request and without asking anyone. The
+          right exists whether or not there is a button; the button is what
+          makes answering the request take a second instead of a week. */}
+      <div className="card">
+        <strong>{t('myData')}</strong>
+        <p className="muted">{t('myDataHint')}</p>
+        <button type="button" className="ghost" disabled={exporting} onClick={downloadMyData}>
+          {exporting ? '…' : t('myDataDownload')}
+        </button>
+      </div>
+
+      {/* Notification channels. Email needs nothing — it goes to the address
+          above. Telegram is a one-tap connect, only offered when the server has
+          a bot configured. */}
+      <div className="card">
+        <strong>{t('notifications')}</strong>
+        <p className="muted">{t('emailChannel', { email: form.email })}</p>
+        {telegram?.url && (
+          <div className="row-between tg-row">
+            <span className={telegram.connected ? 'tg-connected' : 'muted'}>
+              {telegram.connected && <Icon name="check-circle" />}
+              {telegram.connected ? t('telegramOn') : t('telegramHint')}
+            </span>
+            {telegram.connected ? (
+              <button type="button" className="ghost" onClick={disconnectTelegram}>
+                {t('telegramDisconnect')}
+              </button>
+            ) : (
+              <a
+                className="cta-primary"
+                href={telegram.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('telegramConnect')}
+              </a>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

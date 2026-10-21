@@ -40,6 +40,8 @@ services:
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      # Used to build the password-reset link in emails.
+      APP_URL: ${APP_URL:-}
       ALLOW_ADMIN_REGISTRATION: ${ALLOW_ADMIN_REGISTRATION:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
@@ -48,6 +50,25 @@ services:
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      # Bot username powers the per-user "Connect Telegram" deep link; the
+      # secret authenticates Telegram's webhook calls.
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      # Email delivery for notifications; unset SMTP_HOST = no mail is sent.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      NOTIFY_DISPATCH: ${NOTIFY_DISPATCH:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5}
+      # OpenAI-compatible provider (OpenRouter / Gemini / Groq / Ollama / …).
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_MAX_CONCURRENCY: ${AI_MAX_CONCURRENCY:-3}
       TRANSFER_RECEIVER_NAME: ${TRANSFER_RECEIVER_NAME:-}
       TRANSFER_RECEIVER_COUNTRY: ${TRANSFER_RECEIVER_COUNTRY:-}
       PORT: "3001"
@@ -55,6 +76,8 @@ services:
       - "3001:3001"
     volumes:
       - apiuploads:/app/uploads
+      # Resolve the host's local zone so server-side dates match the web UI.
+      - /etc/localtime:/etc/localtime:ro
     healthcheck:
       test:
         - CMD
@@ -73,9 +96,23 @@ services:
       args:
         # Baked into the client bundle at build time — must be browser-reachable.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+        # Resolved into the statically-prerendered shell at build time (the same
+        # value is also passed at runtime below for the dynamic schedule route).
+        APP_TIMEZONE: ${APP_TIMEZONE:-}
     restart: unless-stopped
     depends_on:
       - api
+    environment:
+      # Optional FIXED display zone for the UI (see apps/web/src/i18n/request.ts).
+      # Leave empty (the default) and every viewer sees dates in their OWN browser
+      # zone — a student in Berlin sees Berlin time and their "today" is their local
+      # day, like Google Calendar. Set it (e.g. Europe/Moscow) to force that single
+      # zone for everyone instead.
+      APP_TIMEZONE: ${APP_TIMEZONE:-}
+    volumes:
+      # The container's own clock/logs. The UI zone is APP_TIMEZONE (if set) or the
+      # viewer's browser zone — this mount no longer drives it.
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - "3000:3000"
 

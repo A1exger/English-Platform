@@ -139,6 +139,31 @@ describe('Billing (e2e)', () => {
       .expect(401);
   });
 
+  it('refuses to trust a webhook when no secret is configured', async () => {
+    // An HMAC keyed with the empty string is still a valid HMAC, so an unset
+    // secret does not turn verification off — it publishes the key. Anyone
+    // could then sign "this transaction is paid", which is why an unconfigured
+    // provider must refuse rather than verify.
+    const saved = process.env.STRIPE_WEBHOOK_SECRET;
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+    try {
+      const body = JSON.stringify({
+        type: 'payment.succeeded',
+        externalId: 'cs_test_forged',
+        status: 'succeeded',
+      });
+      await api()
+        .post('/api/v1/billing/webhook/stripe')
+        .set('Content-Type', 'application/json')
+        // Signed exactly as an attacker would, knowing only the public code.
+        .set('x-webhook-signature', sign(body, ''))
+        .send(body)
+        .expect(401);
+    } finally {
+      process.env.STRIPE_WEBHOOK_SECRET = saved;
+    }
+  });
+
   it('student tops up balance via PayPal', async () => {
     const checkout = await api()
       .post('/api/v1/billing/checkout')
