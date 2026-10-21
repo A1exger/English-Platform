@@ -1,5 +1,6 @@
 import { getRequestConfig } from 'next-intl/server';
 import { routing } from './routing';
+import { isValidTimeZone } from '../lib/timezone';
 
 /**
  * Optional *fixed* display time zone for the whole UI.
@@ -15,7 +16,11 @@ import { routing } from './routing';
  * never drifts to "yesterday" (the bug this originally fixed).
  */
 export function fixedTimeZone(): string | undefined {
-  return process.env.APP_TIMEZONE || process.env.TZ || undefined;
+  // TZ in particular is a container setting, and POSIX allows forms there
+  // ("MSK-3") that Intl does not. Anything Intl rejects is treated as unset —
+  // per-viewer local time — rather than pinned, where it would break every
+  // date the server renders.
+  return [process.env.APP_TIMEZONE, process.env.TZ].find(isValidTimeZone);
 }
 
 export default getRequestConfig(async ({ requestLocale }) => {

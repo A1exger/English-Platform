@@ -9,6 +9,7 @@ import { fetchMe, Me, tokenStore } from '@/lib/auth';
 import { Skeleton } from './Skeleton';
 import { Icon } from './Icon';
 import { useAppTimeZone } from './AppIntlProvider';
+import { isValidTimeZone } from '@/lib/timezone';
 
 // Curated IANA time zones offered as an explicit override. "Auto" (empty value)
 // is added in the <select> and means "use the viewer's own browser zone".
@@ -40,9 +41,11 @@ const TIMEZONES = [
 ];
 
 // '' means "auto (browser zone)". The legacy default 'UTC' is treated as auto too,
-// so users who never picked a zone keep seeing their own local time.
+// so users who never picked a zone keep seeing their own local time. So is a
+// stored value this browser's Intl rejects: the app is already ignoring it, and
+// showing it as the selection would hide the one save that replaces it.
 function autoTz(v?: string): string {
-  return v && v !== 'UTC' ? v : '';
+  return v && v !== 'UTC' && isValidTimeZone(v) ? v : '';
 }
 
 export function SettingsView() {

@@ -5164,6 +5164,115 @@ button.link-button:focus-visible {
 .data-table .col-end {
   text-align: end;
 }
+/* A cell that gives way instead of widening the table: the text is clipped
+   with an ellipsis and the full value lives in the span's title. The limit
+   sits on the inner element because max-width on a table cell itself is not
+   reliably honoured. */
+.data-table td.col-truncate > span {
+  display: block;
+  max-inline-size: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Name over email in one cell. Each line clips on its own, so a long address
+   never hides the name above it. */
+.data-table td.col-person > .person-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-inline-size: 260px;
+}
+.person-cell > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.person-cell > small {
+  font-size: 13px;
+}
+/* Row actions as icons: two words of button text were the widest thing in the
+   users table after the email. */
+.data-table .col-actions {
+  inline-size: 1%;
+  padding-inline-end: 12px;
+}
+.data-table .col-actions .row-actions {
+  gap: 6px;
+}
+.icon-btn {
+  inline-size: 34px;
+  block-size: 34px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+}
+.icon-btn.danger:hover {
+  color: var(--low-600);
+  background: var(--low-100);
+  border-color: var(--low-100);
+}
+
+/* ——— Tables that do not scroll sideways ———
+   Below the width a row of columns can honestly use, each row becomes a small
+   card: the first cell is its heading, actions sit top-right, and every other
+   cell carries its column name, since there is no header row to read it from.
+   Measured on the table's own box, not the window, so the same table behaves
+   the same with the sidebar open or shut. */
+.data-table-wrap {
+  container-type: inline-size;
+}
+@container (max-width: 600px) {
+  .data-table thead {
+    display: none;
+  }
+  .data-table,
+  .data-table tbody {
+    display: block;
+  }
+  .data-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 4px;
+    padding: 12px 14px;
+    border-block-end: 1px solid var(--line);
+  }
+  .data-table tbody tr:last-child {
+    border-block-end: 0;
+  }
+  .data-table td {
+    grid-column: 1;
+    display: block;
+    padding: 0;
+    border: 0;
+    text-align: start;
+    font-size: 13px;
+  }
+  .data-table td:first-child {
+    font-size: 14px;
+  }
+  .data-table td:not(:first-child):not(.col-actions)::before {
+    content: attr(data-label) ' · ';
+    color: var(--slate);
+  }
+  .data-table td.col-actions {
+    grid-column: 2;
+    grid-row: 1 / span 6;
+    align-self: start;
+    inline-size: auto;
+  }
+  .data-table tbody tr:hover td {
+    background: transparent;
+  }
+  .data-table tbody tr:hover {
+    background: var(--indigo-50);
+  }
+  .data-table td.col-truncate > span,
+  .data-table td.col-person > .person-cell {
+    max-inline-size: 100%;
+  }
+}
 .th-sort {
   background: transparent;
   border: none;

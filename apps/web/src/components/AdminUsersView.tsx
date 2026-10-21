@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { useFormatter, useLocale, useTranslations } from 'next-intl';
+import { useFormatter, useLocale, useNow, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { ApiError, apiFetch } from '@/lib/api';
 import { fetchMe, tokenStore } from '@/lib/auth';
@@ -10,6 +10,7 @@ import { useToast } from './Toast';
 import { PageHeader } from './PageHeader';
 import { Drawer } from './Drawer';
 import { DataTable, Column } from './DataTable';
+import { Icon } from './Icon';
 
 interface UserRow {
   id: string;
@@ -20,6 +21,8 @@ interface UserRow {
   locale: string;
   isActive?: boolean;
   createdAt: string;
+  /** Last sign-in or token refresh; null if never seen since it was recorded. */
+  lastSeenAt?: string | null;
 }
 
 const ROLES = ['student', 'tutor', 'parent', 'admin'];
@@ -30,6 +33,8 @@ export function AdminUsersView() {
   const te = useTranslations('enum');
   const locale = useLocale();
   const format = useFormatter();
+  // "3 minutes ago" has to keep moving while the page is open.
+  const now = useNow({ updateInterval: 60_000 });
   const router = useRouter();
   const { showUndo } = useToast();
 
@@ -148,40 +153,81 @@ export function AdminUsersView() {
     {
       key: 'name',
       label: t('name'),
+      // Name and address share a cell: the address was a column of its own and
+      // the widest one in the table, which is what pushed it past its box.
+      // Both are clipped with an ellipsis and complete on hover.
+      className: 'col-truncate col-person',
       sortValue: (u) => `${u.lastName} ${u.firstName}`.toLowerCase(),
-      render: (u) => <span>{u.firstName} {u.lastName}</span>
+      render: (u) => {
+        const name = `${u.firstName} ${u.lastName}`.trim();
+        return (
+          <span className="person-cell">
+            <span title={name}>{name}</span>
+            <small className="muted" title={u.email}>
+              {u.email}
+            </small>
+          </span>
+        );
+      }
     },
-    { key: 'email', label: t('email'), sortValue: (u) => u.email.toLowerCase(), render: (u) => <span className="muted">{u.email}</span> },
     { key: 'role', label: t('role'), sortValue: (u) => u.role, render: (u) => te(`role.${u.role}`) },
+    {
+      key: 'lastSeen',
+      label: t('lastSeen'),
+      // Never-seen accounts sort as the oldest, not as a blank at the top.
+      sortValue: (u) => u.lastSeenAt ?? '',
+      render: (u) =>
+        u.lastSeenAt ? (
+          <span title={format.dateTime(new Date(u.lastSeenAt), { dateStyle: 'medium', timeStyle: 'short' })}>
+            {format.relativeTime(new Date(u.lastSeenAt), now)}
+          </span>
+        ) : (
+          <span className="muted">{t('never')}</span>
+        )
+    },
     {
       key: 'created',
       label: t('created'),
-      align: 'end',
       sortValue: (u) => u.createdAt,
-      render: (u) => <span className="mono-num">{format.dateTime(new Date(u.createdAt), { dateStyle: 'short' })}</span>
+      render: (u) => (
+        <span className="mono-num muted">{format.dateTime(new Date(u.createdAt), { dateStyle: 'short' })}</span>
+      )
     },
     {
       key: 'actions',
       label: '',
       align: 'end',
-      render: (u) => (
-        <span className="row-actions">
-          <button
-            type="button"
-            className="ghost"
-            disabled={busy}
-            onClick={() => {
-              setEditError('');
-              setEditing({ ...u, password: '', isActive: u.isActive !== false });
-            }}
-          >
-            {t('edit')}
-          </button>
-          <button type="button" className="ghost" disabled={busy} onClick={() => remove(u.id)}>
-            {t('delete')}
-          </button>
-        </span>
-      )
+      className: 'col-actions',
+      render: (u) => {
+        const who = `${u.firstName} ${u.lastName}`.trim() || u.email;
+        return (
+          <span className="row-actions">
+            <button
+              type="button"
+              className="ghost icon-btn"
+              disabled={busy}
+              title={t('edit')}
+              aria-label={`${t('edit')}: ${who}`}
+              onClick={() => {
+                setEditError('');
+                setEditing({ ...u, password: '', isActive: u.isActive !== false });
+              }}
+            >
+              <Icon name="edit" size={16} />
+            </button>
+            <button
+              type="button"
+              className="ghost icon-btn danger"
+              disabled={busy}
+              title={t('delete')}
+              aria-label={`${t('delete')}: ${who}`}
+              onClick={() => remove(u.id)}
+            >
+              <Icon name="trash" size={16} />
+            </button>
+          </span>
+        );
+      }
     }
   ];
 

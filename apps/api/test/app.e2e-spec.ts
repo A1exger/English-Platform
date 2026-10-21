@@ -152,6 +152,24 @@ describe('English-Platform API (e2e)', () => {
     expect(res.body.studentProfile.cefrLevel).toBe('B1');
   });
 
+  it('PATCH /users/me refuses a zone Intl does not know, keeps "auto"', async () => {
+    // These break every date formatter in the browser; the API must not store them.
+    for (const timezone of ['MSK', 'GMT+3', 'Moscow Standard Time']) {
+      await api()
+        .patch('/api/v1/users/me')
+        .set('Authorization', `Bearer ${studentTokens.accessToken}`)
+        .send({ timezone })
+        .expect(400);
+    }
+    // '' is the Settings page's "follow my browser".
+    const auto = await api()
+      .patch('/api/v1/users/me')
+      .set('Authorization', `Bearer ${studentTokens.accessToken}`)
+      .send({ timezone: '' })
+      .expect(200);
+    expect(auto.body.timezone).toBe('');
+  });
+
   it('POST /lessons as student -> 403 (tutor only)', async () => {
     await api()
       .post('/api/v1/lessons')

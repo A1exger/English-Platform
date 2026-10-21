@@ -134,6 +134,8 @@
     "title": "Gebruikers",
     "newUser": "Nieuwe gebruiker",
     "role": "Rol",
+    "lastSeen": "Laatst actief",
+    "never": "Nooit",
     "firstName": "Voornaam",
     "lastName": "Achternaam",
     "email": "E-mail",

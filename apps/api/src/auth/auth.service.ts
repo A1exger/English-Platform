@@ -164,6 +164,12 @@ export class AuthService {
         expiresAt: new Date(decoded.exp * 1000),
       },
     });
+    // Every way into a session — sign-in, sign-up, refresh — passes through
+    // here, so this one write keeps "last seen" honest for all of them.
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lastSeenAt: new Date() },
+    });
 
     return { accessToken, refreshToken };
   }

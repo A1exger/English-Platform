@@ -9,12 +9,18 @@ function cmp(a: string | number, b: string | number): number {
   return String(a).localeCompare(String(b));
 }
 
+function cellClass<T>(c: Column<T>): string | undefined {
+  return [c.align === 'end' ? 'col-end' : '', c.className ?? ''].filter(Boolean).join(' ') || undefined;
+}
+
 export interface Column<T> {
   key: string;
   label: string;
   render?: (row: T) => ReactNode;
   sortValue?: (row: T) => string | number;
   align?: 'start' | 'end';
+  /** Extra class on the header and every cell of this column. */
+  className?: string;
 }
 
 export interface TableFilter {
@@ -126,7 +132,7 @@ export function DataTable<T>({
             <thead>
               <tr>
                 {columns.map((c) => (
-                  <th key={c.key} className={c.align === 'end' ? 'col-end' : undefined}>
+                  <th key={c.key} className={cellClass(c)}>
                     {c.sortValue ? (
                       <button type="button" className="th-sort" onClick={() => toggleSort(c.key)}>
                         {c.label}
@@ -145,7 +151,7 @@ export function DataTable<T>({
               {shown.map((r) => (
                 <tr key={getKey(r)}>
                   {columns.map((c) => (
-                    <td key={c.key} className={c.align === 'end' ? 'col-end' : undefined}>
+                    <td key={c.key} className={cellClass(c)} data-label={c.label}>
                       {c.render ? c.render(r) : String(c.sortValue ? c.sortValue(r) : '')}
                     </td>
                   ))}

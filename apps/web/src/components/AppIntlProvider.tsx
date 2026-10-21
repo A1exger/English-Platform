@@ -11,6 +11,7 @@ import {
 import { NextIntlClientProvider, type AbstractIntlMessages } from 'next-intl';
 import { apiFetch } from '@/lib/api';
 import { tokenStore } from '@/lib/auth';
+import { firstValidTimeZone, isValidTimeZone } from '@/lib/timezone';
 
 // App-wide effective time zone, highest priority first:
 //   1. APP_TIMEZONE — a single zone forced for everyone (server env)
@@ -36,7 +37,7 @@ export const useAppTimeZone = () => useContext(AppTimeZoneContext);
 export function AppIntlProvider({
   locale,
   messages,
-  fixedTimeZone,
+  fixedTimeZone: fixedRaw,
   children
 }: {
   locale: string;
@@ -44,6 +45,9 @@ export function AppIntlProvider({
   fixedTimeZone?: string;
   children: ReactNode;
 }) {
+  // A forced zone Intl rejects is no forced zone: fall through to the profile
+  // and the browser as if it were unset, instead of skipping both for it.
+  const fixedTimeZone = isValidTimeZone(fixedRaw) ? fixedRaw : undefined;
   const browserTz =
     typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC';
   // null until checked. A forced zone needs no profile lookup, so start "ready".
@@ -68,7 +72,10 @@ export function AppIntlProvider({
   const setProfileTimeZone = useCallback((tz: string) => setProfileTz(tz || ''), []);
 
   const chosen = profileTz && profileTz !== 'UTC' ? profileTz : '';
-  const timeZone = fixedTimeZone || chosen || browserTz || 'UTC';
+  // Each source is only as good as Intl's opinion of it: a zone it rejects is
+  // skipped for the next one rather than handed to the formatter, where it
+  // would turn every date in the app into a raw Date string.
+  const timeZone = firstValidTimeZone(fixedTimeZone, chosen, browserTz);
   const ready = fixedTimeZone ? true : profileTz !== null;
 
   return (

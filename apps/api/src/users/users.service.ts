@@ -57,6 +57,8 @@ export class UsersService {
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        // Recorded about them, so it belongs in what they can download.
+        lastSeenAt: true,
       },
     });
 

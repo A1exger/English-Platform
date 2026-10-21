@@ -38,6 +38,11 @@ model User {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  // When the account last held a live session: stamped on sign-in and on every
+  // token refresh, so an open tab keeps it within one access-token lifetime
+  // (15 minutes) instead of freezing it at the last time a password was typed.
+  // Null until the first sign-in after this column existed.
+  lastSeenAt   DateTime?
 
   tutorProfile   TutorProfile?
   studentProfile StudentProfile?

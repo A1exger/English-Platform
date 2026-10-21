@@ -3,7 +3,9 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsTimeZone,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { CEFR_LEVELS, CefrLevel } from '../../common/constants/enums';
 
@@ -24,8 +26,18 @@ export class UpdateMeDto {
   @IsString()
   locale?: string;
 
+  /**
+   * An IANA zone ("Europe/Moscow"), or '' for "follow my browser".
+   *
+   * Used to be any string. A zone the browser's Intl does not know — "MSK",
+   * "GMT+3" — makes every date formatter in the app throw, and next-intl
+   * answers a throw by printing the raw Date ("Sat Aug 15 2026 21:41:57
+   * GMT+0300 (Moscow Standard Time)") in place of every date on every screen.
+   */
   @IsOptional()
   @IsString()
+  @ValidateIf((o: UpdateMeDto) => o.timezone !== '')
+  @IsTimeZone()
   timezone?: string;
 
   @IsOptional()

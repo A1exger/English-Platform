@@ -134,6 +134,8 @@
     "title": "Benutzer",
     "newUser": "Neuer Benutzer",
     "role": "Rolle",
+    "lastSeen": "Zuletzt aktiv",
+    "never": "Nie",
     "firstName": "Vorname",
     "lastName": "Nachname",
     "email": "E-Mail",

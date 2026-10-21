@@ -60,6 +60,41 @@ describe('Admin user management (e2e)', () => {
     expect(res.body.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('"last seen" moves on sign-in and on token refresh, and the admin sees it', async () => {
+    const seen = async () =>
+      (await prisma.user.findUniqueOrThrow({ where: { email: 'tutor@adm.com' } })).lastSeenAt;
+
+    // Registering is a sign-in: the account was seen the moment it was made.
+    const atRegister = await seen();
+    expect(atRegister).toBeInstanceOf(Date);
+
+    const login = await api()
+      .post('/api/v1/auth/login')
+      .send({ email: 'tutor@adm.com', password: 'Password123!' })
+      .expect(201);
+    const atLogin = await seen();
+    expect(atLogin!.getTime()).toBeGreaterThanOrEqual(atRegister!.getTime());
+
+    // An open tab never types the password again — it refreshes. That has to
+    // count, or a tutor teaching daily would read "last seen a week ago".
+    await prisma.user.update({
+      where: { email: 'tutor@adm.com' },
+      data: { lastSeenAt: new Date('2020-01-01T00:00:00Z') },
+    });
+    await api()
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: login.body.refreshToken })
+      .expect(201);
+    expect((await seen())!.getFullYear()).toBeGreaterThan(2020);
+
+    const list = await api()
+      .get('/api/v1/admin/users')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(200);
+    const row = list.body.find((u: { email: string }) => u.email === 'tutor@adm.com');
+    expect(new Date(row.lastSeenAt).getFullYear()).toBeGreaterThan(2020);
+  });
+
   it('admin creates a tutor (with profile)', async () => {
     const res = await api()
       .post('/api/v1/admin/users')

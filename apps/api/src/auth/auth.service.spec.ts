@@ -10,7 +10,7 @@ import { MailService } from '../notifications/mail.service';
 describe('AuthService', () => {
   let service: AuthService;
   let prisma: {
-    user: { findUnique: jest.Mock; create: jest.Mock };
+    user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
     refreshToken: {
       create: jest.Mock;
       findMany: jest.Mock;
@@ -37,7 +37,8 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     prisma = {
-      user: { findUnique: jest.fn(), create: jest.fn() },
+      // update: issuing tokens stamps lastSeenAt.
+      user: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn().mockResolvedValue({}) },
       refreshToken: {
         create: jest.fn().mockResolvedValue({}),
         findMany: jest.fn(),

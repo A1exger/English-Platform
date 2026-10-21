@@ -18,6 +18,7 @@ const USER_SELECT = {
   locale: true,
   isActive: true,
   createdAt: true,
+  lastSeenAt: true,
 } as const;
 
 @Injectable()

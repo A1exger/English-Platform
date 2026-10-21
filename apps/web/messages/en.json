@@ -134,6 +134,8 @@
     "title": "Users",
     "newUser": "New user",
     "role": "Role",
+    "lastSeen": "Last seen",
+    "never": "Never",
     "firstName": "First name",
     "lastName": "Last name",
     "email": "Email",
